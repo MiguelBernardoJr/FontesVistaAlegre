@@ -1,0 +1,41 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "RWMAKE.CH"
+
+User Function MT150FIX()
+Local aRet   := {} // PARAMIXB
+Local cAlias := "SC8"
+
+DbSelectArea("SX3")
+SX3->(DBSETORDER( 1 ))
+SX3->(DBSEEK( cAlias )) // COTACAO
+While !SX3->(Eof()) .and. X3_ARQUIVO == cAlias
+    aAdd( aRet, {;
+                    SX3->X3_TITULO,;
+                    SX3->X3_CAMPO ;
+    })
+    SX3->(DbSkip())
+EndDo
+
+Return aRet
+
+
+User Function MT150LIN()
+    Local cCampos := "C8_XNOMFOR"
+    Local aCampos := STRTOKARR( cCampos, ";" )
+    Local nPos    := 0, nI := 0
+    
+    For nI := 1 to Len(aCampos)
+        If !Empty(aCampos[nI])
+            If (nPos := aScan( aHeaderPro, {|x| x[1] == aCampos[nI] })) > 0
+                aDel( aCols[1], nPos)
+                aSize( aCols[1], len(aCols[1])-1 )
+
+                aDel( aHeader, nPos)
+                aSize( aHeader, len(aHeader)-1 )
+
+                aDel( aHeaderPro, nPos)
+                aSize( aHeaderPro, len(aHeaderPro)-1 )
+            EndIf
+        EndIf
+    Next nI
+Return 

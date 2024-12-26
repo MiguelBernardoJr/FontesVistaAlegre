@@ -1,0 +1,185 @@
+ACodigo Banco   0010030"341"                                                       
+ALote de Servico0040070"0000"                                                      
+ATipo Registro  0080080"0"                                                         
+ABrancos        0090140Space( 06 )                                                 
+ALayout         0150170"080"                                                       
+ATipo Inscricao 0180180"2"                                                         
+ACNPJ           0190320cCodCnpj                                                    
+ABrancos        0330520Space( 20 )                                                 
+ACod Agencia    0530570StrZero(Val( cCodAgenc ),5)                                 
+ADigito Agencia 0580580Space( 01 )                                                 
+ANumero Conta   0590700StrZero(Val( cCodConta ),12)                                
+ABrancos        0710710Space( 01 )                                                 
+ADigito Conta   0720720StrZero(Val( cDigConta ),01)                                
+ANome Empresa   0731020PadR(cNomeEmpr,30)                                          
+ANome Banco     1031320PadR("ITAU",30)                                             
+ABrancos        1331420Space( 10 )                                                 
+ACodigo Remessa 1431430"1"                                                         
+AData Geracao   1441510GravaData(dDataBase,.F.,5)                                  
+AHora Geracao   1521570SubStr(Time(),1,2)+SubStr(Time(),4,2)+SubStr(Time(),7,2)    
+AZeros          1581660Replicate("0",9)                                            
+ADens. Gravacao 1671710"00000"                                                     
+ABrancos        1722400Space( 69 )                                                 
+BCodigo Banco   0010030"341"                                                       
+BLote de Servico0040070INCREMENTA()                                                
+BTipo Registro  0080080"1"                                                         
+BTipo Operacao  0090090"C"                                                         
+BTipo Servico   0100110"30"                                                        
+BForma Lancament0120130If(nTipoConta==1,"01","05")                                 
+BNr Versao Layou0140160"040"                                                       
+BBrancos        0170170Space( 01 )                                                 
+BTipo Inscricao 0180180"2"                                                         
+BCNPJ           0190320cCodCnpj                                                    
+BIdent Lancto   0330360Space( 04 )                                                 
+BBrancos        0370520Space( 16 )                                                 
+BCod Agencia    0530570StrZero(Val( cCodAgenc ),5)                                 
+BDigito Agencia 0580580Space( 01 )                                                 
+BNumero Conta   0590700StrZero(Val( cCodConta ),12)                                
+BBrancos        0710710Space( 01 )                                                 
+BDigito Conta   0720720StrZero(Val( cDigConta ),01)                                
+BNome Empresa   0731020PadR(cNomeEmpr,30)                                          
+BFinalidade Lote1031320PadR("00",30)                                               
+BHistorico CC   1331420Space( 10 )                                                 
+BEndereco Emp   1431720PadR( aInfo[04],30 )                                        
+BNumero Local   1731770Replicate("0",5)                                            
+BComplemento    1781920PadR( aInfo[14],15 )                                        
+BCidade         1932120PadR( aInfo[05],20 )                                        
+BCep            2132200aInfo[07]                                                   
+BEstado         2212220PadR( aInfo[06],02 )                                        
+BUso Febraban   2232300Space( 08 )                                                 
+BOcorrencias    2312400Space( 10 )                                                 
+DCodigo Banco   0010030"341"                                                       
+DLote de Servico0040070"0001"                                                      
+DReg.Trailer lot0080080"5"                                                         
+DFiller         0090170SPACE(9)                                                    
+DQtde.Reg.Lote  0180230INCREMENTA() +1                                             
+DSomatoria Valor0240410STRZERO(nTotal,18)                                          
+DFiller Numerico0420590STRZERO(0,18)                                               
+DFiller         0602300SPACE(171)                                                  
+DOcorrencias    2312400SPACE(10)                                                   
+GCodigo Banco   0010030"341"                                                       
+GLote de Servico0040070"0001"                                                      
+GTipo Registro  0080080"3"                                                         
+GNº Sequencial  0090130nSeq                                                        
+GSegmento       0140140"A"                                                         
+GTipo Movimento 0150170"000"                                                       
+GZeros          0180200"000"                                                       
+GCod. Banco Favo0210230SubStr(cBanco,1,3)                                          
+GNum. Agencia   0240280StrZero(Val(SubStr(SRA->RA_BCDEPSA,4,5)),5)                 
+GBrancos        0290290" "                                                         
+GNr Conta Corren0300410Left(StrZero(Val(cConta),13),12)                            
+GBrancos        0420420" "                                                         
+GDig Verif Conta0430430Right(StrZero(Val(cConta),13),01)                           
+GNome Favorecido0440730PadR(cNome,30)                                              
+GNr Doc Atribuid0740930Space( 20 )                                                 
+GData Pagamento 0941010GravaData(dDataPgto,.F.,5)                                  
+GTipo Moeda     1021040"REA"                                                       
+GQuant Moeda    1051190"000000000000000"                                           
+GValor Pagamento1201340StrZero(nValor,15)                                          
+GNosso Numero   1351490Space( 15 )                                                 
+GBrancos        1501540Space( 05 )                                                 
+GData Efetiva   1551620"00000000"                                                  
+GValor Efetivo  1631772"000000000000000"                                           
+GOutras Informac1781950Space( 18 )                                                 
+GBrancos        1961970Space( 02 )                                                 
+GDoc Retorno    1982030"000000"                                                    
+GNumero Inscrica2042170StrZero(Val(cCPF),14)                                       
+GCompl Tipo Serv2182190If(lDocCc,"06",If(lDocPoup,"11","  "))                      
+GNr Doc/Ted/OP  2202240Space( 05 )                                                 
+GBrancos        2252290Space( 05 )                                                 
+GAviso Favorecid2302300"0"                                                         
+GOcorrencias    2312400Space( 10 )                                                 
+HBanco          0010030"341"                                                       
+HLote           0040070"0001"                                                      
+HTipo Registro  0080080"3"                                                         
+HSeq.Reg.no Lote0090130StrZero(nSeq:=nSeq+1,5)                                     
+HCod.Seguimento 0140140"B"                                                         
+HBrancos        0150170Space( 03 )                                                 
+HTipo Insc.Favor0180180"1"                                                         
+HCPF            0190320StrZero(Val(cCPF),14)                                       
+HBrancos        0332400Space( 208 )                                                
+FCodigo Banco   0010030"341"                                                       
+FLote de Servico0040070"9999"                                                      
+FTipo Registro  0080080"9"                                                         
+FBrancos        0090170Space( 09 )                                                 
+FQtde. Lotes    0180230"000001"                                                    
+FQtde. Registros0240290nSeq+4                                                      
+FBrancos        0302400Space( 211 )                                                
+CCod.Banco      0010030"341"                                                       
+CCod.Lote       0040070"0001"                                                      
+CTipo Registro  0080080"1"                                                         
+CTipo Operacao  0090090"C"                                                         
+CTipo Pagamento 0100110SUBST( SEA->EA_TIPOPAG,1,2 )                                
+CForma Pagto    0120130SUBST( SEA->EA_MODELO,1,2)                                  
+CLayout Lote    0140160"030"                                                       
+CBrancos        0170170SPACE(1)                                                    
+CTipo Insc      0180180"2"                                                         
+CCGC/CPF Debitar0190320SUBST(SM0->M0_CGC,1,14)                                     
+CFiller         0330520SPACE(20)                                                   
+CAgencia Debito 0530570STRZERO(VAL(ALLTRIM(SEA->EA_AGEDEP)),5)                     
+CFiller         0580580SPACE(1)                                                    
+CC/C Debitar    0590700STRZERO(VAL(SUBSTR(ALLTRIM(SEA->EA_NUMCON),1,5)),12)        
+CFiller         0710710SPACE(1)                                                    
+CDAC            0720720SUBSTR(ALLTRIM(SEA->EA_NUMCON),7,1)                         
+CNome Empresa   0731020SUBSTR(SM0->M0_NOME,1,30)                                   
+CFinalidade Pgto1031320SPACE(30)                                                   
+CHist C/C       1331420"LOTE"                                                      
+CLogradouro     1431720SUBSTR(SM0->M0_ENDCOB,1,30)                                 
+CNumero         1731770"310"                                                       
+CComplemento    1781920SUBSTR(SM0->M0_BAIRCOB,1,20)                                
+CCidade         1932120SUBS(SM0->M0_CIDCOB,1,20)                                   
+CCEP            2132200SUBS(SM0->M0_CEPCOB,1,8 )                                   
+CEstado         2212220SUBS(SM0->M0_ESTCOB,1,2)                                    
+CFiller         2232300SPACE(8)                                                    
+COcorrencias    2312400SPACE(10)                                                   
+JCod.Banco      0010030"341"                                                       
+JCod.Lote       0040070"0001"                                                      
+JTIPO REGISTRO  008008 "3"                                                         
+JNUMERO REGISTRO009013 incrementa()-1                                              
+JSEGMENTO       014014 "J"                                                         
+JTIPO MOVIMENTO 015017 "000"                                                       
+JBCO FAVORECIDO 018020 SUBSTR(SE2->E2_CODBAR,1,3)                                  
+JMOEDA          021021 SUBSTR(SE2->E2_CODBAR,4,1)                                  
+JDV             022022 SUBSTR(SE2->E2_CODBAR,5,1)                                  
+JVENCIMENTO     023026 SUBSTR(SE2->E2_CODBAR,6,4)                                  
+JVALOR          027036 SUBSTR(SE2->E2_CODBAR,10,10)                                
+JCAMPO LIVRE    037061 SUBSTR(SE2->E2_CODBAR,20,25)                                
+JNOME FAVORECIDO062091 SUBSTR(SA2->A2_NOME,1,30)                                   
+JDATA VECIMENTO 092099 StrTran(dtoc(SE2->E2_VENCTO),'/','')                        
+JVALOR TITULO   100114 STRZERO(ROUND(SE2->E2_VALOR*100,2),15)                      
+JDESCONTOS      115129 STRZERO(ROUND(SE2->E2_DECRESC*100,2),15)                    
+JACRESCIMOS     130144 STRZERO(ROUND(SE2->E2_ACRESC*100,2),15)                     
+JDATA PAGTO     145152 StrTran(dtoc(SEA->EA_DATABOR),'/','')                       
+JVALOR PAGTO    153167 StrZero(nValor,15)                                          
+JZEROS          168182 STRZERO(15)                                                 
+JSEU NUMERO     183202 SE2->E2_IDCNAB                                              
+JBRANCOS        203215 SPACE(13)                                                   
+JNOSSO NUMERO   216230 SPACE(15)                                                   
+JOCORRENCIAS    231240 SPACE(10)                                                   
+ECod.Banco      0010030"341"                                                       
+ECod. Lote      0040070"0001"                                                      
+ETIPO REGISTRO  0080080"5"                                                         
+EBRANCOS        0090170SPACE(9)                                                    
+ETOTAL QTDE REG 0180230M->NSEQ+2                                                   
+ETOTAL VL PAGTOS0240410STRZERO(nTotal,18)                                          
+EZEROS          0420590STRZERO(18)                                                 
+EBRANCOS        0602300SPACE(171)                                                  
+EOCORRENCIAS    2312400SPACE(10)                                                   
+5Cod.Banco      0010030"341"                                                       
+5Cod.Lote       0040070"0001"                                                      
+5Tipo Registro  0080080"3"                                                         
+5Numero Registro0090130incrementa()                                                
+5Segmento       0140140"J"                                                         
+5Tipo Movimento 0150170"000"                                                       
+5Cod. Registro  0180190"52"                                                        
+5Tp Inscr Sacado0200200IIF(SA2->A2_TIPO="J","2","1")                               
+5Nro Inscr Sac-10210320"0"+SUBSTR(SA2->A2_CGC,1,11)                                
+5Nro Inscr Sac-20330350IIF(SA2->A2_TIPO="J",SUBSTR(SA2->A2_CGC,12,3),"000")        
+5Nome Sacado    0360750SUBSTR(SA2->A2_NOME,1,40)                                   
+5Tp Inscr Cedent0760760"2"                                                         
+5Nro Inscr Ceden0770910"0"+STRZERO(VAL(SM0->M0_CGC),14,0)                          
+5Nome Cedente   0921310SUBSTR(SM0->M0_NOMECOM,1,40)                                
+5Tipo Inscr Sac 1321320"0"                                                         
+5Nro Sac Aval   1331470STRZERO(15)                                                 
+5Nome Sacador   1481870SPACE(40)                                                   
+5Brancos        1882400SPACE(53)                                                   
