@@ -23,7 +23,8 @@
 static nPEmpCod := 1
 static nPEmpLoc := 2
 static nPEmpQtd := 3
-static nPEmpCtl := 4
+static nPEmpCtl := 4 // LoteCtl
+
 
 /*/{Protheus.doc} vaest003
 
@@ -48,11 +49,12 @@ local cMovBat 	:= GetMV("VA_MOVBATI")
 local cCC 		:= GetMV("VA_CCPRDBA")
 Local cIC		:= GetMV("VA_ICPRDBA")
 Local cClvl		:= GetMV("VA_CLPRDBA")
+Local cCodMod   := GetMv("VA_MODFAB")
 
 SB1->(DbSetOrder(1))
-SB1->(DbSeek(xFilial("SB1")+cCodPro))
-If aScan(aEmpenho,{|x| Alltrim(x[1]) == Alltrim(SB1->B1_XCODAPR)}) == 0
-	aAdd( aEmpenho, { SB1->B1_XCODAPR , SB1->B1_LOCPAD , nQuant } )
+SB1->(DbSeek(xFilial("SB1")+cCodMod))
+If aScan(aEmpenho,{|x| Alltrim(x[1]) == Alltrim(SB1->B1_COD)}) == 0
+	aAdd( aEmpenho, { SB1->B1_COD , SB1->B1_LOCPAD , nQuant } ) 
 Endif
 
 If Type("__DATA") == "U"
