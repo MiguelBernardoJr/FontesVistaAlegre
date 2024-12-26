@@ -1,0 +1,81 @@
+; Definição dos formatos do arquivo
+; Todo comentário deve ser precedido por ';'. O comentário pode ocorrer tanto no inicio de uma linha ou no final.
+; As linhas em branco serão descartadas
+
+[OWN]; A seção OWN (Owner) define quem serão os usuários ou grupo aptos a usar a query 
+ALL ; Define que todos os usuários terão acesso ao arquivo
+;USR=000000,000001,000002,000003 ; Identifica os usuários que terão acesso ao relatório
+;GRP=000000,000001,000002 ; Identifica os grupos de usuário que terão acesso
+
+[DEF]; definição do que a query faz, aparecerá na base da tela como ajuda para no momento da seleção do arquivo a ser executado.
+Relatorio Apuração de Entrada Pis/Cofins
+
+[ASK]; Define a pergunta a ser executa
+ASK=pPosVda001; Nome da pergunta deve ter no máximo 10 caracteres. 
+;{ <Pergunta> (C, 30), <Tipo>("C", "N", "D"), <Tamanho> (@E99), <Decimal>(@E99),  <GSC>("G", "C"), <Def1> (C 15), <Def2> (C 15), <Def3> (C 15), <Def4> (C 15), <Def5> (C 15), <F3> (C 3), {<Ajuda para pergunta>, <Ajuda para pergunta>} }
+;        123456789012345678901234567890                                              	   123456789012345678901234567890    123456789012345678901234567890
+PAR01={ "Data Emissao de ?   "	   , "D",  8, 0, "G", "", "", "", "", "", "", 	 {"Digite a data inicial de emissao ", "de notas fiscais de entrada. "} }
+PAR02={ "Data Emissao ate?   "	   , "D",  8, 0, "G", "", "", "", "", "", "",    {"Digite a data final de emissao "  , "de notas fiscais de entrada. "} }
+;PAR03={ "Codigo Operador de  ?   ", "C",  6, 0, "G", "", "", "", "", "", "SU7",	 {"Codigo Operador Inical.       ", "                            "} }
+;PAR04={ "Codigo Operador ate ?   ", "C",  6, 0, "G", "", "", "", "", "", "SU7",	 {"Codigo Operador Final.        ", "                            "} }
+;PAR05={ "Posto ?   			 " , "C", 40, 0, "G", "", "", "", "", "", " ",	 {"Grupo de operadores. Separado ", "por virgula.                    "} }
+;PAR06={ "Assunto de ?   	     " , "C",  6, 0, "G", "", "", "", "", "", "T1",	 {"Codigo do Assunto Inicial     ", "                                "} }
+;PAR07={ "Assunto ate ?   	     " , "C",  6, 0, "G", "", "", "", "", "", "T1",	 {"Codigo do Assunto Final.      ", "                                "} }
+;PAR06={ "Excluir IPI: S/N        ", "N", 01, 0, "C", "SIM", "NAO", "", "", "", "", {"Excluir IPI: Sim ou Não       ", "                             "} }
+
+; Obs 1: Parametro deve iniciar sempre com 01 Ex: PAR01
+; Obs 2: No máximo podem haver 60 parâmetros
+
+[PRE]; Executa funções antes de executar a query. 
+; Voce pode utilizar a função _SetOwnerPrvt() ou _SetNamedPrvt() para setar variaveis que serão utilizadas 
+; nessa query.
+; Todas as variáveis do sistema deverão ser passadas entre caracteres '#'. Ex: SD2.D2_EMISSAO BETWEEN '#mv_par01#' AND '#mv_par02#'
+; A Propria rotina já converte o tipo de dado para o adequado. não é necessário que seja feito cast.
+;
+;MATA010()
+;U_PCOMR01()
+
+[PRC]; Executa procedimentos em arquivos .slq salvos na pasta definida em JW_QRYDIR
+; no caso de Storage procedures, deve-se criar apenas a SP no arquivo e ela não deve ter parâmetros
+;proc01.sql ; Nome do arquivo que contem os procedimentos
+;proc02.sql
+;procxx.sql
+
+[QRY]; Query a ser executada.
+SELECT FT_FILIAL		FILIAL,
+	   CONVERT(DATE, FT_ENTRADA, 103)	DT_ENTRADA,
+	   CONVERT(DATE, FT_EMISSAO, 103)	DT_EMISSAO,
+	   FT_NFISCAL		DOC_FISCAL,
+	   FT_SERIE			SERIE_NF,
+	   FT_CLIEFOR		FORNECEDOR,
+	   A2_NOME			NOME_FONECEDOR,
+	   FT_CFOP			CFOP,
+	   FT_VALCONT		VLR_CONTABIL,
+	   FT_ESPECIE		ESPECIE,
+	   FT_CONTA			CONTA_CONTABIL,
+	   FT_PRODUTO		COD_PRODUTO,
+	   B1_DESC			PRODUTO_DESC,
+	   FT_TIPOMOV		TIPO_MOV,
+	   FT_POSIPI		NCM,
+	   FT_BASEPIS		BASE_PIS,
+	   FT_ALIQPIS		ALIQ_PIS,
+	   FT_VALPIS		VLR_PIS,
+	   FT_BASECOF		BASE_COF,
+	   FT_ALIQCOF		ALIQ_COF,
+	   FT_VALCOF		VLR_COF,
+	   FT_CSTPIS		CST_PIS,
+	   FT_CSTCOF		CST_COF,
+	   FT_TES			COD_TES,
+	   F4_TEXTO			TES_DESC
+FROM #RetSqlName('SFT')# F
+JOIN #RetSqlName('SA2')# S ON  FT_CLIEFOR=A2_COD AND FT_LOJA=A2_LOJA 
+		AND S.D_E_L_E_T_=' ' AND F.D_E_L_E_T_=' '
+JOIN #RetSqlName('SB1')# B ON FT_PRODUTO=B1_COD AND B.D_E_L_E_T_=' '
+JOIN #RetSqlName('SF4')# F4 ON FT_TES=F4_CODIGO AND F4.D_E_L_E_T_= ' '
+WHERE FT_EMISSAO BETWEEN '#DToS(mv_par01)#' AND '#DToS(mv_par02)#'	
+AND FT_TIPOMOV='E'
+ORDER BY FT_FILIAL, FT_ENTRADA, FT_EMISSAO, FT_NFISCAL, FT_SERIE		
+
+[POS]; Funções a serem executadas apos a execução da query e criação do array Private aDados. Voce pode manipular o array, apenas tome o cuidade de não criar
+; mais que 2 dimensões para que não haja erro.
+;U_RelBlcP()

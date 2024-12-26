@@ -1,0 +1,206 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "FILEIO.CH"
+
+User Function MBSaveLog(); Return
+
+/*--------------------------------------------------------------------------------,
+ | Principal:   		              MBSaveLog            		                  |
+ | Func:                  	          	            	                          |
+ | Cliente:   V@                                                                  |
+ | Autor:     Miguel Martins Bernardo Junior	            	          	  	  |
+ | Data:      23.01.2023	            	          	            	          |
+ | Desc:                                                                          |
+ '--------------------------------------------------------------------------------|
+ | Obs.:                                                                          |
+ |                                                                                |
+ '--------------------------------------------------------------------------------*/
+	Class MBSaveLog
+
+		DATA nHdl          as numeric
+		DATA cRootLog      as character
+		DATA cDataLog      as character
+		DATA cRotina       as character
+		DATA cCRLF         as character
+		DATA cErro         as character
+		DATA lAddCallStack as logical
+
+		Public Method New() Constructor
+
+		Public Method Create()
+		Public Method Close()
+
+		Public Method GetError()
+
+		Public Method Write( cLog, cEmpLog, cFilLog )
+		Public Method FULLWrite( cRotina, cLog, cEmpLog, cFilLog )
+
+	EndClass
+
+
+/*--------------------------------------------------------------------------------,
+ | Principal:   		              MBSaveLog            		                  |
+ | Func:                  	          	            	                          |
+ | Cliente:   V@                                                                  |
+ | Autor:     Miguel Martins Bernardo Junior	            	          	  	  |
+ | Data:      23.01.2023	            	          	            	          |
+ | Desc:                                                                          |
+ '--------------------------------------------------------------------------------|
+ | Obs.:                                                                          |
+ |                                                                                |
+ '--------------------------------------------------------------------------------*/
+	Method New(cRotina,lAddCallStack,cRootLog) Class MBSaveLog
+		Default cRotina       := FunName() + '_' + cUserName // + '_' + dToS(Date()) + '_' + StrTran(Time(), ':', '-')
+		Default lAddCallStack := .T.
+		Default cRootLog      := GetMV("MV_LOGPATH",, '\LOGS\' )
+
+		::cRootLog	    := cRootLog
+		::cDataLog	    := Dtos(Date())
+		::cRotina	    := cRotina
+		::cCRLF	        := CRLF
+		::cErro	        := ''
+		::lAddCallStack	:= lAddCallStack
+
+	Return( Self )
+
+/*--------------------------------------------------------------------------------,
+ | Principal:   		              MBSaveLog            		                  |
+ | Func:                  	          	            	                          |
+ | Cliente:   V@                                                                  |
+ | Autor:     Miguel Martins Bernardo Junior	            	          	  	  |
+ | Data:      23.01.2023	            	          	            	          |
+ | Desc:                                                                          |
+ '--------------------------------------------------------------------------------|
+ | Obs.:                                                                          |
+ |                                                                                |
+ '--------------------------------------------------------------------------------*/
+Method Create() Class MBSaveLog
+
+	Local lWrite := .F.
+
+	FWMakeDir( ::cRootLog + ::cRotina )
+	If File(::cRootLog + ::cRotina + '\' + ::cDataLog + '.LOG')
+		::nHdl := FOpen(::cRootLog + ::cRotina + '\' + ::cDataLog + '.LOG', FO_READWRITE + FO_SHARED )
+	Else
+		lWrite := .T.
+		::nHdl := FCreate(::cRootLog + ::cRotina + '\' + ::cDataLog + '.LOG')
+		::Close()
+		::nHdl := FOpen(::cRootLog + ::cRotina + '\' + ::cDataLog + '.LOG', FO_READWRITE + FO_SHARED )
+	Endif
+	If ::nHdl >= 0
+		FSeek(::nHdl,0,FS_END)
+	Else
+		::cErro	:= fError()
+	Endif
+
+	If lWrite
+		::Write('---->>>> [GetEnvServer] ' + AllTrim(GetEnvServer()) + ' / ' + '[Porta] ' + cValtoChar( GetPvProfString("TCP", "Port","", GetAdv97() ) ))
+	EndIf
+Return(.T.)
+
+
+/*--------------------------------------------------------------------------------,
+ | Principal:   		              MBSaveLog            		                  |
+ | Func:                  	          	            	                          |
+ | Cliente:   V@                                                                  |
+ | Autor:     Miguel Martins Bernardo Junior	            	          	  	  |
+ | Data:      23.01.2023	            	          	            	          |
+ | Desc:                                                                          |
+ '--------------------------------------------------------------------------------|
+ | Obs.:                                                                          |
+ |                                                                                |
+ '--------------------------------------------------------------------------------*/
+Method Close() Class MBSaveLog
+	If ::nHdl >= 0
+		FClose(::nHdl)
+	Endif
+Return()
+
+
+/*--------------------------------------------------------------------------------,
+ | Principal:   		              MBSaveLog            		                  |
+ | Func:                  	          	            	                          |
+ | Cliente:   V@                                                                  |
+ | Autor:     Miguel Martins Bernardo Junior	            	          	  	  |
+ | Data:      23.01.2023	            	          	            	          |
+ | Desc:                                                                          |
+ '--------------------------------------------------------------------------------|
+ | Obs.:                                                                          |
+ |                                                                                |
+ '--------------------------------------------------------------------------------*/
+Method GetError() Class MBSaveLog
+Return( ::cErro )
+
+
+/*--------------------------------------------------------------------------------,
+ | Principal:   		              MBSaveLog            		                  |
+ | Func:                  	          	            	                          |
+ | Cliente:   V@                                                                  |
+ | Autor:     Miguel Martins Bernardo Junior	            	          	  	  |
+ | Data:      23.01.2023	            	          	            	          |
+ | Desc:                                                                          |
+ '--------------------------------------------------------------------------------|
+ | Obs.:                                                                          |
+ |                                                                                |
+ '--------------------------------------------------------------------------------*/
+Method Write( cLog, cEmpLog, cFilLog, lDetalhes ) Class MBSaveLog
+	Local cTexto    := '' as character
+	Local nI 		:= 00 as numeric
+
+	Default cLog	:= ''
+	Default cEmpLog	:= 'EMP-JOB'
+	Default cFilLog	:= 'FIL-JOB'
+	Default lDetalhes	:= .T.
+
+	If ::nHdl >= 0
+
+		If Type('cEmpAnt') <> 'U' .AND. cEmpLog == 'EMP-JOB'
+			cEmpLog := cEmpAnt
+		Endif
+		If Type('cFilAnt') <> 'U' .AND. cFilLog == 'FIL-JOB'
+			cFilLog := cFilAnt
+		Endif
+		If Type('cUserName') == 'U'
+			cUserName := 'USR-JOB'
+		Endif
+
+		cTexto	:= 'Empresa: ' + cValtoChar(cEmpLog) + cValtoChar(cFilLog) + ' - '
+		cTexto	+= 'Hora: ' + Time() + iIf(lDetalhes, ' - ', ' | ')
+		If lDetalhes
+			cTexto	+= cUserName + ' - '
+			cTexto	+= 'Linha: ' + cValtoChar(ProcLine(1)) + ' - '
+		EndIf
+		cTexto	+= AllTrim( cLog )
+
+		If ::lAddCallStack
+			cTexto  += ::cCRLF
+			For nI := 1 to 8
+				cTexto += '['+cValtoChar(ProcLine(nI))+']'+Upper(AllTrim(ProcName(nI))) + ' / '
+			Next nI
+		Endif
+		cTexto  += ::cCRLF
+
+		FWrite(::nHdl, cTexto, Len(cTexto))
+
+	Endif
+
+Return( .T. )
+
+/*--------------------------------------------------------------------------------,
+ | Principal:   		              MBSaveLog            		                  |
+ | Func:                  	          	            	                          |
+ | Cliente:   V@                                                                  |
+ | Autor:     Miguel Martins Bernardo Junior	            	          	  	  |
+ | Data:      23.01.2023	            	          	            	          |
+ | Desc:                                                                          |
+ '--------------------------------------------------------------------------------|
+ | Obs.:                                                                          |
+ |                                                                                |
+ '--------------------------------------------------------------------------------*/
+Method FULLWrite( cRotina, lDetalhes, cLog, cEmpLog, cFilLog, cRootLog ) Class MBSaveLog
+
+	::New( cRotina, .F., cRootLog )
+	::Create()
+	::Write( cLog, cEmpLog, cFilLog, lDetalhes )
+	::Close()
+
+Return( .T. )
