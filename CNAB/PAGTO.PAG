@@ -1,0 +1,250 @@
+AArq. Header    0010030"341"                                                       
+ALote de Servico0040070FA240LOTE()                                                 
+ATipo Registro  0080080"0"                                                         
+ABrancos        0090140Space( 06 )                                                 
+ALayout         0150170"080"                                                       
+ATipo Inscricao 0180180"2"                                                         
+ACNPJ           0190320"09358882000136"                                            
+ABrancos        0330520Space( 20 )                                                 
+AAgencia Debitar0530570STRZERO(VAL(SUBS(SA6->A6_AGENCIA,1,5)),5,0)                 
+AFiller         0580580SPACE(1)                                                    
+AC/C Debitar    0590700STRZERO(VAL(SUBS(SA6->A6_NUMCON,1,5)),12,0)                 
+AFiller         0710710SPACE(1)                                                    
+ADAC Ag C/C Deb 0720720STRZERO(VAL(SUBS(SA6->A6_NUMCON,6,1)),1,0)                  
+ANome Empresa   0731020SUBS( SM0->M0_NOME,1,30 )                                   
+ANome Banco     1031320SUBS( SA6->A6_NOME,1,30 )                                   
+AFiller         1331420SPACE(10)                                                   
+ACodigo Remessa 1431430"1"                                                         
+AData Geracao   1441510GravaData(dDataBase,.F.,5)                                  
+AHora Geracao   1521570SubStr(Time(),1,2)+SubStr(Time(),4,2)+SubStr(Time(),7,2)    
+ANo Sequencial  1581630"000000"                                                    
+AFiller         1641660"000"                                                       
+ADens. Gravacao 1671710"00000"                                                     
+ABrancos        1722400Space( 69 )                                                 
+FArq. Trailler  0010030"341"                                                       
+FLote de Servico0040070"9999"                                                      
+FReg. Trailer   0080080"9"                                                         
+FCompl. Registro0090170SPACE(9)                                                    
+FQtde.Lotes arq.0180230"000001"                                                    
+FQtde.Reg.do arq0240290M->NSEQ*(IIF(SEA->EA_MODELO$"30|31",2,1))+4                 
+FCompl. Registro0302400SPACE(211)                                                  
+BSeqA Header    0010030"341"                                                       
+BLote de Servico0040070"0001"                                                      
+BReg. Header    0080080"1"                                                         
+BTipo Operacao  0090090"C"                                                         
+BTipo de Pgto   0100110SUBS(SEA->EA_TIPOPAG,1,2)                                   
+BForma Pgto     0120130SUBS(SEA->EA_MODELO,1,2)                                    
+BLayout do Lote 0140160"040"                                                       
+BCompl. Registro0170170SPACE(1)                                                    
+BTipo Inscricao 0180180"2"                                                         
+BCGC/CPF Debitar0190320"09358882000136"                                            
+BIdent Lancto   0330360Space( 04 )                                                 
+BBrancos        0370520Space( 16 )                                                 
+BNo Agenc Debit 0530570STRZERO(VAL(SUBS(SA6->A6_AGENCIA,1,5)),5,0)                 
+BFiller         0580580SPACE(1)                                                    
+BC/C Debitar    0590700STRZERO(VAL(SUBS(SA6->A6_NUMCON,1,5)),12,0)                 
+BFiller         0710710SPACE(1)                                                    
+BDAC            0720720STRZERO(VAL(SUBS(SA6->A6_NUMCON,6,1)),1,0)                  
+BNome Empresa   0731020SUBSTR(SM0->M0_NOME,1,30)                                   
+BFinalidade Pgto1031320SPACE(30)                                                   
+BHist C/C       1331420SPACE(10)                                                   
+BLogradouro     1431720SUBSTR(SM0->M0_ENDCOB,1,30)                                 
+BNumero         1731770"00000"                                                     
+BComplemento    1781920SPACE(15)                                                   
+BCidade         1932120SUBS(SM0->M0_CIDCOB,1,20)                                   
+BCEP            2132200SUBS(SM0->M0_CEPCOB,1,8 )                                   
+BEstado         2212220SUBS(SM0->M0_ESTCOB,1,2)                                    
+BFiller         2232300SPACE(8)                                                    
+BOcorrencias    2312400Space( 10 )                                                 
+GSeqA Detail    0010030"341"                                                       
+GLote de Servico0040070"0001"                                                      
+GReg. Detalhe   0080080"3"                                                         
+GN. Sequencial  0090130M->NSEQ                                                     
+GCod. Segmento  0140140"A"                                                         
+GTipo Movimento 0150170"000"                                                       
+GFiller         0180200"000"                                                       
+GBcoAgCtaNome   0210730U_fCtaFavor()                                               
+GSeu Numero     0740930NUMTITULO()                                                 
+GData Pgto      0941010STRTRAN(STRTRAN(DTOC(SE2->E2_VENCREA),"/","",1,1),"/","20") 
+GTipo Moeda     1021040"REA"                                                       
+GCompl. Registro1051190REPL("0",15)                                                
+GValor Pgto     1201342STRZERO(SE2->E2_SALDO*100,15)                               
+GNosso Numero   1351490SPACE(15)                                                   
+GCompl. Registro1501540SPACE(5)                                                    
+GData Efet Pgto 1551620REPL("0",8)                                                 
+GValor Efetivo  1631772REPL("0",15)                                                
+GFinalid Detalhe1781950SPACE(18)                                                   
+GCompl. Registro1961970SPACE(2)                                                    
+GN.DOC/TED/OP/Ch1982030REPL("0",6)                                                 
+GCGC/CPF Favorec2042170SUBS(SA2->A2_CGC,1,14)                                      
+GCompl. Registro2182290SPACE(12)                                                   
+GAviso Favorecid2302300"0"                                                         
+GOcorrencias    2312400SPACE(10)                                                   
+DSeqA Trailler  0010030"341"                                                       
+DLote de Servico0040070"0001"                                                      
+DReg. Trailer   0080080"5"                                                         
+DCompl. Registro0090170SPACE(9)                                                    
+DQtde Reg.Lote  0180230M->NSEQ+2                                                   
+DSomatoria Valor0240412STRZERO(SOMAVALOR(),18)                                     
+DCompl. Registro0420590REPL("0",18)                                                
+DCompl. Registro0602300SPACE(171)                                                  
+DOcorrencias    2312400SPACE(10)                                                   
+HSeqB Detail    0010030"341"                                                       
+HLote Servico   0040070"0001"                                                      
+HReg. Detalhe   0080080"3"                                                         
+HN. Sequencial  0090130M->NSEQ                                                     
+HCod. Segmento  0140140"B"                                                         
+HCompl. Registro0150170SPACE(3)                                                    
+HTipo Inscricao 0180180IIF(SA2->A2_TIPO="J","2","1")                               
+HN. Inscricao   0190320SUBS(SA2->A2_CGC,1,14)                                      
+HEnder. Forneced0330620SUBS(SA2->A2_END,1,30)                                      
+HNumero         0630670"00000"                                                     
+HComplemento    0680820SPACE(15)                                                   
+HBairro         0830970SUBS(SA2->A2_BAIRRO,1,15)                                   
+HCidade         0981170SUBS(SA2->A2_MUN,1,20)                                      
+HCep            1181250SUBS(SA2->A2_CEP,1,8)                                       
+HSigla do Estado1261270SUBS(SA2->A2_EST,1,2)                                       
+HCompl. Registro1282400SPACE(113)                                                  
+CSeqJ Header    0010030"341"                                                       
+CLote de Servico0040070"0001"                                                      
+CReg. Header    0080080"1"                                                         
+CTipo Operacao  0090090"C"                                                         
+CTipo de Pgto   0100110SUBS(SEA->EA_TIPOPAG,1,2)                                   
+CForma Pgto     0120130SUBS(SEA->EA_MODELO,1,2)                                    
+CLayout do Lote 0140160"030"                                                       
+CCompl. Registro0170170SPACE(1)                                                    
+CTipo Inscricao 0180180"2"                                                         
+CN. Inscricao   0190320"09358882000136"                                            
+CCompl. Registro0330520SPACE(20)                                                   
+CAgencia Debitar0530570STRZERO(VAL(SUBS(SA6->A6_AGENCIA,1,5)),5,0)                 
+CFiller         0580580SPACE(1)                                                    
+CC/C Debitada   0590700STRZERO(VAL(SUBS(SA6->A6_NUMCON,1,5)),12,0)                 
+CFiller         0710710SPACE(1)                                                    
+CDAC            0720720STRZERO(VAL(SUBS(SA6->A6_NUMCON,6,1)),1,0)                  
+CNome Empresa   0731020SUBSTR(SM0->M0_NOME,1,30)                                   
+CFinalidade Pgto1031320SPACE(30)                                                   
+CHist C/C       1331420"LOTE"                                                      
+CLogradouro     1431720SUBSTR(SM0->M0_ENDCOB,1,30)                                 
+CNumero         1731770"310"                                                       
+CComplemento    1781920SUBSTR(SM0->M0_BAIRCOB,1,20)                                
+CCidade         1932120SUBS(SM0->M0_CIDCOB,1,20)                                   
+CCEP            2132200SUBS(SM0->M0_CEPCOB,1,8 )                                   
+CEstado         2212220SUBS(SM0->M0_ESTCOB,1,2)                                    
+CFiller         2232300SPACE(8)                                                    
+COcorrencias    2312400SPACE(10)                                                   
+JSeqJ Detail    0010030"341"                                                       
+JLote de Servico0040070"0001"                                                      
+JReg. Detalhe   0080080"3"                                                         
+JN. Sequencial  0090130U_NroJ52()                                                  
+JCod. Segmento  0140140"J"                                                         
+JTipo Movimento 0150170"000"                                                       
+JBanco Favorecid0180200SUBS(SE2->E2_CODBAR,1,3)                                    
+JMoeda C.B.     0210210SUBS(SE2->E2_CODBAR,4,1)                                    
+JDig.Verif.C.B. 0220220SUBS(SE2->E2_CODBAR,5,1)                                    
+JFat.Venc.C.B.  0230260SUBS(SE2->E2_CODBAR,6,4)                                    
+JValor C.B.     0270360SUBS(SE2->E2_CODBAR,10,10)                                  
+JCpo.Livre C.B. 0370610SUBS(SE2->E2_CODBAR,20,25)                                  
+JNome Favorecido0620910SUBS(SA2->A2_NOME,1,30)                                     
+JData Vencto    0920990STRTRAN(STRTRAN(DTOC(SE2->E2_VENCREA),"/","",1,1),"/","20") 
+JValor Titulo   1001142STRZERO(SE2->E2_VALOR*100,15)                               
+JDesc./Acresc.  1151442REPL("0",30)                                                
+JData Pagamento 1451520STRTRAN(STRTRAN(DTOC(SE2->E2_VENCREA),"/","",1,1),"/","20") 
+JValor Pagamento1531672STRZERO(SE2->E2_SALDO*100,15)                               
+JCompl. Registro1681820REPL("0",15)                                                
+JSeu Numero     1832020NUMTITULO()                                                 
+JCompl. Registro2032150SPACE(13)                                                   
+JNosso Numero   2162300SPACE(15)                                                   
+JOcorrencias    2312400SPACE(10)                                                   
+5Cod. SeqJ j52  0010030"341"                                                       
+5Cod.Lote       0040070"0001"                                                      
+5Tipo Registro  0080080"3"                                                         
+5Numero Registro0090130U_NroJ52()                                                  
+5Segmento       0140140"J"                                                         
+5Tipo Movimento 0150170"000"                                                       
+5Iden. Registro 0180190"52"                                                        
+5Inscr Sacado   0200200IIF(SA2->A2_TIPO="J","2","1")                               
+5Inscr Sac      0210350"0"+SUBS(SA2->A2_CGC,1,14)                                  
+5NOME SACADO    0360750SUBSTR(SA2->A2_NOME,1,40)                                   
+5TP INSCR CEDENT0760760"2"                                                         
+5NRO INSCR CEDEN0770910"0"+"09358882000136"                                        
+5NOME CEDENTE   0921310SUBSTR(SM0->M0_NOMECOM,1,40)                                
+5TIPO INSCR SAC 1321320"2"                                                         
+5NRO SAC AVAL   1331470STRZERO(15)                                                 
+5NOME SACADOR   1481870SPACE(40)                                                   
+5BRANCOS        1882400SPACE(53)                                                   
+ESeqJ Trailler  0010030"341"                                                       
+ELote de Servico0040070"0001"                                                      
+EReg. Trailer   0080080"5"                                                         
+ECompl. Registro0090170SPACE(9)                                                    
+EQtde.Reg.Lote  0180230M->NSEQ+2                                                   
+ETOTAL VL PAGTOS0240410STRZERO(SOMAVALOR(),18)                                     
+ECompl. Registro0420590REPL("0",18)                                                
+ECompl. Registro0602300SPACE(171)                                                  
+EOcorrencias    2312400SPACE(10)                                                   
+NSeqN Detail    0010030"341"                                                       
+NLote Servico   0040070"0001"                                                      
+NReg. Detalhe   0080080"3"                                                         
+NN. Sequencial  0090130M->NSEQ                                                     
+NCod. Segmento  0140140"N"                                                         
+NTipo Movimento 0150170"000"                                                       
+NIdent. Tributo 0180190"04"                                                        
+NCodigo Receita 0200230SUBS(SE2->E2_HIST,1,4)                                      
+NTipo Inscricao 0240240"2"                                                         
+NN. Inscricao   0250380"09358882000136"                                            
+NInscr. Estadual0390460SUBS(SM0->M0_INSC,1,8)                                      
+NOrigem         0470620SUBS(SE2->E2_BENEFIC,1,16)                                  
+NCompl. Registro0630630SPACE(1)                                                    
+NValor Principal0640772STRZERO(SE2->E2_SALDO*100,14)                               
+NValor Atual.Mon0780912STRZERO(SE2->E2_ACRESC*100,14)                              
+NValor Mora     0921052REPL("0",14)                                                
+NValor Multa    1061192REPL("0",14)                                                
+NValor Total    1201332STRZERO((SE2->E2_SALDO+SE2->E2_ACRESC)*100,1                
+NVencimento     1341410GRAVADATA(SE2->E2_VENCREA,.F.)                              
+NData Pagamento 1421490GRAVADATA(SE2->E2_VENCREA,.F.)                              
+NPeriodo/Parcela1501550STR(MONT(SE2->E2_EMISSAO),2)+STR(YEAR(SE2->EMISSAO),4)      
+NCompl. Registro1561650SPACE(30)                                                   
+NContribuinte   1661950SUBS(SM0->M0_NOME,1,30)                                     
+NSeu Numero     1962150NUMTITULO()                                                 
+NNosso Numero   2162300SPACE(15)                                                   
+NOcorrencias    2312400SPACE(10)                                                   
+ISeqN Trailler  0010030"341"                                                       
+ILote de servico0040070"0001"                                                      
+IReg. Trailer   0080080"5"                                                         
+ICompl. Registro0090170SPACE(9)                                                    
+IQtde.Reg.Lote  0180230M->NSEQ+2                                                   
+ISomatoria Valor0240372STRZERO(SOMAVALOR(),14)                                     
+ISoma Out.Entida0380512REPL("0",14)                                                
+ITOTAL ACRESCIM 0520652ExecBlock("SOMAJM",.F.,.F.)                                 
+ITOTAL VALOR ARR0660792ExecBlock("SOMATOTAL",.F.,.F.)                              
+ICompl. Registro0802300SPACE(151)                                                  
+IOcorrencias    2312400SPACE(10)                                                   
+OSeqO Detail    0010030"341"                                                       
+OLote de Servico0040070"0001"                                                      
+OReg. Detalhe   0080080"3"                                                         
+ON. Sequencial  0090130M->NSEQ                                                     
+OCod. Segmento  0140140"O"                                                         
+OTipo Movimento 0150170"000"                                                       
+OCodigo Barras  0180650SUBS(SE2->E2_CODBAR,1,48)                                   
+ONome Concession0660950SUBS(SA2->A2_NOME,1,30)                                     
+OData Vencto    0961030STRTRAN(STRTRAN(DTOC(SE2->E2_VENCREA),"/","",1),"/","20")   
+OMoeda          1041060"REA"                                                       
+OQtde. Moeda    1071218REPL("0",15)                                                
+OValor          1221362STRZERO(SE2->E2_SALDO*100,15)                               
+OData Pagamento 1371440STRTRAN(STRTRAN(DTOC(SE2->E2_VENCREA),"/","",1),"/","20")   
+OValor Pago     1451592REPL("0",15)                                                
+OBRANCOS        1601620SPACE(3)                                                    
+ONOTA FISCAL    1631710SPACE(9)                                                    
+OBRANCOS        1721740SPACE(3)                                                    
+ONro Titulo     1751940PadR(SE2->E2_IDCNAB,20,"")                                  
+OCompl. Registro1952150SPACE(21)                                                   
+ONosso Numero   2162300SPACE(15)                                                   
+OOcorrencias    2312400SPACE(10)                                                   
+KSeqO Trailler  0010030"341"                                                       
+KLote de Servico0040070"0001"                                                      
+KReg. Trailer   0080080"5"                                                         
+KCompl. Registro0090170SPACE(9)                                                    
+KQtde.Reg.Lote  0180230M->NSEQ+2                                                   
+KSomatoria Valor0240412STRZERO(SOMAVALOR(),18)                                     
+KSoma Qtde.Moeda0420560STRZERO(SOMAVALOR(),9)+"000000"                             
+KCompl. Registro0572300SPACE(174)                                                  
+KOcorrencias    2312400SPACE(10)                                                   
