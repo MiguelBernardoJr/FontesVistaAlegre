@@ -5,14 +5,20 @@
 			"type": "totvs_language_debug",
 			"request": "launch",
 			"name": "TOTVS Language Debug",
-			"program": "${command:AskForProgramName}",
+			"program": "SIGAMDI",
 			"cwb": "${workspaceFolder}",
-			"smartclientBin": "../totvs/bin/smartclient/smartclient.exe",
+			"smartclientBin": "C:\\Totvs\\SMARTCLIENT\\smartclient.exe",
 			"isMultiSession": true,
 			"enableTableSync": true,
 			"extendFeatures": {
 				"charDetails": false
 			}
 		}
-	]
+	],
+	"lastPrograms": [
+		{
+			"label": "sigamdi"
+		}
+	],
+	"lastProgramExecuted": "sigamdi"
 }
