@@ -4,21 +4,28 @@
 		{
 			"type": "totvs_language_debug",
 			"request": "launch",
-			"name": "TOTVS Language Debug",
-			"program": "SIGAMDI",
+			"name": "Depuração do idioma TOTVS",
+			"program": "${command:AskForProgramName}",
 			"cwb": "${workspaceFolder}",
-			"smartclientBin": "C:\\Totvs\\SMARTCLIENT\\smartclient.exe",
+			"smartclientBin": "C:\\Totvs\\smartclient_teste_livio\\smartclient_teste\\smartclient.exe",
 			"isMultiSession": true,
-			"enableTableSync": true,
-			"extendFeatures": {
-				"charDetails": false
-			}
+			"enableTableSync": true
 		}
 	],
 	"lastPrograms": [
 		{
-			"label": "sigamdi"
+			"label": "SIGAMDI"
+		},
+		{
+			"label": "MPSDU"
+		},
+		{
+			"label": "U_CXNFACI"
+		},
+		{
+			"label": "UPDBATCH"
 		}
 	],
-	"lastProgramExecuted": "sigamdi"
+	"lastProgramExecuted": "SIGAMDI",
+	"lastProgramArguments": []
 }
