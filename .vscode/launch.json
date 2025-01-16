@@ -4,6 +4,7 @@
 		{
 			"type": "totvs_language_debug",
 			"request": "launch",
+<<<<<<< Updated upstream
 			"name": "Depuração do idioma TOTVS",
 			"program": "${command:AskForProgramName}",
 			"cwb": "${workspaceFolder}",
@@ -28,4 +29,17 @@
 	],
 	"lastProgramExecuted": "SIGAMDI",
 	"lastProgramArguments": []
+=======
+			"name": "TOTVS Language Debug",
+			"program": "${command:AskForProgramName}",
+			"cwb": "${workspaceFolder}",
+			"smartclientBin": "../totvs/bin/smartclient/smartclient.exe",
+			"isMultiSession": true,
+			"enableTableSync": true,
+			"extendFeatures": {
+				"charDetails": false
+			}
+		}
+	]
+>>>>>>> Stashed changes
 }
