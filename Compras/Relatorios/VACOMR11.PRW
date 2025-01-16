@@ -341,7 +341,7 @@ Static Function aColsGrid()
             oPrinter:SayAlign ( nRow            , nPosUnd, aDados[nI][23]                                       , oFGrid,  (nPosCod - nPosUnd),    10, , PAD_LEFT,  )   // Codigo Interno
             oPrinter:SayAlign ( nRow            , nPosCod, AllTrim(aDados[nI][24])                              , oFGrid,  (nPosProd - nPosCod),    10, , PAD_LEFT ,  )  // Marca
 
-            QuebraTexto(AllTrim(aDados[nI][25]),nPosProd,nPosUnit,nPosProd,oFGrid,45) // NOME DO PRODUTO
+            QuebraTexto(AllTrim(aDados[nI][25]),nPosProd,nPosUnit,nPosProd,oFGrid,40) // NOME DO PRODUTO
 
             //oPrinter:SayAlign ( nRow, nPosProd , aDados[nI][23], oFGrid,  (nPosCod - nPosUnd),    10, , PAD_LEFT ,  )  
             oPrinter:SayAlign ( nRow, nPosUnit, AllTrim(Transform(aDados[nI][8] , "@r 999,999,999.99")), oFGrid,  (nPosICMS - nPosUnit),    10, , PAD_LEFT ,  )  // ICMS
@@ -353,7 +353,7 @@ Static Function aColsGrid()
 
             oPrinter:FillRect({nRow+nTamLin-8, nBoxCol+1, nRow + (nTamLin * 2) - 10, nBoxRight-1}, oBrushCinza)
             
-            cTxtAux := "Solicitação:" + AllTrim(Str(Year(dDataBase)) + ' / ' + aDados[1][28] )
+            cTxtAux := "Solicitação: " +  aDados[1][28] 
             oPrinter:SayAlign ( nRow+=nTamLin-10, nPosSeq , cTxtAux , oFGridInfo, (nPosProd  - nPosSeq), 10,, PAD_LEFT ,)
             
             cTxtAux := "Obj. Custo:" + AllTrim(aDados[nI][17])  +" "+ AllTrim(Posicione("CTT",1,FWxFilial("CTT")+aDados[nI][17],"CTT_DESC01"))
