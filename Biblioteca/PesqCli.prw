@@ -51,7 +51,7 @@ User Function PesqCli()
 	AADD(aFields, {"CNPJ" 		, "_QRY1->A1_CGC"	})	
 	AADD(aFields, {"Telefone"	, "_QRY1->A1_TEL"	})	
 	AADD(aFields, {"UF"   		, "_QRY1->A1_EST"	})	
-	AADD(aFields, {"Municipio"  , "_QRY1->A1_MUN"	}) 
+	AADD(aFields, {"Municipio"  , "_QRY1->A1_MUN"	})
 
 		
 	DEFINE MSDIALOG oDlg TITLE "Pesquisa - Clientes" FROM 000, 000  TO 445, 950 COLORS 0, 16777215 PIXEL

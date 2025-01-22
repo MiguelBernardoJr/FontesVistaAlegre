@@ -36,9 +36,9 @@ Private __dDtPergunte := StoD("")
 //AAdd(aParBox,{1,"Data      ", dDataBase, "", "", ""   , "", 50, .F.}) // aParRet[1]
 
 //If (Len(aDadSel) == 0)
-//If (ParamBox(aParBox, "Data da Roteirizacao", @aParRet))
+//	If (ParamBox(aParBox, "Data da Roteirizacao", @aParRet))
 aDadSel := {"ROTA01", dDataBase, "0001", "03"}
-//EndIf
+//	EndIf
 //EndIf
 
 U_PosSX1({{cPrgRot, "01", DTOS(dDataBase)}})
@@ -102,7 +102,7 @@ Local cChvCnf, cChvLin
 //Local cSktBox, cSktCur
 Local cShwZer              := ""
 //Local cShwVis := ""
-Local aSize                := {}, aObjects := {}, aInfo := {}, aPObjs := {}
+Local aSize                :={}, aObjects := {}, aInfo := {}, aPObjs := {}
 Local aTFldr               := {}
 Local oTFldr
 Local oTFntGr              := TFont():New('Courier new', , 16, .T., .T.)
@@ -573,7 +573,7 @@ if Select("QRYDIE") > 0
 	QRYDIE->( dbCloseArea() )
 endif
 
-dbUseArea(.T.,'TOPCONN',TCGENQRY(,, cQryDie ),"QRYDIE",.F.,.F.)
+	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, cQryDie ),"QRYDIE",.F.,.F.)
 
 //TCQUERY cQryDie NEW ALIAS "QRYDIE"
 
@@ -592,10 +592,10 @@ If (!(Z0S->(DBSeek(xFilial("Z0S") + DTOS(aDadSel[2]) + aDadSel[3])))) //+aDadSel
 		While (Z0S->Z0S_DATA == dDtRD1 .AND. Z0S->Z0S_VERSAO == aDadSel[3])
 
 			While (!QRYDIE->(EOF())) // ADICIOANR REGISTROS 
-				/*
-					27/05/2020 - Arthur Toshio
-					Alteração Para verificar se no dia anterior o trato = 0 durante a geração da Z0S
-				*/
+		/*
+			27/05/2020 - Arthur Toshio
+			Alteração Para verificar se no dia anterior o trato = 0 durante a geração da Z0S
+		*/
 				AAdd(aRotD1, {QRYDIE->ROTA, QRYDIE->EQUIP, 0, QRYDIE->DIETA, QRYDIE->OPERAD})
 				QRYDIE->(DBSkip())
 			EndDo	
@@ -778,7 +778,7 @@ cOper1 := AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[1],"Z0U_NOME"))
 cOper2 := AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[2],"Z0U_NOME"))
 
 DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], aPObjs[1][2] To aPObjs[1][3], aPObjs[1][4] of oDlgRotas PIXEL 
-
+ 
 /*Toshio - 20220921
 Operador
 */ 

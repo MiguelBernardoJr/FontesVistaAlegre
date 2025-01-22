@@ -11,7 +11,7 @@ Rotina responsável por listar o saldo diario de cada era.
 @since 17/05/2018
 @version 1.0
 @return ${nil}, ${Sem retorno}
-
+d
 @type function
 /*/
 user function VAESTR17()
@@ -30,7 +30,7 @@ Local nX      := 0
 
 	if (len(aParams) > 0)
 		aFiliais := GetListFiliais(aParams[1], aParams[2])
-		aDias := GetDiasFromPeriodo(aParams[3], aParams[4])
+		aDias:= GetDiasFromPeriodo(aParams[3], aParams[4])
 		
 		dbSelectArea("SM0")
 		_aAreaSM0 := SM0->(GetArea())

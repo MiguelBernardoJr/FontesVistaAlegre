@@ -11,8 +11,8 @@
 /*
 #IFNDEF _ENTER_
 	#DEFINE _ENTER_ (Chr(13)+Chr(10))
-	//Alert("miguel")
-#ENDIF
+	// Alert("miguel")
+#ENDIF 
 */
 
 /*--------------------------------------------------------------------------------,

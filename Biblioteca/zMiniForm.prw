@@ -27,7 +27,6 @@ User Function zMiniForm()
 
     // cGetForm := 'U_WSEnviaPlaca( "AAA"+"-"+StrTran(SubS(Time(),1,5),":",""), "MILHO VERDE", "Miguel " + DtoS(dDataBase) + " " + StrTran(SubS(Time(),1,5),":",""))'
     // cGetForm := 'U_SocketSiemens()'
-    //cGetForm := 'U_TImpCSV()'
     
     //Criando a janela
     DEFINE MSDIALOG oDlgForm TITLE "zMiniForm - Execução de Fórmulas" FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
@@ -63,7 +62,7 @@ Static Function fExecuta()
         Begin Sequence
             &(cFormula)
         End Sequence
-        
+         
         //Restaurando bloco de erro do sistema
         ErrorBlock(bError)
          

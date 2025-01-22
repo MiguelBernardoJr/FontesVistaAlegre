@@ -8,7 +8,9 @@
 /* 
 	MJ : 24.08.2017
 	1- Este PE estava implementado no arquivo VACOMLIB; 
-		1.1 - Trouxe ele para um FONTE exclusivo (MT100TOK), para melhor entendimento
+		1.1 - Trouxe ele para um FONTE exclusivo (
+			
+		), para melhor entendimento
 			do processo, apos inclusao de encerrametno de transacao;
 	2- Foi incluido neste PE bloco para encerrar transacao. Sug. do Andre, a fim de
 			conseguir finalizar um documento de entrada, que estava impedindo continuidade

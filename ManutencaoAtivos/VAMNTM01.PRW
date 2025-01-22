@@ -40,66 +40,35 @@ Return
 	@since 28/02/2022
 /*/
 Static Function FS_Fechamento()
-	Local aArea 	:= FwGetArea()
-	Local aParamBox  := {}
-	Local aRet       := {}
-	Local aOpc      := {("Prest.Serviço"),("Transportador"),("Prest Serv.(Preço V@)")}
-	Local cAlias	:= GetNextAlias()
-	Local cQry 		:= ""
+Local aParamBox  := {}
+Local aRet       := {}
+Local aOpc      := {("Prest.Serviço"),("Transportador"),("Prest Serv.(Preço V@)")}
+Private cCodfor   := ""
+Private dDatFec  := Ctod("")
+Private dDatFeAt  := Ctod("")
+Private nTipFec  := "Prest.Serviço"
 
-	Private cCodfor   	:= ""
-	Private dDatFec  	:= Ctod("")
-	Private dDatFeAt  	:= Ctod("")
-	Private nTipFec  	:= "Prest.Serviço"
-	Private cFilde  	:= ""
-	Private cFilAte 	:= ""
-	Private cFilBak 	:= cFilant
 
-	aAdd(aParamBox,{1,"Data Fechamento",Ctod(""),"@D","","","",50,.f.})
-	aAdd(aParamBox,{1,"Data Até",Ctod(""),"@D","","","",50,.f.})
-	AADD(aParamBox,{2,"Tipo de Fechamento",nTipFec,aOpc,90,"",.t.}) 
-	AADD(aParamBox,{1,"Fornecedor",Space(TamSX3("A2_COD")[1]), "","","SA2_X","",0,.T.})
-	//aAdd(aParamBox,{1 , "Pedido de Compra", Space(TamSX3("C7_NUM")[1]), "","","SC7","",0,.T.}) // Tipo caractere
-	aAdd(aParamBox,{1,"Filial De"	,"'0101001'","","","","",50,.f.})
-	aAdd(aParamBox,{1,"Filial Ate"  ,"'ZZZZZZZ'","","","","",50,.f.})
+aAdd(aParamBox,{1,"Data Fechamento",Ctod(""),"@D","","","",50,.f.})
+aAdd(aParamBox,{1,"Data Até",Ctod(""),"@D","","","",50,.f.})
+AADD(aParamBox,{2,"Tipo de Fechamento",nTipFec,aOpc,90,"",.t.}) 
+AADD(aParamBox,{1,"Fornecedor",Space(TamSX3("A2_COD")[1]), "","","SA2_X","",0,.T.})
+//aAdd(aParamBox,{1 , "Pedido de Compra", Space(TamSX3("C7_NUM")[1]), "","","SC7","",0,.T.}) // Tipo caractere
 
-	While .t.
-		If ParamBox(aParamBox,"",@aRet,,,,,,,,.F.)
-			dDatFec   := aRet[1]
-			dDatFeAt  := aRet[2]
-			nTipFec   := aRet[3]
-			cCodFor   := aRet[4]
-			cFilde    := aRet[5]
-			cFilAte   := aRet[6]
-		Else
-			Return .f.
-		EndIf
-		Exit
-	Enddo
+While .t.
+	If ParamBox(aParamBox,"",@aRet,,,,,,,,.F.)
+		dDatFec   := aRet[1]
+		dDatFeAt  := aRet[2]
+		nTipFec   := aRet[3]
+		cCodFor   := aRet[4]
+	Else
+		Return .f.
+	EndIf
+	Exit
+Enddo
 
-	cQry := "select TQN_FILIAL " + CRLF
-	cQry += " from "+RetSqlName("TQN")+" TQN " + CRLF
-	cQry += " WHERE TQN.D_E_L_E_T_ =''  " + CRLF
-	cQry += " AND TQN_FILIAL BETWEEN '"+aRet[5]+"' AND '"+aRet[6]+"'  " + CRLF
-	cQry += " GROUP BY TQN_FILIAL " + CRLF
-
-	MpSysOpenQuery(cQry, cAlias)
-
-	While !(cAlias)->(EOF())
-
-		cFilant := (cAlias)->TQN_FILIAL
-		
-		oProcTTP := MsNewProcess():New({ |lEnd| FS_ProcFech() }," ","",.f.)
-		oProcTTP:Activate()
-
-		(cAlias)->(DbSkip())
-	Enddo
-
-	(cAlias)->(dbCloseArea())
-
-	cFilant := cFilBak
-
-	FwRestArea(aArea)
+oProcTTP := MsNewProcess():New({ |lEnd| FS_ProcFech() }," ","",.f.)
+oProcTTP:Activate()
 
 Return
 
@@ -192,7 +161,8 @@ While !TMPTQN->(Eof())
 					nFValAbast, ; 
 					1,;
 					{0},;
-					"TQN"})   
+					"TQN",;
+					""})   
 			endif
 
 		Endif
@@ -255,7 +225,7 @@ If Select("TMPSTL") > 0
 	TMPSTL->(dbCloseArea())
 EndIf
 	
-cQuery := "SELECT STL.TL_FILIAL, STL.TL_FORST9, STL.TL_LOJST9, SA2.A2_NOME, STL.TL_QUANTID, STL.TL_NRABAS, STL.TL_VUNABA, STL.TL_VTTABA, STJ.TJ_CCUSTO, STL.R_E_C_N_O_ AS RECSTL "
+cQuery := "SELECT STL.TL_FILIAL, STL.TL_FORST9, STL.TL_LOJST9, SA2.A2_NOME, STL.TL_CODIGO, SB1.B1_DESC, STL.TL_QUANTID, STL.TL_NRABAS, STL.TL_VUNABA, STL.TL_VTTABA, STJ.TJ_CCUSTO, STL.R_E_C_N_O_ AS RECSTL "
 cQuery += "  FROM "+RetSqlName("STL")+" STL "
 cQuery += "	 JOIN "+RetSqlName("STJ")+" STJ ON "
 cQuery += "	     STJ.TJ_FILIAL = '"+xFilial("STJ")+ "' "
@@ -268,6 +238,7 @@ cQuery += "      AND ST9.D_E_L_E_T_ = ' ' )"
 cQuery += "  LEFT JOIN "+RetSqlName("SA2")+" SA2 ON ( SA2.A2_FILIAL = '"+xFilial("SA2")+ "' "
 cQuery += "     AND SA2.A2_COD+SA2.A2_LOJA = STL.TL_FORST9+STL.TL_LOJST9 "
 cQuery += "  	AND SA2.D_E_L_E_T_= ' ' ) "
+cQuery += "  	LEFT JOIN "+RetSqlName('SB1')+" SB1 ON B1_COD = TL_CODIGO AND SB1.D_E_L_E_T_ =' ' "
 cQuery += "    WHERE STL.TL_FILIAL='"+xFilial("STL")+"' AND STL.TL_TITABA = '  ' AND STL.TL_FORST9 <> '   '"
 cQuery += "      AND STJ.TJ_DTORIGI BETWEEN '"+Dtos(dDatFec)+"' AND '"+dTos(dDatFeAt) +"' AND STL.D_E_L_E_T_ = ' '"
 cQuery += " AND STL.TL_CODIGO = '130011' "
@@ -314,7 +285,8 @@ While !TMPSTL->(Eof())
 					nFValAbast, ; 
 					1,;
 					{0},;
-					"STL"})   
+					"STL",;
+					""})   
 			endif
 
 		Endif
@@ -339,15 +311,15 @@ While !TMPSTL->(Eof())
 			TMPSTL->TL_FORST9, ; 
 			TMPSTL->TL_LOJST9, ; 
 			TMPSTL->A2_NOME, ; 
-			"007", ; 
-			"ARLA", ; 
+			TMPSTL->TL_CODIGO, ; 
+			TMPSTL->B1_DESC, ;  
 			TMPSTL->TL_QUANTID, ; 
 			TMPSTL->TL_NRABAS, ; 
 			TMPSTL->TL_VUNABA, ; 
 			TMPSTL->TL_VTTABA, ; 
 			1,;
 			{TMPSTL->RECSTL},;
-			{TMPSTL->TJ_CCUSTO},;
+			TMPSTL->TJ_CCUSTO,;
 			"STL" })   
 
 	Else
@@ -403,7 +375,7 @@ For nCntFor := 1 to Len(aVetTemp)
 		Loop
 	Endif
 
-	nPosVet := aScan(aVetInteg,{|x| x[1]+x[2]+x[4] == aVetTemp[nCntFor,1]+aVetTemp[nCntFor,2]+aVetTemp[nCntFor,4]})
+	nPosVet := aScan(aVetInteg,{|x| x[1]+x[2]+x[4]+x[12] == aVetTemp[nCntFor,1]+aVetTemp[nCntFor,2]+aVetTemp[nCntFor,4]+aVetTemp[nCntFor,12]})
 	If nPosVet == 0
 		aadd(aVetInteg,{;
 			aVetTemp[nCntFor,1] , ; 
@@ -462,19 +434,20 @@ For nCntFor := 1 to Len(aVetInteg)
 	cHistorico := "REF. A "+Transform(aVetInteg[nCntFor,10],'@E 999999') + " ABASTECIMENTO(S) EM VEÍCULO(S) DE TERCEIRO(S)"
 
 	aCtasPagar := {}
-	aAdd(aCtasPagar, {"E2_PREFIXO"	,"ABT"      		 , Nil} )
-	aAdd(aCtasPagar, {"E2_NUM"     ,dTos(dDatFec)+cSeq   , Nil} )
-	aAdd(aCtasPagar, {"E2_TIPO"    ,"NDF"   	         , Nil} )
-	aAdd(aCtasPagar, {"E2_PARCELA"	,"  "	             , Nil} )
-	aAdd(aCtasPagar, {"E2_NATUREZ" ,cNatureABT           , Nil} )
-	aAdd(aCtasPagar, {"E2_FORNECE" ,aVetInteg[nCntFor,1] , Nil} )
-	aAdd(aCtasPagar, {"E2_LOJA"    ,aVetInteg[nCntFor,2] , Nil} )
-	aAdd(aCtasPagar, {"E2_EMISSAO" ,dDataBase            , Nil} )
-	aAdd(aCtasPagar, {"E2_VENCTO"  ,dDataVenc			 , Nil} )
-	aAdd(aCtasPagar, {"E2_VALOR"   ,aVetInteg[nCntFor,9] , Nil} )
-	aAdd(aCtasPagar, {"E2_VLCRUZ"  ,aVetInteg[nCntFor,9] , Nil} )
-	aAdd(aCtasPagar, {"E2_HIST"    ,cHistorico           , Nil} )
-	aAdd(aCtasPagar, {"E2_ORIGEM"  ,"VAMNTM01"      	 , Nil} )
+	aAdd(aCtasPagar, {"E2_PREFIXO"	,"ABT"      		  , Nil} )
+	aAdd(aCtasPagar, {"E2_NUM"     ,dTos(dDatFec)+cSeq    , Nil} )
+	aAdd(aCtasPagar, {"E2_TIPO"    ,"NDF"   	          , Nil} )
+	aAdd(aCtasPagar, {"E2_PARCELA"	,"  "	              , Nil} )
+	aAdd(aCtasPagar, {"E2_NATUREZ" ,cNatureABT            , Nil} )
+	aAdd(aCtasPagar, {"E2_FORNECE" ,aVetInteg[nCntFor,1]  , Nil} )
+	aAdd(aCtasPagar, {"E2_LOJA"    ,aVetInteg[nCntFor,2]  , Nil} )
+	aAdd(aCtasPagar, {"E2_EMISSAO" ,dDataBase             , Nil} )
+	aAdd(aCtasPagar, {"E2_VENCTO"  ,dDataVenc			  , Nil} )
+	aAdd(aCtasPagar, {"E2_VALOR"   ,aVetInteg[nCntFor,9]  , Nil} )
+	aAdd(aCtasPagar, {"E2_VLCRUZ"  ,aVetInteg[nCntFor,9]  , Nil} )
+	aAdd(aCtasPagar, {"E2_HIST"    ,cHistorico            , Nil} )
+	aAdd(aCtasPagar, {"E2_CCD"     ,aVetInteg[nCntFor,12] , Nil} )
+	aAdd(aCtasPagar, {"E2_ORIGEM"  ,"VAMNTM01"      	  , Nil} )
 
 	lMsErroAuto := .f.
 
@@ -573,6 +546,7 @@ oLbTelFec:addColumn( TCColumn():New( "Loja"        , { ||     aVetTel[oLbTelFec:
 oLbTelFec:addColumn( TCColumn():New( "Nome"        , { ||     aVetTel[oLbTelFec:nAt,3]          } ,,,,"LEFT" ,100,.F.,.F.,,,,.F.,) )
 oLbTelFec:addColumn( TCColumn():New( "Combustivel" , { ||     aVetTel[oLbTelFec:nAt,4]          } ,,,,"LEFT" ,040,.F.,.F.,,,,.F.,) )
 oLbTelFec:addColumn( TCColumn():New( "Descrição"   , { ||     aVetTel[oLbTelFec:nAt,5]          } ,,,,"LEFT" ,100,.F.,.F.,,,,.F.,) )
+oLbTelFec:addColumn( TCColumn():New( "C. Custos"   , { ||     aVetTel[oLbTelFec:nAt,12]          } ,,,,"LEFT" ,100,.F.,.F.,,,,.F.,) )
 oLbTelFec:addColumn( TCColumn():New( "Qtd Abastec" , { ||     Iif(!Empty(aVetTel[oLbTelFec:nAt,1]),FG_AlinVlrs(Transform(aVetTel[oLbTelFec:nAt,10],"@E 999")),"")         } ,,,,"LEFT",040,.F.,.F.,,,,.F.,) )
 oLbTelFec:addColumn( TCColumn():New( "Qtd Litros"  , { ||     FG_AlinVlrs(Transform(aVetTel[oLbTelFec:nAt,6],"@E 99,999,999.999"))    } ,,,,"LEFT" ,060,.F.,.F.,,,,.F.,) )
 oLbTelFec:addColumn( TCColumn():New( "Prç Médio Lt", { ||     FG_AlinVlrs(Transform(aVetTel[oLbTelFec:nAt,8],"@E 9999.999"))     } ,,,,"LEFT" ,050,.F.,.F.,,,,.F.,) )

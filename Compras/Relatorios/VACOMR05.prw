@@ -106,7 +106,7 @@ default lAbreCliente := .t.
             aCotacao[nPosProd][5][nPosFornec][2] := TMPSC8->C8_NUMPRO
             aCotacao[nPosProd][5][nPosFornec][3] := TMPSC8->C8_COND + "-" + TMPSC8->E4_DESCRI
             aCotacao[nPosProd][5][nPosFornec][4] := TMPSC8->C8_XMARCA
-            aCotacao[nPosProd][5][nPosFornec][5] := TMPSC8->C8_PRECO
+            aCotacao[nPosProd][5][nPosFornec][5] := TMPSC8->C8_PRECO//iF(TMPSC8->C8_PRECO > 0,TMPSC8->C8_PRECO,"")
             aCotacao[nPosProd][5][nPosFornec][6] := TMPSC8->C8_TOTAL
         
             TMPSC8->(DbSkip())
@@ -244,6 +244,23 @@ Local J       := 0
                     '            <NumberFormat ss:Format="Standard"/>' + CRLF +;
                     '            <Protection ss:Protected="0"/>' + CRLF +;
                     '        </Style>' + CRLF)
+    FWrite(nHandle, '        <Style ss:ID="m2126159379956"> '+ CRLF +;
+                    '            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>' + CRLF +;
+                    '             <Borders>' + CRLF +;
+                    '              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"' + CRLF +;
+                    '               ss:Color="#808080"/>' + CRLF +;
+                    '              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"' + CRLF +;
+                    '               ss:Color="#808080"/>' + CRLF +;
+                    '              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"' + CRLF +;
+                    '               ss:Color="#808080"/>' + CRLF +;
+                    '              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"' + CRLF +;
+                    '               ss:Color="#808080"/>' + CRLF +;
+                    '             </Borders>' + CRLF +;
+                    '             <Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="#000000" ss:Bold="1"/>' + CRLF +;
+                    '             <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>' + CRLF +;
+                    '             <NumberFormat ss:Format="#,##0.00_ ;\-#,##0.00\ "/>' + CRLF +;
+                    '        </Style> '+ CRLF )
+    
     FWrite(nHandle, '        <Style ss:ID="m320402760">' + CRLF +;
                     '            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>' + CRLF +;
                     '            <Borders>' + CRLF +;
@@ -793,23 +810,42 @@ Local J       := 0
 //    <aFornece> ::= '{' Fornecedor, Num Proposta, CondPgto, Marca, PrcUnit, Total '}'
 
     nLenProdutos := Len(aCotacao)
+    
     for i := 1 to nLenProdutos
-        FWrite(nHandle, '            <Row ss:AutoFitHeight="0" ss:Height="15">' + CRLF +;
+        FWrite(nHandle, '            <Row ss:AutoFitHeight="0" ss:Height="33.75">' + CRLF +;
                         '                <Cell ss:StyleID="s37"><Data ss:Type="String">' + FrmtValorExcel(AllTrim(aCotacao[i][1]) + " - " + AllTrim(Posicione("SB1", 1, xFilial("SB1")+aCotacao[i][1], "B1_DESC"))) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '                <Cell ss:StyleID="s38"><Data ss:Type="Number">' + FrmtValorExcel(aCotacao[i][3]) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '                <Cell ss:StyleID="s38"><Data ss:Type="Number">' + FrmtValorExcel(aCotacao[i][4]) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '                <Cell ss:StyleID="s38"><Data ss:Type="String">' + FrmtValorExcel(aCotacao[i][2]) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF )
 
         cFormula := ""
+        
         for j := 1 to nLenFornec
-            FWrite(nHandle, '                <Cell ss:StyleID="s39"><Data ss:Type="Number">' + FrmtValorExcel(Iif(aCotacao[i][5][j][5]==0,"",aCotacao[i][5][j][5]))  + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+            If(aCotacao[i][5][j][5] == 0)
+                FWrite(nHandle, '            <Cell ss:StyleID="s39"/>' + CRLF +;
                             '                <Cell ss:StyleID="s40" ss:Formula="=IF(RC[-1]=&quot;&quot;,&quot;&quot;,RC[-1]*RC2)"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
-                            '                <Cell ss:StyleID="s40"><Data ss:Type="String">' + FrmtValorExcel(aCotacao[i][5][j][4]) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF )
-            cFormula += Iif(Empty(cFormula), "", ",") + "IF(RC[-" + AllTrim(Str(j*3)) + "]=0,999999999,RC[-" + AllTrim(Str(j*3)) + "])"
+                            '                <Cell ss:StyleID="s40"><Data ss:Type="String">' + FrmtValorExcel(aCotacao[i][5][j][4]) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF ) 
+            Else
+                
+                FWrite(nHandle, '            <Cell ss:StyleID="s39"><Data ss:Type="Number">' + FrmtValorExcel(aCotacao[i][5][j][5])  + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+                            '                <Cell ss:StyleID="s40" ss:Formula="=IF(RC[-1]=&quot;&quot;,&quot;&quot;,RC[-1]*RC2)"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+                            '                <Cell ss:StyleID="s40"><Data ss:Type="String">' + FrmtValorExcel(aCotacao[i][5][j][4]) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF ) 
+            //cFormula += Iif(Empty(cFormula), "", ",") + "IF(RC[-" + AllTrim(Str(j*3)) + "]=0,999999999,RC[-" + AllTrim(Str(j*3)) + "])"
+            EndIf
         next
-
+        /*
         FWrite(nHandle, '                <Cell ss:StyleID="s40" ss:Formula="=MIN(' + cFormula + ')"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '                <Cell ss:StyleID="s40" ss:Formula="=MIN(' + cFormula + ')"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+                        '            </Row>' + CRLF ) 
+        */                        
+        //FWrite(nHandle, '                <Cell ss:StyleID="s40" ss:Formula="=MINIFS(RC[-'+CVALTOCHAR( nLenFornec * 3 )+']:R5C[-1],R5C[-'+CVALTOCHAR( nLenFornec * 3 )+']:R[-1]C[-1],&quot;R$ Unit&quot;,RC[-'+CVALTOCHAR( nLenFornec * 3 )+']:RC[-1],&quot;&gt;0&quot;)"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+        /*
+        FWrite(nHandle, '                <Cell ss:StyleID="s40" ss:Formula="=MINIFS(RC[-'+CVALTOCHAR( nLenFornec * 3 )+']:RC[-1],R5C5:R5C[-1],&quot;R$ Unit&quot;,RC[-'+CVALTOCHAR( nLenFornec * 3 )+']:RC[-1],&quot;&gt;0&quot;)"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+                        '                <Cell ss:StyleID="s40" ss:Formula="=MINIFS(RC[-'+CVALTOCHAR( (nLenFornec * 3)+1 )+']:RC[-2],R5C5:R5C[-2],&quot;R$ Total&quot;,RC[-'+CVALTOCHAR( (nLenFornec * 3)+1 )+']:RC[-2],&quot;&gt;0&quot;)"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+                        '            </Row>' + CRLF ) 
+                        */
+        FWrite(nHandle, '                <Cell ss:StyleID="s40" ss:Formula="=MIN(RC[-'+CVALTOCHAR( nLenFornec * 3 )+']:RC[-1])"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
+                        '                <Cell ss:StyleID="s40" ss:Formula="=MIN(RC[-'+CVALTOCHAR( (nLenFornec * 3)+4 )+'] * RC[-1])"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '            </Row>' + CRLF ) 
     next
 
@@ -817,10 +853,11 @@ Local J       := 0
     FWrite(nHandle, '            <Row ss:AutoFitHeight="0">' + CRLF +;
                     '                <Cell ss:MergeAcross="3" ss:StyleID="m320402740"><Data ss:Type="String">TOTAL</Data></Cell>' + CRLF)
     for i := 1 to nLenFornec
-        FWrite(nHandle, '                <Cell ss:MergeAcross="2" ss:StyleID="m320402760" ss:Formula="=SUM(R[-' + AllTrim(Str(nLenProdutos+1)) + ']C[1]:R[-1]C[1])"><Data ss:Type="Number"></Data></Cell>' + CRLF)
+        FWrite(nHandle, '                <Cell ss:MergeAcross="2" ss:StyleID="m2126159379956" ss:Formula="=SUM(R[-' + AllTrim(Str(nLenProdutos+1)) + ']C[1]:R[-1]C[1])"><Data ss:Type="Number"></Data></Cell>' + CRLF)
     next
-    
+    FWrite(nHandle, '                <Cell ss:MergeAcross="1" ss:StyleID="m2126159379956" ss:Formula="=SUM(R[-' + AllTrim(Str(nLenProdutos+1)) + ']C[1]:R[-1]C[1])"><Data ss:Type="Number"></Data></Cell>' + CRLF)
     FWrite(nHandle, '            </Row>' + CRLF)
+    
     FWrite(nHandle, '            <Row ss:AutoFitHeight="0">' + CRLF +;
                     '                <Cell ss:MergeAcross="3" ss:StyleID="m320402740"><Data ss:Type="String">Condicao Pagamento</Data></Cell>' + CRLF)
     for i := 1 to nLenFornec

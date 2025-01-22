@@ -12,76 +12,41 @@
 //  22/02/22|  Manoel Filho                      | Reprocessamento dos Abastecimento de Veiculos  
 //          |                                    |  de Terceiros
 // ---------+------------------------------------+------------------------------------------------
-
-
-/* Colocar no Pergunte, Filial de/ate para processamento 
-	Por enquanto terá q processar filial por filial no menu. */
 User Function VAMNTP01()
-	Local aArea 	:= FwGetArea()
-	Local aParamBox := {}
-	Local aRet      := {}
-	Local dDatCorte := GetMv("VA_RECCMB",,cTod("01/01/2021")) // Data de Minima para Recálculo de Abastecimentos
-	Local cAlias	:= GetNextAlias()
-	Local cQry 		:= ""
 
-	Private dDatIni := cTod("")
-	Private dDatFin := cTod("")
-	Private cFilde  := ""
-	Private cFilAte := ""
-	Private cFilBak := cFilant
+Local aParamBox := {}
+Local aRet      := {}
+Local dDatCorte := GetMv("VA_RECCMB",,cTod("01/01/2021")) // Data de Minima para Recálculo de Abastecimentos
+Private dDatIni := cTod("")
+Private dDatFin := cTod("")
 
-	aAdd(aParamBox,{1,"Data Inicial",Ctod(""),"@D","","","",50,.f.})
-	aAdd(aParamBox,{1,"Data Final",Ctod(""),"@D","","","",50,.f.})
-	aAdd(aParamBox,{1,"Filial De"	,"'0101001'","@","","","",50,.f.})
-	aAdd(aParamBox,{1,"Filial Ate"  ,"'ZZZZZZZ'","@","","","",50,.f.})
-	//aAdd(aParamBox,{1,"Data Final",Ctod(""),"@D","","","",50,.f.})
+aAdd(aParamBox,{1,"Data Inicial",Ctod(""),"@D","","","",50,.f.})
+aAdd(aParamBox,{1,"Data Final",Ctod(""),"@D","","","",50,.f.})
 
-	While .t.
-		If ParamBox(aParamBox,"",@aRet,,,,,,,,.F.)
-			dDatIni := aRet[1]
-			dDatFin := aRet[2]
-			cFilde  := aRet[3]
-			cFilAte := aRet[4]
-		Else
-			Return
-		EndIf
+While .t.
+	If ParamBox(aParamBox,"",@aRet,,,,,,,,.F.)
+		dDatIni  := aRet[1]
+		dDatFin  := aRet[2]
+	Else
+		Return
+	EndIf
 
-		If Empty(dDatIni) .or. Empty(dDatFin) .or. (dDatFin<dDatIni).or. ;
-			Empty(cFilde) .or. Empty(cFilAte) .or. (cFilAte<cFilde)
-			MsgStop("Data(s) Inválida(s)! Favor informar corretamente!")
-			Loop
-		Endif
+	If Empty(dDatIni) .or. Empty(dDatFin) .or. (dDatFin<dDatIni)
+		MsgStop("Data(s) Inválida(s)! Favor informar corretamente!")
+		Loop
+	Endif
 
-		If (dDatIni<dDatCorte)
-			MsgStop("Data Inicial MENOR que a Data de Corte informada no parâmetro VA_RECCMB! Favor informar corretamente!")
-			Loop
-		Endif
+	If (dDatIni<dDatCorte)
+		MsgStop("Data Inicial MENOR que a Data de Corte informada no parâmetro VA_RECCMB! Favor informar corretamente!")
+		Loop
+	Endif
 
-		Exit
-	Enddo
-	cQry := "select TQN_FILIAL " + CRLF
-	cQry += " from "+RetSqlName("TQN")+" TQN " + CRLF
-	cQry += " WHERE TQN.D_E_L_E_T_ =''  " + CRLF
-	cQry += " AND TQN_FILIAL BETWEEN '"+aRet[3]+"' AND '"+aRet[4]+"'  " + CRLF
-	cQry += " GROUP BY TQN_FILIAL " + CRLF
+	Exit
+Enddo
 
-	MpSysOpenQuery(cQry, cAlias)
-	
-	While !(cAlias)->(EOF())
+oProcTTP := MsNewProcess():New({ |lEnd| FS_Proc01() }," ","",.f.)
+oProcTTP:Activate()
 
-		cFilant := (cAlias)->TQN_FILIAL
-		
-		oProcTTP := MsNewProcess():New({ |lEnd| FS_Proc01() }," ","",.f.)
-		oProcTTP:Activate()
-
-		(cAlias)->(DbSkip())
-	Enddo
-
-	(cAlias)->(dbCloseArea())
-
-	cFilant := cFilBak
-
-	FwRestArea(aArea)
 Return
 
 
@@ -100,7 +65,6 @@ cQuery += " FROM "+RetSqlName("TQN")+" TQN "
 cQuery += " JOIN "+RetSqlName("ST9")+" ST9 ON TQN.TQN_FILIAL = ST9.T9_FILIAL AND TQN.TQN_FROTA = ST9.T9_CODBEM "
 cQuery += "  AND ST9.D_E_L_E_T_ = ' ' AND ST9.T9_PROPRIE = '2'
 cQuery += "  WHERE TQN.D_E_L_E_T_ = ' ' AND TQN.TQN_DTABAS BETWEEN '"+Dtos(dDatIni)+"' AND '"+Dtos(dDatFin)+"' "
-cQuery += "  AND TQN.TQN_FILIAL = '"+FwxFilial("TQN")+"'"
 DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPTQN", .f., .f.)
 
 Begin Transaction
@@ -113,10 +77,8 @@ While !TMPTQN->(Eof())
 	oProcTTP:IncRegua2()
 	
 	if TMPTQN->(T9_XTPTER) $ "1" // Prestador de Serviço
-		cQuery := "SELECT top 1 ZAU.ZAU_VALCOM FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.ZAU_FILIAL = '"+FwxFilial("ZAU")+"' AND ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+TMPTQN->(TQN_CODCOM)+"' AND ZAU.ZAU_DATCPA <= (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+TMPTQN->(TQN_DTABAS)+"' AND ZAU_CODCOM = '"+TMPTQN->(TQN_CODCOM)+"') ORDER BY ZAU_DATCPA DESC "
+		cQuery := "SELECT ZAU.ZAU_VALCOM FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+TMPTQN->(TQN_CODCOM)+"' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+TMPTQN->(TQN_DTABAS)+"' AND ZAU_CODCOM = '"+TMPTQN->(TQN_CODCOM)+"')"
 	ElseIf TMPTQN->(T9_XTPTER) $ "23" // Transportadora
-
-		// Verificar se precisa colocar essa tabela em exclusivo tambem 
 		cQuery := "SELECT ZAT.ZAT_VALCOM FROM "+RetSqlName("ZAT")+" ZAT WHERE ZAT.D_E_L_E_T_ = ' ' AND ZAT.ZAT_CODCOM = '"+TMPTQN->(TQN_CODCOM)+"' AND ZAT.ZAT_DATCAD = (SELECT Max(ZAT_DATCAD) FROM "+RetSqlName("ZAT")+" WHERE D_E_L_E_T_ = ' ' AND ZAT_DATCAD <= '"+TMPTQN->(TQN_DTABAS)+"' AND ZAT_CODCOM = '"+TMPTQN->(TQN_CODCOM)+"')"
 	Endif
 	nValComb := FM_Sql(cQuery)
@@ -157,7 +119,6 @@ cQuery += " JOIN "+RetSqlName("ST9")+" ST9 ON STL.TL_FILIAL = ST9.T9_FILIAL AND 
 cQuery += "  AND ST9.D_E_L_E_T_ = ' ' AND ST9.T9_PROPRIE = '2'
 cQuery += "  WHERE STL.D_E_L_E_T_ = ' ' AND STJ.TJ_DTORIGI BETWEEN '"+Dtos(dDatIni)+"' AND '"+Dtos(dDatFin)+"' "
 cQuery += "  AND STL.TL_CODIGO = '130011' "
-cQuery += "  AND STL.TL_FILIAL = '"+FwxFilial("STL")+"' "
 cQuery += "  AND STJ.D_E_L_E_T_ = ' ' "
 cQuery += "  AND STJ.TJ_SERVICO = 'C00014' "
 DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSTL", .f., .f.)
@@ -170,7 +131,7 @@ While !TMPSTL->(Eof())
 	oProcTTP:IncRegua2()
 	
 	if TMPSTL->(T9_XTPTER) == "1" // Prestador de Serviço
-		cQuery := "SELECT ZAU.ZAU_VALCOM FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.ZAU_FILIAL = '"+FwxFilial("ZAU")+"' AND ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '007' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+TMPSTL->(TJ_DTORIGI)+"' AND ZAU_CODCOM = 'ARL')"
+		cQuery := "SELECT ZAU.ZAU_VALCOM FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '007' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+TMPSTL->(TJ_DTORIGI)+"' AND ZAU_CODCOM = 'ARL')"
 	ElseIf TMPSTL->(T9_XTPTER) $ "23" // Transportadora
 		cQuery := "SELECT ZAT.ZAT_VALCOM FROM "+RetSqlName("ZAT")+" ZAT WHERE ZAT.D_E_L_E_T_ = ' ' AND ZAT.ZAT_CODCOM = '007' AND ZAT.ZAT_DATCAD = (SELECT Max(ZAT_DATCAD) FROM "+RetSqlName("ZAT")+" WHERE D_E_L_E_T_ = ' ' AND ZAT_DATCAD <= '"+TMPSTL->(TJ_DTORIGI)+"' AND ZAT_CODCOM = '007')"
 	Endif
@@ -199,9 +160,31 @@ TMPSTL->(dbCloseArea())
 End Transaction
 
 If lProcess
-	MsgInfo("Reprocessamento da Filial "+SubStr(FwxFilial("TQN"),6,2)+" realizado com sucesso!!!"+IIf(lCombZERO,CRLF+CRLF+"Porém alguns abastecimentos não foram reprocessados por não haver Preço do Combustivel vigente na data do evento!",""), "Atenção")
+	MsgInfo("Reprocessamento realizado com sucesso!!!"+IIf(lCombZERO,CRLF+CRLF+"Porém alguns abastecimentos não foram reprocessados por não haver Preço do Combustivel vigente na data do evento!",""), "Atenção")
 Else
-	MsgInfo("Não houve reprocessamento da Filial "+SubStr(FwxFilial("TQN"),6,2)+" porque não há dados a serem processados ou não há preço de combustivel vigente nesta data!!!", "Atenção")
+	MsgInfo("Não houve reprocessamento porque não há dados a serem processados ou não há preço de combustivel vigente nesta data!!!", "Atenção")
 Endif
 
 Return
+
+/*
+SELECT TJ_CODBEM, TJ_DTORIGI,  TJ_TIPOOS, TL_FILIAL, TL_CODIGO, TL_QUANTID, TJ_CODBEM
+    FROM STL010 STL
+	JOIN STJ010 STJ ON
+	     TJ_FILIAL = '01'
+	 AND TJ_ORDEM= TL_ORDEM
+	 AND TJ_PLANO = TL_PLANO
+	-- AND TJ_CODBEM = TL_CODBEM
+	 AND STL.D_E_L_E_T_ = ' ' 
+	JOIN TZZ010 TZZ ON
+	     TZZ_FILIAL = '01' 
+	 AND TZZ_PRODUT = TL_CODIGO
+	JOIN ST9010 ST9 ON ( ST9.T9_FILIAL = '01' 
+	 AND ST9.T9_CODBEM = STJ.TJ_CODBEM AND ST9.T9_PROPRIE = '1' AND ST9.D_E_L_E_T_ = ' ' )
+   WHERE TL_FILIAL = '01'
+     AND TL_CODIGO = '130011' -- PRODUTO
+	 AND STJ.D_E_L_E_T_ = ' '
+	 AND TJ_SERVICO = 'C00014' -- MESMO PREENCHIDO NA TELA DE ABASTECIMENTO EM PRODUTOS
+     AND STJ.TJ_DTORIGI BETWEEN '20220101' AND '20220210' AND STL.D_E_L_E_T_ = ' '
+	 ORDER BY STJ.R_E_C_N_O_ DESC
+*/

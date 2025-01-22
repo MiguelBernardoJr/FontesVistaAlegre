@@ -59,11 +59,11 @@ Local _sAlias,i,j
 
 	//AADD(aRegs,{cPerg,"01","Filial De             ?",Space(20),Space(20),"mv_ch1","C",02,0,0,"G","","mv_par01","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
 	//AADD(aRegs,{cPerg,"02","Filial Ate            ?",Space(20),Space(20),"mv_ch2","C",02,0,0,"G","","mv_par02","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
-	AADD(aRegs,{cPerg,"01","Data de         	   ?",Space(20),Space(20),"mv_ch3","D",08,0,0,"G","","mv_par01","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
-	AADD(aRegs,{cPerg,"02","Data até        	   ?",Space(20),Space(20),"mv_ch4","D",08,0,0,"G","","mv_par02","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
-	AADD(aRegs,{cPerg,"03","TM Nascimento          ?",Space(20),Space(20),"mv_ch5","C",08,0,0,"G","","mv_par03","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
-	AADD(aRegs,{cPerg,"04","TM Morte	           ?",Space(20),Space(20),"mv_ch6","C",08,0,0,"G","","mv_par04","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
-	//AADD(aRegs,{cPerg,"07","Fornecedor De         ?",Space(20),Space(20),"mv_ch7","C",06,0,0,"G","","mv_par07","","","","","","","","","","","","","","","","","","","","","","","","","FOR","","","","",""})
+	AADD(aRegs,{cPerg,"01","Data de         	   ?",Space(20),Space(20),"mv_ch1","D",08,0,0,"G","","mv_par01","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+	AADD(aRegs,{cPerg,"02","Data até        	   ?",Space(20),Space(20),"mv_ch2","D",08,0,0,"G","","mv_par02","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+	AADD(aRegs,{cPerg,"03","TM Nascimento          ?",Space(20),Space(20),"mv_ch3","C",08,0,0,"G","","mv_par03","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+	AADD(aRegs,{cPerg,"04","Data até        	   ?",Space(20),Space(20),"mv_ch4","D",08,0,0,"G","","mv_par04","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+	AADD(aRegs,{cPerg,"05","Saldos por Filiais     ?",Space(20),Space(20),"mv_ch5","N",01,0,0,"C","","mv_par05","1=Sim","","","","","","2=Não","","","","","","","","","","","","","","","","","","","","N","","",""})
 	//AADD(aRegs,{cPerg,"08","Fornecedor Ate        ?",Space(20),Space(20),"mv_ch8","C",06,0,0,"G","","mv_par08","","","","","","","","","","","","","","","","","","","","","","","","","FOR","","","","",""})
 	//AADD(aRegs,{cPerg,"09","Loja De               ?",Space(20),Space(20),"mv_ch9","C",02,0,0,"G","","mv_par09","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
 	//AADD(aRegs,{cPerg,"10","Loja Ate              ?",Space(20),Space(20),"mv_cha","C",02,0,0,"G","","mv_par10","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})		
@@ -705,25 +705,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	/* 19 */ oExcel:AddColumn( cWorkSheet, cTitulo, "ICMS Frete (Contrato)"	, 1, 3, .T.)
 	/* 19 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Corretor"	        	, 1, 1 )
 	/* 19 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Comissao"	    , 1, 3, .T.)
-	/* 20 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Custo"	    	        , 1, 3, .T. )
-	/* 21 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Base Funrural"	        , 1, 3 )
-	/* 22 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Aliq Funrural"	        , 1, 2 )
-	/* 23 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Funrural"	    , 1, 3, .T. )
-	/* 24 */ oExcel:AddColumn( cWorkSheet, cTitulo, "TES"	  		        , 1, 1 )
-	/* 25 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Desc. TES"	 	        , 1, 1 )
-	/* 26 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Embar."		        , 1, 1 )
-	/* 27 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Hr Embar."	            , 1, 1 )
-	/* 28 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Chega."	            , 1, 1 )
-	/* 29 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Hr Chega"	            , 1, 1 )
-	/* 30 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Peso Chega"	        , 1, 2, .T. )
-	/* 31 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quebra"	            , 1, 2 )
-	/* 32 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quebra Animal"         , 1, 2 )
-	/* 33 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Distancia"		        , 1, 2 )
-	/* 33 */ oExcel:AddColumn( cWorkSheet, cTitulo, "R$ Frete"		        , 1, 3 )
-	/* 33 */ oExcel:AddColumn( cWorkSheet, cTitulo, "R$ ICMS Frete"	        , 1, 3 )
-	
-	
-	///* 34 */ oExcel:AddColumn( cWorkSheet, cTitulo, ""	    		     , 1, 1 )
+
 	
 	dbGotop()
 	
@@ -731,18 +713,13 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 			oExcel:AddRow( cWorkSheet, cTitulo, ;
 							{ (cAlias)->FILIAL, ;
 							  (cAlias)->NOTA_FIS, ;
-							  (cAlias)->SERIE, ;
 							  (cAlias)->EMISSAO, ;
 							  (cAlias)->DTDIGIT, ;
-							  (cAlias)->TIPO, ;
-							  (cAlias)->COD_FORNECEDOR, ;
 							  (cAlias)->FORNECEDOR, ;
 							  (cAlias)->MUNICIPIO, ;
 							  (cAlias)->ESTADO, ;
-							  (cAlias)->ITEM, ;
-							  (cAlias)->CODIGO, ; 
+							  (cAlias)->CODIGO, ;
 							  (cAlias)->DESCRICAO, ;
-							  (cAlias)->UM, ;
 							  (cAlias)->QUANTIDADE, ;
 							  (cAlias)->VL_UNIT, ;
 							  (cAlias)->VALOR_TOTAL, ;
@@ -751,23 +728,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 							  (cAlias)->VALOR_ICMS, ;
 							  (cAlias)->ICMS_FRETE, ;
 							  (cAlias)->CORRETOR, ;
-							  (cAlias)->VALOR_COMI, ;
-							  (cAlias)->CUSTO, ;
-							  (cAlias)->BASE_FUNRURAL, ;
-							  (cAlias)->ALIQ_FUNRURAL, ;
-							  (cAlias)->VAL_FUNRURAL, ;
-							  (cAlias)->TES, ;
-							  (cAlias)->DESCRI_TES, ;
-							  (cAlias)->DATA_EMBAR, ;
-							  (cAlias)->HR_EMBAR, ;
-							  (cAlias)->DATA_CHEGA, ;
-							  (cAlias)->HR_CHEGA, ;
-							  (cAlias)->PESO_CHEGADA, ;
-							  (cAlias)->QUEBRA, ;
-							  (cAlias)->QUEBRA_ANIMAL, ;
-							  (cAlias)->DISTANCIA, ;
-							  (cAlias)->FR_TOTAL, ;
-							  (cAlias)->FR_ICMS  })							  
+							  (cAlias)->VALOR_COMI } )							  
 		(cAlias)->(DbSkip())
 	EndDo
 	RestArea(aArea)
@@ -1099,21 +1060,17 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	/* 04 */ oExcel:AddColumn( cWorkSheet, cTitulo, "TES"		      		 		 , 1, 1 )
 	/* 05 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Descricao"		      		 	 , 1, 1 )
 	/* 06 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cliente"		     		     , 1, 1 )
-	/* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Loja"		     	 			 , 1, 1 )
 	/* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Razao Social"		     	     , 1, 1 )
 	/* 09 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Codigo "		     	         , 1, 1 )
 	/* 10 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Descricao"		     	         , 1, 1 )
-	/* 11 */ oExcel:AddColumn( cWorkSheet, cTitulo, "UM"		     		         , 1, 1 )
 	/* 12 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Lote"		     		         , 1, 1 )
 	///* 13 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Curral"		    		     , 1, 1 )
 	/* 12 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quantidade"		     	     , 1, 2, .T. )
-	/* 14 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Peso Saída"		     	     , 1, 2, .T. )
-	/* 13 */ oExcel:AddColumn( cWorkSheet, cTitulo, "N. Pesagem"		     		 , 1, 1 )
 	/* 14 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Armazem"		    		     , 1, 1 )
 	/* 15 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Unit."		     		 , 1, 3 )
 	/* 16 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Total"		     		 , 1, 3, .T. )
-	/* 17 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Custo Unit."		     		 , 1, 3 )
-	/* 18 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Custo Total"		     		 , 1, 3, .T. )
+	///* 17 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Custo Unit."		     		 , 1, 3 )
+	///* 18 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Custo Total"		     		 , 1, 3, .T. )
 	
 	dbGotop()
 	
@@ -1126,25 +1083,20 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 							  (cAlias)->TES, ;
 							  (cAlias)->DESCRICAO, ;
 							  (cAlias)->CLIENTE, ;
-							  (cAlias)->LOJA, ;
 							  (cAlias)->NOME, ;
 							  (cAlias)->CODIGO, ;
 							  (cAlias)->DESCR, ;
-							  (cAlias)->UM, ;
 							  (cAlias)->LOTE, ;
 							  (cAlias)->QTDE, ;
-							  (cAlias)->PESO_SAIDA, ;
-							  (cAlias)->NUM_PESAGEM, ;
 							  (cAlias)->ARMAZ, ;
 							  (cAlias)->VL_UNIT, ;
-							  (cAlias)->TOTAL, ;
-							  (cAlias)->CUS_UNIT, ;
-							  (cAlias)->CUSTO })
+							  (cAlias)->TOTAL })
 		(cAlias)->(DbSkip())
 	EndDo
 	RestArea(aArea)
 
 Return
+
 
 Static Function fQuadro9(cPerg)
 
@@ -1322,17 +1274,17 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	
 	/* 01 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Filial"  		 	 , 1, 1 )
 	/* 02 */ oExcel:AddColumn( cWorkSheet, cTitulo, "NF"		      	 , 1, 1 )
-	/* 03 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Serie"	    	 	 , 1, 1 )
+	///* 03 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Serie"	    	 	 , 1, 1 )
 	/* 04 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Emissao"   	 	 , 1, 4 )
-	/* 05 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Tipo"	    	     , 1, 1 )
-	/* 06 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cod. Forn."   		 , 1, 1 )
+	///* 05 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Tipo"	    	     , 1, 1 )
+	///* 06 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cod. Forn."   		 , 1, 1 )
 	/* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Razao"    	   		 , 1, 1 )
 	/* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Municipio"		     , 1, 1 )
 	/* 09 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Est." 		         , 1, 1 )
-	/* 10 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Item"	    		 , 1, 1 )
-	/* 11 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cod."		     	 , 1, 1 )
+	///* 10 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Item"	    		 , 1, 1 )
+	///* 11 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cod."		     	 , 1, 1 )
 	/* 12 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Descricao"		     , 1, 1 )
-	/* 13 */ oExcel:AddColumn( cWorkSheet, cTitulo, "UM"	     		 , 1, 1 )
+	///* 13 */ oExcel:AddColumn( cWorkSheet, cTitulo, "UM"	     		 , 1, 1 )
 	/* 14 */ oExcel:AddColumn( cWorkSheet, cTitulo, "QTD"	   		     , 1, 2 )
 	/* 15 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Unit."	     , 1, 3, .T. )
 	/* 16 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Total"	    	     , 1, 3, .T. )
@@ -1340,19 +1292,19 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	/* 18 */ oExcel:AddColumn( cWorkSheet, cTitulo, "% ICMS"		     , 1, 2 )
 	/* 19 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor ICMS"	     , 1, 3, .T.)
 	/* 20 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Custo"	    	     , 1, 3, .T. )
-	/* 21 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Base Funrural"	     , 1, 3 )
-	/* 22 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Aliq Funrural"	     , 1, 2 )
-	/* 23 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Funrural"	 , 1, 3, .T. )
-	/* 24 */ oExcel:AddColumn( cWorkSheet, cTitulo, "TES"	  		     , 1, 1 )
-	/* 25 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Desc. TES"	 	     , 1, 1 )
-	/* 26 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Embar."		     , 1, 1 )
-	/* 27 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Hr Embar."	         , 1, 1 )
-	/* 28 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Chega."	         , 1, 1 )
-	/* 29 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Hr Chega"	         , 1, 1 )
-	/* 30 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Peso Chega"	     , 1, 2, .T. )
-	/* 31 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quebra"	         , 1, 2 )
-	/* 32 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quebra Animal"      , 1, 2 )
-	/* 33 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Distancia"		     , 1, 2 )
+	///* 21 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Base Funrural"	     , 1, 3 )
+	///* 22 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Aliq Funrural"	     , 1, 2 )
+	///* 23 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Funrural"	 , 1, 3, .T. )
+	///* 24 */ oExcel:AddColumn( cWorkSheet, cTitulo, "TES"	  		     , 1, 1 )
+	///* 25 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Desc. TES"	 	     , 1, 1 )
+	///* 26 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Embar."		     , 1, 1 )
+	///* 27 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Hr Embar."	         , 1, 1 )
+	///* 28 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Chega."	         , 1, 1 )
+	///* 29 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Hr Chega"	         , 1, 1 )
+	///* 30 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Peso Chega"	     , 1, 2, .T. )
+	///* 31 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quebra"	         , 1, 2 )
+	///* 32 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quebra Animal"      , 1, 2 )
+	///* 33 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Distancia"		     , 1, 2 )
 	///* 34 */ oExcel:AddColumn( cWorkSheet, cTitulo, ""	    		     , 1, 1 )
 	
 	dbGotop()
@@ -1361,37 +1313,212 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 			oExcel:AddRow( cWorkSheet, cTitulo, ;
 							{ (cAlias)->FILIAL, ;
 							  (cAlias)->NOTA_FIS, ;
-							  (cAlias)->SERIE, ;
 							  (cAlias)->EMISSAO, ;
-							  (cAlias)->TIPO, ;
-							  (cAlias)->COD_FORNECEDOR, ;
 							  (cAlias)->FORNECEDOR, ;
 							  (cAlias)->MUNICIPIO, ;
 							  (cAlias)->ESTADO, ;
-							  (cAlias)->ITEM, ;
-							  (cAlias)->CODIGO, ; 
 							  (cAlias)->DESCRICAO, ;
-							  (cAlias)->UM, ;
 							  (cAlias)->QUANTIDADE, ;
 							  (cAlias)->VL_UNIT, ;
 							  (cAlias)->VALOR_TOTAL, ;
 							  (cAlias)->BASE_ICMS, ;
 							  (cAlias)->PERC_ICMS, ;
 							  (cAlias)->VALOR_ICMS, ;
-							  (cAlias)->CUSTO, ;
-							  (cAlias)->BASE_FUNRURAL, ;
-							  (cAlias)->ALIQ_FUNRURAL, ;
-							  (cAlias)->VAL_FUNRURAL, ;
-							  (cAlias)->TES, ;
-							  (cAlias)->DESCRI_TES, ;
-							  (cAlias)->DATA_EMBAR, ;
-							  (cAlias)->HR_EMBAR, ;
-							  (cAlias)->DATA_CHEGA, ;
-							  (cAlias)->HR_CHEGA, ;
-							  (cAlias)->PESO_CHEGADA, ;
-							  (cAlias)->QUEBRA, ;
-							  (cAlias)->QUEBRA_ANIMAL, ;
-							  (cAlias)->DISTANCIA  })							  
+							  (cAlias)->CUSTO })
+							  //(cAlias)->BASE_FUNRURAL, ;
+							  //(cAlias)->ALIQ_FUNRURAL, ;
+							  //(cAlias)->VAL_FUNRURAL, ;
+							  //(cAlias)->TES, ;
+							  //(cAlias)->DESCRI_TES, ;
+							  //(cAlias)->DATA_EMBAR, ;
+							  //(cAlias)->HR_EMBAR, ;
+							  //(cAlias)->DATA_CHEGA, ;
+							  //(cAlias)->HR_CHEGA, ;
+							  //(cAlias)->PESO_CHEGADA, ;
+							  //(cAlias)->QUEBRA, ;
+							  //(cAlias)->QUEBRA_ANIMAL, ;
+							  //(cAlias)->DISTANCIA  })							  
+		(cAlias)->(DbSkip())
+	EndDo
+	RestArea(aArea)
+
+Return
+
+Static Function fQuadro11(cPerg)
+
+Local aArea 	 := getArea()
+Local _cQry		 := ''
+Local cAlias     := CriaTrab(,.F.)
+Local cWorkSheet := "Entrada de Insumos"
+Local cTitulo	 := "Entrada de Insumos "
+
+cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
+
+oExcel:AddworkSheet(cWorkSheet)
+oExcel:AddTable(  cWorkSheet, cTitulo)
+
+_cQry += "select D1_FILIAL ,D1_DTDIGIT, D1_DOC + '-' + D1_SERIE  D1_DOC, D1_QUANT,  B1_DESC, A2_NOME, D1_TOTAL" + CRLF
+_cQry += "  from "+RetSqlName("SD1")+" SD1" + CRLF
+_cQry += "  join "+RetSqlName("SA2")+" SA2 ON" + CRLF
+_cQry += "       A2_COD +A2_LOJA = D1_FORNECE + D1_LOJA" + CRLF
+_cQry += "   and SA2.D_E_L_E_T_ = ' ' " + CRLF
+_cQry += "  join "+RetSqlName("SB1")+" SB1 ON " + CRLF
+_cQry += "       B1_COD = D1_COD" + CRLF
+_cQry += "   and SB1.D_E_L_E_T_ = ' ' " + CRLF
+_cQry += "   and B1_GRUPO in ('02','03')" + CRLF
+_cQry += "  join "+RetSqlName("SF4")+" SF4 ON " + CRLF
+_cQry += "       D1_TES  = F4_CODIGO" + CRLF
+_cQry += "   and F4_TRANFIL <> '1' " + CRLF
+_cQry += "   and SF4.D_E_L_E_T_ = ' ' " + CRLF
+_cQry += " where D1_TIPO = 'N' " + CRLF
+_cQry += "   and D1_DTDIGIT BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
+_cQry += "   and SD1.D_E_L_E_T_ = ' ' " + CRLF
+	
+	
+	If Select(cAlias) > 0
+		(cAlias)->(DbCloseArea())
+	EndIf
+	
+		MemoWrite(StrTran(cArquivo,".xml","")+"Quadro_Devolucao_Vendas.sql" , _cQry)
+
+	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(cAlias),.F.,.F.) 
+	
+	TcSetField(cAlias, "D1_DTDIGIT", "D")
+	
+	/* 01 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Filial"  		 	 , 1, 1 )
+	/* 02 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Nota Fiscal"		 , 1, 1 )
+	/* 02 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Entrada"		 , 1, 1 )
+	/* 04 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quantidade"   	 	 , 1, 2, .T. )
+	/* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Produto"    	   	 , 1, 1 )
+	/* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Fornecedor"		 , 1, 1 )
+	/* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "R$ Total"		     , 1, 3, .T. )
+	
+	dbGotop()
+	
+	While !(cAlias)->(Eof())                                             
+			oExcel:AddRow( cWorkSheet, cTitulo, ;
+							{ (cAlias)->D1_FILIAL, ;
+							  (cAlias)->D1_DOC, ;
+							  (cAlias)->D1_DTDIGIT, ;
+							  (cAlias)->D1_QUANT, ;
+							  (cAlias)->B1_DESC, ;
+							  (cAlias)->A2_NOME, ;
+							  (cAlias)->D1_TOTAL } )
+							  						  
+		(cAlias)->(DbSkip())
+	EndDo
+	RestArea(aArea)
+
+Return
+
+
+
+
+
+
+// Devolução de Compra
+Static Function fQuadro12(cPerg)
+
+Local aArea 	 := getArea()
+Local _cQry1		 := ''
+Local cAlias     := CriaTrab(,.F.)
+Local cWorkSheet := "Devolução de Compra "
+Local cTitulo	 := "Saída por Devolução de Compra"
+
+cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
+
+oExcel:AddworkSheet(cWorkSheet)
+oExcel:AddTable(  cWorkSheet, cTitulo)
+
+	_cQry1 := "  			SELECT D2.D2_FILIAL							FILIAL,	  " + CRLF
+	_cQry1 += "  				   D2.D2_DOC							NUMERO,  " + CRLF
+	_cQry1 += "  				   D2.D2_EMISSAO						EMISSAO,  " + CRLF
+	_cQry1 += "  				   D2.D2_XDTABAT						DATA_ABATE,  " + CRLF
+	_cQry1 += "  				   D2.D2_TES							TES,  " + CRLF
+	_cQry1 += "  				   F4.F4_TEXTO							DESCRICAO,  " + CRLF
+	_cQry1 += "  				   D2.D2_CLIENTE						CLIENTE,  " + CRLF
+	_cQry1 += "  				   D2.D2_LOJA							LOJA,  " + CRLF
+	_cQry1 += "  				   A2.A2_NOME							NOME,  " + CRLF
+	_cQry1 += "  				   D2.D2_COD							CODIGO,  " + CRLF
+	_cQry1 += "  				   B1.B1_DESC							DESCR,  " + CRLF
+	_cQry1 += "  				   B1.B1_UM								UM,  " + CRLF
+	_cQry1 += "  				   D2.D2_LOTECTL						LOTE,  " + CRLF
+	//_cQry1 += "  				   B1.B1_X_CURRA						CURRAL,  " + CRLF
+	_cQry1 += "  				   D2.D2_QUANT							QTDE,  " + CRLF
+	_cQry1 += "  				   D2.D2_XPESLIQ						PESO_SAIDA,  " + CRLF
+	_cQry1 += "  				   D2.D2_XNRPSAG						NUM_PESAGEM,  " + CRLF
+	_cQry1 += "  				   D2.D2_LOCAL							ARMAZ,  " + CRLF
+	_cQry1 += "  				   D2.D2_TOTAL/D2.D2_QUANT				VL_UNIT,  " + CRLF
+	_cQry1 += "  				   D2.D2_TOTAL							TOTAL,  " + CRLF
+	_cQry1 += "  				   D2.D2_CUSTO1/D2.D2_QUANT				CUS_UNIT,  " + CRLF
+	_cQry1 += "  				   D2.D2_CUSTO1							CUSTO  " + CRLF
+	_cQry1 += "     		  FROM "+RetSqlName("SD2")+" 	 D2  " + CRLF
+	_cQry1 += "  	          JOIN "+RetSqlName("SF2")+"	 F2   " + CRLF
+	_cQry1 += "  			    ON D2.D2_DOC				=					F2.F2_DOC  " + CRLF
+	_cQry1 += "  			   AND D2.D2_FILIAL				=					F2.F2_FILIAL  " + CRLF
+	_cQry1 += "  			   AND D2.D2_CLIENTE			=					F2.F2_CLIENTE  " + CRLF
+	_cQry1 += "  			   AND D2.D2_LOJA				=					F2.F2_LOJA  " + CRLF
+	_cQry1 += "   			   AND F2.D_E_L_E_T_ 			=					' ' " + CRLF
+	_cQry1 += "  		INNER JOIN "+RetSqlName("SF4")+"	 F4  " + CRLF
+	_cQry1 += "  				ON D2.D2_TES				=					F4.F4_CODIGO  " + CRLF
+	_cQry1 += "  			   AND F4.D_E_L_E_T_			=					' '  " + CRLF
+	_cQry1 += "  			   AND D2_ESTOQUE				=					'S'  " + CRLF
+	_cQry1 += "  			   AND F4_TIPO					=					'S'  " + CRLF
+	_cQry1 += "  			   AND F4_TRANFIL				=					'2'  " + CRLF
+	_cQry1 += "  		 LEFT JOIN "+RetSqlName("SA2")+"	 A2  " + CRLF
+	_cQry1 += "  				ON A2.A2_COD				=					D2_CLIENTE  " + CRLF
+	_cQry1 += "  			   AND A2.A2_LOJA				=					D2_LOJA  " + CRLF
+	_cQry1 += "  			   AND A2.D_E_L_E_T_			=					' '  " + CRLF
+	_cQry1 += "  		INNER JOIN "+RetSqlName("SB1")+" 	 B1  " + CRLF
+	_cQry1 += "  				ON B1.B1_COD				=					D2.D2_COD  " + CRLF
+	_cQry1 += "  			   AND B1.D_E_L_E_T_			=					' '  " + CRLF
+	_cQry1 += "  			 WHERE D2.D2_EMISSAO			BETWEEN		'"+dToS(MV_PAR01)+"'	AND	  '"+dToS(MV_PAR02)+"'  " + CRLF
+	_cQry1 += "  			   AND D2.D_E_L_E_T_			=					' '  " + CRLF
+	_cQry1 += "  			   AND D2.D2_QUANT				>					0  " + CRLF
+	_cQry1 += "  			   AND D2.D2_TIPO				=					'D'  " + CRLF
+	_cQry1 += "  			   AND D2.D2_GRUPO IN ('BOV','01','05') " + CRLF
+	_cQry1 += "  		  ORDER BY D2.D2_EMISSAO  " + CRLF
+	
+	
+	If Select(cAlias) > 0
+		(cAlias)->(DbCloseArea())
+	EndIf
+	
+		MemoWrite(StrTran(cArquivo,".xml","")+"DevCompras.sql" , _cQry1)
+
+	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry1 ),(cAlias),.F.,.F.) 
+	
+	TcSetField(cAlias, "EMISSAO", "D")
+	TcSetField(cAlias, "DATA_ABATE", "D")
+	
+	/* 01 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Filial"		      		 	 , 1, 1 )
+	/* 02 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Numero"		     	         , 1, 1 )
+	/* 03 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Emissao"		     	         , 1, 1 )
+	/* 05 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Descricao"		      		 	 , 1, 1 )
+	/* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Razao Social"		     	     , 1, 1 )
+	/* 09 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Codigo "		     	         , 1, 1 )
+	/* 10 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Descricao"		     	         , 1, 1 )
+	/* 12 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Lote"		     		         , 1, 1 )
+	///* 13 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Curral"		    		     , 1, 1 )
+	/* 12 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Quantidade"		     	     , 1, 2, .T. )
+	/* 15 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Unit."		     		 , 1, 3 )
+	/* 16 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Total"		     		 , 1, 3, .T. )
+	
+	dbGotop()
+	
+	While !(cAlias)->(Eof())                                             
+			oExcel:AddRow( cWorkSheet, cTitulo, ;
+							{ (cAlias)->FILIAL, ;
+							  (cAlias)->NUMERO, ;
+							  (cAlias)->EMISSAO, ;
+							  (cAlias)->DESCRICAO, ;
+							  (cAlias)->NOME, ;
+							  (cAlias)->CODIGO, ;
+							  (cAlias)->DESCR, ;
+							  (cAlias)->LOTE, ;
+							  (cAlias)->QTDE, ;
+							  (cAlias)->VL_UNIT, ;
+							  (cAlias)->TOTAL })
 		(cAlias)->(DbSkip())
 	EndDo
 	RestArea(aArea)
@@ -1400,7 +1527,7 @@ Return
 
 
 // Resumo da Movimentação
-Static Function fQuadro11(cPerg)
+Static Function fQuadro13(cPerg)
 
 Local aArea 	 := getArea()
 Local _cQry		 := ''
@@ -1692,7 +1819,7 @@ Return
 
 
 // Resumo da Movimentação
-Static Function fQuadro12(cPerg)
+Static Function fQuadro14(cPerg)
 
 Local aArea 	 := getArea()
 Local _cQry		 := ''
@@ -1972,7 +2099,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 Return
 
 // Resumo da Movimentação
-Static Function fQuadro13(cPerg)
+Static Function fQuadro15(cPerg)
 
 Local aArea 	 := getArea()
 Local _cQry		 := ''
@@ -2273,7 +2400,7 @@ Return
 		Relatorio para o Canela;
 			Analisar a chegada dos animais na agropecuaria;
 */
-Static Function fQuadro14()
+Static Function fQuadro16()
 
 Local aArea 	 := getArea()
 Local _cQry		 := ''

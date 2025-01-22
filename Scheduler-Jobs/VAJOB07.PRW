@@ -77,7 +77,8 @@ xHTM += '<br>'
 
 _cQry := " SELECT " + CRLF
  _cQry += " 	C1_FILIAL, C1_NUM, C1_ITEM, C1_PRODUTO, C1_DESCRI, C1_QUANT-C1_QUJE QT_PENDENTE, C1_CC, C1_ITEMCTA, C1_OBS, C1_EMISSAO, C1_SOLICIT, " + CRLF
-_cQry += "  C1_XAPROV, C1_DATPRF -- , C1_APROV, C1_NOMAPRO " + CRLF
+_cQry += " 	, C1_XAPROV, C1_DATPRF -- , C1_APROV, C1_NOMAPRO " + CRLF
+_cQry += " 	-- , *  " + CRLF
 _cQry += " FROM SC1010  " + CRLF
 _cQry += " WHERE	D_E_L_E_T_=' ' " + CRLF
 _cQry += " 	AND C1_APROV <> 'L' " + CRLF

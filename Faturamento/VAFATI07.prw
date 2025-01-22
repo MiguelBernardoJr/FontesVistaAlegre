@@ -110,7 +110,6 @@ Static Function FI07DT()
             cQry += " AND Z09.D_E_L_E_T_ = ' '  " +CRLF 
             cQry += " WHERE B1_GRUPO IN ('B0V','01','05') AND SB1.D_E_L_E_T_ = ' ' AND B1_MSBLQL <> ' '  " +CRLF 
             cQry += " AND B1_XIDADE NOT LIKE '%/%' " +CRLF 
-            cQry += " AND B1_DESC NOT LIKE '%BUFAL%' " +CRLF 
 
             MpSysOpenQuery(cQry,"TMP")
             

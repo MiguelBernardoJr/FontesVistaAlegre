@@ -33,7 +33,7 @@
 '--------------------------------------------------------------------------------*/
 User Function MBESTPES()
 
-    Private oMBSaveLog	:= MBSaveLog():New() as object
+    // Private oMBSaveLog	:= MBSaveLog():New() as object
     Private cF3CodCFPes  := ""
     Private cF3LojCFPes  := ""
     Private cF3NomCFPes  := ""
@@ -102,9 +102,9 @@ User Function Tela1Pesagem(cAlias, nReg, nOpc)
     Local nTS1Row   , nTS1Col, nTSWidth
     Local nTG1Row   , nTG1Col, nTGWidth
     Local nTBRow    , nTBCol , nTBWidth
+
     Private __cBorderMB := ""
     // Private __cCorFundo := ""
-    
 
     DbSelectArea("SA2")
     SA2->(DbSetOrder(1))
@@ -243,11 +243,10 @@ User Function Tela2Pesagem(cAlias, nReg, nOpc)
 
     oDlg2 := MsDialog():New( 0/*nTop*/, 0/*nLeft*/, aSize[6]+20/*nBottom*/, aSize[5]/*nRight*/,;
         OemToAnsi("Dados da Pesagem do Caminhão")/*cCaption*/,/*uParam6*/, /*uParam7*/, /*uParam8*/,;
-        DS_MODALFRAME/* nOr(WS_VISIBLE,  WS_POPUP) *//*uParam9*/, /*nClrText*/, /*nClrBack*/,/*uParam12*/,;
+        /* nOr(WS_VISIBLE,  WS_POPUP) *//*uParam9*/, /*nClrText*/, /*nClrBack*/,/*uParam12*/,;
     /*oWnd*/, .T./*lPixel*/, /*uParam15*/, /*uParam16*/, /*uParam17*/,.F./*lTransparent*/ )
-    oDlg2:lEscClose := .F.
-    // ficou definido a permissao de sair no ESC sem salvar -- ANTERIOR 
-    // 03/05/2024 TOSHIO PEDIU PARA NÃO PERMITIR FECHAR NO ESC
+    oDlg2:lEscClose := .T.
+    // ficou definido a permissao de sair no ESC sem salvar
 
     __cCorFundo:=" background: #e6ffe6; "
     __cBorderMB:=" border: 2px solid green; border-radius: 20px; "
@@ -296,7 +295,7 @@ User Function Tela2Pesagem(cAlias, nReg, nOpc)
     oBtImprimir:SetCss( oBtCaptura:GetCss() )
 
     oBtSair := tButton():New(nTB1Row, nTB3Col:=nTB2Col+nTamCol+nDisBot, "SAIR (F4)", o2Panel,;
-        {||  nOpcA := 2, Iif(ZADSalvar(.F.), (AtualPsgemNF(), oDlg2:End()), .T.) }, nTBWidth, nB1Height/*nHeight*/,,,, .T./*lPixel*/)
+        {|| nOpcA := 2, Iif(ZADSalvar(.F.), (AtualPsgemNF(), oDlg2:End()), .T.) }, nTBWidth, nB1Height/*nHeight*/,,,, .T./*lPixel*/)
     oBtSair:SetCss( oBtCaptura:GetCss() )
 
     SetKey( VK_F10, { || U_PegaPeso(.T.) } )
@@ -305,9 +304,9 @@ User Function Tela2Pesagem(cAlias, nReg, nOpc)
 
     oDlg2:Activate( /*uParam1*/, /*uParam2*/, /*uParam3*/, .T./*lCentered*/, /* {|| nOpcA := 1, .T.	} *//*bValid*/,;
     /*uParam6*/, /* {||msgStop('iniciando ...')} *//*bInit*/, /*uParam8*/, /*uParam9*/ )
-    //If nOpcA == 0
-    //    Processa({|| ZADSalvar(.F.) },"Salvando Pesagem")
-    //EndIf
+    If nOpcA == 0
+        Processa({|| ZADSalvar(.F.) },"Salvando Pesagem")
+    EndIf
     RestArea(aArea)
 Return nil
 // Tela2Pesagem
@@ -382,20 +381,14 @@ Static Function AtualPsgemNF()
         dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),"TEMPSQL",.F.,.F.)
         While !TEMPSQL->(Eof())
             nLinAtu += 1
-
-            MBSaveLog():FULLWrite(, .F., "AtualPsgemNF Lock: Placa - "+ AllTrim(M->ZPB_PLACA) + " Peso Entrada - "   + AllTrim( cValToChar(M->ZPB_PESOE) ) + " Peso Saida - "   + AllTrim( cValToChar(M->ZPB_PESOS) ) )
-
             SD2->(DbGoTo(TEMPSQL->RECNO))
             RecLock("SD2", .F.)
             SD2->D2_XNRPSAG := xFilial("ZPB")+DtoS(M->ZPB_DATA)+M->ZPB_CODIGO
             SD2->D2_XPESLIQ := TEMPSQL->PESO_RATEADO
             SD2->D2_XDTABAT := DataValida(M->ZPB_DATAF+1, .T.)
             SD2->(MsUnlock())
-            
-            MBSaveLog():FULLWrite(, .F., "AtualPsgemNF Unlock: Placa - "+ AllTrim(M->ZPB_PLACA ) + " Peso Entrada - "   + AllTrim( cValToChar(M->ZPB_PESOE) ) + " Peso Saida - "   + AllTrim( cValToChar(M->ZPB_PESOS) ) )
 
             TEMPSQL->(DBSkip())
-
         EndDo
         TEMPSQL->(DbCloseArea())
     Next nI
@@ -422,9 +415,6 @@ User Function BuscaCurral()
     Local aArea   := GetArea()
     Local cCurral := CriaVar( 'ZPB_BAIA', .F.)
     Local _cQry   := ""
-
-    MBSaveLog():FULLWrite(, .F., "BuscaCurral Entrada: Placa - "+ AllTrim(M->ZPB_PLACA ) + " Peso - "   + AllTrim( cValToChar(M->ZPB_PESOE) ) )
-
     _cQry := " SELECT  DISTINCT D2_LOTECTL " + CRLF+;
         " FROM    SD2010 " + CRLF+;
         " WHERE   D2_FILIAL='" + xFilial('SD2') + "' " + CRLF+;
@@ -434,17 +424,11 @@ User Function BuscaCurral()
     If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador'
         MemoWrite("C:\totvs_relatorios\BuscaCurral.sql" , _cQry)
     EndIf
-    
     dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),"TEMPSQL",.F.,.F.)
-    
     if !TEMPSQL->(Eof())
         cCurral := TEMPSQL->D2_LOTECTL
     EndIf
-    
     TEMPSQL->(DbCloseArea())
-    
-    MBSaveLog():FULLWrite(, .F., "BuscaCurral Saida: Placa - "+ AllTrim(M->ZPB_PLACA ) + " Peso - "   + AllTrim( cValToChar(M->ZPB_PESOE) ) )
-
     RestArea(aArea)
 Return PadR(cCurral, TamSX3('ZPB_BAIA')[1])
 
@@ -502,26 +486,13 @@ Static Function ZADSalvar(lAuto)
 
     Default lAuto  := .T.
 
-    MBSaveLog():FULLWrite(, .F., "ZADSALVAR Manual: Placa - "+ AllTrim(M->ZPB_PLACA ) + " Peso - "   + AllTrim( cValToChar(M->ZPB_PESOE) ) )
-    MBSaveLog():FULLWrite(, .F., "ZADSALVAR Auto:   Placa - "+ AllTrim(M->ZPB_PLACA ) + " Peso - "   + AllTrim( cValToChar(M->ZPB_OPESOE) ) )
-    MBSaveLog():FULLWrite(, .F., "ZADSALVAR Manual: Placa - "+ AllTrim(M->ZPB_PLACA ) + " Peso - "   + AllTrim( cValToChar(M->ZPB_PESOS) ) )
-    MBSaveLog():FULLWrite(, .F., "ZADSALVAR Auto:   Placa - "+ AllTrim(M->ZPB_PLACA ) + " Peso - "   + AllTrim( cValToChar(M->ZPB_OPESOS) ) )
+    MBSaveLog():FULLWrite(, .F., "ZADSALVAR Entrada: " + AllTrim( cValToChar(M->ZPB_PESOE) ) )
+    MBSaveLog():FULLWrite(, .F., "ZADSALVAR Saida  : " + AllTrim( cValToChar(M->ZPB_PESOS) ) )
 
     If M->ZPB_PESOE == 0
-        MSGSTOP('<font color="#FF0000" size="5"><b>PESO DE ENTRADA NÃO INFORMADO. SAIDA BLOQUEADA.</b></font>', "Atenção")
+        Alert("Saida da Rotina Bloqueada. Peso nao informado.")
         Return .F.
     EndIf
-    
-    if !lAuto .AND. M->ZPB_PESOS==0
-        if !MSGYESNO('<font color="#FF0000" size="6"><b>PESO DE SAÍDA NÃO INFORMADO. DESEJA SAIR?</b></font>', "Atenção")
-            Return .F.
-        ENDIF
-    ENDIF
-
-    If lAuto .AND. M->ZPB_PESOS==0
-        MSGSTOP('<font color="#FF0000" size="5"><b>PESO DE SAÍDA NÃO INFORMADO. SAIDA BLOQUEADA.</b></font>', "Atenção")
-        Return .F.
-    ENDIF
 
     If lAuto .OR. M->ZPB_PESOE>0.AND.M->ZPB_PESOS>0
         If !Obrigatorio(aGets, aTela) .OR. !VldPesagem()
@@ -540,9 +511,9 @@ Static Function ZADSalvar(lAuto)
         ZPB->( DbSetOrder(1) )
         lRecLock:=!ZPB->(DbSeek( xFilial("ZPB") + cChave))
         RecLock( "ZPB", lRecLock )
-            ZPB->ZPB_FILIAL	:= xFilial('ZPB')
-            U_GrvCpo("ZPB")
-            ZPB->ZPB_STATUS := IiF(M->ZPB_PESOE>0.AND.M->ZPB_PESOS>0, "F", "1")
+        ZPB->ZPB_FILIAL	:= xFilial('ZPB')
+        U_GrvCpo("ZPB")
+        ZPB->ZPB_STATUS := IiF(M->ZPB_PESOE>0.AND.M->ZPB_PESOS>0, "F", "1")
         ZPB->(MsUnlock())
 
         // While __lSX8
@@ -563,11 +534,6 @@ Static Function ZADSalvar(lAuto)
     EndException
     EndTran()
     RestArea(aAreaZPB)
-
-    SetKey( VK_F10, NIL)
-    SetKey( VK_F11, NIL)
-    SetKey( VK_F4 , NIL)
-
 Return .T.
 
 /*--------------------------------------------------------------------------------,
@@ -681,7 +647,7 @@ Return .T.
                         Else
                             ZPB->ZPB_DATAF  := Date()
                             ZPB->ZPB_HORAF  := Time()
-                            ZPB->ZPB_OPESOS := nRetorno
+                                ZPB->ZPB_OPESOS := nRetorno
                             ZPB->ZPB_PESOS  := nRetorno
                             ZPB->ZPB_PESOL  := ABS( iIf(ValType(ZPB->ZPB_PESOE)=="U", 0, ZPB->ZPB_PESOE) - nRetorno)
                         EndIf

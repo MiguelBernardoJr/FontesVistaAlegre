@@ -60,7 +60,7 @@ Return aRotina
  |                                                                                |
  | Obs.:  -                                                                       |
  '--------------------------------------------------------------------------------*/
-User Function FTCAD01VA(cAlias, nReg, nOpc)
+User Function FTCAD01LV(cAlias, nReg, nOpc)
 
 Local aArea		 := GetArea()
 Local oDlg

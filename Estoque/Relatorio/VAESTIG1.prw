@@ -3,11 +3,6 @@
 #include 'RWMAKE.CH'
 #include 'protheus.ch'
 #include 'parmtype.ch'
-
-static oCellHorAlign    := FwXlsxCellAlignment():Horizontal()
-static oCellVertAlign   := FwXlsxCellAlignment():Vertical()
-static cTitulo          := "Relatório - Compra de Gado"
-
 /*---------------------------------------------------------------------------------,
  | Analista : Igor Gomes Oliveira                                                  |
  | Data		: 11.10.2021                                                           |
@@ -20,48 +15,26 @@ static cTitulo          := "Relatório - Compra de Gado"
  |---------------------------------------------------------------------------------|
  | Obs.     : U_VAESTIG1()                                                         |
  '---------------------------------------------------------------------------------*/
+
  USER FUNCTION VAESTIG1()
     Local cTimeINi  := Time()
     Local cStyle    := ""
     Local cXML      := ""
+    Local lTemDados := .T.
+    Local cPerg     := "VAESTIG1"
+    Private cTitulo     := "Relatório - Compra de Gado"
     Private cPath       := "C:\TOTVS_RELATORIOS\"
-    Private cPerg       := "VAESTIG1"
     Private cArquivo    := cPath + cPerg +;
                                     DToS(dDataBase)+;//converte a data para aaaammdd
                                     "_"+;
                                     StrTran(Subs(Time(),1,5),":","")+;
                                     ".xml"
-    Private oExcel      := nil
+    Private oExcelApp   := nil
     Private _cAliasG    := GetNextAlias()
 
     Private nHandle     := 0
     Private nHandAux    := 0
-    Private lTemDados   := .F. 
 
-    Private JFontHeader
-    Private JFontTitulo
-    Private JFontText
-    Private JFLeft
-    Private JFRight
-    Private JFCenter
-    Private JFData
-    Private jFormatTit
-    Private jFormatGD
-    Private jFormatTot
-    Private jFormatHead
-    Private jFM4d
-    Private jFMoeda
-    Private jFPercent
-    Private jFNum
-    Private jBorder
-    Private jNoBorder
-    Private jBHeaderLeft
-    Private jBHeaderRight
-    Private jBottomLeft
-    Private jBorderCenter
-    Private jBorderRight
-
-    DefinirFormatacao()
     GeraX1(cPerg)
 
     IF Pergunte(cPerg, .T.)
@@ -76,37 +49,44 @@ static cTitulo          := "Relatório - Compra de Gado"
                 MsgAlert('Não foi possível criar o diretório. Erro', CValToChar(FError()),'Aviso')
             ENDIF
         ENDIF
+    ENDIF
 
+    nHandle := FCREATE(cArquivo)
+    IF nHandle = -1
+        ConOut("Erro ao criar arquivo - ferror" + Str(FError()))
+    ELSE
+        cStyle  := U_defStyle()
         // Processar SQL
-        FWMsgRun(, {|| lTemDados := fLoadSql("Geral", @_cAliasG ) },;
-                        'Por Favor Aguarde...',;
-                        'Processando Banco de Dados - Recebimento')
+ 		FWMsgRun(, {|| lTemDados := fLoadSql("Geral", @_cAliasG ) },;
+					    'Por Favor Aguarde...',; 
+						'Processando Banco de Dados - Recebimento')
         IF lTemDados
-            oExcel := FwPrinterXlsx():New()
-            oExcel:Activate(cArquivo)
+            cXML    := U_CabXMLExcel(cStyle)
+
+            IF !Empty(cXML)
+                FWrite(nHandle, EncodeUTF8(cXML))
+                cXML := ""
+            ENDIF
 
             // Gerar primeira planilha
             FWMsgRun(, {|| fQuadro1() }, 'Gerando excel, Por favor, aguarde...')
-            
-            lRet := oExcel:toXlsx()
 
-            nRet := ShellExecute("open", SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx", "", "", 1)
+            // Final - encerramento do arquivo
+            FWrite(nHandle, EncodeUTF8('</Workbook>'))
 
-            oExcel:EraseBaseFile()
+            FClose(nHandle)
 
-            //Se houver algum erro
-            If nRet <= 32
-                MsgStop("Não foi possível abrir o arquivo "+SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx"+ "!", "Atenção")
-            EndIf 
-            
-            oExcel:DeActivate()
-
-            IF oExcel <> NIL
-                oExcel := Nil
+            IF ApoLeClient("MSExcel") // Verifica se o excel está instado
+                oExcelApp   := MsExcel():New()
+                oExcelApp:WorkBooks:Open(cArquivo)
+                oExcelApp:SetVisible(.T.)
+                oExcelApp:Destroy()
+            ELSE
+                MsgAlert("O Excel não foi encontrado. Arquivo" + cArquivo + " gerado em " + cPath + ".", "MsExcel não encontrado")
             ENDIF
         ELSE
             MsgAlert("Os parametros informados não retornaram nenhuma informação do banco de dados." + CRLF + ;
-            "Por isso o excel não será aberto automaticamente.", "Dados não localizados")
+			"Por isso o excel não será aberto automaticamente.", "Dados não localizados")
         ENDIF
 
         (_cAliasG)->(DbCloseArea())
@@ -144,7 +124,6 @@ STATIC FUNCTION GeraX1(cPerg)
 	AADD(aRegs,{cPerg,"03","Codigo de          ?",Space(20),Space(20),"mv_ch3", TamSX3("ZCC_CODIGO")[3], TamSX3("ZCC_CODIGO")[1], TamSX3("ZCC_CODIGO")[2],0,"G","","mv_par03","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
 	AADD(aRegs,{cPerg,"04","Codigo ate         ?",Space(20),Space(20),"mv_ch4", TamSX3("ZCC_CODIGO")[3], TamSX3("ZCC_CODIGO")[1], TamSX3("ZCC_CODIGO")[2],0,"G","","mv_par04","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
     AADD(aRegs,{cPerg,"05","Boi Gordo          ?",Space(20),Space(20),"mv_ch5", TamSX3("ZCC_GORDO")[3] , TamSX3("ZCC_GORDO")[1] , TamSX3("ZCC_GORDO")[2] ,0,"C","","mv_par05","Sim","Sim","Sim","","Não","Não","Não","","Ambos","Ambos","Ambos","Ambos","","","","","","","","","","","","","","","","","",""})
-    AADD(aRegs,{cPerg,"06","Quebra de peso:     ",Space(20),Space(20),"mv_ch6", "N"                    , 3                      , 0                      ,0,"G","","mv_par06","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
 
 //Se quantidade de perguntas for diferente, apago todas
     SX1 -> (DbGoTop())
@@ -187,7 +166,6 @@ STATIC FUNCTION fLoadSQL(cTipo, _cAlias)
         _cQry   := " WITH PRINCIPAL AS ( " + CRLF
         _cQry   += "    SELECT  ZBC.ZBC_FILIAL  FILIAL" + CRLF
         _cQry   += "            ,ZBC.ZBC_CODIGO     CODIGO" + CRLF
-        _cQry   += "            ,ZBC.ZBC_VERSAO     VERSAO" + CRLF
 		_cQry   += "            ,ZBC.ZBC_CODFOR     COD_FORN" + CRLF
 		_cQry   += "            ,ZBC.ZBC_LOJFOR     LOJ_FORN" + CRLF
 		_cQry   += "            ,ZCC.ZCC_NOMFOR     FORNECEDOR " + CRLF
@@ -195,7 +173,6 @@ STATIC FUNCTION fLoadSQL(cTipo, _cAlias)
 		_cQry   += "            ,SA2.A2_EST         ESTADO" + CRLF
 		_cQry   += "            ,ZBC.ZBC_PRODUT     PRODUTO" + CRLF
 		_cQry   += "            ,ZBC_PRDDES         DESCRICAO" + CRLF
-		_cQry   += "            ,ZBC_PEDIDO         PEDIDO" + CRLF
 		_cQry   += "            ,CASE WHEN ZBC.ZBC_TPNEG = 'P'   THEN   'PESO'" + CRLF
  		_cQry   += "                  WHEN ZBC.ZBC_TPNEG = 'K'   THEN   'KG'" + CRLF
     	_cQry   += "                  WHEN ZBC.ZBC_TPNEG = 'Q'   THEN   'CABECA'"   + CRLF
@@ -216,7 +193,7 @@ STATIC FUNCTION fLoadSQL(cTipo, _cAlias)
 		_cQry   += "            ,ZBC_VLRCOM          COMISSAO" + CRLF
         _cQry   += "            ,CASE WHEN ZCC.ZCC_GORDO IN ('S') THEN  'SIM' " + CRLF
         _cQry   += "                 ELSE 'NÃO' END AS BOIGORDO " + CRLF
-        _cQry   += "    FROM " + RetSqlName("ZBC") +" ZBC "+ CRLF
+        _cQry   += "    FROM " + RetSqlName("ZBC") +" ZBC "+ CRLF 
         _cQry   += "    JOIN " + RetSqlName("ZCC") + " ZCC ON"+ CRLF
         _cQry   += "                                   ZCC.ZCC_FILIAL = ZBC.ZBC_FILIAL"+ CRLF 
         _cQry   += "                                   AND ZCC.ZCC_CODIGO = ZBC.ZBC_CODIGO "+ CRLF
@@ -251,7 +228,6 @@ STATIC FUNCTION fLoadSQL(cTipo, _cAlias)
     EndIf
         _cQry   += " GROUP BY ZBC.ZBC_FILIAL"+ CRLF
         _cQry   += "                ,ZBC.ZBC_CODIGO"+ CRLF
-        _cQry   += "                ,ZBC.ZBC_VERSAO"+ CRLF
 		_cQry   += "                ,ZBC.ZBC_CODFOR"+ CRLF
 		_cQry   += "                ,ZBC.ZBC_LOJFOR"+ CRLF
         _cQry   += "                ,ZCC.ZCC_NOMFOR"+ CRLF
@@ -262,7 +238,6 @@ STATIC FUNCTION fLoadSQL(cTipo, _cAlias)
 		_cQry   += "                ,ZBC.ZBC_TPNEG"+ CRLF
 		_cQry   += "                ,ZBC.ZBC_QUANT"+ CRLF
 		_cQry   += "                ,ZBC.ZBC_PESO"+ CRLF
-		_cQry   += "                ,ZBC_PEDIDO"+ CRLF
 		_cQry   += "                ,ZBC_REND"+ CRLF
 		_cQry   += "                ,ZBC.ZBC_ARROV"+ CRLF
 		_cQry   += "                ,ZBC_VLFRPG"+ CRLF
@@ -271,80 +246,43 @@ STATIC FUNCTION fLoadSQL(cTipo, _cAlias)
 		_cQry   += "                ,SD1.D1_COD"+ CRLF
         _cQry   += "                ,ZCC_GORDO"+ CRLF
         _cQry   += " ) " + CRLF
-		_cQry   += " SELECT P.*
-        _cQry   += "       , SUM(ISNULL(SD1C.D1_TOTAL,0)) GADO_COMPLEMENTO  " + CRLF 
-        _cQry   += " 	     , ISNULL(ZAB.ZAB_DTABAT,'') [DATAABATE] " + CRLF 
-        _cQry   += " 	     , ISNULL((SUM(ZAB_PESOLQ)),0)/SUM(ZAB_QTABAT) * QTDE [PESOLIQ] " + CRLF 
-        _cQry   += " 	     , ISNULL((SUM(ZAB_QTABAT)),0) [CABECA] " + CRLF 
-        _cQry   += " 	     , ISNULL((SUM(ZAB_VLRARR)),0) [VLRARR] " + CRLF 
-        _cQry   += " 	     , ISNULL((SUM(ZAB_VLRTOT)),0)/SUM(ZAB_QTABAT) * QTDE  [VLRTOTAL] " + CRLF 
-        _cQry   += " 	     , ISNULL((SELECT STRING_AGG(D2_DOC,' | ')  " + CRLF 
-        _cQry   += " 	              FROM "+RetSqlName("SD2")+" SD2 " + CRLF 
-        _cQry   += " 		         WHERE D2_FILIAL = ZAB_FILIAL " + CRLF 
-        _cQry   += " 				   AND D2_XCODABT = ZAB_CODIGO " + CRLF 
-        _cQry   += " 				   --AND D2_XDTABAT = ZAB_DTABAT " + CRLF 
-        _cQry   += " 				   AND SD2.D_E_L_E_T_ =' ' ),'') [NF_V_BET] " + CRLF 
-        _cQry   += " 	  , ISNULL((SELECT STRING_AGG(D1_DOC,' | ')  " + CRLF 
-        _cQry   += " 	              FROM "+RetSqlName("SD1")+" SD1   " + CRLF 
-        _cQry   += " 				 WHERE D1_FILIAL = FILIAL " + CRLF 
-        _cQry   += " 				   AND D1_FORNECE = P.COD_FORN " + CRLF 
-        _cQry   += " 				   AND D1_LOJA = P.LOJ_FORN  " + CRLF 
-        _cQry   += " 				   AND D1_PEDIDO = P.PEDIDO " + CRLF 
-        _cQry   += " 				   AND SD1.D_E_L_E_T_ = ' '  " + CRLF 
-        _cQry   += " 				   ),'') [NF_V_PEC] " + CRLF 
-        _cQry   += "    FROM PRINCIPAL P  " + CRLF 
-        _cQry   += "  LEFT JOIN "+RetSqlName("SD1")+" SD1C ON  " + CRLF 
-        _cQry   += " 	        SD1C.D1_FILIAL                      = FILIAL " + CRLF 
-        _cQry   += " 		AND SD1C.D1_FORNECE+SD1C.D1_LOJA    = P.COD_FORN+P.LOJ_FORN  " + CRLF 
-        _cQry   += " 	    AND SD1C.D1_COD                     = P.PRODUTO " + CRLF 
-        _cQry   += " 	    AND SD1C.D1_TIPO IN ('C')  " + CRLF 
-        _cQry   += " 	    AND P.COD_FORN                      <> ' ' " + CRLF 
-        _cQry   += " 	    AND SD1C.D_E_L_E_T_                 = ' '  " + CRLF 
-        _cQry   += "   LEFT JOIN "+RetSqlName("ZAB")+" ZAB ON  " + CRLF 
-        _cQry   += " 		    ZAB_FILIAL = FILIAL " + CRLF 
-        _cQry   += " 		AND ZAB.ZAB_CODZCC = CODIGO " + CRLF 
-        _cQry   += " 		AND ZAB.ZAB_VERZCC = VERSAO " + CRLF 
-        _cQry   += " 		AND ZAB.ZAB_FORZCC = COD_FORN " + CRLF 
-        _cQry   += " 		AND ZAB.ZAB_LOJZCC = LOJ_FORN " + CRLF 
-        _cQry   += " 		AND ZAB.D_E_L_E_T_ = ' '   " + CRLF 
-        _cQry   += "    GROUP BY  " + CRLF 
-        _cQry   += "            P.FILIAL " + CRLF 
-        _cQry   += "          , P.CODIGO " + CRLF 
-        _cQry   += "          , P.VERSAO " + CRLF 
-        _cQry   += "          , P.COD_FORN " + CRLF 
-        _cQry   += "          , P.LOJ_FORN " + CRLF 
-        _cQry   += "          , P.FORNECEDOR " + CRLF 
-        _cQry   += "          , P.MUNICIPIO " + CRLF 
-        _cQry   += "          , P.ESTADO " + CRLF 
-        _cQry   += "          , P.PRODUTO " + CRLF 
-        _cQry   += "          , P.DESCRICAO " + CRLF 
-        _cQry   += "          , P.NEGOCIACAO " + CRLF 
-        _cQry   += "          , P.QTDE " + CRLF 
-        _cQry   += "          , P.PESO_COMPRA " + CRLF 
-        _cQry   += "          , P.PESO_MEDIO " + CRLF 
-        _cQry   += "          , P.PEDIDO " + CRLF 
-        _cQry   += "          , P.RENDIMENTO " + CRLF 
-        _cQry   += "          , P.VALOR " + CRLF 
-        _cQry   += "          , P.PESO_CHEGADA " + CRLF 
-        _cQry   += "          , P.PESOMEDIO " + CRLF 
-        _cQry   += "          , P.DATANF " + CRLF 
-        _cQry   += "          , P.GADO_TOTAL " + CRLF 
-        _cQry   += "          , P.GADO_ICMS_TOTAL " + CRLF 
-        _cQry   += "          , P.GADO_SEM_ICMS " + CRLF 
-        _cQry   += "          , P.GADO_TOTAL " + CRLF 
-        _cQry   += "          , P.VALOR_FRETE " + CRLF 
-        _cQry   += "          , P.ICMS_FRETE " + CRLF 
-        _cQry   += "          , P.COMISSAO " + CRLF 
-        _cQry   += "          , P.BOIGORDO " + CRLF 
-        _cQry   += "          , ZAB.ZAB_FILIAL " + CRLF 
-        _cQry   += " 		    , ZAB.ZAB_CODIGO " + CRLF 
-        _cQry   += " 		    , ZAB.ZAB_QTABAT " + CRLF 
-        _cQry   += " 	        , ZAB.ZAB_DTABAT " + CRLF 
-        _cQry   += " 	        , ZAB.ZAB_PESOLQ " + CRLF 
-        _cQry   += " 	        , ZAB.ZAB_VLRARR " + CRLF 
-        _cQry   += " 	        , ZAB.ZAB_DESCON " + CRLF 
-        _cQry   += " 	        , ZAB.ZAB_VLRTOT " + CRLF 
-        _cQry   += "          ORDER BY DATANF " + CRLF 
+		_cQry   += " SELECT P.*, SUM(ISNULL(SD1C.D1_TOTAL,0)) GADO_COMPLEMENTO " + CRLF
+		_cQry   += "        FROM PRINCIPAL P " + CRLF
+		_cQry   += "            LEFT JOIN " +RetSqlName("SD1") + " SD1C ON " + CRLF
+		_cQry   += "				                               SD1C.D1_FILIAL                      = FILIAL" + CRLF
+		_cQry   += "			                                   AND SD1C.D1_FORNECE+SD1C.D1_LOJA    = P.COD_FORN+P.LOJ_FORN " + CRLF
+		_cQry   += "			                                   AND SD1C.D1_COD                     = P.PRODUTO" + CRLF
+		_cQry   += "			                                   AND SD1C.D1_TIPO IN ('C') " + CRLF
+		_cQry   += "			                                   AND P.COD_FORN                      <> ' '" + CRLF
+		_cQry   += "			                                   AND SD1C.D_E_L_E_T_                 = ' ' " + CRLF
+		_cQry   += "                GROUP BY " + CRLF
+		_cQry   += "                P.FILIAL" + CRLF
+		_cQry   += "                ,P.CODIGO" + CRLF
+        _cQry   += "                ,P.COD_FORN" + CRLF
+		_cQry   += "                ,P.LOJ_FORN" + CRLF
+		_cQry   += "                ,P.FORNECEDOR" + CRLF
+		_cQry   += "                ,P.MUNICIPIO" + CRLF
+		_cQry   += "                ,P.ESTADO" + CRLF
+		_cQry   += "                ,P.PRODUTO" + CRLF
+		_cQry   += "                ,P.DESCRICAO" + CRLF
+		_cQry   += "                ,P.NEGOCIACAO" + CRLF
+		_cQry   += "                ,P.QTDE" + CRLF
+		_cQry   += "                ,P.PESO_COMPRA" + CRLF
+		_cQry   += "                ,P.PESO_MEDIO" + CRLF
+		_cQry   += "                ,P.RENDIMENTO" + CRLF
+		_cQry   += "                ,P.VALOR" + CRLF
+		_cQry   += "                ,P.PESO_CHEGADA" + CRLF
+		_cQry   += "                ,P.PESOMEDIO" + CRLF
+		_cQry   += "                ,P.DATANF" + CRLF
+		_cQry   += "                ,P.GADO_TOTAL" + CRLF
+		_cQry   += "                ,P.GADO_ICMS_TOTAL" + CRLF
+		_cQry   += "                ,P.GADO_SEM_ICMS" + CRLF
+		_cQry   += "                ,P.GADO_TOTAL" + CRLF
+		_cQry   += "                ,P.VALOR_FRETE" + CRLF
+		_cQry   += "                ,P.ICMS_FRETE" + CRLF
+		_cQry   += "                ,P.COMISSAO" + CRLF
+        _cQry   += "                ,P.BOIGORDO" + CRLF
+		_cQry   += "       ORDER BY DATANF" + CRLF
     ENDIF
 
     IF lower(cUserName) $ 'ioliveira,bernardo,mbernardo,atoshio,admin,administrador'
@@ -356,339 +294,172 @@ STATIC FUNCTION fLoadSQL(cTipo, _cAlias)
 RETURN !(_cAlias)->(Eof())
 // FIM floadSQL
 
-Static Function fQuadro1()
-    Local cWorkSheet    := " "
-    Local nRow          := 1
-    Local nCol          := 1
-    Local nI
-    Local aHeader    := { 'Filial'				    ,;
-                            'Código' 			    ,;
-                            'Código do Fornecedor' 	,;
-                            'Loja' 	                ,;
-                            'Fornecedor' 			,;
-                            'Município'		        ,;
-                            'Estado'			    ,;
-                            'Produto'				,;
-                            'Descrição'				,;
-                            'Negociação'			,;
-                            'Quantidade'			,;
-                            'Peso de Compra'	    ,;
-                            'Peso Médio'	    	,;
-                            'Rendimento'		    ,;
-                            'Valor'		            ,;
-                            'DataNF'				,;
-                            'Peso de Chegada'	    ,;
-                            'Peso Médio'			,;
-                            'R$ Total'		        ,;
-                            'Sem ICMS'		        ,;
-                            'ICMS Total'		    ,;
-                            'Frete'   		        ,;
-                            'ICMS Frete'		    ,;
-                            'Comissão'		        ,;
-                            'Complemento'		    ,;
-                            'R$ @'		            ,;
-                            'Valor da @ pelo peso chegada + despesas',;
-                            'Valor Cabeça'          ,;
-                            'Boi Gordo?'		     }
-    Local nPosQPeso := 0
+STATIC FUNCTION fQuadro1()
+    LOCAL nRegistros    := 0
+    LOCAL cXML          := ""
+    LOCAL cWorkSheet    := ""
 
-    if MV_PAR05 != 2 
-        aAdd(aHeader, 'Data Abate'      )
-        aAdd(aHeader, 'Peso Liquido'	)
-        aAdd(aHeader, 'Qtd Cabeça'	    )
-        aAdd(aHeader, 'Valor @'		    )
-        aAdd(aHeader, 'Valor Total'		)
-        aAdd(aHeader, 'NFS V@ x Better'	)
-        aAdd(aHeader, 'NFS V@ x Pec'	)
+
+    (_cAliasG)->(DbEval({|| nRegistros++}))
+
+    (_cAliasG) -> (DbGoTop())
+
+    IF  !(_cAliasG)->(DbGoTop())
+
+        cWorkSheet  := "Relatório - Compra de Gado"
+
+        cXML += U_prtCellXML( 'Worksheet', cWorkSheet)
+
+        cXML += ' <Names>' + CRLF
+        cXML += ' <NamedRange ss:Name="_FilterDatabase"'+ CRLF
+        cXML += ' ss:RefersTo="='+cWorkSheet+'!R1C1:R'+CValToChar(nRegistros+1)+'C25"'+CRLF
+        cXML += 'ss:Hidden="1"/>' + CRLF
+        cXML += '</Names>'+CRLF
         
-        nPosQPeso := Len(aHeader) - 11
-    else
-        nPosQPeso := Len(aHeader) - 4
-    endif
- 
-    cWorkSheet := cTitulo
+        cXML += '<Table>'+CRLF
+        cXML += ' <Column ss:Index="3" ss:AutoFitWidth="0" ss:Width="60"/>'+CRLF
+        cXML += ' <Column ss:Width="52.5"/>'+CRLF
+        cXML += ' <Column ss:Width="184.5"/>'+CRLF
+        cXML += ' <Column ss:Width="160.5"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="39"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="90"/>'+CRLF
+        cXML += ' <Column ss:Width="74.25"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="63.75"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="58.5"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="52.5"/>'+CRLF
+        cXML += ' <Column ss:Width="44.25"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="61.5"/>'+CRLF
+        cXML += ' <Column ss:Width="52.5"/>'+CRLF
+        cXML += ' <Column ss:Width="51.75"/>'+CRLF
+        cXML += ' <Column ss:Width="57.75"/>'+CRLF
+        cXML += ' <Column ss:Width="47.25"/>'+CRLF
+        cXML += ' <Column ss:Width="65.25" ss:Span="1"/>'+CRLF
+        cXML += ' <Column ss:Index="21" ss:AutoFitWidth="0" ss:Width="62.25"/>'+CRLF
+        cXML += ' <Column ss:Width="57.75"/>'+CRLF
+        cXML += ' <Column ss:Width="52.5"/>'+CRLF
+        cXML += ' <Column ss:Width="57.75"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="70.5"/>'+CRLF
+        cXML += ' <Column ss:AutoFitWidth="0" ss:Width="68.25"/>'+CRLF
 
-    oExcel:AddSheet(cWorkSheet)
+        cXML += U_prtCellXML( 'Titulo'/* cTag */, /* cName */, '38'/* cHeight */, /* cIndex */, '16'/* cMergeAcross */, 's62'/* cStyleID */, 'String'/* cType */, /* cFormula */, cTitulo/* cInfo */, /* cPanes */)
+	    // Titulo
+	    cXML += U_prtCellXML( 'Row',,'33' )
+/*01*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Filial'				    ,,.T. )
+/*02*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Código' 			        ,,.T. )
+/*03*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Código do Fornecedor' 	,,.T. )
+/*04*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Loja' 	                ,,.T. )
+/*05*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Fornecedor' 			    ,,.T. )
+/*06*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Município'		        ,,.T. )
+/*07*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Estado'			        ,,.T. )
+/*08*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Produto'				    ,,.T. )
+/*09*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Descrição'				,,.T. )
+/*10*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Negociação'			    ,,.T. )
+/*11*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Quantidade'			    ,,.T. )
+/*12*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Peso de Compra'	        ,,.T. )
+/*13*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Peso Médio'	    	    ,,.T. )
+/*14*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Rendimento'		        ,,.T. )
+/*14*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Valor'		            ,,.T. )
+/*15*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'DataNF'				    ,,.T. )
+/*16*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Peso de Chegada'	        ,,.T. )
+/*17*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Peso Médio'			    ,,.T. )
+/*18*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'R$ Total'		        ,,.T. )
+/*19*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Sem ICMS'		        ,,.T. )
+/*20*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'ICMS Total'		        ,,.T. )
+/*21*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Frete'   		        ,,.T. )
+/*22*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'ICMS Frete'		        ,,.T. )
+/*23*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Comissão'		        ,,.T. )
+/*24*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Complemento'		        ,,.T. )
+/*25*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'R$ @'		            ,,.T. )
+/*26*/  cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Boi Gordo?'		        ,,.T. )
+	    cXML += U_prtCellXML( '</Row>' )
 
-    oExcel:SetCellsFormatConfig(jFormatTit)
-    oExcel:SetFontConfig(JFontTitulo)
-    oExcel:MergeCells(nRow, nCol, nRow+1, Len(aHeader))
+    	//fQuadro1
+	While !(_cAliasG)->(Eof())
+
+	  cXML += U_prtCellXML( 'Row' )
+/*01*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->FILIAL )                                            ,,.T. )//Filial'		
+/*02*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->CODIGO)                                             ,,.T. )//'Código   
+/*03*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->COD_FORN )                                           ,,.T. )//'Código do Fornecedor'
+/*04*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->LOJ_FORN )                                           ,,.T. )//'Loja'		
+/*05*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->FORNECEDOR )                                        ,,.T. )//'Fornecedor'	   
+/*06*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->MUNICIPIO )                                         ,,.T. )//'Município'	   
+/*07*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->ESTADO)                                             ,,.T. )//'Estado'			
+/*08*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->PRODUTO)                                            ,,.T. )//'Produto'			
+/*09*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->DESCRICAO )		                                    ,,.T. )//'Descrição'		
+/*10*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->NEGOCIACAO )	                                    ,,.T. )//'Negociação'			
+/*11*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sSemDig', 'Number',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->QTDE )			                                    ,,.T. )//'Quantidade'	    
+/*12*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->PESO_COMPRA )	                                    ,,.T. )//'Peso de Compra'	    	
+/*13*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->PESO_MEDIO )	                                    ,,.T. )//'Peso Médio'		       
+/*14*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sSemDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->RENDIMENTO )	                                    ,,.T. )//'Rendimento'			
+/*15*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->VALOR)		                                        ,,.T. )//'Valor'   
+/*16*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sData', 'DateTime', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->DATANF)  		                                    ,,.T. )//'DataNF'			
+/*17*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->PESO_CHEGADA)	                                    ,,.T. )//'Peso de Chegada'		   
+/*18*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->PESOMEDIO)		                                    ,,.T. )//'Peso Médio'	       
+/*19*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->GADO_TOTAL	)	                                    ,,.T. )//'R$ Total'		   	
+/*20*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->GADO_SEM_ICMS)	                                    ,,.T. )//'Sem ICMS'		   
+/*21*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->GADO_ICMS_TOTAL)                                    ,,.T. )//'ICMS Total'		     
+/*22*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->VALOR_FRETE)	                                    ,,.T. )//'Frete'		   
+/*23*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->ICMS_FRETE)		                                    ,,.T. )//'ICMS Frete'	       
+/*24*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->COMISSAO)		                                    ,,.T. )//'Comissão'		       
+/*25*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->GADO_COMPLEMENTO)                                   ,,.T. )//'Complemento'
+/*26*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/ "=IF(RC[-14]&gt;0,&#10;       (RC[-7]+RC[-4]+RC[-3]+RC[-2]+RC[-1])/(RC[-14]*(RC[-12]/100))*15,&#10;       (  (RC[-7]+RC[-4]+RC[-3]+RC[-2]+RC[-1])    /  ((RC[-9]+(R1C26*RC[-15])) *  (IF(RC[-12]&gt;0,RC[-12],50)/100) ))*15)",   ,,.T. )
+///*26*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/ "=IFERROR((RC[-7]+RC[-4]+RC[-3]+RC[-2]+RC[-1])/(RC[-14]*(RC[-12]/100))*15,0)",   ,,.T. )
+/*27*/cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto', 'String',  /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->BOIGORDO )	                                    ,,.T. )//'Boi Gordo'			
+      cXML += U_prtCellXML( '</Row>' )		
     
-    oExcel:SetText(nRow, nCol, cWorkSheet )
+		(_cAliasG)->(DbSkip())
+		
+		If !Empty(cXML)
+			FWrite(nHandle, EncodeUTF8( cXML ) )
+		EndIf
+		cXML := ""
 
-    nRow += 2
-    nCol := nPosQPeso - 5
-
-    oExcel:MergeCells(nRow, nCol, nRow, nPosQPeso)
-
-    oExcel:SetCellsFormatConfig(jFormatHead)
-    oExcel:SetFontConfig(JFontHeader)
-    oExcel:SetValue(nRow    , nCol, "Estimativa de quebra de peso do gado")
-
-    nCol := nPosQPeso
-    oExcel:SetFontConfig(JFontText)
-    oExcel:SetBorderConfig(jBorder)
-    oExcel:SetCellsFormatConfig(JFNum)
-    oExcel:SetValue(nRow    , ++nCol, MV_PAR06)
-
-    
-    nRow += 1
-    nCol := 1
-
-    oExcel:SetCellsFormatConfig(jFormatHead)
-    oExcel:SetFontConfig(JFontHeader)
-
-    For nI := nCol to Len(aHeader)
-        oExcel:SetValue(nRow, nI, aHeader[nI])
-    Next nI
-    
-    oExcel:SetCellsFormatConfig(JFLeft)
-    oExcel:SetBorderConfig(jBorder)
-    oExcel:SetFontConfig(jFontText)
-    While !(_cAliasG)->(Eof())
-
-        nRow += 1
-        nCol := 1
-        oExcel:SetCellsFormatConfig(JFLeft)
-        oExcel:SetValue(nRow, nCol  , AllTrim((_cAliasG)->FILIAL     )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->CODIGO     )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->COD_FORN   )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->LOJ_FORN   )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->FORNECEDOR )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->MUNICIPIO  )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->ESTADO     )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->PRODUTO    )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->DESCRICAO  )   )
-        oExcel:SetValue(nRow, ++nCol, AllTrim((_cAliasG)->NEGOCIACAO )   )
-
-        jFNum['custom_format']     := "###,###,##0.00"
-        oExcel:SetCellsFormatConfig(jFNum)
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->QTDE          )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->PESO_COMPRA   )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->PESO_MEDIO    )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->RENDIMENTO    )
-        
-        oExcel:SetCellsFormatConfig(jFMoeda)
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->VALOR     )
-        
-        oExcel:SetCellsFormatConfig(JFData)
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->DATANF    )
-
-        jFNum['custom_format']     := "###,###,##0.00"
-        oExcel:SetCellsFormatConfig(jFNum)
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->PESO_CHEGADA      )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->PESOMEDIO         )
-
-        oExcel:SetCellsFormatConfig(jFMoeda)
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->GADO_TOTAL        )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->GADO_SEM_ICMS     )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->GADO_ICMS_TOTAL   )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->VALOR_FRETE       )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->ICMS_FRETE		)
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->COMISSAO		    )
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->GADO_COMPLEMENTO  )
-        
-        cRow := cValToChar(nRow)
-        oExcel:SetFormula(nRow, ++nCol, "=IF(L"+cRow+">0, " +;
-                                        "(S"+cRow+"+V"+cRow+"+W"+cRow+"+X"+cRow+"+Y"+cRow+")/(L"+cRow+"*(N"+cRow+"/100))*15, " +;
-                                        "((S"+cRow+"+V"+cRow+"+W"+cRow+"+X"+cRow+"+Y"+cRow+")    /  ((Q"+cRow+"+($Z$3*K"+cRow+")) *  (IF(N"+cRow+">0,N"+cRow+",50)/100) ))*15) " )  
-        
-        oExcel:SetFormula(nRow, ++nCol, "=IF(Q"+cRow+"=0,Z"+cRow+",((S"+cRow+"+V"+cRow+"+W"+cRow+"+X"+cRow+"+Y"+cRow+")/K"+cRow+")/R"+cRow+"*30)" )
-        
-        oExcel:SetFormula(nRow, ++nCol, "=SUM(S"+cRow+"+V"+cRow+"+W"+cRow+"+X"+cRow+"+Y"+cRow+")/K"+cRow+"" )
-
-        oExcel:SetCellsFormatConfig(JFLeft)
-        oExcel:SetValue(nRow, ++nCol, (_cAliasG)->BOIGORDO		    )
-        
-        IF MV_PAR05 != 2 
-            oExcel:SetCellsFormatConfig(JFData)
-            oExcel:SetValue(nRow, ++nCol, iif(AllTRIM((_cAliasG)->DATAABATE) != '',sTod((_cAliasG)->DATAABATE),""))
-
-            oExcel:SetCellsFormatConfig(jFNum)
-            oExcel:SetValue(nRow, ++nCol, (_cAliasG)->PESOLIQ  )
-            oExcel:SetValue(nRow, ++nCol, (_cAliasG)->CABECA  )
-
-            oExcel:SetCellsFormatConfig(jFMoeda)
-            oExcel:SetValue(nRow, ++nCol, (_cAliasG)->VLRARR  )
-            oExcel:SetValue(nRow, ++nCol, (_cAliasG)->VLRTOTAL  )
-            
-            oExcel:SetCellsFormatConfig(JFLeft)
-            oExcel:SetValue(nRow, ++nCol, AllTRIM((_cAliasG)->NF_V_BET)  )
-            oExcel:SetValue(nRow, ++nCol, AllTRIM((_cAliasG)->NF_V_PEC)  )
-
-        ENDIF
-
-        (_cAliasG)->(DbSkip())
 	EndDo
+    //Linha média Geral 
+    cXML += ' <Row> ' +CRLF
+    cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,'25',/*cMergeAcross*/,'s65',     'String',  /*cFormula*/,"Média Geral"                               ,,.T. )
+    cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,'26',/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[-"+CValToChar(nRegistros+1)+"]C:R[-1]C)",  ,,.T. )
+    cXML += ' </Row> ' +CRLF    
 
-    oExcel:ApplyAutoFilter(4,1,nRow,Len(aHeader))
+    //fim da tabela
+    cXML += '</Table>'+CRLF
+    cXML += ' <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">'+CRLF
+    cXML += '  <PageSetup>'+CRLF
+    cXML += '   <Header x:Margin="0.31496062000000002"/>'+CRLF
+    cXML += '   <Footer x:Margin="0.31496062000000002"/>'+CRLF
+    cXML += '   <PageMargins x:Bottom="0.78740157499999996" x:Left="0.511811024"'+CRLF
+    cXML += '    x:Right="0.511811024" x:Top="0.78740157499999996"/>'+CRLF
+    cXML += '  </PageSetup>'+CRLF
+    cXML += '  <Unsynced/>'+CRLF
+    cXML += '  <Print>'+CRLF
+    cXML += '   <ValidPrinterInfo/>'+CRLF
+    cXML += '   <PaperSizeIndex>9</PaperSizeIndex>'+CRLF
+    cXML += '   <VerticalResolution>0</VerticalResolution>'+CRLF
+    cXML += '  </Print>'+CRLF
+    cXML += '  <Selected/>'+CRLF
+    cXML += '  <FreezePanes/>'+CRLF
+    cXML += '  <FrozenNoSplit/>'+CRLF
+    cXML += '  <SplitHorizontal>2</SplitHorizontal>'+CRLF
+    cXML += '  <TopRowBottomPane>2</TopRowBottomPane>'+CRLF
+    cXML += '  <ActivePane>2</ActivePane>'+CRLF
+    cXML += '  <Panes>'+CRLF
+    cXML += '   <Pane>'+CRLF
+    cXML += '    <Number>3</Number>'+CRLF
+    cXML += '   </Pane>'+CRLF
+    cXML += '   <Pane>'+CRLF
+    cXML += '    <Number>2</Number>'+CRLF
+    cXML += '    <ActiveRow>1</ActiveRow>'+CRLF
+    cXML += '   </Pane>'+CRLF
+    cXML += '  </Panes>'+CRLF
+    cXML += '  <ProtectObjects>False</ProtectObjects>'+CRLF
+    cXML += '  <ProtectScenarios>False</ProtectScenarios>'+CRLF
+    cXML += ' </WorksheetOptions>'+CRLF
+    cXML += '</Worksheet>'+CRLF
+
+    If !Empty(cXML)
+		FWrite(nHandle, EncodeUTF8( cXML ) )
+	EndIf
+	cXML := ""
     
-    nRow += 1
-
-    jFormatTot['custom_format']     := "###,##0.00"
-    oExcel:SetCellsFormatConfig(jFormatTot)
-    oExcel:SetFormula(nRow, 11, "=SUBTOTAL(9,K5:K"+cValToChar(nRow-1)+")") 
-    oExcel:SetFormula(nRow, 12, "=SUBTOTAL(9,L5:L"+cValToChar(nRow-1)+")") 
-    
-    oExcel:SetFormula(nRow, 26, "=SUBTOTAL(1,Z5:Z"+cValToChar(nRow-1)+")") 
-    oExcel:SetFormula(nRow, 27, "=SUBTOTAL(1,AA5:AA"+cValToChar(nRow-1)+")") 
-    oExcel:SetFormula(nRow, 28, "=SUBTOTAL(1,AB5:AB"+cValToChar(nRow-1)+")") 
-Return 
-
-
-Static Function DefinirFormatacao()
-    Local cCVerde       := '00A75D'
-    Local cCCinza       := "D9D9D9"
-    Local cCAmarelo     := "FFFF00"
-
-    JFontHeader := FwXlsxPrinterConfig():MakeFont()
-    JFontHeader['font'] := FwPrinterFont():Calibri()
-    JFontHeader['size'] := 12
-    JFontHeader['bold'] := .T.
-
-    JFontTitulo := FwXlsxPrinterConfig():MakeFont()
-    JFontTitulo['font'] := FwPrinterFont():Calibri()
-    JFontTitulo['size'] := 14
-    JFontTitulo['bold'] := .T.
-    JFontTitulo['underline'] := .F. 
-
-    JFontText := FwXlsxPrinterConfig():MakeFont()
-    JFontText['font'] := FwPrinterFont():Calibri()
-    JFontText['size'] := 12
-    JFontText['italic'] := .F.
-
-    JFLeft := JsonObject():New()
-    JFLeft['hor_align']        := oCellHorAlign:Left()
-    JFLeft['vert_align']       := oCellVertAlign:Center()
-    JFLeft := FwXlsxPrinterConfig():MakeFormat(JFLeft)
-
-    JFCenter := JsonObject():New()
-    JFCenter['hor_align']        := oCellHorAlign:Center()
-    JFCenter['vert_align']       := oCellVertAlign:Center()
-    JFCenter := FwXlsxPrinterConfig():MakeFormat(JFCenter)
-
-    JFRight := JsonObject():New()
-    JFRight := FwXlsxPrinterConfig():MakeFormat()
-    JFRight['hor_align']        := oCellHorAlign:RIGHT()
-    JFRight['vert_align']       := oCellVertAlign:Center()
-    JFRight := FwXlsxPrinterConfig():MakeFormat(JFRight)
-    
-    JFData := JsonObject():New()
-    JFData['custom_format']    := "dd/mm/yyyy"
-    JFData['hor_align']        := oCellHorAlign:Left()
-    JFData['vert_align']       := oCellVertAlign:Center()
-    JFData := FwXlsxPrinterConfig():MakeFormat(JFData)
-
-    jFormatTit := JsonObject():New()
-    jFormatTit['hor_align']         := oCellHorAlign:Center()
-    jFormatTit['vert_align']        := oCellVertAlign:Center()
-    jFormatTit['background_color']  := cCVerde
-    jFormatTit := FwXlsxPrinterConfig():MakeFormat(jFormatTit)
-
-    jFormatGD := JsonObject():New()
-    jFormatGD['hor_align']         := oCellHorAlign:Center()
-    jFormatGD['vert_align']        := oCellVertAlign:Center()
-    jFormatGD['background_color']  := cCAmarelo
-    jFormatGD := FwXlsxPrinterConfig():MakeFormat(jFormatGD)
-    
-    jFormatTot := JsonObject():New()
-    jFormatTot['custom_format']     := "\R$ ###,##0.00"
-    jFormatTot['hor_align']         := oCellHorAlign:Center()
-    jFormatTot['vert_align']        := oCellVertAlign:Center()
-    jFormatTot['background_color']  := cCCinza
-    jFormatTot := FwXlsxPrinterConfig():MakeFormat(jFormatTot)
-
-    jFormatHead := JsonObject():New()
-    jFormatHead['hor_align']         := oCellHorAlign:Center()
-    jFormatHead['vert_align']        := oCellVertAlign:Center()
-    jFormatHead['background_color']  := "000000"
-    jFormatHead['text_color']        := "FFFFFF"
-    jFormatHead['text_wrap']         := .T. 
-    jFormatHead := FwXlsxPrinterConfig():MakeFormat(jFormatHead)
-
-    //MOEDA COM 4 CASAS DECIMAIS
-    jFM4d := FwXlsxPrinterConfig():MakeFormat()
-    jFM4d['custom_format']    := "\R$ ###,##0.0000"
-    jFM4d['hor_align']        := oCellHorAlign:RIGHT()
-    jFM4d['vert_align']       := oCellVertAlign:Center()
-
-    jFMoeda := FwXlsxPrinterConfig():MakeFormat()
-    jFMoeda['custom_format']    := "\R$ ###,##0.00"
-    jFMoeda['hor_align']        := oCellHorAlign:RIGHT()
-    jFMoeda['vert_align']       := oCellVertAlign:Center()
-
-    jFPercent := FwXlsxPrinterConfig():MakeFormat()
-    jFPercent['custom_format']    := "#0.00%"
-    jFPercent['hor_align']        := oCellHorAlign:RIGHT()
-    jFPercent['vert_align']       := oCellVertAlign:Center()
-
-    jFNum := FwXlsxPrinterConfig():MakeFormat()
-    jFNum['hor_align']        := oCellHorAlign:Left()
-    jFNum['vert_align']       := oCellVertAlign:Center()
-
-    // Bordas para o header
-    jBorder := FwXlsxPrinterConfig():MakeBorder()
-    jBorder['top']    := .T.
-    jBorder['bottom'] := .T.
-    jBorder['left']   := .T.
-    jBorder['right']  := .T.
-    jBorder['border_color'] := "000000"
-    jBorder['style'] := FwXlsxBorderStyle():Medium()
-
-    jNoBorder := FwXlsxPrinterConfig():MakeBorder()
-    jNoBorder['top']    := .F.
-    jNoBorder['bottom'] := .F.
-    jNoBorder['left']   := .F.
-    jNoBorder['right']  := .F.
-    jNoBorder['border_color'] := "000000"
-    jNoBorder['style'] := FwXlsxBorderStyle():Medium()
-
-    jBHeaderLeft := FwXlsxPrinterConfig():MakeBorder()
-    jBHeaderLeft['top']    := .T.
-    jBHeaderLeft['bottom'] := .F.
-    jBHeaderLeft['left']   := .T.
-    jBHeaderLeft['right']  := .F.
-    jBHeaderLeft['border_color'] := "000000"
-    jBHeaderLeft['style'] := FwXlsxBorderStyle():Medium()
-
-    jBHeaderRight := FwXlsxPrinterConfig():MakeBorder()
-    jBHeaderRight['top']    := .T.
-    jBHeaderRight['bottom'] := .F.
-    jBHeaderRight['left']   := .F.
-    jBHeaderRight['right']  := .T.
-    jBHeaderRight['border_color'] := "000000"
-    jBHeaderRight['style'] := FwXlsxBorderStyle():Medium()
-    
-    jBottomLeft := FwXlsxPrinterConfig():MakeBorder()
-    jBottomLeft['top']    := .F.
-    jBottomLeft['bottom'] := .T.
-    jBottomLeft['left']   := .T.
-    jBottomLeft['right']  := .F.
-    jBottomLeft['border_color'] := "000000"
-    jBottomLeft['style'] := FwXlsxBorderStyle():Medium()
-
-    jBottomRight := FwXlsxPrinterConfig():MakeBorder()
-    jBottomRight['top']    := .F.
-    jBottomRight['bottom'] := .T.
-    jBottomRight['left']   := .F.
-    jBottomRight['right']  := .T.
-    jBottomRight['border_color'] := "000000"
-    jBottomRight['style'] := FwXlsxBorderStyle():Medium()
-
-    jBorderLeft := FwXlsxPrinterConfig():MakeBorder()
-    jBorderLeft['left'] := .T.
-    jBorderLeft['border_color'] := "000000"
-    jBorderLeft['style'] := FwXlsxBorderStyle():Medium()
-    
-    jBorderCenter := FwXlsxPrinterConfig():MakeBorder()
-    jBorderCenter['left'] := .T.
-    jBorderCenter['right'] := .T.
-    jBorderCenter['border_color'] := "000000"
-    jBorderCenter['style'] := FwXlsxBorderStyle():Medium()
-    
-    jBorderRight := FwXlsxPrinterConfig():MakeBorder()
-    jBorderRight['right'] := .T.
-    jBorderRight['border_color'] := "000000"
-    jBorderRight['style'] := FwXlsxBorderStyle():Medium()
-
-Return 
+    ENDIF
+RETURN

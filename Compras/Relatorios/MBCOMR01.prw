@@ -150,10 +150,10 @@ Static Function GeraX1(cPerg)
 Local _aArea	:= GetArea()
 Local aRegs     := {}
 Local nX		:= 0
+Local i         := 0
+Local j         := 0 
 Local nPergs	:= 0
 Local aRegs		:= {}
-Local j
-Local i
 
 //Conta quantas perguntas existem ualmente.
 DbSelectArea('SX1')
@@ -179,9 +179,9 @@ aAdd(aRegs,{cPerg, "10", "Fornecedor Ate?"		        , "", "", "MV_CHA", "C", Tam
 aAdd(aRegs,{cPerg, "11", "Baia: (Separado por virgula)" , "", "", "MV_CHB", "C", 					  99, 					    0, 0, "G", ""		, "mv_par11" , ""   , "","",""	  	,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
 aAdd(aRegs,{cPerg, "12", "Data Abate De?"               , "", "", "MV_CHC", "D", TamSX3("D2_EMISSAO")[1], TamSX3("D2_EMISSAO")[2], 0, "G", "        ", "MV_PAR12", ""   , "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
 aAdd(aRegs,{cPerg, "13", "Data Abate Ate?"              , "", "", "MV_CHD", "D", TamSX3("D2_EMISSAO")[1], TamSX3("D2_EMISSAO")[2], 0, "G", "        ", "MV_PAR13", ""   , "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
-aAdd(aRegs,{cPerg, "14", "Imprime Emergencia?"          , "", "", "MV_CHE", "N", 					   1,					    0, 1, "C", ""        , "MV_PAR14", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","",""   ,"U","","","",""})
-aAdd(aRegs,{cPerg, "15", "Imprime Outras Movimentacoes?", "", "", "MV_CHF", "N", 					   1,					    0, 1, "C", ""        , "MV_PAR15", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","",""   ,"U","","","",""})
-aAdd(aRegs,{cPerg, "16", "Exibe Auxiliares?"			, "", "", "MV_CHG", "N", 					   1,					    0, 1, "C", ""        , "MV_PAR16", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","",""   ,"U","","","",""})
+aAdd(aRegs,{cPerg, "14", "Imprime Emergencia?"          , "", "", "MV_CHE", "N", 					   1,					    0, 1, "C", ""        , "MV_PAR14", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
+aAdd(aRegs,{cPerg, "15", "Imprime Outras Movimentacoes?", "", "", "MV_CHF", "N", 					   1,					    0, 1, "C", ""        , "MV_PAR15", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
+aAdd(aRegs,{cPerg, "16", "Exibe Auxiliares?"			, "", "", "MV_CHG", "N", 					   1,					    0, 1, "C", ""        , "MV_PAR16", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
 aAdd(aRegs,{cPerg, "17", "Data Valor?"		    		, "", "", "MV_CHH", "D", TamSX3("ZSI_DATA")[1]  , TamSX3("ZSI_DATA")[2]  , 0, "G", "NaoVazio", "MV_PAR17", ""   , "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","ZSI","","","","",""})
 aAdd(aRegs,{cPerg, "18", "Codigo?"        				, "", "", "MV_CHI", "C", TamSX3("ZCI_CODIGO")[1], TamSX3("ZCI_CODIGO")[2], 0, "G", "NaoVazio", "MV_PAR18", ""   , "","",""  	,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
 aAdd(aRegs,{cPerg, "19", "Valor?"        				, "", "", "MV_CHJ", "N", TamSX3("ZSI_VALOR")[1] , TamSX3("ZSI_VALOR")[2] , 0, "G", "NaoVazio", "MV_PAR19", ""   , "","",""	  	,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
@@ -387,7 +387,7 @@ ElseIf cTipo == "NFiscal"
 	_cQry += "		    	 WHEN D1_FILIAL=C.FILIAL AND D1_FORNECE+D1_LOJA <> C.CODIGO_FORNEC+LOJA_FORNEC AND D1_TIPO='C' AND F1_TPCOMPL='3'" + CRLF
 	_cQry += "					THEN '3-FRETE' " + CRLF
 	_cQry += "			END AS TIPO," + CRLF
-	_cQry += " 			D1.D1_PEDIDO, D1.D1_FILIAL, D1.D1_DOC, D1.D1_SERIE, D1.D1_EMISSAO, D1.D1_FORNECE, D1.D1_LOJA, A2.A2_NOME, D1.D1_COD, B1.B1_DESC, D1.D1_VALICM, D1.D1_TOTAL," + CRLF
+	_cQry += " 			D1.D1_PEDIDO, D1.D1_FILIAL, D1.D1_DOC, D1.D1_SERIE, D1.D1_EMISSAO, D1.D1_, D1.D1_FORNECE, D1.D1_LOJA, A2.A2_NOME, D1.D1_COD, B1.B1_DESC, D1.D1_VALICM, D1.D1_TOTAL," + CRLF
 	_cQry += " 			D1.D1_X_PESCH PESO_CHEGADA, " + CRLF
 	_cQry += "  		D1.D1_X_EMBDT DATA_EMBARQUE, " + CRLF
 	_cQry += "  		D1.D1_X_EMBHR HORA_EMBARQUE, " + CRLF

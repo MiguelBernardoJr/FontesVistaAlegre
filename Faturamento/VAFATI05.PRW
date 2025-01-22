@@ -36,11 +36,12 @@ Return
 
 Static Function ModelDef()
 	Local oModel 	:= nil
-    Local oMaster   := FWFormStruct(1, 'ZVA', {|cCampo| AllTrim(cCampo) $ "ZVA_COD|ZVA_CLI|ZVA_LOJA|ZVA_NOME|ZVA_QTLO|ZVA_QTAT|ZVA_COND|ZVA_FRET|ZVA_DTEMIS|ZVA_MENPAD|ZVA_MENNT|ZVA_FILTRO" })
-    Local oGridZVA  := FWFormStruct(1, 'ZVA', {|cCampo| (AllTrim(cCampo) $ "ZVA_ITEM|ZVA_LOTE|ZVA_QUANT|ZVA_TES|ZVA_NUMSC5|ZVA_NF|ZVA_SERINF|ZVA_USER|ZVA_STATUS") })
-    Local oGridZVB  := FWFormStruct(1, 'ZVB', {|cCampo| (AllTrim(cCampo) $ "ZVB_COD|ZVB_ITEM|ZVB_ITEMZA|ZVB_NUMSC5|ZVB_LOTE|ZVB_BOV|ZVB_DESC|ZVB_QUANT|ZVB_PRECO|ZVB_TOTAL") })
+    Local oMaster   := FWFormStruct(1, 'ZVA', {|cCampo| AllTrim(cCampo) $ "ZVA_COD|ZVA_CLI|ZVA_LOJA|ZVA_NOME|ZVA_QTLO|ZVA_QTAT|ZVA_COND|ZVA_FRET|ZVA_DTEMIS|ZVA_MENPAD|ZVA_MENNT" })
+    Local oGridZVA   	:= FWFormStruct(1, 'ZVA', {|cCampo| (AllTrim(cCampo) $ "ZVA_ITEM|ZVA_LOTE|ZVA_QUANT|ZVA_TES|ZVA_NUMSC5|ZVA_NF|ZVA_SERINF|ZVA_USER|ZVA_STATUS") })
+    Local oGridZVB   	:= FWFormStruct(1, 'ZVB', {|cCampo| (AllTrim(cCampo) $ "ZVB_COD|ZVB_ITEM|ZVB_ITEMZA|ZVB_NUMSC5|ZVB_LOTE|ZVB_BOV|ZVB_DESC|ZVB_QUANT|ZVB_PRECO|ZVB_TOTAL") })
     Local aZVBRel   := {}
     Local aZVARel   := {}
+    Local bCommit   := {|| bSaveCom()}
 
     oGridZVA:SetProperty('ZVA_LOTE'   ,   MODEL_FIELD_VALID, {|| FI05LT()})
     oGridZVA:SetProperty('ZVA_QUANT'  ,   MODEL_FIELD_VALID, {|| FI05QT()})
@@ -75,7 +76,7 @@ Return oModel
 
 Static Function ViewDef()
 	Local oModel    := FWLoadModel("VAFATI05")
-    Local oMaster   := FWFormStruct(2, 'ZVA', {|cCampo| AllTrim(cCampo) $ "ZVA_COD|ZVA_CLI|ZVA_LOJA|ZVA_NOME|ZVA_QTLO|ZVA_QTAT|ZVA_COND|ZVA_FRET|ZVA_DTEMIS|ZVA_MENPAD|ZVA_MENNT|ZVA_FILTRO" })
+    Local oMaster   := FWFormStruct(2, 'ZVA', {|cCampo| AllTrim(cCampo) $ "ZVA_COD|ZVA_CLI|ZVA_LOJA|ZVA_NOME|ZVA_QTLO|ZVA_QTAT|ZVA_COND|ZVA_FRET|ZVA_DTEMIS|ZVA_MENPAD|ZVA_MENNT" })
     Local oGridZVA  := FWFormStruct(2, 'ZVA', {|cCampo| (AllTrim(cCampo) $ "ZVA_ITEM|ZVA_LOTE|ZVA_QUANT|ZVA_TES|ZVA_NUMSC5|ZVA_NF|ZVA_SERINF|ZVA_USER|ZVA_STATUS") })
     Local oGridZVB  := FWFormStruct(2, 'ZVB', {|cCampo| (AllTrim(cCampo) $ "ZVB_COD|ZVB_ITEM|ZVB_ITEMZA|ZVB_NUMSC5|ZVB_LOTE|ZVB_BOV|ZVB_DESC|ZVB_QUANT|ZVB_PRECO|ZVB_TOTAL") })
 	Local oView
@@ -256,10 +257,9 @@ User Function FATI05M()
             RollBackSx8()
 		else
 			if Alltrim(cIdPonto) == "FORMPRE" .and. cIdModel == 'ZVADETAIL' .AND. cIdIXB5 == 'DELETE'
-                oModel      := FWModelActive()
-                oCab        := oModel:GetModel("ZVAMASTER")
-                oGridZVA    := oModel:GetModel("ZVADETAIL")
-                oGridZVB    := oModel:GetModel("ZVBDETAIL")
+                oModel := FWModelActive()
+                oGridZVA  := oModel:GetModel("ZVADETAIL")
+                oGridZVB := oModel:GetModel("ZVBDETAIL")
                 oGridZVB:SetNoDeleteLine(.F.)
                 IF oGridZVA:GetValue("ZVA_STATUS") != 'F'
                     IF !EMPTY(oGridZVA:GetValue("ZVA_LOTE")) .or. !EMPTY(oGridZVA:GetValue("ZVA_QUANT"))
@@ -284,15 +284,13 @@ User Function FATI05M()
                                         aSize(aBovs[nX][2], Len(aBovs[nX][2])-1) 
                                     EndIf 
                                 Next nX
-                                oCab:SetValue("ZVA_QTLO",aBovs[nI][3])
-                                oCab:SetValue("ZVA_QTAT",aLotes[nI][3])
                             endif
                         Next nI
                     endif 
                 ELSE 
                     oModel:SetErrorMessage("","","","","Pedido Gerado!", 'Não é possivel alterar quantidade em linhas com pedido gerado.', "") 
                     xRet := .F.
-                endif
+                endif 
                 oGridZVB:SetNoDeleteLine(.T.)
                 xRet := .T.
  			elseif  Alltrim(cIdPonto) == "FORMPRE" .and. cIdModel == 'ZVADETAIL' .AND. cIdIXB5 == 'UNDELETE'/* !(aParam[5] $ "ISENABLE-ADDLINE") */
@@ -303,7 +301,7 @@ User Function FATI05M()
                 xRet := .T.
 			elseif Alltrim(cIdPonto) == 'FORMPOS'
                 xRet := .T.
-			ENDIF   
+			ENDIF
 		ENDIF
 	ENDIF
 Return xRet
@@ -436,12 +434,105 @@ Static Function bSaveCom(oModel)
 
     RestArea(aArea)
 Return lRet
+//LOAD GRID ZVA
+Static Function LoadGPrincipal()
+	Local aArea		:= GetArea()
+	Local aRet 		:= {}
+	Local cQry 		:= ''
+
+    cQry := " SELECT *  " + CRLF 
+    cQry += " FROM "+RetSqlName("ZVA")+"  " + CRLF 
+    cQry += " WHERE ZVA_FILIAL = '"+FwXFilial("ZVA")+"' " + CRLF 
+    cQry += " AND ZVA_COD = '"+ZVA->ZVA_COD+"' " + CRLF 
+    cQry += " AND D_E_L_E_T_ = '' " + CRLF 
+    cQry += " ORDER BY ZVA_ITEM " + CRLF 
+
+    MpSysOpenQuery(cQry,"TMP")
+	
+    While !TMP->(EOF())
+        aAdd(aRet,{Val(TMP->ZVA_ITEM),{     TMP->ZVA_ITEM,;
+                                            TMP->ZVA_LOTE,;
+                                            TMP->ZVA_QUANT,;
+                                            TMP->ZVA_TES,;
+                                            TMP->ZVA_NUMSC5,;
+                                            TMP->ZVA_NF,;
+                                            TMP->ZVA_SERINF,;
+                                            TMP->ZVA_USER,;
+                                            TMP->ZVA_STATUS}})
+        TMP->(DBSKIP())
+    End
+
+    if Len(aRet) == 0
+        aAdd(aRet,{ 1,{ "",;
+                        0,;
+                        "",;
+                        "",;
+                        "",;
+                        "",;
+                        "",;
+                        "",;
+                        ""}})
+    EndIf
+    
+    TMP->(DbCloseArea())
+    RestArea(aArea)
+Return aRet
+//LOAD GRID ZVB
+Static Function LoadGRodape()
+	Local aArea		:= GetArea()
+	Local aRet 		:= {}
+	Local cQry 		:= ''
+    Local cBakItem  := ''
+
+    cQry := " SELECT *  " + CRLF 
+    cQry += " FROM "+RetSqlName("ZVB")+" " + CRLF
+    cQry += " WHERE ZVB_FILIAL = '"+FwXFilial("ZVA")+"' " + CRLF 
+    cQry += " AND ZVB_COD = '"+ZVA->ZVA_COD+"' " + CRLF 
+    //cQry += " AND ZVB_ITEMZA = '"+ZVA->ZVA_ITEM+"' " + CRLF
+    cQry += " AND D_E_L_E_T_ = '' " + CRLF 
+    cQry += " ORDER BY ZVB_ITEMZA, ZVB_ITEM " + CRLF 
+
+    MpSysOpenQuery(cQry,"TMP")
+	TMP->(DBGOTOP(  ))
+    cBakItem := TMP->ZVB_ITEM
+    While !TMP->(EOF())
+        
+        aAdd(aRet,{Val(TMP->ZVB_ITEM),{     TMP->ZVB_COD,;
+                                            TMP->ZVB_ITEM,;
+                                            TMP->ZVB_ITEMZA,;
+                                            TMP->ZVB_NUMSC5,;
+                                            TMP->ZVB_LOTE,;
+                                            TMP->ZVB_BOV,;
+                                            ALLTRIM(Posicione("SB1",1,FWxFilial("SB1")+TMP->ZVB_BOV,"B1_DESC")),;
+                                            TMP->ZVB_QUANT,;
+                                            TMP->ZVB_PRECO,;
+                                            TMP->ZVB_TOTAL}})
+        TMP->(DBSKIP())
+    End
+
+    if Len(aRet) == 0
+        aAdd(aRet,{ 1,{ "",;
+                        "",;
+                        "",;
+                        "",;
+                        "",;
+                        "",;
+                        "",;
+                        0,;
+                        0,;
+                        0}})
+    EndIf
+    
+    TMP->(DbCloseArea())
+    RestArea(aArea)
+RETURN aRet
+
 //Gatilho do campo ZVA_LOTE -> ZVA_QTLO
 Static Function FI05LT()
     Local oModel    := FWModelActive()
     Local oView     := FWViewActive()
     Local oCab      := oModel:GetModel("ZVAMASTER")
-    Local oGridZVA  := oModel:GetModel("ZVADETAIL")
+    Local oGridZVA     := oModel:GetModel("ZVADETAIL")
     Local aArea     := GetArea()
     Local cQry      := ''
     Local nI        := 0
@@ -450,8 +541,6 @@ Static Function FI05LT()
     Local cLote     := ''
     Local nSoma     := 0
     Local lRet      := .T. 
-    Local lFIltra   := .F.
-    Local cFiltro   := ''
 
     if EMPTY(oGridZVA:GetValue("ZVA_NUMSC5")) .OR. EMPTY(oGridZVA:GetValue("ZVA_NF")) .or. EMPTY(oGridZVA:GetValue("ZVA_SERINF")) 
 
@@ -474,46 +563,14 @@ Static Function FI05LT()
                 endif
             endif
         Next nI
-        
-        IF lFiltra := !EMPTY(ALLTRIM(oCab:GetValue("ZVA_FILTRO")))
-            if ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'BEZERRO'
-                cFiltro  := 'BOVINO MACHO DE 0 A 8 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'BEZERRO D'
-                cFiltro  := 'BOVINO MACHO DE 9 A 12 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'BEZERRA'
-                cFiltro  := 'BOVINO FEMEA DE 0 A 8 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'BEZERRA D'
-                cFiltro  := 'BOVINO FEMEA DE 9 A 12 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'BOI'
-                cFiltro  := 'BOVINO MACHO DE 25 A 36 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'GARROTE'
-                cFiltro  := 'BOVINO MACHO DE 13 A 24 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'NOVILHA'
-                cFiltro  := 'BOVINO FEMEA DE 13 A 24 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'TOURO'
-                cFiltro  := 'BOVINO MACHO ACIMA DE 36 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'VACA'
-                cFiltro  := 'BOVINO FEMEA DE 25 A 36 MESES'
-            elseif ALLTRIM(oCab:GetValue("ZVA_FILTRO")) == 'VACA SOLTEIRA'
-                cFiltro  := 'BOVINO FEMEA ACIMA DE 36 MESES'
-            endif
-        ENDIF
-
-        //Verifica se o lote possui diferença de ERAS
-        // ValidaERA(oModel,oView,oCab,oGridZVA)
 
         cQry := " SELECT B8_LOTECTL, SUM(B8_SALDO) AS SALDO " + CRLF
-        cQry += " FROM "+RetSqlName("SB8")+" SB8 " + CRLF
-        if lFiltra 
-            cQry += " JOIN "+RetSqlName("SB1")+" SB1 ON B1_DESC = '"+cFiltro+"' " + CRLF
-            cQry += " AND B8_PRODUTO = B1_COD " + CRLF
-            cQry += " AND SB1.D_E_L_E_T_ = '' " + CRLF
-        endif 
+        cQry += " FROM "+RetSqlName("SB8")+"  " + CRLF
         cQry += " WHERE B8_PRODUTO LIKE 'BOV%' " + CRLF
         cQry += " and B8_LOTECTL = '"+oGridZVA:GetValue("ZVA_LOTE")+"' " + CRLF
-        cQry += " AND B8_SALDO > 0 " + CRLF 
-        cQry += " AND SB8.D_E_L_E_T_ = ' '  " + CRLF
-        cQry += " GROUP BY B8_LOTECTL "+ CRLF
+        cQry += " AND B8_SALDO > 0 " + CRLF
+        cQry += " AND D_E_L_E_T_ = ' '  " + CRLF
+        cQry += " GROUP BY B8_LOTECTL "+ CRLF 
         
         If lower(cUserName) $ 'administrador,admin,ioliveira'
             MemoWrite(StrTran(cArquivo,".xml","")+"SALDO DO LOTE-VAFATI05.sql" , cQry)
@@ -524,17 +581,12 @@ Static Function FI05LT()
         IF !TMP->(EOF())
             //Montar Array dos BOVS 
             cQry := " SELECT B8_LOTECTL, B8_PRODUTO, B8_SALDO " + CRLF
-            cQry += " FROM "+RetSqlName("SB8")+" SB8 " + CRLF
-            if lFiltra
-                cQry += " JOIN "+RetSqlName("SB1")+" SB1 ON B1_DESC = '"+cFiltro+"' " + CRLF
-                cQry += " AND B8_PRODUTO = B1_COD " + CRLF
-                cQry += " AND SB1.D_E_L_E_T_ = '' " + CRLF
-            endif 
+            cQry += " FROM "+RetSqlName("SB8")+"  " + CRLF
             cQry += " WHERE B8_PRODUTO LIKE 'BOV%' " + CRLF
             cQry += " and B8_LOTECTL = '"+oGridZVA:GetValue("ZVA_LOTE")+"' " + CRLF
             cQry += " AND B8_SALDO > 0 " + CRLF
-            cQry += " AND SB8.D_E_L_E_T_ = ' '  " + CRLF
-            cQry += " ORDER BY B8_LOTECTL, B8_SALDO "+ CRLF
+            cQry += " AND D_E_L_E_T_ = ' '  " + CRLF
+            cQry += " ORDER BY B8_LOTECTL, B8_SALDO " + CRLF
 
             If lower(cUserName) $ 'administrador,admin,ioliveira'
                 MemoWrite(StrTran(cArquivo,".xml","")+"SALDO POR PRODUTO-VAFATI05.sql" , cQry)
@@ -552,6 +604,7 @@ Static Function FI05LT()
                     nSoma += TMPBOV->B8_SALDO
                     TMPBOV->(dbSkip())
                 enddo 
+                        //LOTE //SALDO POR PRODUTO  //SALDO TOTAL DO LOTE          
                 aAdd(aLotes,{cLote, aBvLote             ,nSoma})
                 aBvLote := {}
             EndDo
@@ -562,9 +615,8 @@ Static Function FI05LT()
             oCab:SetValue("ZVA_QTLO",nSoma)
             nSoma := 0
         else 
-            oModel:SetErrorMessage("","","","","Lote Inválido", 'Lote não existe ou está sem saldo.' + CRLF +;
-                                                                'Verifique o campo FILTRO no cabeçalho e o Lote digitado na GRID.', "") 
-            lRet := .F.
+            oModel:SetErrorMessage("","","","","Lote Inválido", 'Lote não existe ou está sem saldo!', "") 
+            lRet := .F. 
         ENDIF
     else 
         oModel:SetErrorMessage("","","","","Pedido Gerado!", 'Não é possivel alterar lote em linhas com pedido gerado.', "") 
@@ -747,29 +799,27 @@ Static Function FI05QT()
                     
                     For nJ := 1 to Len(aLotes[nPosBov][2])
                         if aLotes[nPosBov][2][nJ][2] != 0
-                            if !(nQtSoma == nQtDigit)
-                                if (nQtSoma + aLotes[nPosBov][2][nJ][2]) <= nQtDigit
-                                    
-
-                                    aAdd(aBovs[nPosBLot][2][nPosBItem][2], {aLotes[nPosBov][2][nJ][1]  ,; // BOV
-                                                                                        aLotes[nPosBov][2][nJ][2]   ,; // Quantidade
-                                                                                        nJ                         })
-                                    
-                                    nQtSoma += aLotes[nPosBov][2][nJ][2]
-                                    
-                                    aLotes[nPosBov][2][nJ][2] := 0
+                            if (nQtSoma + aLotes[nPosBov][2][nJ][2]) <= nQtDigit
                                 
-                                elseif (nQtSoma + aLotes[nPosBov][2][nJ][2]) >= nQtDigit
 
-                                    aAdd(aBovs[nPosBLot][2][nPosBItem][2],{ aLotes[nPosBov][2][nJ][1]  ,; // BOV
-                                                                                        nQtDigit - nQtSoma         ,; // Quantidade
-                                                                                        nJ                         })
+                                aAdd(aBovs[nPosBLot][2][nPosBItem][2], {aLotes[nPosBov][2][nJ][1]  ,; // BOV
+                                                                                    aLotes[nPosBov][2][nJ][2]   ,; // Quantidade
+                                                                                    nJ                         })
+                                
+                                nQtSoma += aLotes[nPosBov][2][nJ][2]
+                                
+                                aLotes[nPosBov][2][nJ][2] := 0
+                            
+                            elseif (nQtSoma + aLotes[nPosBov][2][nJ][2]) >= nQtDigit
 
-                                    aLotes[nPosBov][2][nJ][2] := aLotes[nPosBov][2][nJ][2] - (nQtDigit - nQtSoma)
-                                    
-                                    nQtSoma += nQtDigit - nQtSoma
-                                    exit 
-                                EndIf
+                                aAdd(aBovs[nPosBLot][2][nPosBItem][2],{ aLotes[nPosBov][2][nJ][1]  ,; // BOV
+                                                                                    nQtDigit - nQtSoma         ,; // Quantidade
+                                                                                    nJ                         })
+
+                                aLotes[nPosBov][2][nJ][2] := aLotes[nPosBov][2][nJ][2] - (nQtDigit - nQtSoma)
+                                
+                                nQtSoma += nQtDigit - nQtSoma
+                                exit 
                             EndIf
                         EndIf
 
@@ -805,11 +855,11 @@ Static Function FI05QT()
                     oGridZVB:SetValue("ZVB_DESC"  ,ALLTRIM(SB1->B1_DESC) )
                     if (nPosPreco := aScan(aPreco, {|x| Upper(x[1]) == ALLTRIM(SB1->B1_DESC)})) > 0
                         oGridZVB:SetValue("ZVB_PRECO" ,aPreco[nPosPreco][2]) // VER O PREÇO
-                        oGridZVB:SetValue("ZVB_TOTAL" ,aPreco[nPosPreco][2] * aBovs[nPosBLot][2][nPosBItem][2][nI][2])
                     endif
                 endif
                     oGridZVB:SetValue("ZVB_QUANT" ,aBovs[nPosBLot][2][nPosBItem][2][nI][2])
                     
+                    //oGridZVB:SetValue("ZVB_TOTAL" ,nPreco * aBovs[nPosBLot][2][nPosBItem][2][nI][2])
             Next 
 
             SB1->(DBCLOSEAREA(  ))
@@ -932,17 +982,16 @@ Static Function ExecSC5Auto(oModel,oCab,oGridZVA,oGridZVB)
 
         cNumPed := U_fChvITEM( "SC5", , "C5_NUM" )
         
-        aCabC5 := {{"C5_NUM"    , cNumPed                           , Nil},;
-                    {"C5_TIPO"   , "N"         		                , Nil},;
-                    {"C5_CLIENTE", SA1->A1_COD	                    , Nil},;
-                    {"C5_LOJACLI", SA1->A1_LOJA	                    , Nil},;
-                    {"C5_LOJAENT", SA1->A1_LOJA	                    , Nil},;
-                    {"C5_TIPOCLI", SA1->A1_TIPO	                    , Nil},;
-                    {"C5_MENPAD" , oCab:GetValue("ZVA_MENPAD")      , Nil},;
-                    {"C5_MENNOTA", oCab:GetValue("ZVA_MENNT")       , Nil},;
-                    {"C5_NATUREZ", SA1->A1_NATUREZ	                , Nil},;
-                    {"C5_VOLUME1", oGridZVA:GetValue("ZVA_QUANT")	, Nil},;
-                    {"C5_TPFRETE", oCab:GetValue("ZVA_FRET")        , Nil}}
+        aCabC5 := {{"C5_NUM"    , cNumPed                      , Nil},;
+                    {"C5_TIPO"   , "N"         		           , Nil},;
+                    {"C5_CLIENTE", SA1->A1_COD	               , Nil},;
+                    {"C5_LOJACLI", SA1->A1_LOJA	               , Nil},;
+                    {"C5_LOJAENT", SA1->A1_LOJA	               , Nil},;
+                    {"C5_TIPOCLI", SA1->A1_TIPO	               , Nil},;
+                    {"C5_MENPAD" , oCab:GetValue("ZVA_MENPAD") , Nil},;
+                    {"C5_MENNOTA", oCab:GetValue("ZVA_MENNT")  , Nil},;
+                    {"C5_NATUREZ", SA1->A1_NATUREZ	           , Nil},;
+                    {"C5_TPFRETE", oCab:GetValue("ZVA_FRET")   , Nil}}
         
         For nX := 1 to oGridZVB:GetQtdLine()
             oGridZVB:GoLine(nX)
@@ -1016,6 +1065,7 @@ Static Function ExecSC5Auto(oModel,oCab,oGridZVA,oGridZVB)
                     For nX := 1 to  oGridZVB:GetQtdLine()
                         oGridZVB:GoLine(nX)
                         If !oGridZVB:isDeleted()
+                            
                             oGridZVB:SetValue("ZVB_NUMSC5", StrZero(Val(cPedVen),TamSX3('ZVA_NUMSC5')[1]))
 
                             RecLock('ZVB', lRecLock := !ZVB->(DbSeek( FWxFilial("ZVB") +;
@@ -1027,7 +1077,7 @@ Static Function ExecSC5Auto(oModel,oCab,oGridZVA,oGridZVB)
                             ZVB->ZVB_COD 	   	:= oGridZVB:GetValue('ZVB_COD')
                             ZVB->ZVB_ITEM    	:= oGridZVB:GetValue('ZVB_ITEM')
                             ZVB->ZVB_ITEMZA    	:= oGridZVB:GetValue('ZVB_ITEMZA')
-                            ZVB->ZVB_NUMSC5   	:= oGridZVA:GetValue('ZVA_NUMSC5')
+                            ZVB->ZVB_NUMSC5   	:= oGridZVB:GetValue('ZVB_NUMSC5')
                             ZVB->ZVB_LOTE   	:= oGridZVB:GetValue('ZVB_LOTE')
                             ZVB->ZVB_BOV   	    := oGridZVB:GetValue('ZVB_BOV')
                             ZVB->ZVB_QUANT      := oGridZVB:GetValue('ZVB_QUANT')
@@ -1035,6 +1085,7 @@ Static Function ExecSC5Auto(oModel,oCab,oGridZVA,oGridZVB)
                             ZVB->ZVB_TOTAL      := oGridZVB:GetValue('ZVB_TOTAL')
                         endif 
                     Next nX 
+
                 Endif 
             EndIf
         EndIf
@@ -1099,51 +1150,3 @@ Static Function LIBeFaturar( cFilEnt, cPedVen, cE1HIST )
 	cFilAnt := cCurFil
 	
 Return lErro
-//Verifica se o lote possui diferença de ERAS
-
-Static Function ValidaERA(oModel,oView,oCab,oGridZVA)
-    Local aArea := GetArea()
-    Local cQry 
-    Local cMsg := ''
-    Local nCount := 0
-    Local nI
-
-    IF !EMPTY(ALLTRIM(oCab:GetValue("ZVA_FILTRO")))
-        Return 
-    ENDIF 
-
-    for nI := 1 to Len(aLotes)
-        if oGridZVA:GetValue("ZVA_LOTE") == aLotes[nI][1]
-            Return 
-        endif
-    Next nI
-    cQry := " SELECT B1_DESC, SUM(B8_SALDO) AS SALDO " + CRLF 
-    cQry += " FROM "+RetSqlName("SB8")+" SB8  " + CRLF 
-    cQry += " JOIN "+RetSqlName("SB1")+" SB1 ON  B1_COD = B8_PRODUTO   " + CRLF 
-    cQry += " AND SB1.D_E_L_E_T_ = ''  " + CRLF 
-    cQry += " WHERE B8_PRODUTO LIKE 'BOV%'  " + CRLF 
-    cQry += " and B8_LOTECTL = '"+oGridZVA:GetValue("ZVA_LOTE")+"' " + CRLF 
-    cQry += " AND B8_SALDO   > 0 " + CRLF 
-    cQry += " AND SB8.D_E_L_E_T_ = ' ' " + CRLF 
-    cQry += " GROUP BY B1_DESC " + CRLF 
-    cQry += " ORDER BY B1_DESC " + CRLF 
-
-    MpSysOpenQuery(cQry,"TMP")
-    IF !TMP->(EOF())
-        cMsg := "Lote possui divergência de idade: " + CRLF
-        cMsg += "" + CRLF 
-        WHILE !TMP->(EOF())
-        ++nCount
-            cMsg += ALLTRIM(TMP->B1_DESC) + SPACE(20 - LEN(ALLTRIM(TMP->B1_DESC))) + " - " + ALLTRIM(STR(TMP->SALDO)) +CRLF
-            TMP->(DBSKIP( ))
-        ENDDO
-    ENDIF 
-    TMP->(DBCLOSEAREA(  ))
-
-    IF nCount > 1 
-        if MSGYESNO( cMsg, "Evoluir Era?" )
-
-        endif 
-    ENDIF 
-    RestArea(aArea)
-Return 

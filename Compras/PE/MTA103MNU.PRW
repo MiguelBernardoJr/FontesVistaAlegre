@@ -11,14 +11,14 @@ User Function CriaZ0C()
 local aEnButt := {{.f., nil},;     // 1 - Copiar
                   {.f., nil},;     // 2 - Recortar
                   {.f., nil},;     // 3 - Colar
-                  {.f., nil},;     // 4 - Calculade
-                  {.f., nil},;     // 11 - Mashupora
+                  {.f., nil},;     // 4 - Calculadora
                   {.f., nil},;     // 5 - Spool
                   {.f., nil},;     // 6 - Imprimir
                   {.t., "Salvar"},;// 7 - Confirmar
                   {.t., "Sair"},;  // 8 - Cancelar
                   {.f., nil},;     // 9 - WalkTrhough
-                  {.f., nil},;     // 10 - Ambient
+                  {.f., nil},;     // 10 - Ambiente
+                  {.f., nil},;     // 11 - Mashup
                   {.t., nil},;     // 12 - Help
                   {.f., nil},;     // 13 - Formulário HTML
                   {.f., nil},;     // 14 - ECM

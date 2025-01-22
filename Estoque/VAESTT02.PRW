@@ -20,3 +20,4 @@ Local cVldAlt := ".T."
 
 	AxCadastro(cAlias,cTitulo,cVldDel,cVldAlt)
 Return nil
+

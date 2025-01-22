@@ -34,11 +34,10 @@ Local j  , i
 Private aReturn   := { "Zebrado", 1,"Administracao", 2, 2, 1, "",1 } //"Zebrado"###"Administracao"
 Private cTitulo   := "Relacao de Abastecimentos"
 Private cPerg	  := "VAMNTR02"
-Private cFilBak		:= cFilant
 
 aRegs := {}
 
-Aadd(aRegs,{cPerg,"01","Forcecedor de"  ,"","","mv_ch1"  ,"C", 06,0,0,"G","","mv_par01","","","","","","","","","","","","","","","","","","","","","","","","","SA2",""})
+Aadd(aRegs,{cPerg,"01","Forcecedor de" ,"","","mv_ch1"  ,"C", 06,0,0,"G","","mv_par01","","","","","","","","","","","","","","","","","","","","","","","","","SA2",""})
 Aadd(aRegs,{cPerg,"02","Loja de"        ,"","","mv_ch2" ,"C", 02,0,0,"G","","mv_par02","","","","","","","","","","","","","","","","","","","","","","","","","",""})
 Aadd(aRegs,{cPerg,"03","Forcecedor até" ,"","","mv_ch3" ,"C", 06,0,0,"G","","mv_par03","","","","","","","","","","","","","","","","","","","","","","","","","SA2",""})
 Aadd(aRegs,{cPerg,"04","Loja de"        ,"","","mv_ch4" ,"C", 02,0,0,"G","","mv_par04","","","","","","","","","","","","","","","","","","","","","","","","","",""})
@@ -504,7 +503,7 @@ For nCntFor := 1 to Len(aVetImprime)
 			oSection2:PrintLine()
 
 			if aVetImprime[nIntCntFor,19] == "1" // Prestador de Serviço
-				cQuery := "SELECT ZAU.R_E_C_N_O_ FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.ZAU_FILIAL = '"+FwxFilial("ZAU")+"' AND ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
+				cQuery := "SELECT ZAU.R_E_C_N_O_ FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
 			Else // If aVetImprime[nIntCntFor,19] == "2" // Transportadora
 				cQuery := "SELECT ZAT.R_E_C_N_O_ FROM "+RetSqlName("ZAT")+" ZAT WHERE ZAT.D_E_L_E_T_ = ' ' AND ZAT.ZAT_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAT.ZAT_DATCAD = (SELECT Max(ZAT_DATCAD) FROM "+RetSqlName("ZAT")+" WHERE D_E_L_E_T_ = ' ' AND ZAT_DATCAD <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAT_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
 			Endif

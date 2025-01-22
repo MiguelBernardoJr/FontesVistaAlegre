@@ -41,6 +41,7 @@
     Titulo:			Impr.Boleto
     Descrição:		Imprimiu Boleto.
 
+
     Campo:			E1_DVNSNUM
     Tipo:			C
     Tamanho:		1
@@ -222,7 +223,7 @@ User Function VAFINBol(aItens, aLog, nTipoCart)
 	If SE1->E1_PORTADO == "707" // Daycoval
 		__cCodCart := "121"
 	ElseIf SE1->E1_PORTADO == "237" // Bradesco
-		__cCodCart := "04" //__cCodCart := "09"
+		__cCodCart := "09"
 	EndIf
 
 	// Carregando dados do cedente
@@ -273,7 +274,7 @@ User Function VAFINBol(aItens, aLog, nTipoCart)
 
 		ProcBol(aItens[i], @aLog, nTipoCart)
 
-		//Deleta se ja existir no TEMPfDayNossoNro
+		//Deleta se ja existir no TEMP
 		FErase(oPrn:cPathPDF+cNomArq)
 
 		oPrn:Preview() //Visualiza antes de imprimir 
@@ -393,7 +394,7 @@ Static Function ProcBol(aItens, aLog, nTipoCart)
 		AAdd( aLog, "Erro Título " + aItens[6] + "-" + aItens[7] + ". Cliente não cadastrado. Filial: " + aItens[5] + ", Prefíxo: " + aItens[6] + ", Numero: " + aItens[7] + ", Parcela: " + aItens[8] )
 		Return .F.
 	EndIf
-	
+
 	If ( lRet := GetBolDado(aItens, @aLog, nTipoCart) )
 		PrnLayout()
 		DbSelectArea("SE1")
@@ -419,7 +420,6 @@ Return lRet
 /* ############################################################################## */
 Static Function GetBolDado(aItens, aLog, nTipoCart)
 	LOCAL nTotAbat	:= 0
-	Local nTam 		
 
 	cCedentNom := AllTrim(SM0->M0_NOMECOM) + ' - CNPJ: ' + SM0->M0_CGC
 	cCedentCNP := SM0->M0_CGC
@@ -473,13 +473,8 @@ Static Function GetBolDado(aItens, aLog, nTipoCart)
 	cBolDtProc := HS_DToC( dDataBase, 2 )
 	cBolDtVenc := HS_DToC( SE1->E1_VENCREA, 2 )
 
-	if SE1->E1_PORTADO == '237'
-		nTam := 11
-	ELSE 
-		nTam := 10
-	ENDIF
 
-	If ( cBolNosNum := PadL( AllTrim(GetNossNum(@aLog)), nTam, '0')) == Nil // Nosso número inválido
+	If ( cBolNosNum := PadL( AllTrim(GetNossNum(@aLog)), 10, '0')) == Nil // Nosso número inválido
 		AAdd( aLog, "Erro Título " + aItens[6] + "-" + aItens[7] + ". Título não encontrado. Filial: " + aItens[5] + ", Prefíxo: " + aItens[6] + ", Número: " + aItens[7] + ", Parcela: " + aItens[8] )
 		Return .F.
 	EndIf
@@ -494,14 +489,7 @@ Static Function GetNossNum(aLog)
 	Local cNossNum   := ""
 	Local cProxNum   := ""
 	Local i
-//	Local nLenNssNum := 10
-	Local nLenNssNum 
-
-	if SE1->E1_PORTADO = '237'
-		nLenNssNum := 11
-	else 
-		nLenNssNum := 10
-	ENDIF
+	Local nLenNssNum := 10
 
 	cBolDVNsNm     := ""
 
@@ -541,7 +529,7 @@ Static Function GetNossNum(aLog)
 			SA6->A6_PROXNUM	:= cProxNum
 		MsUnlock()
 
-		cBolDVNsNm := DVNsNm( iIf(SE1->E1_PORTADO=="707", AllTrim(cBcoAgenci+cBcoCdCart+cNossNum), cBcoCdCart + AllTrim(cNossNum)) ) /* "19"+AllTrim(cNossNum) */ 
+		cBolDVNsNm := DVNsNm( iIf(SE1->E1_PORTADO=="707", AllTrim(cBcoAgenci+cBcoCdCart+cNossNum), "19"+AllTrim(cNossNum) ) )
 	EndIf
 Return cNossNum
 
@@ -603,12 +591,12 @@ Static Function DVNsNm(cNossNum)
 		If SE1->E1_PORTADO == "707" // Daycoval
 			cRet	:= AllTrim(Str(_nMod - nResto))
 		ElseIf SE1->E1_PORTADO == "237" // Bradesco
-			IF nResto == 1
+			IF nResto == 10
 				cRet	:= "P"
-			ElseIf nResto == 0
+			ElseIf nResto >= 11
 				cRet	:= "0"
 			ELSE
-				cRet	:= AllTrim(Str(_nMod - nResto))
+				cRet	:= str(nResto,1)
 			ENDIF
 		EndIf
 	EndIf
@@ -617,78 +605,39 @@ Return(cRet)
 /* ########################################################################################################## */
 Static Function GetCodBar()
 	LOCAL cCodBar := "", cValor := ""
-	
-  	RecLock("SE1", .F.)
-		SE1->E1_BARRA := ""
-	MsUnlock()  
 
-	if SE1->E1_PORTADO == '237' 
-		If Empty(SE1->E1_BARRA)
-			cCodBar := cCodBco			// Codigo do banco
-			cCodBar += "9"				// Codigo da Moeda "9" Real
-			//Posição 5 = DV CodBar - Adiconado no final,depois do calculo
-			cCodBar += SUBSTR(cBolFatVnc, 1, 4)	// Fator vencimento
+	If Empty(SE1->E1_BARRA)
+		cCodBar := cCodBco			// Codigo do banco
+		cCodBar += "9"				// Codigo da Moeda "9" Real
+		//Posição 5 = DV CodBar - Adiconado no final,depois do calculo
+		cCodBar += SUBSTR(cBolFatVnc, 1, 4)	// Fator vencimento
 
-			cValor := AllTrim(Str(Int(nBolValDoc)))
-			cValor += Right("00"+AllTrim(Str((nBolValDoc-Int(nBolValDoc))*100)),2)
-			cValor := Right("0000000000"+cValor, 10)
-			cCodBar += cValor  // valor do documento
+		cValor := AllTrim(Str(Int(nBolValDoc)))
+		cValor += Right("00"+AllTrim(Str((nBolValDoc-Int(nBolValDoc))*100)),2)
+		cValor := Right("0000000000"+cValor, 10)
+		cCodBar += cValor  // valor do documento
 
-			//Inicio do Campo livre do CodBar Posicao 20 - 44 = Campo Livre
-			cCodBar += cBcoAgenci // Agencia, 4 posicoes
-			cCodBar += cBcoCdCart // Carteira, 2 posicoes
-			
-			cCodBar += cBolNosNum //nosso numero s/ DV, 11 posicoes
-			//cCodBar += cBolDVNsNm // DV
-			cCodBar += cBcoConta  // Codigo do cedente (fornecido pela agência), 7 posicoes
-			cCodBar += "0"
+		//Inicio do Campo livre do CodBar Posicao 20 - 44 = Campo Livre
+		cCodBar += cBcoAgenci // Agencia, 4 posicoes
+		cCodBar += cBcoCdCart // Carteira, 2 posicoes
+		
+		cCodBar += cBcoConta  // Codigo do cedente (fornecido pela agência), 7 posicoes
+		cCodBar += cBolNosNum //nosso numero s/ DV, 11 posicoes
+		cCodBar += cBolDVNsNm // DV
+		
+		cBolDVCdBr := DvCdBar(cCodBar)
 
-			cBolDVCdBr := DvCdBar(cCodBar)
-
-			cCodBar	   := substr(cCodBar,1,4) + cBolDVCdBr + substr(cCodBar,5,39)
-		Else
-			cCodBar := SE1->E1_BARRA
-		EndIf 
- 	else
-		If Empty(SE1->E1_BARRA)
-			cCodBar := cCodBco			// Codigo do banco
-			cCodBar += "9"				// Codigo da Moeda "9" Real
-			//Posição 5 = DV CodBar - Adiconado no final,depois do calculo
-			cCodBar += SUBSTR(cBolFatVnc, 1, 4)	// Fator vencimento
-
-			cValor := AllTrim(Str(Int(nBolValDoc)))
-			cValor += Right("00"+AllTrim(Str((nBolValDoc-Int(nBolValDoc))*100)),2)
-			cValor := Right("0000000000"+cValor, 10)
-			cCodBar += cValor  // valor do documento
-
-			//Inicio do Campo livre do CodBar Posicao 20 - 44 = Campo Livre
-			cCodBar += cBcoAgenci //Agencia, 4 posicoes
-			cCodBar += cBcoCdCart //Carteira, 2 posicoes
-			
-			cCodBar += cBcoConta  //Codigo do cedente (fornecido pela agência), 7 posicoes
-			cCodBar += cBolNosNum //nosso numero s/ DV, 11 posicoes
-			cCodBar += cBolDVNsNm //DV
-			
-			cBolDVCdBr := DvCdBar(cCodBar)
-
-			cCodBar	   := substr(cCodBar,1,4) + cBolDVCdBr + substr(cCodBar,5,39)
-		Else
-			cCodBar := SE1->E1_BARRA
-		EndIf
- 	ENDIF 
+		cCodBar	   := substr(cCodBar,1,4) + cBolDVCdBr + substr(cCodBar,5,39)
+	Else
+		cCodBar := SE1->E1_BARRA
+	EndIf
 Return(AllTRIM(cCodBar))
-
-IIF(SE1->E1_INSTR1 != '',ALLTRIM(SE1->E1_INSTR1),00)
 
 /* ########################################################################################################## */
 Static Function GetLinDig(cBolCodBar)
 	LOCAL cLinDig  := ""
 	LOCAL cCampoLD	:= "" // Campo da linha digitavel
-	
-  	RecLock("SE1", .F.)
-		SE1->E1_LINDIG := ""
-	MsUnlock()  
-	
+
 	If Empty(SE1->E1_LINDIG)
 		// Primeiro campo
 		cCampoLD := Substr(cBolCodBar, 01, 03)		// Codigo do banco (posicao 1 a 3 da barra)
@@ -699,12 +648,12 @@ Static Function GetLinDig(cBolCodBar)
 
 		//Segundo Campo
 		cCampoLD := Substr(cBolCodBar, 25, 10)		// 6 a 15 do campo livre
-		cCampoLD += DvLnDig(cCampoLD)				// digito verificador
+		cCampoLD += DvLnDig(cCampoLD)		// digito verificador
 		cLinDig += Substr(cCampoLD,01,05) + "." + Substr(cCampoLD,06,06) + Space(1)
 
 		//Terceiro Campo
 		cCampoLD := Substr(cBolCodBar, 35, 10)		// 16 a 25 do campo livre
-		cCampoLD += DvLnDig(cCampoLD)				// digito verificador
+		cCampoLD += DvLnDig(cCampoLD)		// digito verificador
 		cLinDig += Substr(cCampoLD,01,05) + "." + Substr(cCampoLD,06,06) + Space(1)
 
 		//Quarto Campo
@@ -715,6 +664,7 @@ Static Function GetLinDig(cBolCodBar)
 		cCampoLD := Substr(cBolCodBar, 06, 04)		// fator vencimento (posicao 06 a 09 da barra)
 		cCampoLD += Strzero(val(Substr(cBolCodBar,10,10)),10) // valor do documento (posicao 10 a 19 da barra)
 		cLinDig += cCampoLD
+
 	Else
 		cLinDig := SE1->E1_LINDIG
 	EndIf
@@ -753,7 +703,7 @@ Static Function GetFatVenc()
 Return AllTrim( Str( 1000 + ( CToD(cBolDtVenc) - dDtaBase ) ) )
 
 
-/* Calculo do digito verificador atraves do MODULO 10 e 11*/
+/* Calculo do digito verificador atraves do MODULO 10 */
 Static Function DvLnDig(cCampoLD)
 	LOCAL cRet
 	LOCAL nPeso := 2, i, nMult, nSoma := 0, nResto
@@ -766,13 +716,10 @@ Static Function DvLnDig(cCampoLD)
 		Endif
 		nSoma	+= nMult
 		nPeso	:= if(nPeso==1,2,1)
+
 	Next
 	nSoma *= 9
-/* 	if SE1->E1_PORTADO == '237'
-		nResto	:= MOD(nSoma,11)
-	else */
-		nResto	:= MOD(nSoma,10)
-/* 	ENDIF */
+	nResto	:= MOD(nSoma,10)
 
 	cRet := AllTrim(Str(nResto))
 	// IF nResto==0
@@ -810,28 +757,23 @@ MB : 16.05.2022
 Static Function DvCdBar(cTexto)
 	LOCAL cRet
 	LOCAL nPeso := 2, i, nMult, nSoma := 0, nResto
+
 	For i := Len(cTexto) To 1 Step -1
 		nMult	:= ( nPeso * Val(substr(cTexto,i,1)) )
 		nSoma	+= nMult
+
 		nPeso	:= if(nPeso==9,2,nPeso+1)
 	Next
 
 	nResto	:= MOD(nSoma,11)
+	cRet	:= 11 - nResto
 
-	if SE1->E1_PORTADO == '237'
-		IF nResto==0 .OR. nResto==1 .OR. nResto>9  // se resultado da subtração igual a ZERO, UM ou MAIOR QUE 9
-			cRet	:= "1"
-		ELSE
-			cRet	:= str(11 - nResto,1)
-		ENDIF
+	IF cRet==0 .OR. cRet==1 .OR. cRet>9  // se resultado da subtração igual a ZERO, UM ou MAIOR QUE 9
+		cRet	:= "1"
 	ELSE
-		cRet	:= 11 - nResto
-		IF nResto==0 .OR. nResto==1 .OR. nResto>9  // se resultado da subtração igual a ZERO, UM ou MAIOR QUE 9
-			cRet	:= "1"
-		ELSE
-			cRet	:= str(cRet,1)
-		ENDIF
+		cRet	:= str(cRet,1)
 	ENDIF
+
 Return(cRet)
 
 /* =========================================================================================== */
@@ -1135,8 +1077,6 @@ Static Function PrnLayout()
 	*/
 
 	//Impressao do Codigo de Barras
-//	MSBAR3("INT25",68.0,0.75,cBolCodBar,oPrn,.F.,,.T.,0.028,1.00,.T.,Nil,Nil,.F.)
-	//MSBAR3("INT25",27.3,0.3,_cbarra,oprn,.F.,,.T.,0.028,1.13,.T.,Nil,Nil,.F.)
 	oPrn:FWMSBAR("INT25",68.0,0.75,cBolCodBar,oPrn,.F., ,.T.,0.028,1.0,NIL,NIL,NIL,.F.,2/*nPFWidth*/,2/*nPFHeigth*/,.F./*lCmtr2Pix*/)
 
 	oPrn:EndPage()
@@ -1274,7 +1214,7 @@ Local nCont := 0
   CpyT2S(cPathTemp + aItens[nCont, 7], "\")
  	cAnexos   := aItens[nCont, 7] //Ira anexar o arquivo gerado na raiz do RootPath - para que no anexo nao vai a subpasta
   
- 	cListMail:="igor.oliveira@vistaalegre.agr.br"
+ 	cListMail:="miguel@martinsbernardo.com.br"
 	If (lEnviou := U_NewSMail(cListMail,"",cMailBCC,cAssunto,cMensagem,cAnexos,,,,,,,, 587, cMailRem)) //587 - Server TOTVS
 			__CopyFIle(cPathServG+"\"+aItens[nCont, 7], cPathServE+"\"+aItens[nCont, 7])
 			FErase(cPathServG+"\"+aItens[nCont, 7])
@@ -1424,8 +1364,8 @@ cSMTPAddr	:= IIF(Empty(cSMTPAddr), GETMV("MV_RELSERV"), cSMTPAddr)
 cPopAddr 	:= cPopAddr//Lower( AllTrim( Iif( cPopAddr  == NIL, WF7->WF7_POP3SR, cPopAddr    ) ) )
 //nPOPPort 	:= Iif( nPOPPort  == NIL, WF7->WF7_POP3PR, nPOPPort    )
 cFrom	   	:= IIF(!Empty(cRemet), cRemet, cAccount)//Lower( AllTrim( Iif( cFrom     == NIL, WF7->WF7_REMETE, cFrom       ) ) )
-lSSL        := GETMV("MV_RELSSL")
-lTSL        := GETMV("MV_RELTLS")
+lSSL      := GETMV("MV_RELSSL")
+lTSL      := GETMV("MV_RELTLS")
 
 // Instancia um novo TMailManager
 oServer := tMailManager():New()

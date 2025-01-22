@@ -50,7 +50,7 @@ If nOpc == 1
 	
 	// aAdd(aParamBox,{11,"Observação" ,"",".T.",".T.",.T.})
 	// aAdd(aParamBox,{1 ,"Nome do Arquivo" ,Space(15),"@!","","","",0,.F.}) // Tipo caractere
-	// http://www.blacktdn.com.br/2012/05/para-quem-precisar-desenvolver-uma.html
+// http://www.blacktdn.com.br/2012/05/para-quem-precisar-desenvolver-uma.html
 	If ParamBox(aParamBox,"Parâmetros...",@aRet, /* [ bOk ] */, /* [ aButtons ] */, /* [ lCentered ] */, /* [ nPosX ] */, /* [ nPosy ] */, /* [ oDlgWizard ] */,  cLoad, lCanSave, lUserSave )
 		If aRet[4] > MsDate()
 			Aviso("Aviso", "A data de referência informada [" + dToC(aRet[4]) + "]" + ;

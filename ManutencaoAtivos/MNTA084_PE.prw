@@ -9,6 +9,7 @@ Local oObj     := '' // Objeto que receberá o modelo.
 Local cIdPonto := '' // Identificador da chamada do ponto de entrada.
 Local cIdModel := '' // Identificador do modelo utilizado.
 Local cModel   := '' // Identifica o modelo utilizado e receberá o seu identificador.
+Local cItemcta := ""
 Local cCodBem  := ""
 Local cPropri  := ""
  

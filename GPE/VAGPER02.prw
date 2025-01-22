@@ -14,7 +14,7 @@
  | Obs.:  -                                                                       |
  '--------------------------------------------------------------------------------*/
 
-user function VAGPER02() // U_VAGPER02()
+user function VAGPER02()
 
 	Private cPerg := nil
 	
@@ -88,7 +88,7 @@ Private cArquivo  := GetTempPath()+'VAGPER02_'+StrTran(dToC(dDataBase), '/', '-'
 
 	oExcel:Activate()
 	oExcel:GetXMLFile(cArquivo)
-
+			
 	//Abrindo o excel e abrindo o arquivo xml
 	oExcelApp := MsExcel():New() 			//Abre uma nova conexão com Excel
 	oExcelApp:WorkBooks:Open(cArquivo) 		//Abre uma planilha
@@ -111,34 +111,38 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR03) + " - " + DtoC(MV_PAR04)
 oExcel:AddworkSheet(cWorkSheet)
 oExcel:AddTable(  cWorkSheet, cTitulo)
 
-_cQry :=  " WITH PONTO AS (  " + CRLF
-_cQry += "  		SELECT  SP8.P8_FILIAL, QB_DESCRIC, SRA.RA_NOME NOME, SP8.P8_CC,SRA.RA_CIC,SRA.RA_NASC,SRA.RA_SEXO, CTT_DESC01, SRA.RA_MAT, SRA.RA_NOME, RJ_DESC,  P8_DATAAPO, COUNT(P8_DATAAPO) REGISTROS    " + CRLF
-_cQry += "  		FROM " + RetSqlName("SP8") + " SP8  " + CRLF
-_cQry += "  		JOIN " + RetSqlName("SRA") + " SRA ON   " + CRLF
-_cQry += "  				    RA_FILIAL = P8_FILIAL " + CRLF
-_cQry += "  				AND RA_MAT = P8_MAT " + CRLF
-_cQry += "  				AND SRA.RA_DEMISSA=' ' " + CRLF
-_cQry += "  				AND SRA.D_E_L_E_T_ = ' ' " + CRLF
-_cQry += "  		JOIN SRJ010 SRJ ON " + CRLF
-_cQry += "  					SRJ.RJ_FILIAL = ' ' " + CRLF
-_cQry += "  				AND SRJ.RJ_FUNCAO = RA_CODFUNC " + CRLF
-_cQry += "  				AND SRJ.D_E_L_E_T_ = ' '   " + CRLF
+
+_cQry := "  WITH PONTO AS (  " +CRLF
+_cQry += CRLF
+_cQry += "  		SELECT  SP8.P8_FILIAL, QB_DESCRIC, RA1.RA_NOME NOME, SRA.RA_CC, CTT_DESC01, SRA.RA_MAT, SRA.RA_NOME, RJ_DESC,  P8_DATA, COUNT(P8_DATA) REGISTROS    " +CRLF
+_cQry += "  		FROM " + RetSqlName("SP8") + " SP8  " +CRLF
+_cQry += "  		JOIN " + RetSqlName("SRA") + " SRA ON   " +CRLF
+_cQry += "  				    RA_FILIAL = P8_FILIAL " +CRLF
+_cQry += "  				AND RA_MAT = P8_MAT " +CRLF
+_cQry += "  				AND SRA.RA_DEMISSA=' ' " +CRLF
+_cQry += "  				AND SRA.D_E_L_E_T_ = ' ' " +CRLF
+_cQry += "  		JOIN " + RetSqlName("SRJ") + " SRJ ON " +CRLF
+_cQry += "  					SRJ.RJ_FILIAL = ' ' " +CRLF
+_cQry += "  				AND SRJ.RJ_FUNCAO = RA_CODFUNC " +CRLF
+_cQry += "  				AND SRJ.D_E_L_E_T_ = ' '   " +CRLF
 _cQry += "          LEFT JOIN " + RetSqlName("CTT") + " CTT ON CTT_FILIAL=' ' AND CTT_CUSTO = RA_CC AND CTT.D_E_L_E_T_ = ' ' " + CRLF
 _cQry += "          LEFT JOIN " + RetSqlName("SQB") + " SQB ON QB_FILIAL=' ' AND QB_DEPTO = RA_DEPTO AND SQB.D_E_L_E_T_ = ' ' " + CRLF
 _cQry += "          LEFT JOIN " + RetSqlName("SRA") + " RA1 ON RA1.RA_FILIAL = P8_FILIAL AND RA1.RA_MAT = SQB.QB_MATRESP AND RA1.RA_DEMISSA=' ' AND RA1.D_E_L_E_T_ = ' ' " + CRLF
 _cQry += "  		WHERE   P8_FILIAL BETWEEN '"+ MV_PAR01 +"' AND '"+ MV_PAR02 +"' " + CRLF
-_cQry += "  			AND P8_DATAAPO BETWEEN '"+dToS(MV_PAR03)+"' AND '"+dToS(MV_PAR04)+"' " + CRLF
+_cQry += "  			AND P8_DATA BETWEEN '"+dToS(MV_PAR03)+"' AND '"+dToS(MV_PAR04)+"' " + CRLF
 _cQry += "          	AND SRA.RA_CC BETWEEN '"+MV_PAR08+"' AND '"+MV_PAR09+"' " + CRLF
 _cQry += "				AND QB_DEPTO BETWEEN '"+MV_PAR06+"' AND '"+MV_PAR07+"' " + CRLF
 _cQry += "  			AND P8_TPMCREP <> 'D' --AND P8_FLAG <> 'I'  " +CRLF
 _cQry += "  			AND SP8.D_E_L_E_T_ = ' ' " +CRLF
-_cQry += "  		GROUP BY SP8.P8_FILIAL, QB_DESCRIC, SRA.RA_NOME, SP8.P8_CC,SRA.RA_CIC,SRA.RA_NASC,SRA.RA_SEXO, CTT_DESC01, SRA.RA_MAT, SRA.RA_NOME, SRA.RA_CARGO, RJ_DESC, P8_DATAAPO   " + CRLF
-_cQry += "  )  " + CRLF
-_cQry += "  SELECT DISTINCT EMP.M0_CGC,QB_DESCRIC, NOME, P8_CC, CTT_DESC01, P8_FILIAL, RA_MAT, RA_NOME,RA_CIC,RA_NASC,RA_SEXO, RJ_DESC,  COUNT(P8_DATAAPO) QT_DIAS, COUNT(P8_DATAAPO)*"+Str(MV_PAR05)+" AS VALOR  " + CRLF
-_cQry += "  FROM  PONTO  " + CRLF
-_cQry += "    LEFT JOIN SYS_COMPANY EMP ON P8_FILIAL = M0_CODFIL  " + CRLF
-_cQry += "  GROUP BY P8_FILIAL, QB_DESCRIC, NOME, P8_CC,RA_CIC,RA_NASC,RA_SEXO, CTT_DESC01, RA_MAT, RA_NOME, RJ_DESC,EMP.M0_CGC    " + CRLF
-_cQry += "  ORDER BY  RA_NOME  " + CRLF
+_cQry += "  		GROUP BY SP8.P8_FILIAL, QB_DESCRIC, RA1.RA_NOME, SRA.RA_CC, CTT_DESC01, SRA.RA_MAT, SRA.RA_NOME, SRA.RA_CARGO, RJ_DESC, P8_DATA   " +CRLF
+_cQry += CRLF
+_cQry += "  )  " +CRLF
+_cQry += CRLF
+_cQry += "  SELECT DISTINCT QB_DESCRIC, NOME, RA_CC, CTT_DESC01, P8_FILIAL, RA_MAT, RA_NOME, RJ_DESC,  COUNT(P8_DATA) QT_DIAS, COUNT(P8_DATA)*"+cValtoChar(MV_PAR05)+" AS VALOR  " +CRLF
+_cQry += "  FROM  PONTO  " +CRLF
+_cQry += "  GROUP BY P8_FILIAL, QB_DESCRIC, NOME, RA_CC, CTT_DESC01, RA_MAT, RA_NOME, RJ_DESC    " +CRLF
+_cQry += "  ORDER BY  RA_NOME  " +CRLF
+_cQry += CRLF 
 
 If Select(cAlias) > 0
 	(cAlias)->(DbCloseArea())
@@ -149,35 +153,33 @@ MemoWrite(StrTran(cArquivo,".xml","")+"Conferencia_ponto_vale_combu1.sql" , _cQr
 dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(cAlias),.F.,.F.) 
 	
 	/* 01 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Filial"		         , 1, 1 )
-	/* 04 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Centro de Custos"		 , 1, 1 )
+	/* 02 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Departamento"		     , 1, 1 )
+	/* 03 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Encarregado"		     , 1, 1 )
+	/* 04 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cod. Centr. Custos"	 , 1, 1 )
+	/* 05 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Centro de Custos"		 , 1, 1 )
 	/* 06 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Matricula"		     	 , 1, 1 )
  	/* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Nome"		     	     , 1, 1 )
-	/* 02 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Departamento"		     , 1, 1 )
- 	/* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "CPF"		     	     , 1, 1 )
- 	/* 09 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Nascimento"    	     , 1, 1 )
-	/* 11 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cargo"		     	     , 2, 1 )
-	/* 12 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Qtde dias"		     	 , 1, 1 )
-	/* 13 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor"		     		 , 1, 3 )
-	/* 14 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Total"		     , 1, 3, .T. )
-	/* 01 */ oExcel:AddColumn( cWorkSheet, cTitulo, "CNPJ"			         , 1, 1 )
-
+	/* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cargo"		     	     , 2, 1 )
+	/* 09 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Qtde dias"		     	 , 1, 1 )
+	/* 10 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor"		     		 , 1, 3 )
+	/* 11 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Valor Total"		     , 1, 3, .T. )
+	
 	dbGotop()
 	
 	While !(cAlias)->(Eof())
 	                                             
 			oExcel:AddRow( cWorkSheet, cTitulo, ;
-							{ (cAlias)->P8_FILIAL, ; 											//1
-							  (cAlias)->P8_CC, ; 												//4
-							  (cAlias)->RA_MAT, ; 												//6
-							  (cAlias)->RA_NOME, ; 												//7
-							  (cAlias)->QB_DESCRIC, ; 											//2
-							  Alltrim(Transform((cAlias)->RA_CIC, "@R 999.999.999-99")) , ; 	//8
-							  dToC(sToD((cAlias)->RA_NASC)), ; 									//9
-							  (cAlias)->RJ_DESC, ; 												//11
-							  (cAlias)->QT_DIAS, ; 												//12
-							  		   MV_PAR05, ; 												//13
-							  (cAlias)->VALOR ,; 												//14
-							  Alltrim(Transform((cAlias)->M0_CGC, "@R 99.999.999/9999-99"))}) 	//15
+							{ (cAlias)->P8_FILIAL, ;
+							  (cAlias)->QB_DESCRIC, ;
+							  (cAlias)->NOME, ;
+							  (cAlias)->RA_CC, ;
+							  (cAlias)->CTT_DESC01, ;							  
+							  (cAlias)->RA_MAT, ;
+							  (cAlias)->RA_NOME, ;
+							  (cAlias)->RJ_DESC, ;
+							  (cAlias)->QT_DIAS, ;
+							  		   MV_PAR05, ;
+							  (cAlias)->VALOR })
 		
 		(cAlias)->(DbSkip())
 	EndDo
@@ -198,31 +200,33 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR03) + " - " + DtoC(MV_PAR04)
 oExcel:AddworkSheet(cWorkSheet)
 oExcel:AddTable(  cWorkSheet, cTitulo)
 
-_cQry := "  WITH PONTO AS (  " + CRLF 
-_cQry += " 		SELECT  SP8.P8_FILIAL, QB_DESCRIC, SRA.RA_NOME NOME, SP8.P8_CC, CTT_DESC01, SRA.RA_MAT,SRA.RA_CIC,SRA.RA_NASC,SRA.RA_SEXO, SRA.RA_NOME, RJ_DESC,  P8_DATAAPO, COUNT(P8_DATAAPO) REGISTROS    " + CRLF 
-_cQry += " 		FROM " + RetSqlName("SP8") + " SP8  " + CRLF 
-_cQry += " 		JOIN " + RetSqlName("SRA") + " SRA ON   " + CRLF 
-_cQry += " 				    RA_FILIAL = P8_FILIAL " + CRLF 
-_cQry += " 				AND RA_MAT = P8_MAT " + CRLF 
-_cQry += " 				AND SRA.RA_DEMISSA=' '  " + CRLF 
-_cQry += " 				AND SRA.D_E_L_E_T_ = ' '   " + CRLF 
-_cQry += " 		JOIN SRJ010 SRJ ON " + CRLF 
-_cQry += " 					SRJ.RJ_FILIAL = ' ' " + CRLF 
-_cQry += " 				AND SRJ.RJ_FUNCAO = RA_CODFUNC " + CRLF 
-_cQry += " 				AND SRJ.D_E_L_E_T_ = ' '   " + CRLF 
-_cQry += "         LEFT JOIN " + RetSqlName("CTT") + " CTT ON CTT_FILIAL=' ' AND CTT_CUSTO = RA_CC AND CTT.D_E_L_E_T_ = ' ' " + CRLF 
-_cQry += "         LEFT JOIN " + RetSqlName("SQB") + " SQB ON QB_FILIAL=' ' AND QB_DEPTO = RA_DEPTO AND SQB.D_E_L_E_T_ = ' ' " + CRLF 
-_cQry += "         LEFT JOIN " + RetSqlName("SRA") + " RA1 ON RA1.RA_FILIAL = P8_FILIAL AND RA1.RA_MAT = SQB.QB_MATRESP AND RA1.RA_DEMISSA=' ' AND RA1.D_E_L_E_T_ = ' ' " + CRLF 
+_cQry := "  WITH PONTO AS (  " +CRLF
+_cQry += CRLF
+_cQry += "  		SELECT  SP8.P8_FILIAL, QB_DESCRIC, RA1.RA_NOME NOME, SRA.RA_CC, CTT_DESC01, SRA.RA_MAT, SRA.RA_NOME, RJ_DESC,  P8_DATA, COUNT(P8_DATA) REGISTROS    " +CRLF
+_cQry += "  		FROM " + RetSqlName("SP8") + " SP8  " +CRLF
+_cQry += "  		JOIN " + RetSqlName("SRA") + " SRA ON   " +CRLF
+_cQry += "  				    RA_FILIAL = P8_FILIAL " +CRLF
+_cQry += "  				AND RA_MAT = P8_MAT " +CRLF
+_cQry += "  				AND SRA.RA_DEMISSA=' '  " +CRLF
+_cQry += "  				AND SRA.D_E_L_E_T_ = ' '   " +CRLF
+_cQry += "  		JOIN " + RetSqlName("SRJ") + " SRJ ON " +CRLF
+_cQry += "  					SRJ.RJ_FILIAL = ' ' " +CRLF
+_cQry += "  				AND SRJ.RJ_FUNCAO = RA_CODFUNC " +CRLF
+_cQry += "  				AND SRJ.D_E_L_E_T_ = ' '   " +CRLF
+_cQry += "          LEFT JOIN " + RetSqlName("CTT") + " CTT ON CTT_FILIAL=' ' AND CTT_CUSTO = RA_CC AND CTT.D_E_L_E_T_ = ' ' " + CRLF
+_cQry += "          LEFT JOIN " + RetSqlName("SQB") + " SQB ON QB_FILIAL=' ' AND QB_DEPTO = RA_DEPTO AND SQB.D_E_L_E_T_ = ' ' " + CRLF
+_cQry += "          LEFT JOIN " + RetSqlName("SRA") + " RA1 ON RA1.RA_FILIAL = P8_FILIAL AND RA1.RA_MAT = SQB.QB_MATRESP AND RA1.RA_DEMISSA=' ' AND RA1.D_E_L_E_T_ = ' ' " + CRLF
 _cQry += "  		WHERE P8_FILIAL BETWEEN '"+ MV_PAR01 +"' AND '"+ MV_PAR02 +"' " + CRLF
-_cQry += "  		  AND P8_DATAAPO BETWEEN '"+dToS(MV_PAR03)+"' AND '"+dToS(MV_PAR04)+"' " + CRLF
+_cQry += "  		  AND P8_DATA BETWEEN '"+dToS(MV_PAR03)+"' AND '"+dToS(MV_PAR04)+"' " + CRLF
 _cQry += "            AND SRA.RA_CC BETWEEN '"+MV_PAR08+"' AND '"+MV_PAR09+"' " + CRLF
-_cQry += "			  AND QB_DEPTO BETWEEN'"+MV_PAR06+"' AND '"+MV_PAR07+"' " + CRLF
+_cQry += "			  AND QB_DEPTO BETWEEN'"+MV_PAR06+"' AND '"+MV_PAR07+"' "
 _cQry += "  		  AND P8_TPMCREP <> 'D' --AND P8_FLAG <> 'I'  " +CRLF
 _cQry += "  		  AND SP8.D_E_L_E_T_ = ' '   " +CRLF
-_cQry += " 		GROUP BY SP8.P8_FILIAL, QB_DESCRIC, SRA.RA_NOME, SP8.P8_CC, CTT_DESC01, SRA.RA_MAT,SRA.RA_CIC,SRA.RA_NASC,SRA.RA_SEXO, SRA.RA_NOME, SRA.RA_CARGO, RJ_DESC, P8_DATAAPO   " + CRLF 
-_cQry += " 		)  " + CRLF 
-_cQry += "    SELECT * FROM PONTO " + CRLF
-
+_cQry += "  		GROUP BY SP8.P8_FILIAL, QB_DESCRIC, RA1.RA_NOME, SRA.RA_CC, CTT_DESC01, SRA.RA_MAT, SRA.RA_NOME, SRA.RA_CARGO, RJ_DESC, P8_DATA   " +CRLF
+_cQry += CRLF
+_cQry += "  		)  " +CRLF
+_cQry += CRLF
+_cQry += "    SELECT * FROM PONTO" +CRLF
 
 If Select(cAlias) > 0
 	(cAlias)->(DbCloseArea())
@@ -232,7 +236,7 @@ MemoWrite(StrTran(cArquivo,".xml","")+"Conferencia_ponto_vale_combu2.sql" , _cQr
 
 dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(cAlias),.F.,.F.) 
 	
-TcSetField(cAlias, "P8_DATAAPO", "D")
+TcSetField(cAlias, "P8_DATA", "D")
 
 /* 01 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Filial"		         , 1, 1 )
 /* 02 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Departamento"		     , 1, 1 )
@@ -241,12 +245,8 @@ TcSetField(cAlias, "P8_DATAAPO", "D")
 /* 05 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Centro de Custos"		 , 1, 1 )
 /* 06 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Matricula"		     	 , 1, 1 )
 /* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Nome"		     	     , 1, 1 )
-/* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "CPF"		     	     , 1, 1 )
-/* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Dt Nasc"		     	 , 1, 4 )
-/* 07 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Sexo"		     	     , 1, 1 )
 /* 08 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Cargo"		     	     , 2, 1 )
 /* 09 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Data"		     	 	 , 1, 4 )
-/* 09 */ oExcel:AddColumn( cWorkSheet, cTitulo, "Registros"	     	 	 , 1, 1 )
 	
 dbGotop()
 
@@ -256,16 +256,12 @@ While !(cAlias)->(Eof())
 					{ (cAlias)->P8_FILIAL, ;
 						(cAlias)->QB_DESCRIC, ;
 						(cAlias)->NOME, ;
-						(cAlias)->P8_CC, ;
+						(cAlias)->RA_CC, ;
 						(cAlias)->CTT_DESC01, ; 
 						(cAlias)->RA_MAT, ;
 						(cAlias)->RA_NOME, ;
-						Alltrim(Transform((cAlias)->RA_CIC, "@R 999.999.999-99")) , ;
-						dToC(sToD((cAlias)->RA_NASC)), ;
-						(cAlias)->RA_SEXO, ;
 						(cAlias)->RJ_DESC, ;
-						(cAlias)->P8_DATAAPO,;
-						(cAlias)->REGISTROS})
+						(cAlias)->P8_DATA })
 
 	(cAlias)->(DbSkip())
 EndDo

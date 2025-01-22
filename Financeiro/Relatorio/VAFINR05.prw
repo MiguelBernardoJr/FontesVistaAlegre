@@ -97,7 +97,7 @@ Local xNumCTR:=""
 Local cAba1 	:= "Titulos Pagos - " + iif(MV_PAR09==1,"Analitico ","Sintetico ")
 Local cTable1	:= "Titulos Pagos - " + iif(MV_PAR09==1,"Analitico ","Sintetico ") + " ( atualizado até  "+'Periodo de Pagamento: ' + SubStr(DtoS(MV_PAR03),7,2)+'/'+SubStr(DtoS(MV_PAR03),5,2) +'/'+ SubStr(DtoS(MV_PAR03),1,4) + " a: " + SubStr(DtoS(MV_PAR04),7,2)+'/'+SubStr(DtoS(MV_PAR04),5,2) +'/'+ SubStr(DtoS(MV_PAR04),1,4)+")" 
 
-Private strDia, strDiaAtu, strNomeImp, sNatur, sNaturA,strForn, strFornA, mTotalN:=0, mTotalP:=0, mTotal:=0, cNaturs := '', mTotalC:= 0, mTotalF:= 0, mTotalD:= 0
+Private strDia, strDiaAtu, strNomeImp, strNatur, strNaturA,strForn, strFornA, mTotalN:=0, mTotalP:=0, mTotal:=0, cNaturs := '', mTotalC:= 0, mTotalF:= 0, mTotalD:= 0
 Private nLinha, nLinhaT, cPag   
 Private nQuebra:=2215      
 // Tratamento para Excel
@@ -110,18 +110,18 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 
 	cNaturs := alltrim(MV_PAR10)
 	If MV_PAR09==1 ////RELATORIO ANALITICO
-		strSQL:="SELECT E5_FILIAL, E2_NOMFOR AS E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, " + CRLF
+		strSQL:="SELECT E5_FILIAL, E2_NOMFOR AS E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, "
 	Else
-		strSQL:="SELECT E5_FILIAL, E2_NOMFOR AS E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, "+ CRLF
+		strSQL:="SELECT E5_FILIAL, E2_NOMFOR AS E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, "
 	Endif
-	strSQL+="E5_LOJA, E5_BENEF, E2_HIST, E5_VALOR, CASE WHEN E2_NATUREZ = '' THEN '99999' ELSE E2_NATUREZ END AS E2_NATUREZ, E5_TIPO, E5_TIPODOC, E5_KEY, E5_SEQ, E5_HISTOR AS E5HIST FROM " + RetSqlName("SE5") + " AS SE5 WITH (NOLOCK) " + CRLF
-	strSQL+="INNER JOIN " + RetSqlName("SE2") + " AS SE2 WITH (NOLOCK) ON E2_FILIAL = E5_FILIAL " + CRLF
-	strSQL+="	AND E2_FORNECE = E5_CLIFOR " + CRLF
-	strSQL+="	AND E2_LOJA = E5_LOJA " + CRLF
-	strSQL+="	AND E2_NUM = E5_NUMERO " + CRLF
-	strSQL+="	AND E2_PREFIXO = E5_PREFIXO " + CRLF
-	strSQL+="	AND E2_PARCELA = E5_PARCELA AND SE2.D_E_L_E_T_ <> '*' " + CRLF
-	strSQL+="WHERE SE5.D_E_L_E_T_ <> '*' "  + CRLF
+	strSQL+="E5_LOJA, E5_BENEF, E2_HIST, E5_VALOR, CASE WHEN E2_NATUREZ = '' THEN '99999' ELSE E2_NATUREZ END AS E2_NATUREZ, E5_TIPO, E5_TIPODOC, E5_KEY, E5_SEQ, E5_HISTOR AS E5HIST FROM " + RetSqlName("SE5") + " AS SE5 WITH (NOLOCK) "
+	strSQL+="INNER JOIN " + RetSqlName("SE2") + " AS SE2 WITH (NOLOCK) ON E2_FILIAL = E5_FILIAL "
+	strSQL+="	AND E2_FORNECE = E5_CLIFOR "
+	strSQL+="	AND E2_LOJA = E5_LOJA "
+	strSQL+="	AND E2_NUM = E5_NUMERO "
+	strSQL+="	AND E2_PREFIXO = E5_PREFIXO "
+	strSQL+="	AND E2_PARCELA = E5_PARCELA AND SE2.D_E_L_E_T_ <> '*' "
+	strSQL+="WHERE SE5.D_E_L_E_T_ <> '*' " 
 	
 	
 	If !Empty(ALLTRIM(MV_PAR11))
@@ -135,7 +135,7 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 		If SubStr(cPfx, Len(cPfx)-1, 2) == ",'"
 			cPfx := "'"+SubStr(cPfx, 1, Len(cPfx)-2)
 		EndIf
-		strSQL+="	AND E5_PREFIXO IN ("+cPfx+") " + CRLF
+		strSQL+="	AND E5_PREFIXO IN ("+cPfx+") "
 	EndIf
 	
 	If !Empty(MV_PAR10)
@@ -143,39 +143,39 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 		If SubStr(cNaturs, Len(cNaturs)-1, 2) == ",'"
 			cNaturs := "'"+SubStr(cNaturs, 1, Len(cNaturs)-2)
 		EndIf
-		strSQL+="	AND SE5.E5_NATUREZ IN ('"+cNaturs+"') " + CRLF
+		strSQL+="	AND SE5.E5_NATUREZ IN ('"+cNaturs+"') "
 	EndIf
 	
-	strSQL+="	AND E5_FILIAL 	BETWEEN '"+MV_PAR01+"' 			AND '"+MV_PAR02+"' " + CRLF
-	strSQL+="	AND E5_DATA 	BETWEEN '"+DtOS(MV_PAR03)+"' 	AND '"+DtOS(MV_PAR04)+"' " + CRLF
-	strSQL+="	AND E5_CLIFOR 	BETWEEN '"+MV_PAR05+"' 			AND '"+MV_PAR06+"' " + CRLF
-	strSQL+="	AND E5_LOJA 	BETWEEN '"+MV_PAR07+"' 			AND '"+MV_PAR08+"' " + CRLF
-	strSQL+="	AND E5_RECPAG = 'P' " + CRLF
-	strSQL+="	AND E5_MOTBX IN ('NOR','DEB') " + CRLF
-	strSQL+="	AND (E5_TIPODOC+E5_MOTBX <> 'BANOR')  " + CRLF // nao considerar baixas que tenham cheque
-	strSQL+="	AND E5_TIPODOC NOT IN ('ES') "	+ CRLF// desconsiderar estornos
-	strSQL+="	AND E5_VALOR > 0 " + CRLF// para evitar impressao de linhas nao consideradas no movimento de descontos, etc
+	strSQL+="	AND E5_FILIAL 	BETWEEN '"+MV_PAR01+"' 			AND '"+MV_PAR02+"' "
+	strSQL+="	AND E5_DATA 	BETWEEN '"+DtOS(MV_PAR03)+"' 	AND '"+DtOS(MV_PAR04)+"' "
+	strSQL+="	AND E5_CLIFOR 	BETWEEN '"+MV_PAR05+"' 			AND '"+MV_PAR06+"' "
+	strSQL+="	AND E5_LOJA 	BETWEEN '"+MV_PAR07+"' 			AND '"+MV_PAR08+"' "
+	strSQL+="	AND E5_RECPAG = 'P' "
+	strSQL+="	AND E5_MOTBX IN ('NOR','DEB') "
+	strSQL+="	AND (E5_TIPODOC+E5_MOTBX <> 'BANOR')  " // nao considerar baixas que tenham cheque
+	strSQL+="	AND E5_TIPODOC NOT IN ('ES') "	// desconsiderar estornos
+	strSQL+="	AND E5_VALOR > 0 " // para evitar impressao de linhas nao consideradas no movimento de descontos, etc
 	// foi incluido para tratar cancelamento de compensacoes com cheques cancelados
-	strSQL+="	AND E5_FILIAL+E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ NOT IN  " + CRLF
-	strSQL+="	(SELECT EF_FILIAL+EF_BANCO+EF_AGENCIA+EF_CONTA+EF_NUM FROM " + RetSqlName("SEF") + "  SEF WITH (NOLOCK) WHERE EF_NATUR ='NTCHEST'  AND EF_IMPRESS='C'  AND EF_NUM <> ''  AND SEF.D_E_L_E_T_ = '' ) " + CRLF
+	strSQL+="	AND E5_FILIAL+E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ NOT IN  "
+	strSQL+="	(SELECT EF_FILIAL+EF_BANCO+EF_AGENCIA+EF_CONTA+EF_NUM FROM " + RetSqlName("SEF") + "  SEF WITH (NOLOCK) WHERE EF_NATUR ='NTCHEST'  AND EF_IMPRESS='C'  AND EF_NUM <> ''  AND SEF.D_E_L_E_T_ = '' ) "
 
 	
 	
 	strSQL+="UNION ALL "             
 	
 	If MV_PAR09==1 //RELATORIO ANALITICO
-		strSQL+="SELECT E5_FILIAL, E1_NOMCLI AS E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA,  E5_CLIFOR, "+ CRLF
+		strSQL+="SELECT E5_FILIAL, E1_NOMCLI AS E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA,  E5_CLIFOR, "
 	Else
-		strSQL+="SELECT E5_FILIAL, E1_NOMCLI AS  E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, "+ CRLF
+		strSQL+="SELECT E5_FILIAL, E1_NOMCLI AS  E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, "
 	Endif
-	strSQL+="E5_LOJA, E5_BENEF, E1_HIST AS E2_HIST, E5_VALOR, CASE WHEN E1_NATUREZ = '' THEN '99999' ELSE E1_NATUREZ END AS E2_NATUREZ, E5_TIPO, E5_TIPODOC, E5_KEY, E5_SEQ, E5_HISTOR AS E5HIST FROM " + RetSqlName("SE5") + " AS SE5 WITH (NOLOCK) " + CRLF
-	strSQL+="INNER JOIN " + RetSqlName("SE1") + " AS SE1 WITH (NOLOCK) ON E1_FILIAL = E5_FILIAL " + CRLF
-	strSQL+="	AND E1_CLIENTE = E5_CLIFOR " + CRLF
-	strSQL+="	AND E1_LOJA = E5_LOJA " + CRLF
-	strSQL+="	AND E1_NUM = E5_NUMERO " + CRLF
-	strSQL+="	AND E1_PREFIXO = E5_PREFIXO " + CRLF
-	strSQL+="	AND E1_PARCELA = E5_PARCELA AND SE1.D_E_L_E_T_ <> '*' " + CRLF
-	strSQL+="WHERE SE5.D_E_L_E_T_ <> '*' " + CRLF
+	strSQL+="E5_LOJA, E5_BENEF, E1_HIST AS E2_HIST, E5_VALOR, CASE WHEN E1_NATUREZ = '' THEN '99999' ELSE E1_NATUREZ END AS E2_NATUREZ, E5_TIPO, E5_TIPODOC, E5_KEY, E5_SEQ, E5_HISTOR AS E5HIST FROM " + RetSqlName("SE5") + " AS SE5 WITH (NOLOCK) "
+	strSQL+="INNER JOIN " + RetSqlName("SE1") + " AS SE1 WITH (NOLOCK) ON E1_FILIAL = E5_FILIAL "
+	strSQL+="	AND E1_CLIENTE = E5_CLIFOR "
+	strSQL+="	AND E1_LOJA = E5_LOJA "
+	strSQL+="	AND E1_NUM = E5_NUMERO "
+	strSQL+="	AND E1_PREFIXO = E5_PREFIXO "
+	strSQL+="	AND E1_PARCELA = E5_PARCELA AND SE1.D_E_L_E_T_ <> '*' "
+	strSQL+="WHERE SE5.D_E_L_E_T_ <> '*' "
 	
 	//Prefixos
 	If !Empty(ALLTRIM(MV_PAR11))
@@ -189,7 +189,7 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 		If SubStr(cPfx, Len(cPfx)-1, 2) == ",'"
 			cPfx := "'"+SubStr(cPfx, 1, Len(cPfx)-2)
 		EndIf
-		strSQL+="	AND E5_PREFIXO IN ("+cPfx+") " + CRLF
+		strSQL+="	AND E5_PREFIXO IN ("+cPfx+") "
 	EndIf
 
 	If !Empty(MV_PAR10)
@@ -197,32 +197,32 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 		If SubStr(cNaturs, Len(cNaturs)-1, 2) == ",'"
 			cNaturs := "'"+SubStr(cNaturs, 1, Len(cNaturs)-2)
 		EndIf
-		strSQL+="	AND SE5.E5_NATUREZ IN ('"+cNaturs+"') " + CRLF
+		strSQL+="	AND SE5.E5_NATUREZ IN ('"+cNaturs+"') "
 	EndIf
 	
-	strSQL+="	AND E5_FILIAL BETWEEN '"+MV_PAR01+"' AND '"+MV_PAR02+"' "+ CRLF
-	strSQL+="	AND E5_DATA BETWEEN '"+DtOS(MV_PAR03)+"' AND '"+DtOS(MV_PAR04)+"' "+ CRLF
-	strSQL+="	AND E5_CLIFOR 	BETWEEN '"+MV_PAR05+"' 			AND '"+MV_PAR06+"' "+ CRLF
-	strSQL+="	AND E5_LOJA 	BETWEEN '"+MV_PAR07+"' 			AND '"+MV_PAR08+"' "+ CRLF
-	strSQL+="	AND E5_RECPAG = 'P' "+ CRLF
-	strSQL+="	AND E5_MOTBX IN ('NOR','DEB') "+ CRLF
-	strSQL+="	AND (E5_TIPODOC+E5_MOTBX <> 'BANOR')  " + CRLF// nao considerar baixas que tenham cheque
-	strSQL+="	AND E5_TIPODOC NOT IN ('ES') "+ CRLF	// desconsiderar estornos
-	strSQL+="	AND E5_VALOR > 0 " + CRLF// para evitar impressao de linhas nao consideradas no movimento de descontos, etc
+	strSQL+="	AND E5_FILIAL BETWEEN '"+MV_PAR01+"' AND '"+MV_PAR02+"' "
+	strSQL+="	AND E5_DATA BETWEEN '"+DtOS(MV_PAR03)+"' AND '"+DtOS(MV_PAR04)+"' "
+	strSQL+="	AND E5_CLIFOR 	BETWEEN '"+MV_PAR05+"' 			AND '"+MV_PAR06+"' "
+	strSQL+="	AND E5_LOJA 	BETWEEN '"+MV_PAR07+"' 			AND '"+MV_PAR08+"' "
+	strSQL+="	AND E5_RECPAG = 'P' "
+	strSQL+="	AND E5_MOTBX IN ('NOR','DEB') "
+	strSQL+="	AND (E5_TIPODOC+E5_MOTBX <> 'BANOR')  " // nao considerar baixas que tenham cheque
+	strSQL+="	AND E5_TIPODOC NOT IN ('ES') "	// desconsiderar estornos
+	strSQL+="	AND E5_VALOR > 0 " // para evitar impressao de linhas nao consideradas no movimento de descontos, etc
 	// foi incluido para tratar cancelamento de compensacoes com cheques cancelados
-	strSQL+="	AND E5_FILIAL+E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ NOT IN  " + CRLF
-	strSQL+="	(SELECT EF_FILIAL+EF_BANCO+EF_AGENCIA+EF_CONTA+EF_NUM FROM " + RetSqlName("SEF") + "  SEF WITH (NOLOCK) WHERE EF_NATUR ='NTCHEST'  AND EF_IMPRESS='C'  AND EF_NUM <> ''  AND SEF.D_E_L_E_T_ = '' ) " + CRLF
+	strSQL+="	AND E5_FILIAL+E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ NOT IN  "
+	strSQL+="	(SELECT EF_FILIAL+EF_BANCO+EF_AGENCIA+EF_CONTA+EF_NUM FROM " + RetSqlName("SEF") + "  SEF WITH (NOLOCK) WHERE EF_NATUR ='NTCHEST'  AND EF_IMPRESS='C'  AND EF_NUM <> ''  AND SEF.D_E_L_E_T_ = '' ) "
 	
 
 	strSQL+="UNION ALL "             
 	
 	If MV_PAR09==1 //RELATORIO ANALITICO
-		strSQL+="SELECT E5_FILIAL, 'MOV.BANCARIO' AS E2_NOMFOR,  E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA,  E5_CLIFOR, " + CRLF
+		strSQL+="SELECT E5_FILIAL, 'MOV.BANCARIO' AS E2_NOMFOR,  E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA,  E5_CLIFOR, "
 	Else
-		strSQL+="SELECT E5_FILIAL, 'MOV.BANCARIO' AS  E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, " + CRLF
+		strSQL+="SELECT E5_FILIAL, 'MOV.BANCARIO' AS  E2_NOMFOR, E5_DATA, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_CLIFOR, "
 	Endif
-	strSQL+="E5_LOJA, E5_BENEF, E5_HISTOR AS E2_HIST, E5_VALOR, CASE WHEN E5_NATUREZ = '' THEN '99999' ELSE E5_NATUREZ END AS E2_NATUREZ, E5_TIPO, E5_TIPODOC, E5_KEY, E5_SEQ, E5_HISTOR AS E5HIST FROM " + RetSqlName("SE5") + " AS SE5 WITH (NOLOCK) " + CRLF
-	strSQL+="WHERE SE5.D_E_L_E_T_ <> '*' " + CRLF
+	strSQL+="E5_LOJA, E5_BENEF, E5_HISTOR AS E2_HIST, E5_VALOR, CASE WHEN E5_NATUREZ = '' THEN '99999' ELSE E5_NATUREZ END AS E2_NATUREZ, E5_TIPO, E5_TIPODOC, E5_KEY, E5_SEQ, E5_HISTOR AS E5HIST FROM " + RetSqlName("SE5") + " AS SE5 WITH (NOLOCK) "
+	strSQL+="WHERE SE5.D_E_L_E_T_ <> '*' "
 	
 	//Prefixos
 	If !Empty(ALLTRIM(MV_PAR11))
@@ -236,7 +236,7 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 		If SubStr(cPfx, Len(cPfx)-1, 2) == ",'"
 			cPfx := "'"+SubStr(cPfx, 1, Len(cPfx)-2)
 		EndIf
-		strSQL+="	AND E5_PREFIXO IN ("+cPfx+") "+ CRLF
+		strSQL+="	AND E5_PREFIXO IN ("+cPfx+") "
 	EndIf
 
 	If !Empty(MV_PAR10)
@@ -244,29 +244,29 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 		If SubStr(cNaturs, Len(cNaturs)-1, 2) == ",'"
 			cNaturs := "'"+SubStr(cNaturs, 1, Len(cNaturs)-2)
 		EndIf
-		strSQL+="	AND SE5.E5_NATUREZ IN ('"+cNaturs+"') "+ CRLF
+		strSQL+="	AND SE5.E5_NATUREZ IN ('"+cNaturs+"') "
 	EndIf
 	
-	strSQL+="	AND E5_FILIAL BETWEEN '"+MV_PAR01+"' AND '"+MV_PAR02+"' " + CRLF
-	strSQL+="	AND E5_DATA BETWEEN '"+DtOS(MV_PAR03)+"' AND '"+DtOS(MV_PAR04)+"' " + CRLF
-	strSQL+="	AND E5_CLIFOR 	BETWEEN '"+MV_PAR05+"' 			AND '"+MV_PAR06+"' " + CRLF
-	strSQL+="	AND E5_LOJA 	BETWEEN '"+MV_PAR07+"' 			AND '"+MV_PAR08+"' " + CRLF
-	strSQL+="	AND E5_CLIFOR = '' "  + CRLF
-	strSQL+="	AND E5_RECPAG = 'P' " + CRLF
+	strSQL+="	AND E5_FILIAL BETWEEN '"+MV_PAR01+"' AND '"+MV_PAR02+"' "
+	strSQL+="	AND E5_DATA BETWEEN '"+DtOS(MV_PAR03)+"' AND '"+DtOS(MV_PAR04)+"' "
+	strSQL+="	AND E5_CLIFOR 	BETWEEN '"+MV_PAR05+"' 			AND '"+MV_PAR06+"' "
+	strSQL+="	AND E5_LOJA 	BETWEEN '"+MV_PAR07+"' 			AND '"+MV_PAR08+"' "
+	strSQL+="	AND E5_CLIFOR = '' " 
+	strSQL+="	AND E5_RECPAG = 'P' "
 //	strSQL+="	AND E5_MOTBX IN ('NOR','DEB') "
-	strSQL+="	AND (E5_TIPODOC+E5_MOTBX <> 'BANOR')  " + CRLF// nao considerar baixas que tenham cheque
-	strSQL+="	AND E5_TIPODOC NOT IN ('ES','TR','TB') "+ CRLF	// desconsiderar estornos
-	strSQL+="	AND E5_VALOR > 0 " + CRLF// para evitar impressao de linhas nao consideradas no movimento de descontos, etc
+	strSQL+="	AND (E5_TIPODOC+E5_MOTBX <> 'BANOR')  " // nao considerar baixas que tenham cheque
+	strSQL+="	AND E5_TIPODOC NOT IN ('ES','TR','TB') "	// desconsiderar estornos
+	strSQL+="	AND E5_VALOR > 0 " // para evitar impressao de linhas nao consideradas no movimento de descontos, etc
 	// foi incluido para tratar cancelamento de compensacoes com cheques cancelados
-	strSQL+="	AND E5_FILIAL+E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ NOT IN  " + CRLF
-	strSQL+="	(SELECT EF_FILIAL+EF_BANCO+EF_AGENCIA+EF_CONTA+EF_NUM FROM " + RetSqlName("SEF") + "  SEF WITH (NOLOCK) WHERE EF_NATUR ='NTCHEST'  AND EF_IMPRESS='C'  AND EF_NUM <> ''  AND SEF.D_E_L_E_T_ = '' ) " + CRLF
+	strSQL+="	AND E5_FILIAL+E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ NOT IN  "
+	strSQL+="	(SELECT EF_FILIAL+EF_BANCO+EF_AGENCIA+EF_CONTA+EF_NUM FROM " + RetSqlName("SEF") + "  SEF WITH (NOLOCK) WHERE EF_NATUR ='NTCHEST'  AND EF_IMPRESS='C'  AND EF_NUM <> ''  AND SEF.D_E_L_E_T_ = '' ) "
 
 		
-	strSQL+= " ORDER BY E5_FILIAL ASC, E5_DATA ASC, E2_NATUREZ ASC, E5_CLIFOR ASC, E5_LOJA ASC, E5_TIPO ASC, E5_PREFIXO ASC, E5_NUMERO ASC " + CRLF
+	strSQL+= " ORDER BY E5_FILIAL ASC, E5_DATA ASC, E2_NATUREZ ASC, E5_CLIFOR ASC, E5_LOJA ASC, E5_TIPO ASC, E5_PREFIXO ASC, E5_NUMERO ASC "
 	
-	if cUserName $ 'ioliveira|Administrador|bernardo|atoshio'
-		Memowrite("C:\TOTVS_RELATORIOS\VAFINR05.txt",strSQL)	
-	endif 
+
+	Memowrite("D:\TOTVS\VAFINR05.txt",strSQL)	
+	
 	
 	If Select("ORSSE2") > 0
 		ORSSE2->(DbCloseArea())
@@ -356,7 +356,7 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 					If nLinha >= nQuebra              
 						ChecaCab()
 					Endif
-					oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+sNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+sNaturA,"ED_DESCRIC"), oFont07n)
+					oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+strNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+strNaturA,"ED_DESCRIC"), oFont07n)
 					nColuna+=nColunaT + nColunaT + 1000
 					oPrint:Say(nLinha + nTopo, COL_8 + nMargem, Transform(mTotalN,"@E 9,999,999,999,999.99"), oFont07n,,,,PAD_RIGHT) 
 					mTotalN:=0
@@ -396,12 +396,7 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 				nLinha+=nLinhaT
 			EndIf			
 			
-			sNatur:=AllTrim(ORSSE2->E2_NATUREZ)
-			
-			if Type("sNaturA") == "U"
-				sNaturA:=sNatur
-			endif 
-
+			strNatur:=AllTrim(ORSSE2->E2_NATUREZ)
 			If AllTrim(ORSSE2->E5_BENEF)=="" .OR. Alltrim(ORSSE2->E5_BENEF)<>Alltrim(POSICIONE("SA2",1,XFILIAL("SA2")+ORSSE2->(E5_CLIFOR+E5_LOJA),"A2_NOME"))
 				strForn:=AllTrim(ORSSE2->E5_CLIFOR+"-"+ORSSE2->E5_LOJA)+"-"+POSICIONE("SA2",1,XFILIAL("SA2")+ORSSE2->(E5_CLIFOR+E5_LOJA),"A2_NOME")				
 			Else
@@ -409,18 +404,18 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 			EndIf	
 			strDia := DTOC(STOD(ORSSE2->E5_DATA))		
 			If MV_PAR09==1 //RELATORIO ANALITICO
-				If Val(sNatur)<>Val(sNaturA)// sub total natureza
+				If strNatur<>strNaturA    // sub total natureza 
 					If mTotalN > 0
-						If nLinha >= nQuebra
+						If nLinha >= nQuebra              
 							ChecaCab()
-						Endif		
-						oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+sNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+sNaturA,"ED_DESCRIC"), oFont07n)
+						Endif				
+						oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+strNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+strNaturA,"ED_DESCRIC"), oFont07n)
 						nColuna+=nColunaT + nColunaT + 1000
 						oPrint:Say(nLinha + nTopo, COL_8 + nMargem, Transform(mTotalN,"@E 9,999,999,999,999.99"), oFont07n,,,,PAD_RIGHT) 
 						mTotalN:=0
 						nLinha+=nLinhaT			                  
 					EndIf
-					sNaturA:=sNatur
+					strNaturA:=strNatur
 				EndIf
 				
 				If strDia<>strDiaAtu  // sub total dia
@@ -438,7 +433,7 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 				EndIf				
 				
 			Else //SINTETICO
-				If strForn<>strFornA .or. strDia<>strDiaAtu .or. Val(sNatur)<>Val(sNaturA)
+				If strForn<>strFornA .or. strDia<>strDiaAtu .or. strNatur<>strNaturA
 					If mTotalF > 0
 						If nLinha >= nQuebra              
 							ChecaCab()
@@ -453,18 +448,18 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 					strFornA:=strForn
 				EndIf
 
-				If Val(sNatur)<>Val(sNaturA) .or. strDia<>strDiaAtu //.or. AllTrim(xNumCTR) <> AllTrim(ORSSE2->E2_X_CONTR)     
+				If strNatur<>strNaturA  .or. strDia<>strDiaAtu //.or. AllTrim(xNumCTR) <> AllTrim(ORSSE2->E2_X_CONTR)     
 					If mTotalN > 0
 						If nLinha >= nQuebra              
 							ChecaCab()
 						Endif				
-						oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+sNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+sNaturA,"ED_DESCRIC"), oFont07n)
+						oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+strNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+strNaturA,"ED_DESCRIC"), oFont07n)
 						nColuna+=nColunaT + nColunaT + 1000
 						oPrint:Say(nLinha + nTopo, COL_8 + nMargem, Transform(mTotalN,"@E 9,999,999,999,999.99"), oFont07n,,,,PAD_RIGHT) 
 						mTotalN:=0
 						nLinha+=nLinhaT			                  
 					EndIf
-					sNaturA:=sNatur
+					strNaturA:=strNatur
 				EndIf
 				
 				If strDia<>strDiaAtu 
@@ -625,7 +620,7 @@ Private cArquivo  := GetTempPath()+'vafinr05_'+StrTran(dToC(dDataBase), '/', '-'
 		//IMPRIME TOTAL POR NATUREZA
 		If mTotalN > 0
 			nLinha+=nLinhaT
-			oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+sNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+sNaturA,"ED_DESCRIC"), oFont07n)
+			oPrint:Say(nLinha + nTopo, COL_7 + nMargem, "-------> "+strNaturA+ "-"+ POSICIONE("SED",1,XFILIAL("SED")+strNaturA,"ED_DESCRIC"), oFont07n)
 			nColuna+=nColunaT + nColunaT + 1000
 			oPrint:Say(nLinha + nTopo, COL_8 + nMargem, Transform(mTotalN,"@E 9,999,999,999,999.99"), oFont07n,,,,PAD_RIGHT) 
 			mTotalN:=0

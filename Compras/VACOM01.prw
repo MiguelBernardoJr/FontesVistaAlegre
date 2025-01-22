@@ -20,7 +20,7 @@
 User Function VACOM01()
 Local   aArea 		:= GetArea()  
 Private cCadastro	:= "Itens de Notas Fiscais"
-Private aRotina		:= {}   
+Private aRotina		:= {}
  
 //AxCadastro( <cAlias>, <cTitulo>, <cVldExc>, <cVldAlt>)
 AxCadastro("SD1", OemToAnsi(cCadastro), '.F.','.F.')

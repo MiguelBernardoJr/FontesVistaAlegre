@@ -139,7 +139,7 @@ local oModel := nil
 local oStrCabG := GridStruct(_MODEL, aCposCab)
 local oStrIteG := GridStruct(_MODEL, aCposItens)
 
-local bLoadFld := {|oModel   , lCopia| LoadForm(oModel, lCopia) }
+local bLoadFld := {|oModel, lCopia| LoadForm(oModel, lCopia) }
 local bLoadCab := {|oFormGrid, lCopia| LoadCabec(oFormGrid, lCopia) }
 local bLoadIte := {|oFormGrid, lCopia| LoadItens(oFormGrid, lCopia) }
 

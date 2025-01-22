@@ -362,8 +362,8 @@ Else
 	cRotBlank := cRoteiro
 EndIf
 
-//Carregar os periodos abertos (aPerAberto) e/ou
-// os periodos fechados (aPerFechado), dependendo
+//Carregar os periodos abertos (aPerAberto) e/ou 
+// os periodos fechados (aPerFechado), dependendo 
 // do periodo (ou intervalo de periodos) selecionado
 RetPerAbertFech(cProcesso	,; // Processo selecionado na Pergunte.
 				cRotBlank	,; // Roteiro selecionado na Pergunte.
@@ -6368,9 +6368,9 @@ Private nPadVal		:= 19, nPadBase := 11
 				Else
 				   nRegAtu 	:= 1
 				   nContr 		:= 1
-				   lContinua 	:= .F.
+				   lContinua 	:= .T.
 				   Exit
-				EndIf
+				EndIf					
 			Next nConta
 
 			// Caso nao haja outra folha imprime o rodape

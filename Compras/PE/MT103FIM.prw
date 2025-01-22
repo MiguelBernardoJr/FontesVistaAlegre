@@ -150,6 +150,12 @@ Local nDif 		:= 0
     //Endif
     // FIM Conforme Sim e Incluso
     
+	// Toshio 20220505 - Quando for operçaão do MS chama rotina que faz a transferencia do grupo de Produtos BMS para BOV
+	If cValtoChar(nOpcao) $ "3/4" .And. nConfirma == 1
+        ProcTrfMS(nOpcao, SF1->F1_DOC, SF1->F1_SERIE, SF1->F1_FORNECE, SF1->F1_LOJA)
+    EndIf
+
+
 	/*
 	Excluir itens SD1;
 	*/

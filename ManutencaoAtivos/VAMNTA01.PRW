@@ -18,8 +18,8 @@ Tabela ZAT (compartilhada - chave única por ZAT_FILIAL+ZAT_CODCOM+dTos(ZAT_DATCA
 criar log de Inclusão, alteração e exclusão no SIGACFG
 
 ZAT_FILIAL
-ZAT_CODCOM (Obrigatório, Vínculo com tabela TQM)
-ZAT_DESCOM (Virtual)
+ZAT_CODCOM (Obrigatório, Vínculo com tabela TQM) ou Conteúdo fixo 007 (ARLA)
+ZAT_DESCOM (Virtual) - recebe o conteudo ARLA quando o ZAT_CODCOM for 007
 ZAT_DATCAD (Obrigatório) 
 ZAT_VALCOM (Obrigatório)
 ZAT_CODUSR (Visualizar - inicializador padrão)
@@ -33,6 +33,11 @@ TQN_VUNABA - Valor Unitário Abastecimento
 TQN_VTTABA - Valor Total Abastecimento
 TQN_TITABA - Título (Nro do Titulo na SA2 - Filial+Pref+Número+Parcela+Tipo)
 
+Novos campos na Tabela STL
+TL_NRABAS - Número do abastecimento
+TL_VUNABA - Valor Unitário Abastecimento
+TL_VTTABA - Valor Total Abastecimento
+TL_TITABA - Título (Nro do Titulo na SA2 - Filial+Pref+Número+Parcela+Tipo)
 
 */
 Private cCadastro  := "Cadastro de Preços de Combustível"
@@ -160,42 +165,97 @@ If lRet .and. !INCLUI
 	Endif
 	TMPZAT->(dbCloseArea())
 
-	If Select("TMPTQN") > 0
-		TMPTQN->(dbCloseArea())
-	EndIf
+	// Verificação Abastecimentos
+	If M->ZAT_CODCOM <> "007"
 
-	cDatVer := If(!Empty(cDatPos),cDatPos,Dtos(dDataBase))
+		If Select("TMPTQN") > 0
+			TMPTQN->(dbCloseArea())
+		EndIf
 
-	cQuery := "SELECT TQN.TQN_TITABA, TQN.R_E_C_N_O_ AS RECTQN "
-	cQuery += "  FROM "+RetSqlName("TQN")+" TQN "
-	cQuery += "  JOIN "+RetSqlName('ST9')+" ST9 ON ( ST9.T9_FILIAL = '"+xFilial("ST9")+ "' "
-	cQuery += " AND ST9.T9_CODBEM = TQN.TQN_FROTA AND ST9.T9_PROPRIE = '2' AND ST9.D_E_L_E_T_ = ' ' )"
-	cQuery += " WHERE TQN.TQN_FILIAL='"+xFilial("TQN")+"' AND TQN.TQN_CODCOM = '"+M->ZAT_CODCOM+"'"
-	cQuery += " AND TQN.TQN_DTABAS BETWEEN '"+Dtos(M->ZAT_DATCAD)+"' AND '"+cDatVer +"' AND TQN.D_E_L_E_T_ = ' '"
-	DbUseArea(.t., "TOPCONN", TCGenQry(,,ChangeQuery(cQuery)), "TMPTQN", .f., .f.)
+		cDatVer := If(!Empty(cDatPos),cDatPos,Dtos(dDataBase))
 
-	If  !TMPTQN->(EOF())
+		cQuery := "SELECT TQN.TQN_TITABA, TQN.R_E_C_N_O_ AS RECTQN "
+		cQuery += "  FROM "+RetSqlName("TQN")+" TQN "
+		cQuery += "  JOIN "+RetSqlName('ST9')+" ST9 ON ( ST9.T9_FILIAL = '"+xFilial("ST9")+ "' "
+		cQuery += " AND ST9.T9_CODBEM = TQN.TQN_FROTA AND ST9.T9_PROPRIE = '2' AND ST9.D_E_L_E_T_ = ' ' )"
+		cQuery += " WHERE TQN.TQN_FILIAL='"+xFilial("TQN")+"' AND TQN.TQN_CODCOM = '"+M->ZAT_CODCOM+"'"
+		cQuery += " AND TQN.TQN_DTABAS BETWEEN '"+Dtos(M->ZAT_DATCAD)+"' AND '"+cDatVer +"' AND TQN.D_E_L_E_T_ = ' '"
+		DbUseArea(.t., "TOPCONN", TCGenQry(,,ChangeQuery(cQuery)), "TMPTQN", .f., .f.)
 
-		If Empty(TMPTQN->TQN_TITABA)
+		If  !TMPTQN->(EOF())
 
-			cMsg := "Já existe cobrança no Financeiro com este preço de Combustvel! É necessário estornar o título para então "+iIf(ALTERA,"alterar o preço","excluir o registro")+"!"
-			MsgInfo(cMsg,"Atenção")
-			lRet := .f.
+			If Empty(TMPTQN->TQN_TITABA)
 
-		Else
-
-			If !MsgYesNo("Já existe registro na tabela de Abastecimento (TQN) utilizando este valor de referência!  Deseja Continuar!","Atenção")
-				lRet := .f.
-			Else
-				cMsg := "Será necessário reprocessar o seguinte período dos Abastecimentos: "+Dtoc(M->AT_DATCAD)+" até "+Dtoc(sTod(cDatVer))+", pois foi alterado o Valor do Litro do Código "+M->ZAT_CODCOM
+				cMsg := "Já existe cobrança no Financeiro com este preço de Combustvel! É necessário estornar o título para então "+iIf(ALTERA,"alterar o preço","excluir o registro")+"!"
 				MsgInfo(cMsg,"Atenção")
-				// TODO
-				// Gerar email para informar da necessidade de reprocessamento
-				// U_EnvMail(cMsg)
+				lRet := .f.
+
+			Else
+
+				If !MsgYesNo("Já existe registro na tabela de Abastecimento (TQN) utilizando este valor de referência!  Deseja Continuar!","Atenção")
+					lRet := .f.
+				Else
+					cMsg := "Será necessário reprocessar o seguinte período dos Abastecimentos: "+Dtoc(M->ZAT_DATCAD)+" até "+Dtoc(sTod(cDatVer))+", pois foi alterado o Valor do Litro do Código "+M->ZAT_CODCOM
+					MsgInfo(cMsg,"Atenção")
+					// TODO
+					// Gerar email para informar da necessidade de reprocessamento
+					// U_EnvMail(cMsg)
+				Endif
+
 			Endif
 
 		Endif
 
+	Endif
+
+	// Verificação ARLA
+	If M->ZAT_CODCOM == "007"
+
+		If Select("TMPSTL") > 0
+			TMPSTL->(dbCloseArea())
+		EndIf
+
+		cDatVer := If(!Empty(cDatPos),cDatPos,Dtos(dDataBase))
+
+		cQuery := "SELECT STL.TL_TITABA, STL.R_E_C_N_O_ AS RECSTL "
+		cQuery += "  FROM "+RetSqlName("STL")+" STL "
+		cQuery += "	JOIN "+RetSqlName("STJ")+" STJ ON "
+		cQuery += "	     TJ_FILIAL = '"+xFilial("STJ")+ "' "
+		cQuery += "	 AND TJ_ORDEM= TL_ORDEM "
+		cQuery += "	 AND TJ_PLANO = TL_PLANO "
+		cQuery += "  JOIN "+RetSqlName('ST9')+" ST9 ON ( ST9.T9_FILIAL = '"+xFilial("ST9")+ "' "
+		cQuery += " AND ST9.T9_CODBEM = TQN.TQN_FROTA AND ST9.T9_PROPRIE = '2' AND ST9.D_E_L_E_T_ = ' ' )"
+		cQuery += " WHERE STL.TL_FILIAL='"+xFilial("STL")+"' "
+		cQuery += " AND STJ.TJ_DTORIGI BETWEEN '"+Dtos(M->ZAT_DATCAD)+"' AND '"+cDatVer +"' AND STL.D_E_L_E_T_ = ' '"
+		cQuery += " AND TL_CODIGO = '130011' "
+		cQuery += " AND STJ.D_E_L_E_T_ = ' ' "
+		cQuery += " AND STJ.TJ_SERVICO = 'C00014' "
+		DbUseArea(.t., "TOPCONN", TCGenQry(,,ChangeQuery(cQuery)), "TMPSTL", .f., .f.)
+
+		If  !TMPSTL->(EOF())
+
+			If Empty(TMPSTL->TL_TITABA)
+
+				cMsg := "Já existe cobrança no Financeiro com este preço do ARLA! É necessário estornar o título para então "+iIf(ALTERA,"alterar o preço","excluir o registro")+"!"
+				MsgInfo(cMsg,"Atenção")
+				lRet := .f.
+
+			Else
+
+				If !MsgYesNo("Já existe registro na tabela de Abastecimento (STL) utilizando este valor de referência!  Deseja Continuar!","Atenção")
+					lRet := .f.
+				Else
+					cMsg := "Será necessário reprocessar o seguinte período de Lançamento do ARLA: "+Dtoc(M->ZAT_DATCAD)+" até "+Dtoc(sTod(cDatVer))+", pois foi alterado o Valor do Litro do Código "+M->ZAT_CODCOM
+					MsgInfo(cMsg,"Atenção")
+					// TODO
+					// Gerar email para informar da necessidade de reprocessamento
+					// U_EnvMail(cMsg)
+				Endif
+
+			Endif
+
+		Endif
+	
 	Endif
 
 /*
@@ -256,5 +316,28 @@ Endif
 return lRet
 
 
-//M->TQN_NRABAS-> (M->TQN_NRABAS := StrZero(Val(M->TQN_NRABAS),8)) .and U_VerAbast()                                                              
-//M->QTC_QUANT ->  U_VlrAbast()           
+/*
+SELECT TJ_CODBEM, TJ_DTORIGI,  TJ_TIPOOS, TL_FILIAL, TL_CODIGO, TL_QUANTID, TJ_CODBEM
+    FROM STL010 STL
+	JOIN STJ010 STJ ON
+	     TJ_FILIAL = '01'
+	 AND TJ_ORDEM= TL_ORDEM
+	 AND TJ_PLANO = TL_PLANO
+	-- AND TJ_CODBEM = TL_CODBEM
+	 AND STL.D_E_L_E_T_ = ' ' 
+	JOIN TZZ010 TZZ ON
+	     TZZ_FILIAL = '01' 
+	 AND TZZ_PRODUT = TL_CODIGO
+	 JOIN ST9010 ST9 ON ( ST9.T9_FILIAL = '01' 
+	 AND ST9.T9_CODBEM = STJ.TJ_CODBEM AND ST9.T9_PROPRIE = '2' AND ST9.D_E_L_E_T_ = ' ' )
+   WHERE TL_FILIAL = '01'
+     AND TL_CODIGO = '130011' -- PRODUTO
+	 AND STJ.D_E_L_E_T_ = ' '
+	 AND TJ_SERVICO = 'C00014' -- MESMO PREENCHIDO NA TELA DE ABASTECIMENTO EM PRODUTOS
+     AND STJ.TJ_DTORIGI BETWEEN '20220101' AND '20220210' AND STL.D_E_L_E_T_ = ' '
+	 ORDER BY STJ.R_E_C_N_O_ DESC
+*/
+
+
+
+
