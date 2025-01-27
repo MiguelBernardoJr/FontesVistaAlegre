@@ -45,7 +45,7 @@ Static Function ModelDef()
     oStVista:SetProperty( 'ZAL_TFERM' 	, MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_TFERM'	,'ZAL_FTFERM','ZAL_MTFERM')"	) )
     oStVista:SetProperty( 'ZAL_TALCOL' 	, MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_TALCOL','ZAL_FTALCO','ZAL_MTALCO')"	) )
     oStVista:SetProperty( 'ZAL_FOLU' 	, MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_FOLU'	,'ZAL_FFOLU' ,'ZAL_MFOLU')"		) )
-    oStVista:SetProperty( 'ZAL_MATSEX' , MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_MATSEX','ZAL_FMATSE' ,'ZAL_MMATSE')"	) )
+    oStVista:SetProperty( 'ZAL_MATSEX'  , MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_MATSEX','ZAL_FMATSE' ,'ZAL_MMATSE')"	) )
 
     oStFornec:SetProperty( 'ZAL_FKGM3' 	, MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_KGM3'	,'ZAL_FKGM3' ,'ZAL_MKGM3')"		) )
     oStFornec:SetProperty( 'ZAL_FTFERM' , MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_TFERM'	,'ZAL_FTFERM','ZAL_MTFERM')"	) )
@@ -53,7 +53,7 @@ Static Function ModelDef()
     oStFornec:SetProperty( 'ZAL_FFOLU' 	, MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_FOLU'	,'ZAL_FFOLU' ,'ZAL_MFOLU')"		) )
     oStFornec:SetProperty( 'ZAL_FMATSE' , MODEL_FIELD_VALID, FwBuildFeature( STRUCT_FEATURE_VALID, "U_zTgUs01(1,'ZAL_MATSEX','ZAL_FMATSE','ZAL_MMATSE')"	) )
 
-	oStCab:SetProperty("ZAL_PESOF", MODEL_FIELD_WHEN, {|| .F.})
+	//oStCab:SetProperty("ZAL_PESOF", MODEL_FIELD_WHEN, {|| .F.})
 
 	oModel := MPFormModel():New("USIN01M",/*Pre-Validacao*/, /*Pos-Validacao*/, bSaveZAL)
 
@@ -400,8 +400,8 @@ User Function US01TIPO()
         cRet := "3"
     else // 4=Analise do Tanque Estabilizado
         cRet := "4" 
-    EndIF 
-Return cRet 
+    EndIF
+Return cRet
 
 User Function CheckTime(pHora)
 	Local lRet := .T.
