@@ -133,6 +133,7 @@ local oStTot1 := FWCalcStruct(oModel:GetModel('TOT_SALDO1'))
 
 return oView
 
+
 /*/{Protheus.doc} u_Est020
 Pontos de entrada para tratamento de dados.
 @return lRet -> Sempre .T.
@@ -325,31 +326,26 @@ Função Auxilar para tratamento da importação dos dados
 @return lOk,
 /*/
 static function procAux()
-local lOk       := .T.
+local lOk := .T.
 local cNomeFile := ""
-local aDados    := U_ImpFile(@cNomeFile)
+local aDados := U_ImpFile(@cNomeFile)
 
 private cSequencia := ""
 private cNumOp := ""
-private _aGeral := {}
 
-    FWMsgRun(, {|| lOk := ValidaDados(aDados) },;
-							"Validando arquivo")
+    BeginTran()
+		TryException
+			if (Z04RunProc( aDados, cNomeFile ))
+				ApMsgInfo( 'Processamento terminado com sucesso.', 'ATENÇÃO' )
+			endif
+		CatchException Using oException
+			u_ShowException(oException)
+			ConOut(oException:ErrorStack)
+			DisarmTransaction()
+			lOK := .f.
+		EndException
+    EndTran()
 
-    if lOk
-        BeginTran()
-            TryException
-                if (Z04RunProc( aDados, cNomeFile ))
-                    ApMsgInfo( 'Processamento terminado com sucesso.', 'ATENÇÃO' )
-                endif
-            CatchException Using oException
-                u_ShowException(oException)
-                ConOut(oException:ErrorStack)
-                DisarmTransaction()
-                lOK := .f.
-            EndException
-        EndTran()
-    endif
 return lOk
 
 /*/{Protheus.doc} Z04RunProc
@@ -363,14 +359,14 @@ local aCposCab      := {}
 local aCposDet      := {}
 local aAux          := {}
 //local cInsumo     := ""
-local cReceita      := ""
+local cReceita    := ""
 Local cArmazem      := ""
 Local i             := 0
 
 Private cSequencia := ""
 
 if !Empty(aDados)
-    if Len(aDados[1]) == 10 //8 .and. aDados[1,6] == 3 // qtd de campos do arquivo de trato
+    if Len(aDados[1]) == 10 // qtd de campos do arquivo de trato
         lRet := .T.
 
         cSequencia  := u_fChaveSX8('Z02','Z02_SEQUEN')
@@ -435,15 +431,8 @@ static function ProcZ02(aDados, cSequencia, cArmazem)
 // local cCodPro := ""
 // local nQuant := 0
 local i := 0
-local x := 0
 // local cUpd := ""
-local aNumOp    := {}
-//Local aAuxNumOp := {}
-Local aEmpenho  := {}
-Local cBov,cLote, cArmz
-Local nQuant
-Local cAuxNumOp := ""
-
+local aNumOp := {}, aAuxNumOp := {}
 Default cArmazem  := "01"
 
 If Type("__DATA") == "U"
@@ -472,79 +461,53 @@ If Len(aDados) > 0
 	EndIf
 EndIf
 
-aNumOp    := {}
-
-for i := 1 to Len(_aGeral)
+for i := 1 to Len(aDados)
     // indice: B1LOTE
     // campo: B1_XLOTE
     // procLote( cLote , cRacao, nQuant, cArmz )
     // procLote( aDados[i,04], Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,09] )
+    IncProc("Atualizando lote " + AllTrim(aDados[i,04]) + "...")
+    
+    aNumOp    := {}
+    if Val(aDados[i,08]) > 0
+	 
+		U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+						 "Processando [VAEST020: ProcZ02]" + _ENTER_ + "Processando dados ["+ StrZero(i,5) + " de " + StrZero(Len(aDados),5) + ": " + AllTrim(aDados[i,04]) +"]",;
+						  .T./* lConOut */,;
+						  /* lAlert */ )
+		
+        
+        
+        //TODO
+        /*
+        // ProcLote(cLote, cRacao, nQuant, cArmz, cArmzRac)
+        // procLote( aDados[i,04], Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,09] )
 
-    cBov        := _aGeral[i,01]
-    nQuant      := _aGeral[i,02]
-    cArmz       := _aGeral[i,03]
-    aEmpenho    := aClone(_aGeral[i,04])
-    cLote       := _aGeral[i,05]
+        Antes de enviar os parametros para o PrcLote
+        Fazer laço e criar Array com as posições para passar na função PrcLote no lugar dessas posições
+         - Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,10] 
+        
 
-    IncProc("Atualizaando lote " + AllTrim(_aGeral[i,05]) + "...")
+        */
 
-    U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-                    "Processando [VAEST020: ProcZ02]" + _ENTER_ + "Processando dados ["+ StrZero(i,5) + " de " + StrZero(Len(_aGeral[i,04]),5) + ": " + AllTrim(_aGeral[i,03]) +"]",;
-                    .T./* lConOut */,;
-                    /* lAlert */ )
-    //Toshio                                                    /*  */               /**/                 /**/
-                //static function ProcLote(   cLote        , cRacao, nQuant, cArmzRac  ,  cArmz       )
-
-    FWMsgRun(, {|| cAuxNumOp := u_vaest021( cBov, nQuant, cArmz, aEmpenho, cLote ) },;
-                        "Processando [VAEST020: ProcLote]",;
-                        "Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(Len(_aGeral),5) + ": " + AllTrim(_aGeral[i,01]) +"]")
-
-    IF Len(aNumOp) == 0
-        AAdd( aNumOp ,{ cLote , { cAuxNumOp } })
-    else
-        if (nPosLote := aScan(aNumOp , {|y| AllTrim(y[1])==cLote})) == 0
-            AAdd( aNumOp ,{ cLote , { cAuxNumOp } })
-        else
-            if ( nPos := aScan(aNumOp[nPosLote][2] , {|x| AllTrim(x)==cAuxNumOp } )) == 0
-                AAdd( aNumOp[nPosLote,2], cAuxNumOp )
+        aAuxNumOp := FWMsgRun(, {|| ProcLote( aDados[i,04], Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,09], aDados[i,10] ) },;
+							"Processando [VAEST020: ProcZ02]",;
+							"Processando dados ["+ StrZero(i,5) + " de " + StrZero(Len(aDados),5) + ": " + AllTrim(aDados[i,04]) +"]")
+		AAdd( aNumOp , aAuxNumOp )
+        if !Empty(aNumOp)
+            Z04->(DbSetOrder(1))
+            if Z04->(DbSeek(xFilial('Z04')+cSequencia+aDados[i,04]))
+                RecLock('Z04', .f.)
+                    Z04->Z04_NUMOP := u_AToS(aNumOp)
+                Z04->(MsUnLock())
             endif
-        endif 
-    endif
+        endif
+    endif.
+    
 next i
 
-//_vVendas[n][1] = Código do gerente
-//_vVendas[n][2] = Valor das vendas do gerente
-//_vVendas[n][3] = Quantidade vendida do gerente
-//_vVendas[n][4][z][1] = Código do vendedor
-//_vVendas[n][4][z][2] = Valor do vendedor
-//_vVendas[n][4][z][3] = Quantidade do vendedor
-//
-//Nesse caso, uma forma bem simples de fazer a busca seria:
-//
-//_cVendedor:=‘000050‘ // Este é o vendedor a quem quero localizar
-//
-//for _nPosicGer:=1 to len(_vVendas)
-//    _nPosicVen:=ascan(_vVendas[_nPosicGer][4],{|_vAux| _vAux[1]==_cVendedor})
-//    if _nPosicVen>0
-//       // Se chegou aqui, esta é a 1a ocorrência desse vendedor
-//       exit
-//    endif
-//next
-
-Z04->(DbSetOrder(1))
-For i := 1 to Len(aNumOp)
-    if Z04->(DbSeek(xFilial('Z04')+cSequencia+aNumOp[i,01]))
-        while rTrim(xFilial('Z04')+cSequencia+aNumOp[i,01]) == rTrim(Z04->(Z04_FILIAL+Z04_SEQUEN+Z04_LOTE))
-            RecLock('Z04', .f.)
-                Z04->Z04_NUMOP := u_AToS(aNumOp[i,02])
-            Z04->(MsUnLock())
-
-            Z04->(DbSkip())
-        enddo 
-    endif
-Next i
-
 return nil
+
 
 /*/{Protheus.doc} ProcLote
 Função responsável pela valorização do custeio do Lote, vinculando o Insumo ao Lote
@@ -554,74 +517,70 @@ Função responsável pela valorização do custeio do Lote, vinculando o Insumo ao L
 @param cArmz, Character, local onde está o insumo usado para alimentar o Lote
 @return nil
 /*/
-//static function ProcLote(cLote, cRacao, nQuant, cArmz, cArmzRac)
-static function ProcLote(cLote, aRacao, cArmz)
-    local nRegistros := 0
-    local cAlias 	 := CriaTrab(,.f.)
-    local i 		 := 0
-    local x 		 := 0
-    local nQtdApro 	 := 0
-    local aNumOp 	 := {}
-    Local cAuxNumOp  := ""
-    local cInGrpInd  := "'" + StrTran(GetMV("VA_GRPINDV"), "|", "', '") + "'"
-    local cSql 		 := ""
-    Local aCpyRacao  := {}
+static function ProcLote(cLote, cRacao, nQuant, cArmz, cArmzRac)
+local nRegistros := 0
+local cAlias 	 := CriaTrab(,.f.)
+local i 		 := 0
+local nQtdApro 	 := 0
+local aNumOp 	 := {}, aAuxNumOp := {}
+local cInGrpInd  := "'" + StrTran(GetMV("VA_GRPINDV"), "|", "', '") + "'"
+local cSql 		 := ""
 
-    If Type("__DATA") == "U"
-        Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
-    EndIf
-    If Type("cFile") == "U"
-        Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
-    EndIf
+If Type("__DATA") == "U"
+	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
+EndIf
+If Type("cFile") == "U"
+	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
+EndIf
 
-    cSql := " with estoque as ( " +_ENTER_+;
-                "  select B8_LOTECTL " +_ENTER_+;
-                "       , B1_GRUPO " +_ENTER_+;
-                "       , B1_COD " +_ENTER_+;
-                "       , B8_FILIAL " +_ENTER_+;
-                "       , B8_LOCAL " +_ENTER_+;
-                "       , B8_SALDO, B8_NUMLOTE " +_ENTER_+;
-                "  from " + RetSqlName('SB8') + " SB8 " +_ENTER_+;
-                "  join " + RetSqlName('SB1') + " SB1 " +_ENTER_+;
-                "      on SB1.B1_FILIAL  = '" + xFilial("SB1") + "' " +_ENTER_+;
-                "      and SB1.B1_COD     = SB8.B8_PRODUTO " +_ENTER_+;
-                "      and SB1.B1_GRUPO  in (" + cInGrpInd + ")" +_ENTER_+;
-                " 	 and SB8.B8_LOTECTL = '" + cLote + "'" +_ENTER_+;
-                " 	 and SB8.B8_LOCAL   = '" + cArmz + "'" +_ENTER_+;
-                "      and SB1.D_E_L_E_T_ = ' ' " +_ENTER_+;
-                "  where SB8.B8_FILIAL  = '" + xFilial("SB8") + "' " +_ENTER_+;
-                " 	 and SB8.B8_DATA <= '" + dToS(dDataBase) + "'" +_ENTER_+;
-                " 	 and SB8.B8_SALDO > 0 " +_ENTER_+;
-                "      and SB8.D_E_L_E_T_ = ' ' " +_ENTER_+;
-                "  ), " +_ENTER_+;
-                "  quant as ( " +_ENTER_+;
-                "  select B8_LOTECTL, count(*) QTDREG " +_ENTER_+;
-                "  from estoque " +_ENTER_+;
-                "  WHERE B8_FILIAL  = '" + xFilial("SB8") + "' " +_ENTER_+;
-                "    AND B8_LOCAL   = '" + cArmz + "'" +_ENTER_+;
-                "    AND B8_SALDO > 0 " +_ENTER_+;
-                "  group by B8_LOTECTL " +_ENTER_+;
-                "  ) " +_ENTER_+;
-                "  select estoque.B8_LOTECTL " +_ENTER_+;
-                "       , estoque.B1_GRUPO " +_ENTER_+;
-                "       , estoque.B1_COD " +_ENTER_+;
-                "       , estoque.B8_FILIAL " +_ENTER_+;
-                "       , estoque.B8_LOCAL " +_ENTER_+;
-                "       , estoque.B8_SALDO, estoque.B8_NUMLOTE " +_ENTER_+;
-                "       , total.TOTAL " +_ENTER_+;
-                "       , quant.QTDREG " +_ENTER_+;
-                "  from estoque " +_ENTER_+;
-                "  join quant " +_ENTER_+;
-                "  on quant.B8_LOTECTL = estoque.B8_LOTECTL " +_ENTER_+;
-                "  join ( " +_ENTER_+;
-                "         select B8_LOTECTL " +_ENTER_+;
-                "            , sum(B8_SALDO) TOTAL " +_ENTER_+;
-                "         from estoque " +_ENTER_+;
-                "         group by B8_LOTECTL " +_ENTER_+;
-                "     ) total " +_ENTER_+;
-                "  on total.B8_LOTECTL = estoque.B8_LOTECTL " +_ENTER_+;
-                "  order by estoque.B8_LOTECTL " +_ENTER_+;
-                "         , estoque.B1_COD "
+cSql := " with estoque as ( " +_ENTER_+;
+            "  select B8_LOTECTL " +_ENTER_+;
+            "       , B1_GRUPO " +_ENTER_+;
+            "       , B1_COD " +_ENTER_+;
+            "       , B8_FILIAL " +_ENTER_+;
+            "       , B8_LOCAL " +_ENTER_+;
+            "       , B8_SALDO, B8_NUMLOTE " +_ENTER_+;
+            "  from " + RetSqlName('SB8') + " SB8 " +_ENTER_+;
+            "  join " + RetSqlName('SB1') + " SB1 " +_ENTER_+;
+            "      on SB1.B1_FILIAL  = '" + xFilial("SB1") + "' " +_ENTER_+;
+            "      and SB1.B1_COD     = SB8.B8_PRODUTO " +_ENTER_+;
+            "      and SB1.B1_GRUPO  in (" + cInGrpInd + ")" +_ENTER_+;
+            " 	 and SB8.B8_LOTECTL = '" + cLote + "'" +_ENTER_+;
+            " 	 and SB8.B8_LOCAL   = '" + cArmz + "'" +_ENTER_+;
+            "      and SB1.D_E_L_E_T_ = ' ' " +_ENTER_+;
+            "  where SB8.B8_FILIAL  = '" + xFilial("SB8") + "' " +_ENTER_+;
+            " 	 and SB8.B8_DATA <= '" + dToS(dDataBase) + "'" +_ENTER_+;
+            " 	 and SB8.B8_SALDO > 0 " +_ENTER_+;
+            "      and SB8.D_E_L_E_T_ = ' ' " +_ENTER_+;
+            "  ), " +_ENTER_+;
+            "  quant as ( " +_ENTER_+;
+            "  select B8_LOTECTL, count(*) QTDREG " +_ENTER_+;
+            "  from estoque " +_ENTER_+;
+            "  WHERE B8_FILIAL  = '" + xFilial("SB8") + "' " +_ENTER_+;
+            "    AND B8_LOCAL   = '" + cArmz + "'" +_ENTER_+;
+            "    AND B8_SALDO > 0 " +_ENTER_+;
+            "  group by B8_LOTECTL " +_ENTER_+;
+            "  ) " +_ENTER_+;
+            "  select estoque.B8_LOTECTL " +_ENTER_+;
+            "       , estoque.B1_GRUPO " +_ENTER_+;
+            "       , estoque.B1_COD " +_ENTER_+;
+            "       , estoque.B8_FILIAL " +_ENTER_+;
+            "       , estoque.B8_LOCAL " +_ENTER_+;
+            "       , estoque.B8_SALDO, estoque.B8_NUMLOTE " +_ENTER_+;
+            "       , total.TOTAL " +_ENTER_+;
+            "       , quant.QTDREG " +_ENTER_+;
+            "  from estoque " +_ENTER_+;
+            "  join quant " +_ENTER_+;
+            "  on quant.B8_LOTECTL = estoque.B8_LOTECTL " +_ENTER_+;
+            "  join ( " +_ENTER_+;
+            "         select B8_LOTECTL " +_ENTER_+;
+            "            , sum(B8_SALDO) TOTAL " +_ENTER_+;
+            "         from estoque " +_ENTER_+;
+            "         group by B8_LOTECTL " +_ENTER_+;
+            "     ) total " +_ENTER_+;
+            "  on total.B8_LOTECTL = estoque.B8_LOTECTL " +_ENTER_+;
+            "  order by estoque.B8_LOTECTL " +_ENTER_+;
+            "         , estoque.B1_COD "
 
     MemoWrite( "C:\TOTVS_RELATORIOS\VAEST020-ProcLote.SQL", cSql)
     
@@ -638,30 +597,38 @@ static function ProcLote(cLote, aRacao, cArmz)
 	
     (cAlias)->(DbEval({|| nRegistros++ }))
 	(cAlias)->(DbGoTop())
-
     while !(cAlias)->(Eof())
+        // u_vaest021( cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac )
         i++
-
-            aCpyRacao := aClone(aRacao)
+        if i < (cAlias)->QTDREG
             
-            For x := 1 to Len(aCpyRacao)
-                aCpyRacao[x,3] := aCpyRacao[x,3] * (cAlias)->(B8_SALDO/TOTAL)
-            next x
-
 			U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
 						 "Processando [VAEST020: ProcLote]"+_ENTER_+"Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(nRegistros,5) + ": " + AllTrim((cAlias)->B1_COD) +"]",;
 						  .T./* lConOut */,;
 						  /* lAlert */ )
-			FWMsgRun(, {|| cAuxNumOp := u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, aCpyRacao, (cAlias)->B8_LOTECTL ) },;
+            // u_vaest021( cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac, Lote  ) TODO: Enviar em Array cRacao, nQuant, cArmzRec
+			aAuxNumOp := FWMsgRun(, {|| u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, round(nQuant*(cAlias)->(B8_SALDO/TOTAL),4), cArmzRac, (cAlias)->B8_LOTECTL ) },;
 							"Processando [VAEST020: ProcLote]",;
 							"Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(nRegistros,5) + ": " + AllTrim((cAlias)->B1_COD) +"]")
-			AAdd( aNumOp , cAuxNumOp )
-      
+			AAdd( aNumOp , aAuxNumOp )
+            nQtdApro += nQuant*(cAlias)->(B8_SALDO/TOTAL)
+        else
+			U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+						 "Processando [VAEST020: ProcLote]"+_ENTER_+"Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(nRegistros,5) + ": " + AllTrim((cAlias)->B1_COD) +"]",;
+						  .T./* lConOut */,;
+						  /* lAlert */ )
+            // u_vaest021( cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac, Lote  ) TODO: Enviar em Array cRacao, nQuant, cArmzRec
+			aAuxNumOp := FWMsgRun(, {|| u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, nQuant-nQtdApro, cArmzRac, (cAlias)->B8_LOTECTL ) },;
+							"Processando [VAEST020: ProcLote]",;
+							"Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(nRegistros,5) + ": " + AllTrim((cAlias)->B1_COD) +"]")
+			AAdd( aNumOp , aAuxNumOp )
+        endif
         (cAlias)->(DbSkip())
     end
     (cAlias)->(DbCloseArea())
 
 return  aNumOp
+
 
 //-------------------------------------------------------------------
 // Importacao dos dados
@@ -928,7 +895,7 @@ Return _cMSG
 Static Function LoteZ04xSB8( cSequencia )
 
 Local _cQry 	:= ""
-Local _cAlias   := CriaTrab(,.F.)
+Local _cAlias   := CriaTrab(,.F.)   
 Local _cMSG		:= ""
 
 _cQry := " SELECT	DISTINCT Z04_LOTE" + _ENTER_
@@ -958,264 +925,3 @@ EndDo
 
 (_cAlias)->(DbCloseArea())
 Return _cMSG
-
-Static Function ValidaDados(aDados)
-    Local aArea     := FwGetArea()
-    Local lRet      := .T.
-    Local i         := 0
-    Local x         := 0
-    Local aCopia    := {}
-    Local aLinha    := {}
-    Local oSaldoB2  := FWTemporaryTable():New(GetNextAlias())
-    Local cAlias    := ""
-    Local aFields   := {}
-    Local nPosLote  := 0
-    Local cLote
-    DbSelectArea("SC2")
-    DbSetorder(1) // C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD
-
-    DbSelectArea("SB1")
-    DbSetOrder(1) // B1_FILIAL+B1_COD
-
-    DbSelectArea("SB8")
-    DbSetOrder(1) // B8_FILIAL+B8_COD+B8_LOCAL
-
-    for i := 1 to Len(aDados)
-        if Val(aDados[i,08]) > 0
-            cLote := aDados[i][4]
-            if i == 1
-                aAdd(aCopia,{aDados[i][1],;              //DATA
-                                aDados[i][2],;              //HORA
-                                aDados[i][3],;              //CURRAL
-                                aDados[i][4],;              //LOTE
-                                aDados[i][5],;              //Z04_NROCAB
-                                {{UPPER(aDados[i][06]),;    //PRODUTO
-                                    aDados[i][10],;          //ARMAZEM RACAO
-                                    Val(aDados[i][08])}},;   //QUANTIDADE RACAO
-                                aDados[i][07],;             //
-                                aDados[i][09]})             //
-            else
-                if (nPosLote := aScan(aCopia , {|y| AllTrim(y[4])==cLote})) == 0
-                    aAdd(aCopia,{aDados[i][01],;
-                                aDados[i][02],;
-                                aDados[i][03],;
-                                aDados[i][04],;
-                                aDados[i][05],;
-                                {{UPPER(aDados[i][06]),;
-                                    aDados[i][10],;
-                                    Val(aDados[i][08])}},;
-                                aDados[i][07],;
-                                aDados[i][09]})
-                else
-                    if aCopia[nPosLote,08] != aDados[i,09]
-                        aAdd(aCopia,{aDados[i][01],;
-                                    aDados[i][02],;
-                                    aDados[i][03],;
-                                    aDados[i][04],;
-                                    aDados[i][05],;
-                                    {{UPPER(aDados[i][06]),;
-                                        aDados[i][10],;
-                                        Val(aDados[i][08])}},;
-                                    aDados[i][07],;
-                                    aDados[i][09]})
-                    else
-                        aAdd(aCopia[nPosLote][6],{   UPPER(aDados[i][06]),;
-                                                        aDados[i][10],;
-                                                        Val(aDados[i][08])})
-                    endif
-                endif 
-            endif
-        else
-            MsgStop("Linha ["+StrZero(i,4)+"] com quantidade zerada. Processamento será iterrempido")
-            lRet :=  .F.
-            exit
-        endif
-    next i
-
-    if lRet 
-        For i := 1 to Len(aCopia)
-            aLinha := {}                            //LOTE        ARRAY         ARMAZEM
-            FWMsgRun(, {|| aLinha := ValidaLotes(  aCopia[i,04] , aCopia[i,06], aCopia[i,08]  ) },;
-                                "Processando [VAEST020: ValidaLotes]",;
-                                "Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(Len(aDados),5) + ": " + aCopia[i,04]  +"]")
-
-            if Empty(aLinha)
-                MsgStop("Não foi encontrado nenhum animal para o Lote: [" + AllTrim(aCopia[i,04]) + "] no armazem: [" + AllTrim(aCopia[i,08]) + "] . Por favor Verifique." )
-                lRet := .F.
-                exit
-            else
-                For x := 1 to Len(aLinha)
-                    aAdd(_aGeral,aLinha[x])
-                next x
-            endif
-        next i
-    endif
-
-    aAdd(aFields, {"CODIGO"  ,TamSx3("B2_COD")[3]    , TamSx3("B2_COD")[1]   , TamSx3("B2_COD")[2]})
-    aAdd(aFields, {"ARMAZEM" ,TamSx3("B2_LOCAL")[3] , TamSx3("B2_LOCAL")[1], TamSx3("B2_LOCAL")[2]})
-    aAdd(aFields, {"QUANT"   ,TamSx3("B2_QATU")[3]   , TamSx3("B2_QATU")[1]  , TamSx3("B2_QATU")[2]})
-
-    oSaldoB2:SetFields( aFields )
-    oSaldoB2:AddIndex("1", {"CODIGO","ARMAZEM"} )
-    oSaldoB2:Create()
-    cAlias := oSaldoB2:GetAlias()
-
-    if lRet
-        For i := 1 to Len(_aGeral)
-            For x := 1 to Len(_aGeral[i,4])
-                if SB1->(DbSeek(xFilial("SB1")+_aGeral[i,4,x,1]))
-
-                    if Empty(_aGeral[i,4,x,2]) //ARMAZEM VAZIO
-                        _aGeral[i,4,x,2] := SB1->B1_LOCPAD
-                    endif
-
-                    IF (cAlias)->(DBSeek(Padr(_aGeral[i,4,x,1],TamSx3("B2_COD")[1])+_aGeral[i,4,x,2]))
-                        if (cAlias)->QUANT > 0 .and. ( _aGeral[i,4,x,3] <= (cAlias)->QUANT .or. (_aGeral[i,4,x,3]-(cAlias)->QUANT)<=GetMV("VA_DIFTRAT",,1))
-                            If _aGeral[i,4,x,3] > (cAlias)->QUANT .or. ABS(_aGeral[i,4,x,3]-(cAlias)->QUANT)<=GetMV("VA_DIFTRAT",,1)
-                                _aGeral[i,4,x,3] := (cAlias)->QUANT
-                            EndIf
-
-                            RecLock((cAlias),.F.)
-                                (cAlias)->QUANT := (cAlias)->QUANT - _aGeral[i,4,x,3]
-                            (cAlias)->(MSUNLOCK())
-                        else
-                            MsgStop("Não existe saldo suficiente para apontar a alimentação [" + AllTrim(_aGeral[i,4,x,1]) + "] Armazem ["+ AllTrim(_aGeral[i,4,x,2]) +"] do animal [" + AllTrim(_aGeral[i,1]) + "]." )
-                            lRet := .F.
-                            exit
-                        endif
-                    else
-                        IF SB2->(DbSeek(xFilial("SB2")+SB1->B1_COD+_aGeral[i,4,x,2]))
-                            RecLock((cAlias),.t.)
-                                (cAlias)->CODIGO    :=  SB2->B2_COD
-                                (cAlias)->ARMAZEM   :=  SB2->B2_LOCAL
-                                (cAlias)->QUANT     :=  SB2->B2_QATU
-                            (cAlias)->(MSUNLOCK())
-
-                            if _aGeral[i,4,x,3] <= (cAlias)->QUANT .or. (_aGeral[i,4,x,3]-(cAlias)->QUANT)<=GetMV("VA_DIFTRAT",,1)
-                                If _aGeral[i,4,x,3] > (cAlias)->QUANT .or. ABS(_aGeral[i,4,x,3]-(cAlias)->QUANT)<=GetMV("VA_DIFTRAT",,1)
-                                    _aGeral[i,4,x,3] := (cAlias)->QUANT
-                                EndIf
-                            
-                                RecLock((cAlias),.F.)
-                                    (cAlias)->QUANT := (cAlias)->QUANT - _aGeral[i,4,x,3]
-                                (cAlias)->(MSUNLOCK())
-                            else
-                                MsgStop("Não existe saldo suficiente para apontar a alimentação [" + AllTrim(_aGeral[i,4,x,1]) + "] do animal [" + AllTrim(_aGeral[i,1]) + "]." )
-                                lRet := .F.
-                                exit
-                            endif
-                        ELSE
-                            MsgStop("Racao [" + AllTrim(_aGeral[i,4,x,1]) + "] não foi encontrada no cadastro de produtos." )
-                            lRet := .F.
-                            exit
-                        endif
-                    ENDIF
-                else
-                    MsgStop("Racao [" + AllTrim(_aGeral[i,4,x,1]) + "] não foi encontrada no cadastro de produtos." )
-                    lRet := .F.
-                    exit
-                endif
-            next x
-            if !lRet
-                exit
-            endif
-        next i
-    endif
-    
-    (cALias)->(DBGoTop())
-    cLine := PADR("CODIGO",TAMSX3("B2_COD")[1])+PADR("ARMAZEM",TAMSX3("B2_COD")[1])+PADR("QUANT",TAMSX3("B2_QATU")[1]) + CRLF
-    WHile !(cALias)->(EOF())
-        cLine += (cALias)->(CODIGO+ARMAZEM)+TRANSFORM( (cALias)->QUANT, "@E 999,999,999.999999" ) + CRLF
-        (cALias)->(DBSkip())
-    enddo 
-    oSaldoB2:DELETE()
-
-    if !Empty(aArea)
-        FwRestArea(aArea)
-    endif
-Return lRet
-
-Static Function ValidaLotes(cLote, aRacao, cArmz)
-    local cAlias 	    := GetNextAlias()
-    local cInGrpInd     := "'" + StrTran(GetMV("VA_GRPINDV"), "|", "', '") + "'"
-    local cSql 		    := ""
-    Local aLinha        := {}
-    Local x
-
-    If Type("__DATA") == "U"
-        Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
-    EndIf
-    If Type("cFile") == "U"
-        Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
-    EndIf
-    
-    cSql := " with estoque as ( " +_ENTER_+;
-                "  select B8_LOTECTL " +_ENTER_+;
-                "       , B1_GRUPO " +_ENTER_+;
-                "       , B1_COD " +_ENTER_+;
-                "       , B8_FILIAL " +_ENTER_+;
-                "       , B8_LOCAL " +_ENTER_+;
-                "       , B8_SALDO, B8_NUMLOTE " +_ENTER_+;
-                "  from " + RetSqlName('SB8') + " SB8 " +_ENTER_+;
-                "  join " + RetSqlName('SB1') + " SB1 " +_ENTER_+;
-                "      on SB1.B1_FILIAL  = '" + xFilial("SB1") + "' " +_ENTER_+;
-                "      and SB1.B1_COD     = SB8.B8_PRODUTO " +_ENTER_+;
-                "      and SB1.B1_GRUPO  in (" + cInGrpInd + ")" +_ENTER_+;
-                " 	 and SB8.B8_LOTECTL = '" + cLote + "'" +_ENTER_+;
-                " 	 and SB8.B8_LOCAL   = '" + cArmz + "'" +_ENTER_+;
-                "      and SB1.D_E_L_E_T_ = ' ' " +_ENTER_+;
-                "  where SB8.B8_FILIAL  = '" + xFilial("SB8") + "' " +_ENTER_+;
-                " 	 and SB8.B8_DATA <= '" + dToS(dDataBase) + "'" +_ENTER_+;
-                " 	 and SB8.B8_SALDO > 0 " +_ENTER_+;
-                "      and SB8.D_E_L_E_T_ = ' ' " +_ENTER_+;
-                "  ), " +_ENTER_+;
-                "  quant as ( " +_ENTER_+;
-                "  select B8_LOTECTL, count(*) QTDREG " +_ENTER_+;
-                "  from estoque " +_ENTER_+;
-                "  WHERE B8_FILIAL  = '" + xFilial("SB8") + "' " +_ENTER_+;
-                "    AND B8_LOCAL   = '" + cArmz + "'" +_ENTER_+;
-                "    AND B8_SALDO > 0 " +_ENTER_+;
-                "  group by B8_LOTECTL " +_ENTER_+;
-                "  ) " +_ENTER_+;
-                "  select estoque.B8_LOTECTL " +_ENTER_+;
-                "       , estoque.B1_GRUPO " +_ENTER_+;
-                "       , estoque.B1_COD " +_ENTER_+;
-                "       , estoque.B8_FILIAL " +_ENTER_+;
-                "       , estoque.B8_LOCAL " +_ENTER_+;
-                "       , estoque.B8_SALDO, estoque.B8_NUMLOTE " +_ENTER_+;
-                "       , total.TOTAL " +_ENTER_+;
-                "       , quant.QTDREG " +_ENTER_+;
-                "  from estoque " +_ENTER_+;
-                "  join quant " +_ENTER_+;
-                "  on quant.B8_LOTECTL = estoque.B8_LOTECTL " +_ENTER_+;
-                "  join ( " +_ENTER_+;
-                "         select B8_LOTECTL " +_ENTER_+;
-                "            , sum(B8_SALDO) TOTAL " +_ENTER_+;
-                "         from estoque " +_ENTER_+;
-                "         group by B8_LOTECTL " +_ENTER_+;
-                "     ) total " +_ENTER_+;
-                "  on total.B8_LOTECTL = estoque.B8_LOTECTL " +_ENTER_+;
-                "  order by estoque.B8_LOTECTL " +_ENTER_+;
-                "         , estoque.B1_COD "
-
-    MemoWrite( "C:\TOTVS_RELATORIOS\VAEST020-ValidaLotes.SQL", cSql)
-
-    MpSysOpenQry(cSql,cAlias)
-
-    if (cAlias)->QTDREG > 0 //nRegistros == 0
-        while !(cAlias)->(Eof())
-                if (cAlias)->B8_SALDO > 0
-                    aCpyRacao := aClone(aRacao)
-                        
-                    For x := 1 to Len(aCpyRacao)
-                        aCpyRacao[x,3] := Round(aCpyRacao[x,3] * (cAlias)->(B8_SALDO/TOTAL),TamSx3("D3_QUANT")[2])
-                    next x
-
-                    AAdd( aLinha , {(cAlias)->B1_COD, (cAlias)->B8_SALDO,cArmz,aCpyRacao,AllTrim((cAlias)->B8_LOTECTL)} )
-                endif
-            (cAlias)->(DbSkip())
-        end
-    endif
-    (cAlias)->(DbCloseArea())
-
-Return aLinha

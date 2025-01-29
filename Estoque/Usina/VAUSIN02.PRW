@@ -37,7 +37,7 @@ Static Function ModelDef()
 
 	oCab:SetProperty("ZAL_MATSEX", MODEL_FIELD_WHEN, {|| .F.})
 
-/*     aAdd(aGatilhos, FWStruTriggger( "ZAL_PESOL"	,"ZAL_MATSEX" ,"",.f.,"",,"100-M->ZAL_PESOL",NIL,"01"))
+	/*aAdd(aGatilhos, FWStruTriggger( "ZAL_PESOL"	,"ZAL_MATSEX" ,"",.f.,"",,"100-M->ZAL_PESOL",NIL,"01"))
 
 	For nI := 1 To Len(aGatilhos)
         oCab:AddTrigger(  aGatilhos[nI][01],; //Campo Origem
