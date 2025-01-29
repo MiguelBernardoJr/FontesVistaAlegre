@@ -103,7 +103,9 @@ Return
 Static Function ImpTicket( lEnd )
     Private nRow        := 30, nColLabel:=30, nColInfo := 100
     Private cTxtAux     := ""
-    Private cLogo       := "\system\lgrl" + AllTrim(cEmpAnt) + ".bmp"
+    //Private cLogo       := "\system\lgrl" + AllTrim(cEmpAnt) + ".bmp"
+    //lgrl8888
+    Private cLogo       := "\system\logo\1.bmp"
     Private cReplc      := 65
     Private nTotLinOBS  := 4
     Private nPosSeq     := nColLabel-15
@@ -209,7 +211,7 @@ Static Function fQuadro( nQuadro )
     //oPrinter:SayAlign ( nRow            , nPosUnit-35, "Prazo de entrega:"                                                                     , oFLabel,  (nPosICMS - (nPosUnit-35) ), 10, , PAD_RIGHT,  )  
     //oPrinter:SayAlign ( nRow            , nPosICMS   , Alltrim(Str(DateDiffDay(sToD(aDados[01][07]),sToD(aDados[01][21]))))+ " Dia(s) " + dToC(sToD(aDados[01][21])), oFInfoBold ,  (nBoxRight - nPosICMS ), 10, , PAD_LEFT, 1 )  
 
-    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Endereço:"                                                  , oFLabel   ,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )  
+    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq , "Endereço..:"                                                  , oFLabel   ,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )  
     QuebraTexto(ALLTRIM(SA2->A2_END),nPosUnd,nPosUnit,nPosUnd,oFInfoBold,) // Condições de Pagamento
 
     if ALLTRIM(aDados[01][12]) == "C"
@@ -233,27 +235,27 @@ Static Function fQuadro( nQuadro )
     oPrinter:SayAlign ( nRow            , nPosVlr, IIF(aDados[1][22]==1,"REAL","DOLÁR")             , oFInfoBold , (nBoxRight - nPosVlr )   , 10, , PAD_LEFT, 1 )  
     
     cTxtAux := Alltrim(Transform(SA2->A2_CGC, iif( len( AllTrim(SA2->A2_CGC)) == 14,"@R 99.999.999/9999-99", "@R 999.999.999-99")))
-    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "CNPJ:"                                          , oFLabel,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )  
+    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "CNPJ......:"                                          , oFLabel,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )  
     oPrinter:SayAlign ( nRow            , nPosUnd , cTxtAux                                         , oFInfoBold ,  (nPosUnit - nPosUnd ), 10, , PAD_LEFT, 1 )  
     
     cTxtAux := Alltrim(Transform(SA2->A2_INSCR, "@R 999.999.999.999"))
     oPrinter:SayAlign ( nRow            , nPosCod      , "I.E:"                                     , oFLabel,  (nPosCod + 20 ), 10, , PAD_RIGHT,  )  
-    oPrinter:SayAlign ( nRow            , nPosProd +80 , cTxtAux                                    , oFInfoBold ,  (nPosUnit - (nPosProd +80) ), 10, , PAD_LEFT, 1 )  
+    oPrinter:SayAlign ( nRow            , nPosProd +100 , cTxtAux                                    , oFInfoBold ,  (nPosUnit - (nPosProd +80) ), 10, , PAD_LEFT, 1 )  
 
-    cTxtAux := aDados[1][10] + " - " + ALLTRIM(Posicione("SE4",1,FWxFilial("SE4")+aDados[1][10],"E4_DESCRI"))
-    oPrinter:SayAlign ( nRow            , nPosUnit, "Condições de Pagamento:"                       , oFLabel,  (nPosIPI - nPosUnit ), 10, , PAD_RIGHT,  )  
-    QuebraTexto(cTxtAux,nPosIPI,nBoxRight,nPosIPI,oFInfoBold) // Condições de Pagamento
+    cTxtAux := ALLTRIM(Posicione("SE4",1,FWxFilial("SE4")+aDados[1][10],"E4_DESCRI"))
+    oPrinter:SayAlign ( nRow            , nPosUnit, "Condições de Pagamento....:"                       , oFLabel,  (nPosVlr - nPosUnit ), 10, , PAD_RIGHT,  )  
+    QuebraTexto(cTxtAux,nPosVlr,nBoxRight,nPosVlr,oFInfoBold) // Condições de Pagamento
     
     cTxtAux := UPPER(AllTrim(SA2->A2_MUN) + ' - ' + AllTrim(SA2->A2_EST))
-    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Cidade:"                                        , oFLabel,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )  
+    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Cidade....:"                                        , oFLabel,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )  
     QuebraTexto(cTxtAux,nPosUnd,nPosUnit,nPosUnd,oFInfoBold,25) // Condições de Pagamento
     
     //oPrinter:SayAlign ( nRow            , nPosUnd , cTxtAux                                         , oFInfoBold ,  (nPosUnit - nPosUnd ), 10, , PAD_LEFT, 1 )  
     
-    cTxtAux := AllTrim(Transform(SA2->A2_CEP,"@R 99.999-999")) 
+    cTxtAux := AllTrim(Transform(SA2->A2_CEP,"@R 99.999-999"))
     
-    oPrinter:SayAlign ( nRow            , nPosCod       , "CEP:"                                    , oFLabel,  (nPosCod + 20 ), 10, , PAD_RIGHT,  )  
-    oPrinter:SayAlign ( nRow            , nPosProd +80  , cTxtAux                                   , oFInfoBold ,  (nPosUnit - (nPosProd +80) ), 10, , PAD_LEFT, 1 )  
+    oPrinter:SayAlign ( nRow            , nPosCod        , "CEP:"                                    , oFLabel,  (nPosCod + 20 ), 10, , PAD_RIGHT,  )  
+    oPrinter:SayAlign ( nRow            , nPosProd +100  , cTxtAux                                   , oFInfoBold ,  (nPosUnit - (nPosProd +80) ), 10, , PAD_LEFT, 1 )  
     
     cTxtAux := ""
     oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Observação:"                                    , oFLabel,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )  
@@ -269,7 +271,7 @@ Static Function fQuadro( nQuadro )
     oPrinter:SayAlign ( nRow            , nPosUnit , cTxtAux                                        , oFInfoBold ,  (nBoxRight - nPosUnit ) , 10, , PAD_LEFT, 1 )
 
     cTxtAux := Alltrim(Transform(SM0->M0_CEPENT, "@R 99999-999"))
-    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Cep Entrega:"                                   , oFLabel,  (nPosProd - nPosSeq )           , 10, , PAD_RIGHT,  )  
+    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Cep Entrega.......:"                                   , oFLabel,  (nPosProd - nPosSeq )           , 10, , PAD_RIGHT,  )  
     oPrinter:SayAlign ( nRow            , nPosProd , cTxtAux                                         , oFInfoBold ,  ((nPosUnit+nPosProd)/2)-nPosProd, 10, , PAD_LEFT, 1 )  
 
     cTxtAux := UPPER(AllTrim( SM0->M0_ENDENT ))
@@ -277,11 +279,11 @@ Static Function fQuadro( nQuadro )
     oPrinter:SayAlign ( nRow            , nPosUnit , cTxtAux                                        , oFInfoBold ,  (nBoxRight - nPosUnit ) , 10, , PAD_LEFT , 1)
     
     cTxtAux := UPPER(Alltrim(SM0->M0_ESTENT))
-    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Estado Entrega:"                                , oFLabel,  (nPosProd - nPosSeq )           , 10, , PAD_RIGHT,  )
+    oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Estado Entrega....:"                                , oFLabel,  (nPosProd - nPosSeq )           , 10, , PAD_RIGHT,  )
     oPrinter:SayAlign ( nRow            , nPosProd , cTxtAux                                         , oFInfoBold ,  ((nPosUnit+nPosProd)/2)-nPosProd, 10, , PAD_LEFT , 1)
     
     cTxtAux := UPPER(AllTrim( SM0->M0_CIDENT ))
-    oPrinter:SayAlign ( nRow            , nPosProd, "Endereço Entrega:"                             , oFLabel,  (nPosUnit - nPosProd )  , 10, , PAD_RIGHT,  )
+    oPrinter:SayAlign ( nRow            , nPosProd, "Cidade Entrega..:"                             , oFLabel,  (nPosUnit - nPosProd )  , 10, , PAD_RIGHT,  )
     oPrinter:SayAlign ( nRow            , nPosUnit , cTxtAux                                        , oFInfoBold ,  (nBoxRight - nPosUnit ) , 10, , PAD_LEFT, 1 )
     nRow+=nTamLin-10
     
