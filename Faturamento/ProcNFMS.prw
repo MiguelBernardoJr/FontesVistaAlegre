@@ -446,31 +446,55 @@ Static Function TransfSaldo(cNumNF, oGD, nPos, cProduto, cDescricao, cUM, cArmaz
 	endif		
 	
 	//
-	aAdd(aProd,{	;
-		cProduto  ,;                 // 01.Produto Origem
-		cDescricao,;                 // 02.Descricao
-		cUM       ,;                 // 03.Unidade de Medida
-		cArmazem,;                   // 04.Local Origem
-		CriaVar("D3_LOCALIZ"),;	   	 // 05.Endereco Origem
-		oGD:GetField("PRODNF", nPos),;     // 06.Produto Destino
-		Posicione("SB1", 1, xFilial("SB1") + oGD:GetField("PRODNF", nPos), "B1_DESC"),; // 07.Descricao
-		Posicione("SB1", 1, xFilial("SB1") + oGD:GetField("PRODNF", nPos), "B1_UM")  ,; // 08.Unidade de Medida
-		cArmazem,;			         // 09.Armazem Destino
-		CriaVar("D3_LOCALIZ",.F.),;	 // 10.Endereco Destino
-		CriaVar("D3_NUMSERI",.F.),;	 // 11.Numero de Serie
-		oGD:GetField("LOTECTL", nPos),;	 // 12.Lote Origem
-		CriaVar("D3_NUMLOTE",.F.),;	 // 13.Sublote
-		dVldLote,;                   // 14.Data de Validade
-		CriaVar("D3_POTENCI",.F.),;	 // 15.Potencia do Lote
-		oGD:GetField("QTDVEN", nPos),;    // 16.Quantidade
-		CriaVar("D3_QTSEGUM",.F.),;	 // 17.Quantidade na 2 UM
-		CriaVar("D3_ESTORNO",.F.),;	 // 18.Estorno
-		"",;                         // 19.NumSeq
-		oGD:GetField("LOTECTL", nPos),; // 20.Lote Destino
-		dVldLote,; // 21.Lote Destino
-		CriaVar("D3_ITEMGRD",.F.),; // 22.Item grade
-		"Referente ao pedido: " + SC5->C5_NUM + " - Nota Fiscal: " + cNumNF }) // 23.Observação       28/08/20 - grava itens na observacao
-	
+	//If oGD:GetField("LOTECTL", nPos) <> nil
+		aAdd(aProd,{	;
+			cProduto  ,;                 // 01.Produto Origem
+			cDescricao,;                 // 02.Descricao
+			cUM       ,;                 // 03.Unidade de Medida
+			cArmazem,;                   // 04.Local Origem
+			CriaVar("D3_LOCALIZ"),;	   	 // 05.Endereco Origem
+			oGD:GetField("PRODNF", nPos),;     // 06.Produto Destino
+			Posicione("SB1", 1, xFilial("SB1") + oGD:GetField("PRODNF", nPos), "B1_DESC"),; // 07.Descricao
+			Posicione("SB1", 1, xFilial("SB1") + oGD:GetField("PRODNF", nPos), "B1_UM")  ,; // 08.Unidade de Medida
+			cArmazem,;			         // 09.Armazem Destino
+			CriaVar("D3_LOCALIZ",.F.),;	 // 10.Endereco Destino
+			CriaVar("D3_NUMSERI",.F.),;	 // 11.Numero de Serie
+			oGD:GetField("LOTECTL", nPos),;	 // 12.Lote Origem
+			CriaVar("D3_NUMLOTE",.F.),;	 // 13.Sublote
+			dVldLote,;                   // 14.Data de Validade
+			CriaVar("D3_POTENCI",.F.),;	 // 15.Potencia do Lote
+			oGD:GetField("QTDVEN", nPos),;    // 16.Quantidade
+			CriaVar("D3_QTSEGUM",.F.),;	 // 17.Quantidade na 2 UM
+			CriaVar("D3_ESTORNO",.F.),;	 // 18.Estorno
+			"",;                         // 19.NumSeq
+			oGD:GetField("LOTECTL", nPos),; // 20.Lote Destino
+			dVldLote,; // 21.Lote Destino
+			CriaVar("D3_ITEMGRD",.F.),; // 22.Item grade
+			"Referente ao pedido: " + SC5->C5_NUM + " - Nota Fiscal: " + cNumNF }) // 23.Observação       28/08/20 - grava itens na observacao
+	/*Else 
+				aAdd(aProd,{	;
+			cProduto  ,;                 // 01.Produto Origem
+			cDescricao,;                 // 02.Descricao
+			cUM       ,;                 // 03.Unidade de Medida
+			cArmazem,;                   // 04.Local Origem
+			CriaVar("D3_LOCALIZ"),;	   	 // 05.Endereco Origem
+			oGD:GetField("PRODNF", nPos),;     // 06.Produto Destino
+			Posicione("SB1", 1, xFilial("SB1") + oGD:GetField("PRODNF", nPos), "B1_DESC"),; // 07.Descricao
+			Posicione("SB1", 1, xFilial("SB1") + oGD:GetField("PRODNF", nPos), "B1_UM")  ,; // 08.Unidade de Medida
+			cArmazem,;			         // 09.Armazem Destino
+			CriaVar("D3_LOCALIZ",.F.),;	 // 10.Endereco Destino
+			CriaVar("D3_NUMSERI",.F.),;	 // 11.Numero de Serie
+			CriaVar("D3_NUMLOTE",.F.),;	 // 13.Sublote
+			CriaVar("D3_POTENCI",.F.),;	 // 15.Potencia do Lote
+			oGD:GetField("QTDVEN", nPos),;    // 16.Quantidade
+			CriaVar("D3_QTSEGUM",.F.),;	 // 17.Quantidade na 2 UM
+			CriaVar("D3_ESTORNO",.F.),;	 // 18.Estorno
+			"",;                         // 19.NumSeq oGD:GetField("LOTECTL", nPos),; // 20.Lote Destino
+			dVldLote,; // 21.Lote Destino
+			CriaVar("D3_ITEMGRD",.F.),; // 22.Item grade
+			"Referente ao pedido: " + SC5->C5_NUM + " - Nota Fiscal: " + cNumNF }) // 23.Observação       28/08/20 - grava itens na observacao
+	EndIf
+	*/
 	lMsErroAuto := .F.
 	MSExecAuto({|x,y| MATA261(x,y)},aProd,3)
 			

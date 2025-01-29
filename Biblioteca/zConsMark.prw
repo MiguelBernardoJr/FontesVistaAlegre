@@ -278,8 +278,6 @@ Static Function fPopula()
 	
 	Else
 		//Faz a consulta
-		if 
-
 		cQuery := " SELECT "	+ STR_PULA
 		cQuery += "    TOP 100 "
 		For nAtual := 1 To Len(aCampos)

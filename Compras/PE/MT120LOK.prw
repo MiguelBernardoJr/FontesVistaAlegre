@@ -1,5 +1,5 @@
 #include "topconn.ch"
-#include "protheus.ch"
+#include "protheus.ch" 
 #include "rwmake.ch"
 
 /* 
@@ -8,23 +8,14 @@
 */
 User Function MT120LOK()
 Local lRet 		 := .T.
-Local nPosItem   := aScan(aHeader,{|x| AllTrim(x[2]) == 'C7_ITEM'})
-Local cPMilho 	 := ALLTRIM(GetMV("MV_121LOK")) // Milho em Grãos
 
 If !IsInCallStack( "U_VACOMM07") .AND.;
 	!IsInCallStack( "U_VACOMM11") .AND.;
 	!IsInCallStack( "U_VACOMM12") .AND.;
-	!(FunName() $ ("MNTA650"))
+	!(FunName() $ ("MNTA650|CNTA121"))
 	
 	If !(lRet := !Empty( CTPFRETE ))
 		Alert("O campo Tipo Frete na 3 ABA não foi informado. Este campo é obrigatorio.")
-	EndIf
-
-	if AllTrim(aCols[nPosItem][3]) == cPMilho .AND. INCLUI 
-		lRet := .F.
-		Alert("Produto: 	"+AllTrim(aCols[nPosItem][3])+ CRLF +;
-			"Linha: 		"+StrZero(nPosItem,2)+ CRLF +;
-			"Só pode ser incluido no Pedido de Compras pela rotina: Configuracao Contratual-Milho")
 	EndIf
 EndIf
 

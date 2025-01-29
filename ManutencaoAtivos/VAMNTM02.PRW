@@ -4,7 +4,7 @@
 
 // ###############################################################################################
 // Projeto: 
-// Fonte  : VAMNTM01.prw
+// Fonte  : VAMNTM02.prw
 // ---------+------------------------------------+------------------------------------------------
 // Data     | Autor                              | Descricao
 // ---------+------------------------------------+------------------------------------------------
@@ -113,6 +113,13 @@ If MsgYesNo("Ao estornar será necessário reprocessar / gerar novamente o título 
                 cQuery += " WHERE TQN_FILIAL = '"+xFilial("TQN")+"' AND "
                 cQuery += " TQN_TITABA = '"+SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO+"' AND "
                 cQuery += " TQN_FORST9 = '"+SE2->E2_FORNECE+"' AND TQN_LOJST9 = '"+SE2->E2_LOJA+"' AND D_E_L_E_T_ = ' '"
+                TcSqlExec( cQuery )
+
+                // Limpa campo TL_TITABA que relaciona as tabelas STL e SE2
+                cQuery := "UPDATE "+RetSqlName("STL")+" SET TL_TITABA = '                   ' "
+                cQuery += " WHERE TL_FILIAL = '"+xFilial("STL")+"' AND "
+                cQuery += " TL_TITABA = '"+SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO+"' AND "
+                cQuery += " TL_FORST9 = '"+SE2->E2_FORNECE+"' AND TL_LOJST9 = '"+SE2->E2_LOJA+"' AND D_E_L_E_T_ = ' '"
                 TcSqlExec( cQuery )
             EndIf
 

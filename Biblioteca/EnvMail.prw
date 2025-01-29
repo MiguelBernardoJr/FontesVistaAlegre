@@ -43,15 +43,15 @@ Local oMessage
 Local nRet
 Local nTimeout := GetMV("MV_RELTIME")	//Timeout no Envio de E-Mail;
 Local cServer  := GetMV("MV_RELSERV")	//Nome do Servidor de Envio de E-Mail utilizado nos relatorios;
-Local cEmail   := ""					//Conta a ser utilizada no envio de E-Mail para os relatorios;
-Local cEmailA  := ""					//Usuario para Autenticacao no Servidor de E-Mail;
-Local cEmailFr := ""					//E-Mail utilizado no campo FROM no envio de relatorios por E-Mail;
-Local cPass    := ""					//Senha da Conta de E-Mail para envio de relatorios;
+Local cEmail   := GetMV("MV_RELACNT")	//Conta a ser utilizada no envio de E-Mail para os relatorios;
+Local cEmailA  := GetMV("MV_RELAUSR")	//Usuario para Autenticacao no Servidor de E-Mail;
+Local cEmailFr := GetMV("MV_RELFROM")	//E-Mail utilizado no campo FROM no envio de relatorios por E-Mail;
+Local cPass    := GetMV("MV_RELPSW")	//Senha da Conta de E-Mail para envio de relatorios;
 Local lAuth    := GetMv("MV_RELAUTH")	//Servidor de E-Mail necessita de Autenticacao? Determina se o Servidor necessita de Autenticacao;
 Local cMailAud := GetMv("MV_MAILADT")	//Conta oculta de auditoria utilizada no envio de E-Mail para os relatorios;
 Local lUseSSL  := GetMv("MV_RELSSL")	//Define se o envio e recebimento de E-Mail na rotina SPED utilizara conexao segura (SSL);
 Local lUseTLS  := GetMv("MV_RELTLS")	//Informe se o servidor de SMTP possui conexao do tipo segura (SSL/TLS);
-Local _nPorta  := 25					//Porta Default;
+Local _nPorta  := 25			//Porta Default;
 Local _nX 	   := 0
 DEFAULT _cPara := ""
 DEFAULT _cCc   := ""
@@ -78,26 +78,12 @@ DEFAULT _lAudit  := .f.
 	|MV_RELTLS  |Informe se o servidor de SMTP possui conexao do tipo segura (SSL/TLS); ......|.T.                   |.F.                   |
 	+-----------+-----------------------------------------------------------------------------+----------------------+---------------------*/
 
-	IF PROCNAME(2) $ 'U_VACOMR10|U_MT131WF'
-		cEmailFr := cEmailA  := cEmail := AllTrim(Posicione("SY1", 3, xFilial("SY1")+__cUserID,"Y1_EMAIL"))
-		cPass 	 := AllTrim(Posicione("SY1", 3, xFilial("SY1")+__cUserID,"Y1_SENHA") )  // 
-	ELSE
-		cEmail   := GetMV("MV_RELACNT")
-		cEmailA  := GetMV("MV_RELAUSR")
-		cEmailFr := GetMV("MV_RELFROM")
-		cPass    := GetMV("MV_RELPSW")
-	ENDIF 
-
 	ProcRegua(15)
 
 	//---------------------------------------------------------------------------------------------------------------------
 	//VALIDANDO OS PARAMETROS INFORMADOS
 	If Empty(cServer) .OR. Empty(cEmail) .OR. Empty(cEmailA) .OR. Empty(cPass)
-		if PROCNAME(2) $ 'U_VACOMR10|U_MT131WF'
-			MsgBox("Verifique o parametro: MV_RELSERV. E o cadastro de comprador os Campos: Y1_EMAIL, Y1_SENHA!!!","Funcao EnvMail","STOP") 
-		else
-			MsgBox("Verifique os parametros: MV_RELSERV, MV_RELACNT, MV_RELAUSR ou MV_RELPSW!!!","Funcao EnvMail","STOP") 
-		endif 
+		MsgBox("Verifique os parametros: MV_RELSERV, MV_RELACNT, MV_RELAUSR ou MV_RELPSW!!!","Funcao EnvMail","STOP") 
 		Return(.F.)
 	EndIf
 

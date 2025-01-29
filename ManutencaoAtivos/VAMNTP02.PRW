@@ -12,77 +12,47 @@
 //  15/03/22|  Manoel Filho                      | Apuração de Preços de Compra de Combustiveis  
 // ---------+------------------------------------+------------------------------------------------
 User Function VAMNTP02()
-	Local aArea 	:= FwGetArea()
-	Local aParamBox := {}
-	Local aRet      := {}
-	Local dDatCorte := GetMv("VA_RECCMB",,cTod("01/01/2021")) // Data de Minima para Recálculo de Abastecimentos
-	Local cAlias	:= GetNextAlias()
-	Local cQry 		:= ""
 
-	Private dDatIni := cTod("")
-	Private dDatFin := cTod("")
-	Private cFilde  := ""
-	Private cFilAte := ""
-	Private cFilBak := cFilant
+Local aParamBox := {}
+Local aRet      := {}
+Local dDatCorte := GetMv("VA_RECCMB",,cTod("01/01/2021")) // Data de Minima para Recálculo de Abastecimentos
+Private dDatIni := cTod("")
+Private dDatFin := cTod("")
 
-	aAdd(aParamBox,{1,"Data Inicial",Ctod(""),"@D","","","",50,.f.})
-	aAdd(aParamBox,{1,"Data Final"  ,Ctod(""),"@D","","","",50,.f.})
-	aAdd(aParamBox,{1,"Filial De"	,"'0101001'","","","","",50,.f.})
-	aAdd(aParamBox,{1,"Filial Ate"  ,"'ZZZZZZZ'","","","","",50,.f.})
+aAdd(aParamBox,{1,"Data Inicial",Ctod(""),"@D","","","",50,.f.})
+aAdd(aParamBox,{1,"Data Final",Ctod(""),"@D","","","",50,.f.})
 
-	While .t.
-		If ParamBox(aParamBox,"",@aRet,,,,,,,,.F.)
-			dDatIni := aRet[1]
-			dDatFin := aRet[2]
-			cFilde  := aRet[3]
-			cFilAte := aRet[4]
-		Else
-			Return
-		EndIf
+While .t.
+	If ParamBox(aParamBox,"",@aRet,,,,,,,,.F.)
+		dDatIni  := aRet[1]
+		dDatFin  := aRet[2]
+	Else
+		Return
+	EndIf
 
-		If Empty(dDatIni) .or. Empty(dDatFin) .or. (dDatFin<dDatIni) .or. ;
-			Empty(cFilde) .or. Empty(cFilAte) .or. (cFilAte<cFilde)
-				MsgStop("Parâmetro(s) inválido(s)! Favor informar corretamente!")
-			Loop
-		Endif
+	If Empty(dDatIni) .or. Empty(dDatFin) .or. (dDatFin<dDatIni)
+		MsgStop("Data(s) Inválida(s)! Favor informar corretamente!")
+		Loop
+	Endif
 
-		If (dDatIni<dDatCorte)
-			MsgStop("Data Inicial MENOR que a Data de Corte informada no parâmetro VA_RECCMB! Favor informar corretamente!")
-			Loop
-		Endif
+	If (dDatIni<dDatCorte)
+		MsgStop("Data Inicial MENOR que a Data de Corte informada no parâmetro VA_RECCMB! Favor informar corretamente!")
+		Loop
+	Endif
 
-		Exit
-	Enddo
+	Exit
+Enddo
 
-	cQry := "select TQN_FILIAL " + CRLF
-	cQry += " from "+RetSqlName("TQN")+" TQN " + CRLF
-	cQry += " WHERE TQN.D_E_L_E_T_ =''  " + CRLF
-	cQry += " AND TQN_FILIAL BETWEEN '"+aRet[3]+"' AND '"+aRet[4]+"'  " + CRLF
-	cQry += " GROUP BY TQN_FILIAL " + CRLF
+oProcTTP := MsNewProcess():New({ |lEnd| FS_Proc01() }," ","",.f.)
+oProcTTP:Activate()
 
-	MpSysOpenQuery(cQry, cAlias)
-
-	While !(cAlias)->(EOF())
-
-		cFilant := (cAlias)->TQN_FILIAL
-		
-		oProcTTP := MsNewProcess():New({ |lEnd| FS_Proc01() }," ","",.f.)
-		oProcTTP:Activate()
-
-		(cAlias)->(DbSkip())
-	Enddo
-
-	(cAlias)->(dbCloseArea())
-
-	cFilant := cFilBak
-
-	FwRestArea(aArea)
 Return
+
 
 Static Function FS_Proc01()
 Local lProcess  := .f.
 Local nAcres    := GetMv("VA_ACCMBI",,0.20) // Valor do Acescimo no preço do litro Combustivel do Prestadores de Serviço
-Local lRecLock  := .T.
+//Local nRecSD1   := 0
 
 DbSelectArea("ZAU")
 
@@ -127,19 +97,21 @@ While !TMPTQN->(Eof())
 		SD1->(DbGoto(TMPSD1->(RECSD1)))
 		lProcess := .t.
 		DbSelectArea("ZAU")
-			RecLock("ZAU", lRecLock := !DbSeek(xFilial("ZAU")+TMPTQN->TQN_CODCOM+Dtos(SD1->D1_DTDIGIT)))
-				ZAU->ZAU_FILIAL := xFilial("ZAU")
-				ZAU->ZAU_CODCOM := TMPTQN->TQN_CODCOM
-				ZAU->ZAU_PRODUT := TMPTQN->TQI_PRODUT
-				ZAU->ZAU_DATCPA := SD1->D1_DTDIGIT
-				ZAU->ZAU_DOC    := SD1->D1_DOC
-				ZAU->ZAU_SERIE  := SD1->D1_SERIE
-				ZAU->ZAU_FORNEC := SD1->D1_FORNECE
-				ZAU->ZAU_LOJA   := SD1->D1_LOJA
-				ZAU->ZAU_VALUNI := SD1->D1_VUNIT
-				ZAU->ZAU_VALACR := nAcres
-				ZAU->ZAU_VALCOM := SD1->D1_VUNIT + nAcres
-			MsUnlock()                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+		If !DbSeek(xFilial("ZAU")+TMPTQN->TQN_CODCOM+Dtos(SD1->D1_DTDIGIT))
+			RecLock("ZAU",!Found())
+			ZAU->ZAU_FILIAL := xFilial("ZAU")
+			ZAU->ZAU_CODCOM := TMPTQN->TQN_CODCOM
+			ZAU->ZAU_PRODUT := TMPTQN->TQI_PRODUT
+			ZAU->ZAU_DATCPA := SD1->D1_DTDIGIT
+			ZAU->ZAU_DOC    := SD1->D1_DOC
+			ZAU->ZAU_SERIE  := SD1->D1_SERIE
+			ZAU->ZAU_FORNEC := SD1->D1_FORNECE
+			ZAU->ZAU_LOJA   := SD1->D1_LOJA
+			ZAU->ZAU_VALUNI := SD1->D1_VUNIT
+			ZAU->ZAU_VALACR := nAcres
+			ZAU->ZAU_VALCOM := SD1->D1_VUNIT + nAcres
+			MsUnlock()
+		Endif
 		TMPSD1->(DbSkip())	
 	Enddo
 	TMPSD1->(dbCloseArea())
@@ -206,7 +178,7 @@ While !TMPSTL->(Eof())
 			ZAU->ZAU_VALCOM := SD1->D1_VUNIT + nAcres
 			MsUnlock()
 		Endif
-		TMPSD1->(DbSkip())
+		TMPSD1->(DbSkip())	
 	Enddo
 	TMPSD1->(dbCloseArea())
 
@@ -218,9 +190,9 @@ TMPSTL->(dbCloseArea())
 End Transaction
 
 If lProcess
-	MsgInfo("Apuração de Preços de Compra de Combustiveis da Filial "+SubStr(FwxFilial("TQN"),6,2)+" ocorrida com sucesso!","Atenção")
+	MsgInfo("Apuração de Preços de Compra de Combustiveis ocorrida com sucesso!","Atenção")
 Else
-	MsgInfo("Não foram encontrados registros de compra na Filial "+SubStr(FwxFilial("TQN"),6,2)+" no periodo informado!","Atenção")
+	MsgInfo("Não foram encontrados registros de compra no periodo informado!","Atenção")
 Endif
 
 Return

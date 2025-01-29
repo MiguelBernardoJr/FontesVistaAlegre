@@ -18,7 +18,7 @@ User Function VAFINI02()
 
     if lRet
         MsgInfo("Registro Excluido!")
-    else
+    else 
         MsgInfo("Registro não pode ser excluido!")
     endif 
 

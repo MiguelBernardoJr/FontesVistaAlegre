@@ -76,6 +76,8 @@ Local aArea			:= GetArea()
 	Restarea(aArea)
 Return .T.
              
+
+
 //-----------------------------------------------------------------------------------------------
 // Codigo Estruturado no cadastro de Produtos
 //-----------------------------------------------------------------------------------------------
@@ -87,7 +89,7 @@ cSequencial		:= ""
 If !Empty(cGrupo)	
 
 	cQuery := " SELECT MAX(B1_COD) PROX FROM " + RetSqlName("SB1") 
-	cQuery += " WHERE B1_FILIAL='"+xFilial('SB1')+"' "
+	cQuery += " WHERE B1_FILIAL='"+FWxFilial('SB1')+"' "
 	cQuery += "   AND B1_GRUPO = '"+cGrupo+"' "
 	If cGrupo == 'BOV'
 		cQuery += "   AND LEN(B1_COD) = 15 "
@@ -198,23 +200,23 @@ Local aArea        := GetArea()
 
 	If cAmbiente<>"E"                
 		If alltrim(cTipo)$"DB"  
-        	cResult := Posicione("SA2",1,xfilial("SA2")+cCodCliFor, if(!empty(cCampo2),cCampo2,"A2_"+substr(cCampo1,4,len(cCampo1)-3) ) )
+        	cResult := Posicione("SA2",1,FWxfilial("SA2")+cCodCliFor, if(!empty(cCampo2),cCampo2,"A2_"+substr(cCampo1,4,len(cCampo1)-3) ) )
   		Else
-			cResult := Posicione("SA1",1,xfilial("SA1")+cCodCliFor,cCampo1)
+			cResult := Posicione("SA1",1,FWxfilial("SA1")+cCodCliFor,cCampo1)
 		Endif 
 	Else
 		If alltrim(cTipo)$"DB"  
-        	cResult := Posicione("SA1",1,xfilial("SA1")+cCodCliFor,Iif(!empty(cCampo2),cCampo2,"A1_"+substr(cCampo1,4,len(cCampo1)-3) ) )
+        	cResult := Posicione("SA1",1,FWxfilial("SA1")+cCodCliFor,Iif(!empty(cCampo2),cCampo2,"A1_"+substr(cCampo1,4,len(cCampo1)-3) ) )
   		Else
-			cResult := Posicione("SA2",1,xfilial("SA2")+cCodCliFor,cCampo1)
+			cResult := Posicione("SA2",1,FWxfilial("SA2")+cCodCliFor,cCampo1)
 		Endif 
 	Endif
 
 RestArea(aArea)       
 Return (cResult)     
 
-iif(EMPTY(M->CN9_XFOR),"",U_CPOES("A2_NOME","A1_NOME",(M->CN9_XFOR+M->CN9_XLOJ),M->CN9_ESPCTR,1))
-                                                          
+
+
 
 
 //-----------------------------------------------------------------------------------------------

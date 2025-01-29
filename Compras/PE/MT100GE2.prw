@@ -7,10 +7,23 @@
 
 // Gravar dados adicionais no titulo apos gravar documento de entrada
 // Observacao da Nota no Titulo Financeiro na Inclusao da NF de Entrada
-User Function MT100GE2()
-	Local nParc		:= iIf(Empty(SE2->E2_PARCELA),1,Val(SE2->E2_PARCELA))
-	Local cMsg, cLinDig
-	Local nValBol
+User Function MT100GE2 
+/*
+Local aTitAtual   := PARAMIXB[1]
+Local nOpc        := PARAMIXB[2]
+Local aHeadSE2	  := PARAMIXB[3]
+// Local nX          := PARAMIXB[4]
+// Local aParcelas   := PARAMIXB[5]
+//.....Exemplo de customização
+Local nPos        := Ascan(aHeadSE2,{|x| Alltrim(x[2]) == 'E2_OBS'})  
+   
+   // If nOpc == 1 //.. inclusao
+   //     SE2->E2_OBS:=aCols[nPos]
+   // EndIf
+   
+   Alert('MT100GE2: ' + cValToChar(nPos))
+*/
+Local nParc	:= iIf(Empty(SE2->E2_PARCELA),1,Val(SE2->E2_PARCELA))
 
 	If Type("aTitSE2") <> "U" .and. !Empty( aTitSE2 ) .and. PARAMIXB[1,2] <> aTitSE2[ nParc, 3]
 		SE2->E2_VENCTO  := DataValida( aTitSE2[ nParc, 3], .T.)
@@ -18,42 +31,10 @@ User Function MT100GE2()
 	EndIf
 
 	If INCLUI .and. Type("cObsMT103") <> "U" .and. !Empty(cObsMT103)
-		cObsMT103 := Replace(cObsMT103,"|","")
-		cObsMT103 := AllTrim(cObsMT103)
-		
 		SE2->E2_HIST :=  cObsMT103 //SF1->F1_MENNOTA //cObsMT103 //
-	EndIf
-
-	if Type("aCBrMT103") <> "U" .and. !Empty( aCBrMT103 ) .and. AllTrim(aCBrMT103[1,1]) != ""
-		
-		cLinDig := aCBrMT103[1,1]
-		nValBol := SubStr(cLinDig,Len(cLinDig)-9,Len(cLinDig))
-		nValBol := SubStr(nValBol,1,8) + '.' + SubStr(nValBol,9,2)
-		nValBol := Val(nValBol)
-
-		if SE2->E2_VALOR != nValBol
-			cMsg := "Código de boleto inválido!" + CRLF
-			cMsg += "Código não será salvo!"+ CRLF
-			cMsg += ""+ CRLF
-			cMsg += "Titulo : " + ALLTRIM(SE2->E2_NUM) + iif(SE2->E2_PARCELA != "  "," Parcela: " + SE2->E2_PARCELA, "") + CRLF
-			cMsg += "Valor do boleto não corresponde ao valor do titulo!"+ CRLF
-			cMsg += "Valor do boleto: " + cValToChar(nValBol) + CRLF
-			cMsg += "Valor do titulo: " + cValToChar(SE2->E2_VALOR)+ CRLF
-
-			MsgAlert(cMsg,"ATENÇÃO!")
-		else 
-			SE2->E2_LINDIG := aCBrMT103[1,1]
-			SE2->E2_CODBAR := aCBrMT103[1,2]
-		endif 	
-		
-		if Len(aCBrMT103) > 1
-			aDel(aCBrMT103, 1) 
-			aSize(aCBrMT103, Len(aCBrMT103) - 1)
-		endif
-	endif
-
- 	If SE2->(FieldPos("E2_XXDTDIG"))>0
-		SE2->E2_XXDTDIG := DATE()
+	EndIf                
+	If SE2->(FieldPos("E2_XXDTDIG"))>0
+		SE2->E2_XXDTDIG := DATE()      
 		// Update criado para tratar titulos TX;IR;ISS e demais que nao estavam tendo o conteudo alterado pelo ponto de entrada
 		cQryUpd := " UPDATE " + RetSqlName('SE2') + "  "
 		cQryUpd += " SET E2_XXDTDIG = '" 	+ DTOS(DATE()) + "' "
@@ -73,8 +54,8 @@ User Function MT100GE2()
 	cQryUpd += " AND E2_PREFIXO  = '"	+ SE2->E2_PREFIXO + "' " 
 	cQryUpd += " AND E2_FORNECE  = '"	+ SE2->E2_FORNECE + "' " 
 	cQryUpd += " AND E2_LOJA     = '"	+ SE2->E2_LOJA    + "' " 
-	cQryUpd += " AND E2_EMISSAO  = '"	+ DTOS(SE2->E2_EMISSAO)  + "' "
+	cQryUpd += " AND E2_EMISSAO  = '"	+ DTOS(SE2->E2_EMISSAO)  + "' " 
 		
-	TcSqlExec(cQryUpd)
+	TcSqlExec(cQryUpd) 				
 
-Return Nil 
+Return Nil  

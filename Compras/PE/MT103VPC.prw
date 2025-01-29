@@ -61,7 +61,7 @@ Endif
    		cC7Obs		:= 	u_SC7OBS(SC7->C7_FILIAL, SC7->C7_NUM)
 		If !(Alltrim(cC7Obs)$cObsMT103)
 			If Empty(Alltrim(cObsMT103))
-				cObsMT103 := Alltrim(cC7Obs)
+				cObsMT103 := Alltrim(cC7Obs)			
 			Else
 				cObsMT103 := Alltrim(cObsMT103) + ' || ' + Alltrim(cC7Obs) 
 				//			cObsMT103 += cObsMT103 + ' || ' + cC7Obs 
@@ -137,8 +137,6 @@ Endif
 	Else
  		Public cItem := StrZero( 1, TamSx3('D1_ITEM')[1])
     Endif
-
-	
 Return(lRet)  
 
 

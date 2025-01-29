@@ -66,15 +66,9 @@ DbSelectArea("SX3")
 DbSetOrder(1) // X3_ARQUIVO + X3_ORDEM
 DbSeek(cAlias)
 while SX3->X3_ARQUIVO == cAlias
-    if cAlias == 'ZBD'
-        if ValType("M->" + SX3->X3_CAMPO) <> "U"
-            AAdd(aVCposOld, {"M->" + SX3->X3_CAMPO , &("M->" + SX3->X3_CAMPO) })
-        endif
-    else 
-        if Type("M->" + SX3->X3_CAMPO) <> "U"
-            AAdd(aVCposOld, {"M->" + SX3->X3_CAMPO , &("M->" + SX3->X3_CAMPO) })
-        endif
-    endif 
+    if Type("M->" + SX3->X3_CAMPO) <> "U"
+        AAdd(aVCposOld, {"M->" + SX3->X3_CAMPO , &("M->" + SX3->X3_CAMPO) })
+    endif
     SX3->(DbSkip())
 end
 
@@ -398,8 +392,6 @@ cCpoFilial := IIf(!Empty(cCpoFilial), cADes + "." + cCpoFilial, nil)
 
 for nCVirtual := 1 to Len(aCVirtual)
     cRStr := aCVirtual[nCVirtual][2]
-    
-    IIF(LEN(AllTrim(POSICIONE("SA2",1,xFilial("SA2")+SE2->E2_FORNECE+E2_LOJA,"A2_CGC"))) == 14,"2","1" )
     
     //POSICIONE("GD4",1,xFilial("GD4")+GCZ->GCZ_REGGER+GCZ->GCZ_CODPLA,"GD4_MATRIC")
     if     "POSICIONE(" $ cRStr
@@ -1044,13 +1036,13 @@ local cPrefix   := Iif( SubStr(cAliasGrv, 1, 1) == 'S', SubStr(cAliasGrv, 2, 2),
 local nLen, i
 
     DbSelectArea("SX3")
-    DbSetOrder(2) // X3_CAMPO
+    DbSetOrder(2) // X3_CAMPO 
         
     DbSelectArea(cAliasGrv)
     
     if aColsGrv == nil  
         nLen := FCount()      
-        for i := 1 to nLen
+        for i := 1 to nLen 
             cCpo := Eval(bCampo3, i)
             if SX3->(DbSeek(cCpo)) .and. SX3->X3_CONTEXT != "V" .and. Type("M->"+(cCpo)) != "U"
                 &(cCpo) := M->&(cCpo)
@@ -1135,7 +1127,6 @@ local nOrderSx3, nRecSx3, nCodObsF
 
     end
 
-TESTE 1205
     DbGoTo(nRecSx3)
     DbSetOrder(nOrderSx3)
     DbSelectArea(cAliasOld)

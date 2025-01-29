@@ -282,6 +282,8 @@ Static Function GeraX1(cPerg)
 Local _aArea	:= GetArea()
 Local nX		:= 0
 Local nPergs	:= 0
+Local i         := 0
+Local j         := 0
 Local aRegs		:= {}
 
 //Conta quantas perguntas existem ualmente.

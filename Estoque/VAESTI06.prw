@@ -18,7 +18,6 @@ User Function VAESTI06()
 	//Cria um browse para a ZAV, filtrando somente a tabela 00 (cabeçalho das tabelas
 	oBrowse := FWMBrowse():New()
 	oBrowse:SetAlias("ZAV")
-	//oBrowse:SetFilterDefault("ZAV->ZAV_DATA == '"+DTOS(dDataBase)+"'")
 	oBrowse:SetDescription(cTitulo)
 	oBrowse:Activate()
 
@@ -66,13 +65,11 @@ Static Function ModelDef()
 	
     //Adiciona o relacionamento de Filho, Pai
 	aAdd(aZAVRel, {'ZAV_FILIAL' , 'Iif(!INCLUI, ZAV->ZAV_FILIAL, FWxFilial("ZAV")    )'} )
-	aAdd(aZAVRel, {'ZAV_COD'    , 'Iif(!INCLUI, ZAV->ZAV_COD, ZAV->ZAV_COD			 )'} )
-	aAdd(aZAVRel, {'ZAV_MAT'    , 'Iif(!INCLUI, ZAV->ZAV_MAT, ZAV->ZAV_MAT			 )'} )
+	aAdd(aZAVRel, {'ZAV_COD'    , 'Iif(!INCLUI, ZAV->ZAV_COD, ""                        )'} )
 	aAdd(aZAVRel, {'ZAV_DATA'   , 'Iif(!INCLUI, ZAV->ZAV_DATA  , sToD("")            )'} )
-	aAdd(aZAVRel, {'ZAV_ITEM'   , 'Iif(!INCLUI, ZAV->ZAV_ITEM  , ZAV->ZAV_ITEM       )'} )
 	
 	//Criando o relacionamento
-	oModel:SetRelation('ZAVDETAIL', aZAVRel, ZAV->(IndexKey(3)))
+	oModel:SetRelation('ZAVDETAIL', aZAVRel, ZAV->(IndexKey(2)))
 
 	oModel:SetPrimaryKey({ })
 
@@ -82,7 +79,6 @@ Static Function ModelDef()
 	//Setando outras informações do Modelo de Dados
 	oModel:SetDescription("Dados do Cadastro "+cTitulo)
 	oModel:GetModel("ZAVMASTER"):SetDescription("Formulário do Cadastro "+cTitulo)
-
 
 Return oModel
 
@@ -181,9 +177,9 @@ User Function zSaveZAVMd2()
 	//Se for Inclusão
 	If nOpc == MODEL_OPERATION_INSERT .OR. nOpc == MODEL_OPERATION_UPDATE
 
-	//Percorre as linhas da grid
+		//Percorre as linhas da grid
 	if !Empty(oModelDad:GetValue( 'ZAVMASTER', 'ZAV_MAT'))
-		//if ValidaNota()
+		if ValidaNota()
 			For nI := 1 To oModelGrid:GetQtdLine()
 				
 				oModelGrid:GoLine(nI)
@@ -201,7 +197,6 @@ User Function zSaveZAVMd2()
 								ZAV->ZAV_ITEM   	:= oModelGrid:GetValue('ZAV_ITEM')
 								ZAV->ZAV_CCOD   	:= oModelGrid:GetValue('ZAV_CCOD')
 								ZAV->ZAV_NOTA   	:= oModelGrid:GetValue('ZAV_NOTA')
-								ZAV->ZAV_ORIGEM 	:= oModelGrid:GetValue('ZAV_ORIGEM')
 
 							ZAV->(MsUnlock())
 						ENDIF
@@ -217,10 +212,10 @@ User Function zSaveZAVMd2()
 						EndIf
 				EndIf
 			Next nI
-		//else 
-		//	lRet := .F.
-		//	oModelDad:SetErrorMessage("ZAVDETAIL","ZAV_NOTA","ZAVDETAIL","ZAV_NOTA","Erro",'Campo Nota vazio', 'Informe Todas as Notas!!')
-		//ENDIF
+		else 
+			lRet := .F.
+			oModelDad:SetErrorMessage("ZAVDETAIL","ZAV_NOTA","ZAVDETAIL","ZAV_NOTA","Erro",'Campo Nota vazio', 'Informe Todas as Notas!!')
+		ENDIF
 	else
 		lRet :=  .F.
 		//Mensagem de erro 
@@ -365,26 +360,22 @@ User Function VAI06PLn()
 	Local aArea 		:= GetArea()
 	Local oView    		:= FWViewActive()
 	Local oModel	 	:= oView:GetModel()
-	Local oModelDad 	:= oModel:GetModel("ZAVMASTER")
 	Local oModelGrid 	:= oModel:GetModel("ZAVDETAIL")
 	Local nOpc     	 	:= oModel:GetOperation()
 	Local _cQry  		:= ""
     Local cAlias 		:= GetNextAlias()
-	Local cCriterio 	:= ''
-	
-	oModelGrid:ClearData()
+	Local aCpos  		:= {}
+	Local nI 		   	
+
 	oModelGrid:SetNoInsertLine(.F.)
 	oModelGrid:SetNoDeleteLine(.F.)
 
 	If nOpc == MODEL_OPERATION_INSERT 
 
-		cCriterio := Posicione("Z0U",1,FWxFilial("Z0U")+oModelDad:GetValue("ZAV_MAT"),"Z0U_TIPO")
-		
 		_cQry := " select ZCP_CODIGO" + CRLF
 		_cQry += "		  ,ZCP_DESC" + CRLF
 		_cQry += "		  from " + RetSqlName("ZCP") + "" + CRLF
 		_cQry += "		  where ZCP_FILIAL = '" + FWxFilial("ZCP") + "'" + CRLF
-		_cQry += "		  and ZCP_TIPOCR IN ('"+IIF(cCriterio=='P','C','T')+"','A') " + CRLF
 		_cQry += "		  and D_E_L_E_T_ = ' ' " + CRLF
 
 		dbUseArea(.T.,"TOPCONN",TcGenQry(,,_cQry),cAlias,.T.,.T.)
@@ -418,21 +409,25 @@ User Function VAI06PLn()
 RETURN 
 
 Static Function ValidaNota()
-	Local lRet	:= .t.
+	Local lRet	:= .F.
 	Local oView    		:= FWViewActive()
 	Local oModel	 	:= oView:GetModel()
 	Local oModelGrid 	:= oModel:GetModel("ZAVDETAIL")
 	Local nL
 	Local nI
+	Local nJ 			:= 1
 
 	nL := oModelGrid:GetQtdLine()   	
 
 	for nI := 1 to nL
 		oModelGrid:GoLine(nI)
-			If(Empty(oModelGrid:GetValue('ZAV_NOTA')))
-				lRet := .F.
-				exit 
+			If(oModelGrid:IsFieldUpdated('ZAV_NOTA'))
+				nJ++
 			ENDIF
 	next nI
+
+	if (nJ==nL+1)
+		lRet := .T.
+	ENDIF
 
 return lRet

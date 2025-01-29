@@ -23,7 +23,7 @@ User Function FECHAMES()		// u_FECHAMES()
 	If MsgYesNo("Sr.(a) <b>" + AllTrim( cUserName ) + "</b> essa rotina atualizará os parâmetros de movimentação de ESTOQUE, FINANCEIRO e Contabil. " +;
 				"Após a data informada nenhum movimento estoque/financeiro/contabil será permitido. A data atual informada " +;
 				"para o financeiro é: " + DTOC(DtFinaceir) + "<br>" +;
-				"e para o contabil é: " + DTOC(DtContabil) + ", deseja prosseguir?","Atenção")     
+				"e para o contabil é: " + DTOC(DtContabil) + ", deseja prosseguir?","Atenção")
 
 		ValidPerg()
 		
@@ -34,13 +34,13 @@ User Function FECHAMES()		// u_FECHAMES()
 		U_PosSX1(aPosSX1)
 		
 		If !Pergunte(cPerg,.t.)
-		    Return
-		Endif                     
+			Return
+		Endif 
 		
 		If MV_PAR01<>MV_PAR02
 			If !Empty(MV_PAR02)
-				PutMV("MV_DATAFIN",DTOS(MV_PAR02))                                                                 
-				PutMV("MV_DATAREC",DTOS(MV_PAR02))                                                                 
+				PutMV("MV_DATAFIN",DTOS(MV_PAR02))
+				PutMV("MV_DATAREC",DTOS(MV_PAR02))
 			EndIf
 		Endif
 		If MV_PAR03<>MV_PAR04
@@ -52,8 +52,8 @@ User Function FECHAMES()		// u_FECHAMES()
 		
 		Aviso("Configuração atual dos parâmetros","As data ficaram configuradas na seguinte maneira: " + CRLF+;
 			  "Financeiro: " + DTOC(GETMV("MV_DATAFIN")) + CRLF +;
-			  "Contabil: " + DTOC(GETMV("MV_DBLQMOV")),{"OK"},1)       
-	Endif                 
+			  "Contabil: " + DTOC(GETMV("MV_DBLQMOV")),{"OK"},1) 
+	Endif
 Return
 
 

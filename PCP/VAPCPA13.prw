@@ -156,7 +156,7 @@ User Function AltOpePC()
 	
 	if Pergunte("ALTMVOPE",.T.,"Alterar Operadores diário")
 		IF !Empty(MV_PAR01) .and. !Empty(MV_PAR02)
-			PUTMV("MV_OPERADO",MV_PAR01+";"+MV_PAR02+" ")	
+			PUTMV("MV_OPERADO",MV_PAR01+";"+MV_PAR02+" ")
 		else 
 			if Empty(MV_PAR01)
 				MsgAlert("Operador um não informado!"+ CRLF ,;
@@ -357,68 +357,21 @@ If (Pergunte(cPrgExp, .T.))
 	//	AAdd(aParRet, MV_PAR03)
 	//	AAdd(aParRet, MV_PAR04)
 	//	AAdd(aParRet, MV_PAR05)
-	
+		
 	/*01*/ AAdd(aParRet, MV_PAR01) // DATA
 	/*02*/ AAdd(aParRet, "0001"  )
 	/*03*/ AAdd(aParRet, MV_PAR03) // EQUIPAMENTO
 	/*04*/ AAdd(aParRet, MV_PAR02) // OPERACAO: 1- trato; 2-Fabrica; 3-Phibro
 	/*05*/ AAdd(aParRet, MV_PAR05) // TIPO ARQUIVO: 1-CSV; 2=JSon
 	/*06*/ AAdd(aParRet, MV_PAR04) // ROTA
-
-	IF MV_PAR02 == 1
-		if vOperador()
-			FWMsgRun(, {|| U_ExpBatTrt()}, "Processando", "Gerando arquivo...")
-		endif
-	else
-		FWMsgRun(, {|| U_ExpBatTrt()}, "Processando", "Gerando arquivo...")
-	endif
 		
+		FWMsgRun(, {|| U_ExpBatTrt()}, "Processando", "Gerando arquivo...")
 	//	FWExecView(cDscCab, 'VAPCPA13', MODEL_OPERATION_INSERT, , { || .T. },,, aEnButt)
 EndIf
 
 Return (Nil)
 
-Static Function vOperador()
-	Local aArea 	:= FwGetArea()
-	Local aOperador := StrTokArr(AllTrim(GetMV("MV_OPERADO")) + ";",";")
-	Local cQry 		:= ""
-	Local cALias 	:= GetNextAlias()
-	Local lRet 		:= .T.
 
-	cQry := " SELECT DISTINCT  Z0Y_OPER1, Z0Y_OPER2 " + CRLF
-	cQry += " FROM Z0Y010 Z0Y " + CRLF 
-	cQry += " WHERE Z0Y_FILIAL = '"+FwxFilial("Z0Y")+"'	 " + CRLF 
-	cQry += " AND Z0Y_DATA = '"+dToS(MV_PAR01)+"'  " + CRLF 
-	cQry += " AND Z0Y_ORIGEM = 'B' " + CRLF 
-	cQry += " AND D_E_L_E_T_ = ' '  " + CRLF 
-	cQry += " GROUP BY Z0Y_OPER1,Z0Y_OPER2 " + CRLF 
-
-	MpSysOpenQuery(cQry, cALias)
-
-	if !(cALias)->(EOF())
-		IF AllTrim((cALias)->Z0Y_OPER1) != AllTrim(aOperador[1])
-			lRet := .F.
-		END
-		IF AllTrim((cALias)->Z0Y_OPER2) != AllTrim(aOperador[2])
-			lRet := .F.
-		END
-	End
-	
-	if !lRet 
-		MsgStop("Operadores diferentes dos já cadastrados para a data "+dToC(MV_PAR01)+" " + CRLF +;
-				"Operadores inseridos agora: " + CRLF +;
-				"	" + AllTrim(aOperador[1])+" - " + Posicione("Z0U",1,fWxFilial("Z0U")+AllTrim(aOperador[1]),"Z0U_NOME") + CRLF +;
-				"	" + AllTrim(aOperador[2])+" - " + Posicione("Z0U",1,fWxFilial("Z0U")+AllTrim(aOperador[2]),"Z0U_NOME") + CRLF +;
-				"Operadores atuais: " + CRLF +;
-				"	" + AllTrim((cALias)->Z0Y_OPER1)+" - " + Posicione("Z0U",1,fWxFilial("Z0U")+AllTrim((cALias)->Z0Y_OPER1),"Z0U_NOME") + CRLF +;
-				"	" + AllTrim((cALias)->Z0Y_OPER2)+" - " + Posicione("Z0U",1,fWxFilial("Z0U")+AllTrim((cALias)->Z0Y_OPER2),"Z0U_NOME") + CRLF ,;
-				"Operadores Inválidos")
-	endif
-
-	(cALias)->(DbCloseArea())
-	
-	FwRestArea(aArea)
-Return lRet
 User Function btnRxp()
 
 Local cLocArq := ""
@@ -525,7 +478,7 @@ User Function btnImp()
                   {.F., NIL},;           // 11 - Mashup
                   {.T., NIL},;           // 12 - Help
                   {.F., NIL},;           // 13 - Formulario HTML
-                  {.F., NIL}}            // 14 - ECM */
+                  {.F., NIL}}           // 14 - ECM */
 Local cPrgImp := "VAPCPA13I"
 
 //U_PosSX1({{cPrgImp, "01", DTOS(dDataBase)}, {cPrgImp, "02", Space(4)}, {cPrgImp, "03", Space(6)}, {cPrgImp, "04", Space(20)}})
@@ -979,7 +932,7 @@ EndIf
 //separacao da tela
 oView:CreateHorizontalBox( "CABECALHO", 16 )
 oView:CreateHorizontalBox( "BOXTELDV1", 02 )
-oView:CreateHorizontalBox( "FILTRO"   , 27 )
+oView:CreateHorizontalBox( "FILTRO"   , 22 )
 
 oView:CreateVerticalBox("BOXFILROT", 16, "FILTRO")
 oView:CreateVerticalBox("BOXFILDV1", 02, "FILTRO")
@@ -992,7 +945,7 @@ oView:CreateVerticalBox("BOXFILDV4", 18, "FILTRO")
 
 If (_cA13LayOut == "NOVO")
 
-	oView:CreateHorizontalBox("FOLDER", 55 )
+	oView:CreateHorizontalBox("FOLDER", 60 )
 
 	oView:CreateFolder( 'PASTAS', 'FOLDER' )
 
@@ -1622,7 +1575,6 @@ User Function ExpBatTrt( )
 	Local nTTrMS        := 0
 	Local nTotMN        := 0
 	Local nTTrMN        := 0
-	Local nRound		:= 0
 	Local nPrcMT        := 0
 	local nQtdPreItem   := 0
 	Local nDivisa       := 0
@@ -2505,15 +2457,14 @@ User Function ExpBatTrt( )
 								nTTrMN += Round((QRYREC->QUANT * nTTrMS)/(QRYREC->INDMS/100), 2)
 
 							ElseIf (aParRet[4] == 2)
-
-								nRound := IF(nDivisa >= 1, nDivisa, 2)
+								nRound:= IF(nDivisa >= 1, nDivisa, 2) 
 								aResult[# 'ordens' ][nCntOrd][# 'ingredientes' ][nCntTrt][nCntCmp]      := rTrim(POSICIONE("SB1", 1, xFilial("SB1")+ AllTrim(QRYREC->ITEM), "B1_XDESC")) //SUBSTR(, 1, 15) //B1_DSCBAL
 								
-								aResult[# 'ordens' ][nCntOrd][# 'pesosrequisitados' ][nCntTrt][nCntCmp] := Round ( Round((QRYREC->QUANT / QRYREC->QB) * nTTrMS, nRound) / nDivisa, nRound )* nDivisa//AllTrim(STR(Round((QRYREC->QUANT / QRYREC->QB) * nTTrMS, -(Len(AllTrim(STR(nDivisa))) * -1))))
+								aResult[# 'ordens' ][nCntOrd][# 'pesosrequisitados' ][nCntTrt][nCntCmp] :=  Round ( Round((QRYREC->QUANT / QRYREC->QB) * nTTrMS, nRound) / nDivisa, nRound )* nDivisa//AllTrim(STR(Round((QRYREC->QUANT / QRYREC->QB) * nTTrMS, -(Len(AllTrim(STR(nDivisa))) * -1))))
 								aResult[# 'ordens' ][nCntOrd][# 'tolerancias' ][nCntTrt][nCntCmp]       := '0'
 
-								nTTrMN := Round ( Round((QRYREC->QUANT / QRYREC->QB) * nTTrMS, nRound) / nDivisa, nRound)* nDivisa
-								//nTTrMN := Round ( Round((QRYREC->QUANT / QRYREC->QB) * nTTrMS, 0) / nDivisa, 0)* nDivisa
+								
+								nTTrMN := Round ( Round((QRYREC->QUANT / QRYREC->QB) * nTTrMS, nRound) / nDivisa, nRound )* nDivisa
 							EndIf
 
 							If (aParRet[4] == 1) // 1 == Trato; 2 = Fabrica
@@ -2635,17 +2586,14 @@ User Function ExpBatTrt( )
 									Z0Y->Z0Y_ORIGEM := cTipo_carreg
 									Z0Y->Z0Y_SEQ    := QRYREC->SEQ
 									Z0Y->Z0Y_EQUIP  := aParRet[3]
-
-									if Z0X->Z0X_OPERAC != '2'
-										if cTipo_carreg == 'B'
-											aOperador 		:= StrTokArr(AllTrim(GetMV("MV_OPERADO")) + ";",";")
-											Z0Y->Z0Y_OPER1  := AllTrim(aOperador[1])
-											Z0Y->Z0Y_OPER2  := AllTrim(aOperador[2])
-										else 
-											cOperador := Posicione("Z0X",2,FWxFilial("Z0X")+Z0X->Z0X_CODIGO,"Z0X_OPERAD")
-											Z0Y->Z0Y_OPER1 := cOperador
-											Z0Y->Z0Y_OPER2 := cOperador
-										endif
+									if cTipo_carreg == 'B'
+										aOperador 		:= StrTokArr(AllTrim(GetMV("MV_OPERADO")) + ";",";")
+										Z0Y->Z0Y_OPER1  := aOperador[1]
+										Z0Y->Z0Y_OPER2  := aOperador[2]
+									else 
+										cOperador := Posicione("Z0X",2,FWxFilial("Z0X")+Z0X->Z0X_CODIGO,"Z0X_OPERAD")
+										Z0Y->Z0Y_OPER1 := cOperador
+										Z0Y->Z0Y_OPER2 := cOperador
 									endif
 								Z0Y->(MSUnlock())
 								nCntCmp += 1
@@ -4771,10 +4719,11 @@ Local nDifOpe 		:= 0
 			nPKGBalanc  := aScan(aHeaderCSV, { |x|Upper(x)=='KG_BALANCA'    })
 			nPKGPrev    := aScan(aHeaderCSV, { |x|Upper(x)=='KG_PREV'       })
 			nPKGRecal   := aScan(aHeaderCSV, { |x|Upper(x)=='KG_PREV_RECAL' })
-			nPKGDesvio  := aScan(aHeaderCSV, { |x| Upper(x)=='DESVIO_PERC'  })
+			nPKGDesvio  := aScan(aHeaderCSV, { |x| Upper(x)=='DESVIO_PERC' })
 			
-			DBSelectArea("Z0Y")
-			Z0Y->(DBSetOrder(5)) // Z0Y_FILIAL+Z0Y_ORDEM+Z0Y_TRATO
+			
+			// DBSele1ctArea("Z0Y")
+			// Z0Y->(DBSetOrder(2)) // Z0Y_FILIAL+Z0Y_ORDEM+Z0Y_TRATO
 
 			cOrdem := ""
 			nCarreg := ""
@@ -4799,7 +4748,7 @@ Local nDifOpe 		:= 0
 					nCarreg := aDados[nI, nPNumCarreg]
 					cOrdem   := aDados[nI, nPOrdemProd]
 					cHoraI := aDados[nI, nPHoraI]
-					nCntTrt += 1
+					// nCntTrt += 1
 				EndIf
 					/* 
 					cTrtBat := IIf (Z0X->Z0X_OPERAC = "1", AllTrim(STR(nCntTrt)), PADL(nCntTrt, 2))
@@ -4854,27 +4803,12 @@ Local nDifOpe 		:= 0
 
 					_cQry += " 	   , Z0Y_DATFIN = '" + DtoS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
 					_cQry += " 	   , Z0Y_HORFIN = '" + (cHoraI:=aDados[nI, nPHoraF])+ "'" + _ENTER_
-
-					/*
-						Criar indice Z0Y - Z0Y_FILIAL + Z0Y_ORDEM 				+ Z0Y_TRATO 						+ ZOY_SEQ
-											FILIAL 	  + aDados[nI, nPOrdemProd] + AllTrim(aDados[nI, nPNumCarreg])  + aDados[nI, nPOrdIngred]
-
-						Está posicionando apenas no primeiro regitro com o indice atual
-					*/
-
-						/* Igor Oliveira 08.2022 */
-						If (Z0Y->(DBSeek(fwxFilial("Z0Y") +;
-								  AllTrim(aDados[nI, nPOrdemProd]) + Space(TamSX3("Z0Y_ORDEM")[1] - LEN(AllTrim(aDados[nI, nPOrdemProd])) ) +;
-								  AllTrim(aDados[nI, nPNumCarreg]) + Space(TamSX3("Z0Y_TRATO")[1] - LEN(AllTrim(aDados[nI, nPNumCarreg])) ) +;
-								  AllTrim(aDados[nI, nPOrdIngred]) + Space(TamSX3("Z0Y_SEQ")[1]   - LEN(AllTrim(aDados[nI, nPOrdIngred])) ))))
-
-							IF Z0Y->Z0Y_ORIGEM == 'B'
-								nDesvio := ABS(ROUND(((Val(aDados[nI, nPKGFornec])  / Val(aDados[nI, nPKGRecal]) )-1),4)) * 100
-								_cQry += "	   , Z0Y_DOPER1 = " + StrTran(cValToChar(nDesvio),",",".") + " " + _ENTER_
-								_cQry += "	   , Z0Y_DOPER2 = " + StrTran(cValToChar(nDesvio),",",".") + " " + _ENTER_
-							EndIF
-						EndIF
-		 
+					/* Igor Oliveira 08.2022 */
+					IF Z0Y->Z0Y_ORIGEM == 'B'
+						_cQry += "	   , Z0Y_DOPER1 = " + StrTran(cValToChar(Abs(nPKGDesvio)),",",".") + " " + _ENTER_
+						_cQry += "	   , Z0Y_DOPER2 = " + StrTran(cValToChar(Abs(nPKGDesvio)),",",".") + " " + _ENTER_
+					EndIF
+		
 						// MB : 09.03.2021
 						aDados[nI, nPVagao] := Posicione("ZV0", 2, fwxFilial("ZV0") + aDados[nI, nPVagao], "ZV0_CODIGO")
 						_cQry += " 	   , Z0Y_EQUIP = '"  + aDados[nI, nPVagao] + "'" + _ENTER_
@@ -4887,13 +4821,13 @@ Local nDifOpe 		:= 0
 							"   AND Z0Y_SEQ = '" + aDados[nI, nPOrdIngred] + "'" + _ENTER_ +;
 							"   AND D_E_L_E_T_ = ' ' "
 						_cQry += _cCond
-
 						If (TCSqlExec(_cQry) < 0)
 							lErro := .T.
 							MsgInfo(TCSqlError())
 							DisarmTransaction()
 							Break
 						EndIf
+						
 						
 						_cQry := " select * " + CRLF
     					_cQry += "   from "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
@@ -4971,245 +4905,245 @@ Local nDifOpe 		:= 0
 					
 			Next nI
 
-		ElseIf aDados[1, nPOperacao] == "F" // Fornecimento / Trato
+						ElseIf aDados[1, nPOperacao] == "F" // Fornecimento / Trato
 
-			nCarreg :=""
+							nCarreg :=""
 
-			nPNumTrt	:= aScan( aHeaderCSV, { |x| Upper(x) == 'NUM_FORNEC_CURRAL' })
-			nPLote      := aScan( aHeaderCSV, { |x| Upper(x) == 'NUM_LOTE'		    })
-			nPCurral    := aScan( aHeaderCSV, { |x| Upper(x) == 'CURRAL'   		    })
-			nPKGFornec  := aScan( aHeaderCSV, { |x| Upper(x) == 'KG_FORNEC'		    })
-			nPNumTrato  := aScan( aHeaderCSV, { |x| Upper(x) == 'NUM_FORNEC'        })
-			nPKGMetaReca:= aScan( aHeaderCSV, { |x| Upper(x) == 'KG_META_PREV_RECAL'})
-			nPKGInic 	:= aScan( aHeaderCSV, { |x| Upper(x) == 'KG_VAGAO_I'	    })
-			nPKGFim     := aScan( aHeaderCSV, { |x| Upper(x) == 'KG_VAGAO_F'	    })
-			nPOperForn  := aScan( aHeaderCSV, { |x| Upper(x) == 'OPERADOR'    	    })
+							nPNumTrt	:= aScan( aHeaderCSV, { |x| Upper(x) == 'NUM_FORNEC_CURRAL' })
+							nPLote      := aScan( aHeaderCSV, { |x| Upper(x) == 'NUM_LOTE'		    })
+							nPCurral    := aScan( aHeaderCSV, { |x| Upper(x) == 'CURRAL'   		    })
+							nPKGFornec  := aScan( aHeaderCSV, { |x| Upper(x) == 'KG_FORNEC'		    })
+							nPNumTrato  := aScan( aHeaderCSV, { |x| Upper(x) == 'NUM_FORNEC'        })
+							nPKGMetaReca:= aScan( aHeaderCSV, { |x| Upper(x) == 'KG_META_PREV_RECAL'})
+							nPKGInic 	:= aScan( aHeaderCSV, { |x| Upper(x) == 'KG_VAGAO_I'	    })
+							nPKGFim     := aScan( aHeaderCSV, { |x| Upper(x) == 'KG_VAGAO_F'	    })
+							nPOperForn  := aScan( aHeaderCSV, { |x| Upper(x) == 'OPERADOR'    	    })
 
-			// DBSelectArea("Z0W")
-			// Z0W->(DBSetOrder(1))
+							// DBSelectArea("Z0W")
+							// Z0W->(DBSetOrder(1))
 
-			cOrdem := ""
-			// ORDENACAO
-			aSort( aDados ,,, {|x,y| x[nPOperacao]+x[nPOrdemProd]+x[nPNumTrt]+x[nPCurral] < y[nPOperacao]+y[nPOrdemProd]+y[nPNumTrt]+y[nPCurral] } )
-			_cCurral := ""
-			For nI := 1 to Len(aDados)
+							cOrdem := ""
+							// ORDENACAO
+							aSort( aDados ,,, {|x,y| x[nPOperacao]+x[nPOrdemProd]+x[nPNumTrt]+x[nPCurral] < y[nPOperacao]+y[nPOrdemProd]+y[nPNumTrt]+y[nPCurral] } )
+							_cCurral := ""
+							For nI := 1 to Len(aDados)
 
-				If aDados[nI, nPOperacao] <> "F" // Fornecimento / Trato
-					lErro := .T.
-					MsgInfo("Não foi identificado o tipo de exportação." +_ENTER_+;
-						"Verifique o arquivo importado." +_ENTER_+;
-						"Esta operação será cancelada...")
-					DisarmTransaction()
-					Break
-				EndIf
+								If aDados[nI, nPOperacao] <> "F" // Fornecimento / Trato
+									lErro := .T.
+									MsgInfo("Não foi identificado o tipo de exportação." +_ENTER_+;
+										"Verifique o arquivo importado." +_ENTER_+;
+										"Esta operação será cancelada...")
+									DisarmTransaction()
+									Break
+								EndIf
 
-				// validar se todos os campos estao preenchidos
-				If Len(aDados[1]) > Len(aDados[nI])
+								// validar se todos os campos estao preenchidos
+								If Len(aDados[1]) > Len(aDados[nI])
 
-					MsgInfo('Erro na linha: ' + cValToChar(nI) +CRLF +;
-						'Total Colunas: ' + cValToChar(Len(aDados[1])) +CRLF +;
-						'Total Colunas na linha: ' + cValToChar(Len(aDados[nI])) +CRLF +;
-						'</br>' +CRLF+;
-						'Hora: ' + aDados[nI, nPHoraI] +CRLF+;
-						'Ordem Produção: ' + aDados[nI, nPOrdemProd] +CRLF+;
-						'Num Fornec Curral: ' + aDados[nI, nPNumTrt] +CRLF+;
-						'Curral: ' + aDados[nI, nPCurral] +CRLF+;
-						'Lote: ' + aDados[nI, nPLote] )
-					Loop
-				EndIf
-				If (cOrdem == aDados[nI, nPOrdemProd] .and. nCarreg <> aDados[nI, nPNumTrato] )
-					cOrdem  := aDados[nI, nPOrdemProd]
-					cHoraI	:= aDados[nI, nPHoraI]
-					nCarreg := aDados[nI, nPNumTrato]
+									MsgInfo('Erro na linha: ' + cValToChar(nI) +CRLF +;
+										'Total Colunas: ' + cValToChar(Len(aDados[1])) +CRLF +;
+										'Total Colunas na linha: ' + cValToChar(Len(aDados[nI])) +CRLF +;
+										'</br>' +CRLF+;
+										'Hora: ' + aDados[nI, nPHoraI] +CRLF+;
+										'Ordem Produção: ' + aDados[nI, nPOrdemProd] +CRLF+;
+										'Num Fornec Curral: ' + aDados[nI, nPNumTrt] +CRLF+;
+										'Curral: ' + aDados[nI, nPCurral] +CRLF+;
+										'Lote: ' + aDados[nI, nPLote] )
+									Loop
+								EndIf
+								If (cOrdem == aDados[nI, nPOrdemProd] .and. nCarreg <> aDados[nI, nPNumTrato] )
+									cOrdem  := aDados[nI, nPOrdemProd]
+									cHoraI	:= aDados[nI, nPHoraI]
+									nCarreg := aDados[nI, nPNumTrato]
 
-				ElseIf (cOrdem <> aDados[nI, nPOrdemProd])
-					cOrdem  := aDados[nI, nPOrdemProd]
-					cHoraI	:= aDados[nI, nPHoraI]
-					nCntTrt += 1
-				EndIf
-				/*
-				8=Z0W_FILIAL+Z0W_TRATO+Z0W_CURRAL+Z0W_LOTE+Z0W_QTDREA+Z0W_RECEIT+Z0W_ORDEM+DTOS(Z0W_DATA)+Z0W_VERSAO
-				
-				If (Z0W->(DBSeek(fwxFilial("Z0W") + Z0X->Z0X_CODIGO +;
-												AllTrim(STR(nCntTrt)) +;
-												UPPER(AllTrim(aDados[nI, cOrdem])))))
+								ElseIf (cOrdem <> aDados[nI, nPOrdemProd])
+									cOrdem  := aDados[nI, nPOrdemProd]
+									cHoraI	:= aDados[nI, nPHoraI]
+									nCntTrt += 1
+								EndIf
+								/*
+								8=Z0W_FILIAL+Z0W_TRATO+Z0W_CURRAL+Z0W_LOTE+Z0W_QTDREA+Z0W_RECEIT+Z0W_ORDEM+DTOS(Z0W_DATA)+Z0W_VERSAO
+								
+								If (Z0W->(DBSeek(fwxFilial("Z0W") + Z0X->Z0X_CODIGO +;
+																AllTrim(STR(nCntTrt)) +;
+																UPPER(AllTrim(aDados[nI, cOrdem])))))
 
-					RecLock("Z0W", .F.)
-						Z0W->Z0W_QTDREA := VAL(aDados[nI, nPKGFornec])
-						Z0W->Z0W_DIFPES := ABS( Z0W->Z0W_QTDPRE - Z0W->Z0W_QTDREA )
-						
-						Z0W->Z0W_DATINI := cToD(aDados[nI, nPData])
-						Z0W->Z0W_HORINI := aDados[nI, nPHoraI]
+									RecLock("Z0W", .F.)
+										Z0W->Z0W_QTDREA := VAL(aDados[nI, nPKGFornec])
+										Z0W->Z0W_DIFPES := ABS( Z0W->Z0W_QTDPRE - Z0W->Z0W_QTDREA )
+										
+										Z0W->Z0W_DATINI := cToD(aDados[nI, nPData])
+										Z0W->Z0W_HORINI := aDados[nI, nPHoraI]
 
-						Z0W->Z0W_DATFIN := cToD(aDados[nI, nPData])
-						Z0W->Z0W_HORFIN := aDados[nI, nPHoraF]
-					Z0W->(MSUnlock())
+										Z0W->Z0W_DATFIN := cToD(aDados[nI, nPData])
+										Z0W->Z0W_HORFIN := aDados[nI, nPHoraF]
+									Z0W->(MSUnlock())
 
-					Z0W->(DBSkip())
+									Z0W->(DBSkip())
 
-				Else
-					MsgInfo("A exportacao da ordem ('" + cOrdem + "') do Descarregamento para o Curral " +;
-							UPPER(AllTrim(aDados[nI, cOrdem])) + " Trato N " + AllTrim(STR(nCntTrt)) +;
-							" nao foi encontrada, verifique e tente novamente.") 
-					DisarmTransaction()
-					Break
-				EndIf
-				*/
-				_cQry  := " SELECT * " + _ENTER_ + " FROM "+RetSqlName("Z0W")+" " + _ENTER_
-				_cCond := " WHERE  Z0W_FILIAL = '" + fwxFilial("Z0W") + "'" + _ENTER_ +;
-					"    AND Z0W_DATA   = '" + dToS( CToD( aDados[nI, nPData] ) ) + "'" + _ENTER_ +;
-					"    AND Z0W_ORDEM  = '" + aDados[nI, nPOrdemProd] + "'" + _ENTER_ +;
-					"    AND Z0W_TRATO  = '" + aDados[nI, nPNumTrt] + "'" + _ENTER_ +;
-					"    AND Z0W_LOTE   = '" + aDados[nI, nPLote] + "'" + _ENTER_ +;
-					"    AND Z0W_CURRAL = '" + aDados[nI, nPCurral] + "'" + _ENTER_ +;
-					"    AND Z0W_RECEIT = '" + aDados[nI, nPCodDieta] + "'" + _ENTER_ +;
-					"    AND D_E_L_E_T_ = ' ' "
-				_cQry += _cCond
-				DbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .f., .f.)
-				if !ALIASTMP->(Eof())
+								Else
+									MsgInfo("A exportacao da ordem ('" + cOrdem + "') do Descarregamento para o Curral " +;
+											UPPER(AllTrim(aDados[nI, cOrdem])) + " Trato N " + AllTrim(STR(nCntTrt)) +;
+											" nao foi encontrada, verifique e tente novamente.") 
+									DisarmTransaction()
+									Break
+								EndIf
+								*/
+								_cQry  := " SELECT * " + _ENTER_ + " FROM "+RetSqlName("Z0W")+" " + _ENTER_
+								_cCond := " WHERE  Z0W_FILIAL = '" + fwxFilial("Z0W") + "'" + _ENTER_ +;
+									"    AND Z0W_DATA   = '" + dToS( CToD( aDados[nI, nPData] ) ) + "'" + _ENTER_ +;
+									"    AND Z0W_ORDEM  = '" + aDados[nI, nPOrdemProd] + "'" + _ENTER_ +;
+									"    AND Z0W_TRATO  = '" + aDados[nI, nPNumTrt] + "'" + _ENTER_ +;
+									"    AND Z0W_LOTE   = '" + aDados[nI, nPLote] + "'" + _ENTER_ +;
+									"    AND Z0W_CURRAL = '" + aDados[nI, nPCurral] + "'" + _ENTER_ +;
+									"    AND Z0W_RECEIT = '" + aDados[nI, nPCodDieta] + "'" + _ENTER_ +;
+									"    AND D_E_L_E_T_ = ' ' "
+								_cQry += _cCond
+								DbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .f., .f.)
+								if !ALIASTMP->(Eof())
+	
+									nDifOpe := NoRound( Abs(( Val(aDados[nI, nPKGMetaReca]) - Val(aDados[nI, nPKGFornec]) )  / Val(aDados[nI, nPKGMetaReca]) * 100),2)
 
-					nDifOpe := NoRound( Abs(( Val(aDados[nI, nPKGMetaReca]) - Val(aDados[nI, nPKGFornec]) )  / Val(aDados[nI, nPKGMetaReca]) * 100),2)
+									_cQry := " UPDATE "+RetSqlName("Z0W")+" " + _ENTER_
+									_cQry += "    SET Z0W_QTDREA = " + StrTran(aDados[nI, nPKGFornec],",",".") + _ENTER_
+									_cQry += " 	    , Z0W_DIFPES = " + StrTran(cValToChar(abs(Val(aDados[nI, nPKGMetaReca]) - Val(aDados[nI, nPKGFornec]))),",",".") + _ENTER_
 
-					_cQry := " UPDATE "+RetSqlName("Z0W")+" " + _ENTER_
-					_cQry += "    SET Z0W_QTDREA = " + StrTran(aDados[nI, nPKGFornec],",",".") + _ENTER_
-					_cQry += " 	    , Z0W_DIFPES = " + StrTran(cValToChar(abs(Val(aDados[nI, nPKGMetaReca]) - Val(aDados[nI, nPKGFornec]))),",",".") + _ENTER_
+									If nPKGInic > 0 .and. nPKGFim > 0
+										_cQry += "  , Z0W_KGINIC = " + StrTran(aDados[nI, nPKGInic],",",".") + _ENTER_
+										_cQry += "  , Z0W_KGFIM  = " + StrTran(aDados[nI, nPKGFim] ,",",".") + _ENTER_
+									Endif
+									If nPKGMetaReca > 0
+										_cQry += "  , Z0W_KGRECA = " + StrTran(aDados[nI, nPKGMetaReca],",",".") + _ENTER_
+									EndIf
 
-					If nPKGInic > 0 .and. nPKGFim > 0
-						_cQry += "  , Z0W_KGINIC = " + StrTran(aDados[nI, nPKGInic],",",".") + _ENTER_
-						_cQry += "  , Z0W_KGFIM  = " + StrTran(aDados[nI, nPKGFim] ,",",".") + _ENTER_
-					Endif
-					If nPKGMetaReca > 0
-						_cQry += "  , Z0W_KGRECA = " + StrTran(aDados[nI, nPKGMetaReca],",",".") + _ENTER_
-					EndIf
+									_cQry += " 	    , Z0W_DATINI = '" + DtoS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
+									_cQry += " 	    , Z0W_HORINI = '" + cHoraI+ "'" + _ENTER_
+									_cQry += " 	    , Z0W_DATFIN = '" + DtoS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
+									_cQry += " 	    , Z0W_HORFIN = '" + (cHoraI:=aDados[If(nI==(Len(aDados)),nI,nI+1), nPHoraI])+ "'" + _ENTER_
+									_cQry += " 		, Z0W_DIFOPE = "+ StrTran(cValToChar(nDifOpe),",",".") +"" + _ENTER_
+									// MB : 09.03.2021
+									If nPVagao>0
+										aDados[nI, nPVagao] := Posicione("ZV0", 2, fwxFilial("ZV0") + aDados[nI, nPVagao], "ZV0_CODIGO")
+										_cQry += " 	    , Z0W_EQUIP  = '" + aDados[nI, nPVagao] + "'" + _ENTER_
+									EndIf
+									If nPOperForn>0
+										_cQry += " 	    , Z0W_OPERAD = '" + aDados[nI, nPOperForn] + "'" + _ENTER_
+									EndIf
+									_cQry += _cCond
 
-					_cQry += " 	    , Z0W_DATINI = '" + DtoS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
-					_cQry += " 	    , Z0W_HORINI = '" + cHoraI+ "'" + _ENTER_
-					_cQry += " 	    , Z0W_DATFIN = '" + DtoS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
-					_cQry += " 	    , Z0W_HORFIN = '" + (cHoraI:=aDados[If(nI==(Len(aDados)),nI,nI+1), nPHoraI])+ "'" + _ENTER_
-					_cQry += " 		, Z0W_DIFOPE = "+ StrTran(cValToChar(nDifOpe),",",".") +"" + _ENTER_
-					// MB : 09.03.2021
-					If nPVagao>0
-						aDados[nI, nPVagao] := Posicione("ZV0", 2, fwxFilial("ZV0") + aDados[nI, nPVagao], "ZV0_CODIGO")
-						_cQry += " 	    , Z0W_EQUIP  = '" + aDados[nI, nPVagao] + "'" + _ENTER_
-					EndIf
-					If nPOperForn>0
-						_cQry += " 	    , Z0W_OPERAD = '" + aDados[nI, nPOperForn] + "'" + _ENTER_
-					EndIf
-					_cQry += _cCond
+									If ( TCSqlExec(_cQry) < 0 )
+										lErro := .T.
+										MsgInfo(TCSqlError())
+										DisarmTransaction()
+										Break
+									EndIf
+									// Alert("Retorno: " + cValToChar(nRet))
 
-					If ( TCSqlExec(_cQry) < 0 )
-						lErro := .T.
-						MsgInfo(TCSqlError())
-						DisarmTransaction()
-						Break
-					EndIf
-					// Alert("Retorno: " + cValToChar(nRet))
+								Else
+									If nPKGFornec > 0
+										impZ0W(aDados, nI, nPCurral, @_cCurral, nPCodDieta, nPOrdemProd, nPNumTrt, nPKGInic, nPKGFim, nPKGMetaReca,;
+											nPKGFornec, nPData, nPHoraI, @cHoraI, nPVagao)
+									EndIf
+								EndIf
+								ALIASTMP->(DbCloseArea())
 
-				Else
-					If nPKGFornec > 0
-						impZ0W(aDados, nI, nPCurral, @_cCurral, nPCodDieta, nPOrdemProd, nPNumTrt, nPKGInic, nPKGFim, nPKGMetaReca,;
-							nPKGFornec, nPData, nPHoraI, @cHoraI, nPVagao)
-					EndIf
-				EndIf
-				ALIASTMP->(DbCloseArea())
+								// GUARDAR EM VETOR O CODEI
+								_cQry := "SELECT DISTINCT Z0W_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0W")+" " + _ENTER_
+								_cQry += _cCond
+								DbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .F., .F.)
+								While !ALIASTMP->(Eof())
+									If (aScan( aCODEI, {|x| x == ALIASTMP->Z0W_CODEI}) < 1)
+										aAdd( aCODEI, ALIASTMP->Z0W_CODEI )
+									EndIf
+									ALIASTMP->(DbSkip())
+								EndDo
+								ALIASTMP->(DBCloseArea())
 
-				// GUARDAR EM VETOR O CODEI
-				_cQry := "SELECT DISTINCT Z0W_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0W")+" " + _ENTER_
-				_cQry += _cCond
-				DbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .F., .F.)
-				While !ALIASTMP->(Eof())
-					If (aScan( aCODEI, {|x| x == ALIASTMP->Z0W_CODEI}) < 1)
-						aAdd( aCODEI, ALIASTMP->Z0W_CODEI )
-					EndIf
-					ALIASTMP->(DbSkip())
-				EndDo
-				ALIASTMP->(DBCloseArea())
+							Next nI
 
-			Next nI
-
+						Else
+							lErro := .T.
+							MsgInfo("Não foi identificado o tipo de exportação." +_ENTER_+;
+								"Verifique o arquivo importado." +_ENTER_+;
+								"Esta operação será cancelada...")
+							DisarmTransaction()
+							Break
+						EndIf
+/* 
+		// 1=Z0X_FILIAL+Z0X_DATA+Z0X_VERSAO+Z0X_EQUIP+Z0X_STATUS
+		dbSelectArea("Z0X")
+		Z0X->(DbSetOrder(1))
+		Z0X->(DbSeek( fwxFilial('Z0X') +;
+					DtoS(cToD(aDados[ 01, nPData])) +;
+					aDados[ 01, aScan(aHeaderCSV, { |x| Upper(x) == 'VERSAO'})] +;
+					aDados[ 01, nPVagao] ))
+ */
+ /* 
+		If (Z0X->Z0X_STATUS == "A")
+			cSepJsn := Z0X->Z0X_STATUS + " | "
 		Else
-			lErro := .T.
-			MsgInfo("Não foi identificado o tipo de exportação." +_ENTER_+;
-				"Verifique o arquivo importado." +_ENTER_+;
-				"Esta operação será cancelada...")
-			DisarmTransaction()
-			Break
-		EndIf
-	/* 
-			// 1=Z0X_FILIAL+Z0X_DATA+Z0X_VERSAO+Z0X_EQUIP+Z0X_STATUS
-			dbSelectArea("Z0X")
-			Z0X->(DbSetOrder(1))
-			Z0X->(DbSeek( fwxFilial('Z0X') +;
-						DtoS(cToD(aDados[ 01, nPData])) +;
-						aDados[ 01, aScan(aHeaderCSV, { |x| Upper(x) == 'VERSAO'})] +;
-						aDados[ 01, nPVagao] ))
-	*/
-	/* 
-			If (Z0X->Z0X_STATUS == "A")
-				cSepJsn := Z0X->Z0X_STATUS + " | "
-			Else
-				cSepJsn := ""
-			EndIf
-	*/
-		If Len(aCODEI) > 0
 			cSepJsn := ""
-			cQryImp := " SELECT * " + _ENTER_ +;
-				" FROM " + RetSqlName("Z0Y") + " Z0Y " + _ENTER_ +;
-				" WHERE Z0Y.Z0Y_FILIAL = '"  + FWxFilial("Z0Y") + "'" + _ENTER_ +;
-				"   AND Z0Y.Z0Y_CODEI IN "   + FormatIn(ArrTokStr(aCODEI , ";"), ";") + _ENTER_ +; // cQryImp += "   AND Z0Y.Z0Y_CODEI = '" + Z0X->Z0X_CODIGO + "'" + _ENTER_ +;
-				"   AND Z0Y.Z0Y_QTDREA = 0 " + _ENTER_ +;
-				"   AND Z0Y.D_E_L_E_T_ = ' ' "
-			TCQUERY cQryImp NEW ALIAS "QRYIMP"
-			If (QRYIMP->(EOF()))
-				cSttImp := "I"
-			Else
-				cSttImp := "A"
-			EndIf
-			QRYIMP->(DBCloseArea())
-
-			cQry := " SELECT	R_E_C_N_O_ " + _ENTER_ +;
-				" FROM		"+RetSqlName("Z0X")+" " + _ENTER_ +;
-				" WHERE		Z0X_CODIGO IN " + FormatIn(ArrTokStr(aCODEI , ";"), ";") + _ENTER_ +;
-				" 		AND D_E_L_E_T_ = ' ' "
-			TCQUERY cQry NEW ALIAS "TEMP"
-			While !(TEMP->(EOF()))
-
-				Z0X->(DbGoTo(TEMP->R_E_C_N_O_))
-
-				Reclock("Z0X", .F.)
-				Z0X->Z0X_CNTIMP := cSepJsn + cJsnImp
-				Z0X->Z0X_ARQIMP := aParRet[1]
-				Z0X->Z0X_DATIMP := Date()
-				Z0X->Z0X_USUIMP := __cUserId
-				Z0X->Z0X_STATUS := cSttImp
-				Z0X->(MSUnlock())
-
-				TEMP->(DbSkip())
-			EndDo
-
-			_cQry := "SELECT * " + _ENTER_ +;
-				"  FROM " +RetSqlName("Z0X")+ " "+ _ENTER_ +;
-				" WHERE Z0X_DATA >= '" +DTOS(Z0X->Z0X_DATA)+ "' "+ _ENTER_ +;
-				" AND Z0X_OPERAC = '1' "+ _ENTER_ +;
-				" AND Z0X_STATUS NOT IN ('P','I') "+ _ENTER_ +;
-				" AND D_E_L_E_T_ = ' ' "
-			TCQUERY cQry NEW ALIAS "QIMP"
-
-			If QIMP->(EoF())
-				DBSelectArea("Z0R")
-				Z0R->(DBSetOrder(1))
-				If (Z0R->(DBSeek(FWxFilial("Z0R") + DTOS(Z0X->Z0X_DATA) + Z0X->Z0X_VERSAO)))
-					RecLock("Z0R", .F.)
-					Z0R->Z0R_LOCK := '3'
-					Z0R->(MSUnlock())
-				EndIf
-			EndIf
-			QIMP->(dbCloseArea())
-			TEMP->(DbCloseArea())
 		EndIf
-	End Transaction
-	RestArea(aArea)
-Return lErro
+ */
+						If Len(aCODEI) > 0
+							cSepJsn := ""
+							cQryImp := " SELECT * " + _ENTER_ +;
+								" FROM " + RetSqlName("Z0Y") + " Z0Y " + _ENTER_ +;
+								" WHERE Z0Y.Z0Y_FILIAL = '"  + FWxFilial("Z0Y") + "'" + _ENTER_ +;
+								"   AND Z0Y.Z0Y_CODEI IN "   + FormatIn(ArrTokStr(aCODEI , ";"), ";") + _ENTER_ +; // cQryImp += "   AND Z0Y.Z0Y_CODEI = '" + Z0X->Z0X_CODIGO + "'" + _ENTER_ +;
+								"   AND Z0Y.Z0Y_QTDREA = 0 " + _ENTER_ +;
+								"   AND Z0Y.D_E_L_E_T_ = ' ' "
+							TCQUERY cQryImp NEW ALIAS "QRYIMP"
+							If (QRYIMP->(EOF()))
+								cSttImp := "I"
+							Else
+								cSttImp := "A"
+							EndIf
+							QRYIMP->(DBCloseArea())
+
+							cQry := " SELECT	R_E_C_N_O_ " + _ENTER_ +;
+								" FROM		"+RetSqlName("Z0X")+" " + _ENTER_ +;
+								" WHERE		Z0X_CODIGO IN " + FormatIn(ArrTokStr(aCODEI , ";"), ";") + _ENTER_ +;
+								" 		AND D_E_L_E_T_ = ' ' "
+							TCQUERY cQry NEW ALIAS "TEMP"
+							While !(TEMP->(EOF()))
+
+								Z0X->(DbGoTo(TEMP->R_E_C_N_O_))
+
+								Reclock("Z0X", .F.)
+								Z0X->Z0X_CNTIMP := cSepJsn + cJsnImp
+								Z0X->Z0X_ARQIMP := aParRet[1]
+								Z0X->Z0X_DATIMP := Date()
+								Z0X->Z0X_USUIMP := __cUserId
+								Z0X->Z0X_STATUS := cSttImp
+								Z0X->(MSUnlock())
+
+								TEMP->(DbSkip())
+							EndDo
+
+							_cQry := "SELECT * " + _ENTER_ +;
+								"  FROM " +RetSqlName("Z0X")+ " "+ _ENTER_ +;
+								" WHERE Z0X_DATA >= '" +DTOS(Z0X->Z0X_DATA)+ "' "+ _ENTER_ +;
+								" AND Z0X_OPERAC = '1' "+ _ENTER_ +;
+								" AND Z0X_STATUS NOT IN ('P','I') "+ _ENTER_ +;
+								" AND D_E_L_E_T_ = ' ' "
+							TCQUERY cQry NEW ALIAS "QIMP"
+
+							If QIMP->(EoF())
+								DBSelectArea("Z0R")
+								Z0R->(DBSetOrder(1))
+								If (Z0R->(DBSeek(FWxFilial("Z0R") + DTOS(Z0X->Z0X_DATA) + Z0X->Z0X_VERSAO)))
+									RecLock("Z0R", .F.)
+									Z0R->Z0R_LOCK := '3'
+									Z0R->(MSUnlock())
+								EndIf
+							EndIf
+							QIMP->(dbCloseArea())
+							TEMP->(DbCloseArea())
+						EndIf
+					End Transaction
+					RestArea(aArea)
+					Return lErro
 // FIM: ImpCSV
 
 

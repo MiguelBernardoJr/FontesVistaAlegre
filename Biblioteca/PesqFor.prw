@@ -20,6 +20,7 @@ ________________________________________________________________________________
 User Function PesqFor()
 	Private lRet           := .F.
 	
+
 	Private cQuery1 := ""
 	Private cFiltro := ""
 	Private cOrdem  := " ORDER BY SA2.A2_COD, SA2.A2_LOJA"	
@@ -39,6 +40,7 @@ User Function PesqFor()
 	Private cTxtAplic := Space(30)
 	Private cCmbInd  := "Nome"
   
+//	cQuery1 := "SELECT *  "                        
 	cQuery1 := "SELECT A2_COD, A2_LOJA, A2_NOME, A2_TEL, A2_EST, A2_MUN, A2_TIPO, A2_INSCR,  "                        
 	cQuery1 += " CASE WHEN A2_TIPO='J' THEN SUBSTRING(A2_CGC,1,2)+'.'+SUBSTRING(A2_CGC,3,3)+'.'+SUBSTRING(A2_CGC,6,3)+'/'+SUBSTRING(A2_CGC,9,4)+'-'+SUBSTRING(A2_CGC,13,2) ELSE SUBSTRING(A2_CGC,1,3)+'.'+SUBSTRING(A2_CGC,4,3)+'.'+SUBSTRING(A2_CGC,7,3)+'-'+SUBSTRING(A2_CGC,10,2) END AS A2_CGC "
 	cQuery1 += " FROM " + RetSqlName("SA2") + " SA2 "
@@ -146,7 +148,7 @@ Static Function Filtro(nOPFil)
 			 		if !(Upper(AllTrim(aTxtLike[i]))$cFiltro)
 			 			cFiltro := " AND UPPER(SA2.A2_NOME) LIKE '%" + Upper(AllTrim(aTxtLike[i])) + "%'"
 			 		endif
-			 	next i
+			 	next i			
 			Else
 				If !(Upper(AllTrim(cTxtLike))$cFiltro)
 					cFiltro := " AND UPPER(SA2.A2_NOME) LIKE '%" + Upper(AllTrim(cTxtLike)) + "%'"
@@ -155,7 +157,7 @@ Static Function Filtro(nOPFil)
 			cOrdem := " ORDER BY SA2.A2_NOME"			
 		Else
 			cFiltro += " AND UPPER(SA2.A2_CGC) LIKE '%" + Upper(AllTrim(cTxtBusca)) + "%'"
-			cOrdem :=  " ORDER BY SA2.A2_NOME "
+			cOrdem := " ORDER BY SA2.A2_NOME "
 		Endif
 	
 	else 
@@ -169,7 +171,7 @@ Static Function Filtro(nOPFil)
 	TcQuery cQuery1 + cFiltro + cOrdem NEW Alias "_QRY1"
 
 	Count to nCont
-		_QRY1->(DbGoTop())
+	_QRY1->(DbGoTop())
 	ProcRegua(nCont)
 		
 	aColsPri := {{nil,nil,nil,nil,nil,nil,nil}}
@@ -235,6 +237,7 @@ Static Function Limpar()
 		Processa({|| Filtro(2) }, "Aguarde...") 
 		oTxtBusca:SetFocus()		
 Return
+
 
 Static Function FilWord(cWord)
 Local cTxtPesq	:= Alltrim(cWord)

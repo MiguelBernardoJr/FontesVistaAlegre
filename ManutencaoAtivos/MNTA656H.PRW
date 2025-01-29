@@ -7,9 +7,11 @@
 	@return 
 /*/
 User Function MNTA656H()
+
 If nLanca == "Produto"
+
 	If !Empty(Posicione("SX3",2,"TL_NRABAS","X3_CAMPO"))
-				
+
 		aValores := fValidHead("TL_NRABAS")
 		aAdd(aHeader,{aValores[1],aValores[2] ,aValores[3] ,aValores[4] ,aValores[5],aValores[6],aValores[7],aValores[8],;
 						aValores[9],aValores[10],aValores[11],aValores[12],aValores[13]})
@@ -56,7 +58,6 @@ If nLanca == "Produto"
 
 	EndIf
 
-
 	If !Empty(Posicione("SX3",2,"TL_COBABA","X3_CAMPO"))
 
 		aValores := fValidHead("TL_COBABA")
@@ -64,6 +65,7 @@ If nLanca == "Produto"
 						aValores[9],aValores[10],aValores[11],aValores[12],aValores[13]})
 
 	EndIf
+
 Else // nLanca == "Abastecimento"
 
 
@@ -121,7 +123,7 @@ Else // nLanca == "Abastecimento"
 		aAdd(aHeader,{aValores[1],aValores[2] ,aValores[3] ,aValores[4] ,aValores[5],aValores[6],aValores[7],aValores[8],;
 						aValores[9],aValores[10],aValores[11],aValores[12],aValores[13]})
 
-	EndIf 
+	EndIf
 
 Endif
 
@@ -142,7 +144,8 @@ Static function fValidHead(cCampo)
 	Local cCBox     := X3CBOX(cCampo)
 	Local cRelac    := Posicione("SX3",2,cCampo,"X3_RELACAO")
 	Local cWhen     := Alltrim(Posicione("SX3",2,cCampo,"X3_WHEN"))
-	
+
+
 Return {cTitulo,cCampo,cPicture,nTam,nDec,cValid,cUsado,cTipo,cF3,cContexto,cCBox,cRelac,cWhen}
 
 

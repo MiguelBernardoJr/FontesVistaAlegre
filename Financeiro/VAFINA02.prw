@@ -455,7 +455,7 @@ Static Function fGeraAntec(cRAFilial, cRACli, cRALOja)
 	End Transaction
 	nModulo	:= nModAnt
 
-	RestArea(aArea)
+	
 Return
                                  
 

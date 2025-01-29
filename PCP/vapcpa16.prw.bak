@@ -43,9 +43,9 @@ private cNotaMan := CriaVar("Z0I_NOTMAN", .f.)
 private cNotaNoi := CriaVar("Z0I_NOTNOI", .f.)
 private cNotaTar := CriaVar("Z0I_NOTTAR", .f.)
 private oBrwLotes, oBrwNotas, oBrwHist, oCodigo, oLote, oSaldo, oDataCo, oDiasDi, oPesoCo, oPesMat, oCMSPV,;
-         oRealizado, oPrevisto, oDifVlr, oDifPerc, oMgKPrev, oMgKReal, oGmdEsp,;
+         oRealizado, oPrevisto, oDifVlr, oDifPerc, oMgKPrev, oMgKReal,;
          oProximo, oGetData, oCmbPeriod, oGetNotMan, oGetNotNoi, oGetNotTar
-private aBrwLotes := {{ "", "", 0, SToD(""), 0, 0, 0, 0}} 
+private aBrwLotes := {{ "", "", 0, SToD(""), 0, 0, 0}} 
 private aBrwNotas := {{ SToD(""), "", "", "", 0, "", 0, 0, 0, 0, 0, 0, 0 }}
 private aBrwHist := {{ "", "", "", "", "" }}
 private lCanChange := .t.
@@ -62,7 +62,7 @@ private lCanChange := .t.
     oLayer:addCollumn('Col01', 065, .f.)
     oLayer:addCollumn('Col02', 035, .f.)
 
-    //Adiciona Janelas as colunas e ajusta tamanho
+    //Adiciona Janelas as colunas
     oLayer:addWindow('Col01','Col1_Win01','Currais',          040, .f., .t., {|| .t. },,{|| .t. })
     oLayer:addWindow('Col01','Col1_Win02','Nota de Cocho',    020, .f., .t., {|| .t. },,{|| .t. })
     oLayer:addWindow('Col01','Col1_Win03','Notas Anteriores', 040, .f., .t., {|| .t. },,{|| .t. })
@@ -87,14 +87,13 @@ private lCanChange := .t.
     // Define as colunas do array
     // {"Z08_CODIGO", "B8_LOTECTL", "B8_SALDO", "B8_XDATACO", "Z05_DIASDI", "Z05_PESOCO", "Z05_PESMAT"}
     // BrwArrCol(cTitulo,xArrData,cPicture,nAlign,nSize,cBrowse,cTipo,nDecimal)
-    oBrwLotes:SetColumns(BrwArrCol("Codigo"         , 1, "@!"       , 0 , 20, "oBrwLotes", "C", 0))
-    oBrwLotes:SetColumns(BrwArrCol("Lote"           , 2, "@!"       , 0 , 10, "oBrwLotes", "C", 0))
-    oBrwLotes:SetColumns(BrwArrCol("Saldo Lote"     , 3, "@!"       , 0 ,  3, "oBrwLotes", "N", 0))
-    oBrwLotes:SetColumns(BrwArrCol("Dt. Ini. Conf." , 4, "@D"       , 0 ,  8, "oBrwLotes", "D", 0))
-    oBrwLotes:SetColumns(BrwArrCol("Dias Cocho"     , 5, "@E 9,999" , 0 ,  4, "oBrwLotes", "N", 0))
-    oBrwLotes:SetColumns(BrwArrCol("Pes. Med. Lote" , 6, "@E 999.99", 0 ,  6, "oBrwLotes", "N", 2))
-    oBrwLotes:SetColumns(BrwArrCol("Pes. Med. Atu"  , 7, "@E 999.99", 0 ,  6, "oBrwLotes", "N", 2))
-    oBrwLotes:SetColumns(BrwArrCol("GMD Esperado"   , 8, "@E 9.99", 0 ,  6, "oBrwLotes", "N", 2))
+    oBrwLotes:SetColumns(BrwArrCol("Codigo", 1, "@!", 0, 20, "oBrwLotes", "C", 0))
+    oBrwLotes:SetColumns(BrwArrCol("Lote", 2, "@!", 0, 10, "oBrwLotes", "C", 0))
+    oBrwLotes:SetColumns(BrwArrCol("Saldo Lote", 3, "@!", 0, 3, "oBrwLotes", "N", 0))
+    oBrwLotes:SetColumns(BrwArrCol("Dt. Ini. Conf.", 4, "@D", 0, 8, "oBrwLotes", "D", 0))
+    oBrwLotes:SetColumns(BrwArrCol("Dias Cocho", 5, "@E 9,999", 0, 4, "oBrwLotes", "N", 0))
+    oBrwLotes:SetColumns(BrwArrCol("Pes. Med. Lote", 6, "@E 999.99", 0, 6, "oBrwLotes", "N", 2))
+    oBrwLotes:SetColumns(BrwArrCol("Pes. Med. Atu", 7, "@E 999.99", 0, 6, "oBrwLotes", "N", 2))
 
     oBrwLotes:SetArray(aBrwLotes)
     oBrwLotes:Activate()
@@ -215,11 +214,11 @@ private lCanChange := .t.
 
     // {"Z0I_DATA","Z0I_NOTTAR","Z0I_NOTNOI","Z0I_NOTMAN","Z05_KGMSDI","Z05_DIETA","Z05_CMSPN"}
     // BrwArrCol(cTitulo,xArrData,cPicture,nAlign,nSize,cBrowse,cTipo,nDecimal)
-    oBrwHist:SetColumns(BrwArrCol("Curral"      , 1, "@!", 0, 20, "oBrwHist", "C", 0))
-    oBrwHist:SetColumns(BrwArrCol("Lote"        , 2, "@!", 0, 10, "oBrwHist", "C", 0))
-    oBrwHist:SetColumns(BrwArrCol("Noite"       , 3, "@!", 0,  6, "oBrwHist", "C", 0))
-    oBrwHist:SetColumns(BrwArrCol("Madrugada"   , 4, "@!", 0,  6, "oBrwHist", "C", 0))
-    oBrwHist:SetColumns(BrwArrCol("Manhã"       , 5, "@!", 0,  6, "oBrwHist", "C", 0))
+    oBrwHist:SetColumns(BrwArrCol("Curral", 1, "@!", 0, 20, "oBrwHist", "C", 0))
+    oBrwHist:SetColumns(BrwArrCol("Lote", 2, "@!", 0, 10, "oBrwHist", "C", 0))
+    oBrwHist:SetColumns(BrwArrCol("Noite", 3, "@!", 0, 6, "oBrwHist", "C", 0))
+    oBrwHist:SetColumns(BrwArrCol("Madrugada", 4, "@!", 0, 6, "oBrwHist", "C", 0))
+    oBrwHist:SetColumns(BrwArrCol("Manhã", 5, "@!", 0, 6, "oBrwHist", "C", 0))
 
     oBrwHist:SetArray(aBrwHist)
     oBrwHist:Activate()
@@ -345,20 +344,20 @@ if !Empty(dData)
         oBrwHist:UpdateBrowse()
 
         // {"Z08_CODIGO", "B8_LOTECTL", "B8_SALDO", "B8_XDATACO", "Z05_DIASDI", "Z05_PESOCO", "Z05_PESMAT"}
-        oCodigo:SetText(AllTrim(  aBrwLotes[oBrwLotes:At()][1]))
-        oLote:SetText(AllTrim(    aBrwLotes[oBrwLotes:At()][2]))
-        oSaldo:SetText(Transform( aBrwLotes[oBrwLotes:At()][3], "@E 999"))
-        oDataCo:SetText(          aBrwLotes[oBrwLotes:At()][4])
+        oCodigo:SetText(AllTrim(aBrwLotes[oBrwLotes:At()][1]))
+        oLote:SetText(AllTrim(aBrwLotes[oBrwLotes:At()][2]))
+        oSaldo:SetText(Transform (aBrwLotes[oBrwLotes:At()][3], "@E 999"))
+        oDataCo:SetText(aBrwLotes[oBrwLotes:At()][4])
         oDiasDi:SetText(Transform(aBrwLotes[oBrwLotes:At()][5], "@E 999"))
         oPesoCo:SetText(Transform(aBrwLotes[oBrwLotes:At()][6], "@E 999.99"))
         oPesMat:SetText(Transform(aBrwLotes[oBrwLotes:At()][7], "@E 999.99"))
-        //oGmdEsp:SetText(Transform(aBrwLotes[oBrwLotes:At()][8], "@E 9.99"))
-
-        oCMSPV:SetText(Transform(    aBrwNotas[1][7], "@E 999.99"))
-        oPrevisto:SetText(Transform( aBrwNotas[1][8], "@E 9,999"))
+        oCMSPV:SetText(Transform(aBrwNotas[1][7], "@E 999.99"))
+        oPrevisto:SetText(Transform(aBrwNotas[1][8], "@E 9,999"))
         oRealizado:SetText(Transform(aBrwNotas[1][9], "@E 9,999"))
+        
         oDifVlr  :SetText(Transform(aBrwNotas[1][10], "@E 9,999"))
         oDifPerc :SetText(Transform(aBrwNotas[1][11], "@E 999.99"))
+
         oMgKPrev :SetText(Transform(aBrwNotas[1][12], "@E 999.99"))
         oMgKReal :SetText(Transform(aBrwNotas[1][13], "@E 999.99"))
 
@@ -498,10 +497,12 @@ if oBrowse:lActivate .and. oCodigo <> nil
     oCMSPV:SetText(Transform(aBrwNotas[1][7], "@E 999.99"))
     oPrevisto:SetText(Transform(aBrwNotas[2][8], "@E 9,999"))
     oRealizado:SetText(Transform(aBrwNotas[2][9], "@E 9,999"))
-    oDifVlr:SetText(Transform(aBrwNotas[2][10], "@E 9,999"))
-    oDifPerc:SetText(Transform(aBrwNotas[2][11], "@E 999.99"))
-    oMgKPrev:SetText(Transform(aBrwNotas[1][12], "@E 999.99"))
-    oMgKReal:SetText(Transform(aBrwNotas[1][13], "@E 999.99"))
+
+    oDifVlr  :SetText(Transform(aBrwNotas[2][10], "@E 9,999"))
+    oDifPerc :SetText(Transform(aBrwNotas[2][11], "@E 999.99"))
+
+    oMgKPrev :SetText(Transform(aBrwNotas[1][12], "@E 999.99"))
+    oMgKReal :SetText(Transform(aBrwNotas[1][13], "@E 999.99"))
 
     cNotaTar := aBrwNotas[1][2]
     oGetNotTar:Refresh()
@@ -551,7 +552,7 @@ local aArea := GetArea()
                          " from " + RetSqlName("Z0O") + " Z0Oa" +;
                         " where Z0Oa.Z0O_FILIAL = '" + FWxFilial("Z0O") + "'" +;
                           " and (" +;
-                                 " '" + DToS(dData) + "' < Z0Oa.Z0O_DATATR" +; 
+                                 " '" + DToS(dData) + "' between Z0Oa.Z0O_DATAIN and Z0Oa.Z0O_DATATR" +; 
                                  " or (Z0Oa.Z0O_DATAIN < '" + DToS(dData) + "' and Z0Oa.Z0O_DATATR = '" + Space(TamSX3("Z0O_DATATR")[1]) + "')" +;
                               " )" +;
                           " and Z0Oa.D_E_L_E_T_ = ' '" +;
@@ -581,7 +582,6 @@ local aArea := GetArea()
                      " , SB8.B8_LOTECTL" +; 
                      " , sum(SB8.B8_SALDO) B8_SALDO" +; 
                      " , min(SB8.B8_XDATACO) B8_XDATACO" +; 
-                     " , InicTrato.Z0O_GMD Z0O_GMD" +; 
                      " , cast(convert(datetime, '" + DToS(dData) + "', 103) - convert(datetime, min(SB8.B8_XDATACO), 103) as numeric)+1 Z05_DIASDI" +; 
                      " , round(sum(SB8.B8_XPESOCO*SB8.B8_SALDO)/sum(SB8.B8_SALDO), 2) Z05_PESOCO" +; 
                      " , case when InicTrato.Z0O_GMD is not null then cast(convert(datetime, '" + DToS(dData) + "', 103) - convert(datetime, min(SB8.B8_XDATACO), 103)+1 as numeric) * InicTrato.Z0O_GMD else 0 end + round(sum(SB8.B8_XPESOCO*SB8.B8_SALDO)/sum(SB8.B8_SALDO), 2) Z05_PESMAT" +; 
@@ -600,11 +600,11 @@ local aArea := GetArea()
               " group by Z08_FILIAL" +;
                      " , SB8.B8_X_CURRA" +;
                      " , SB8.B8_LOTECTL" +;
-                     " , InicTrato.Z0O_GMD" 
-                      
+                     " , InicTrato.Z0O_GMD" +;
+                " having (cast(convert(datetime, '" + DToS(dData) + "', 103) - convert(datetime, min(SB8.B8_XDATACO), 103) as numeric)+1) > 1 " 
+                     
     DbUseArea(.t., "TOPCONN", TCGenQry(,,cQry ), "TMPTBL", .f., .f.)
-//" having (cast(convert(datetime, '" + DToS(dData) + "', 103) - convert(datetime, min(SB8.B8_XDATACO), 103) as numeric)+1) > 1 " 
-               
+
     MEMOWRITE("C:\TOTVS_RELATORIOS\NEW_NOTA_COCHO.txt", cQry)
     
     while !TMPTBL->(Eof())
@@ -614,8 +614,7 @@ local aArea := GetArea()
                         , SToD(TMPTBL->B8_XDATACO);
                         , TMPTBL->Z05_DIASDI;
                         , TMPTBL->Z05_PESOCO;
-                        , TMPTBL->Z05_PESMAT;
-                        , TMPTBL->Z0O_GMD})
+                        , TMPTBL->Z05_PESMAT})
         TMPTBL->(DbSkip())
     end
 

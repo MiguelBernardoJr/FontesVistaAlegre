@@ -77,7 +77,7 @@ If Pergunte(cPerg, .T.)
 
 			FWMsgRun(, {|| fQuadro1( ) },'Por Favor Aguarde...' , 'Gerando planilha com os apontamentos do período selecionado')
 
-			//Final - encerramento do arquivo
+			// Final - encerramento do arquivo
 			FWrite(nHandle, EncodeUTF8( '</Workbook>' ) )
 			
 			FClose(nHandle)

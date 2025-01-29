@@ -1033,7 +1033,7 @@ Default lDigitado := .T. // Digitado ou Automatico
             U_LinePosZ0OGrid( "Z0O_DTABAT" )
 
         //CASE _cCampo == "Z0O_DCESP"
-        CASE _cCampo == "Z0O_DTABAT"
+        CASE _cCampo == "Z0O_DCESP"
             // Data de Abate = Data inicial + dias de cocho
             xAux := oGridModel:GetValue("Z0O_DATAIN") + Round(oGridModel:GetValue("Z0O_DCESP"),0)
             oGridModel:LoadValue("Z0O_DTABAT", xAux)

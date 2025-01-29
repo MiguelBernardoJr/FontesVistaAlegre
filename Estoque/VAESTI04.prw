@@ -99,6 +99,7 @@ Static Function VaGetX8(cAlias, cCampo)
 	Local cCod 		:= ''
 	Local lRet		:= .F.
 	Local _cQry 	:= ''
+//	Default cCampo	:= ReadVar()
 	DbSelectArea(cAlias)
 	
 	_cQry := " select MAX(ZSM_COD) cMAX FROM " + RetSqlName("ZSM") + ""

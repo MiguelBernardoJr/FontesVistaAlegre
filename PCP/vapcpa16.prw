@@ -10,7 +10,7 @@
 // ---------+------------------------------+------------------------------------------------
 
 
-#include 'protheus.ch'
+#include 'protheus.ch' 
 #include 'parmtype.ch'
 #include 'fwbrowse.ch'
 
@@ -511,6 +511,9 @@ if oBrowse:lActivate .and. oCodigo <> nil
     oDiasDi:SetText(Transform(aBrwLotes[oBrwLotes:At()][5], "@E 999"))
     oPesoCo:SetText(Transform(aBrwLotes[oBrwLotes:At()][6], "@E 999.99"))
     oPesMat:SetText(Transform(aBrwLotes[oBrwLotes:At()][7], "@E 999.99"))
+    
+    //oGmdEsp:SetText(Transform(aBrwLotes[oBrwLotes:At()][8], "@E 9.99"))
+    
     oCMSPV:SetText(Transform(aBrwNotas[1][7], "@E 999.99"))
     oPrevisto:SetText(Transform(aBrwNotas[1][8], "@E 9,999"))
     oRealizado:SetText(Transform(aBrwNotas[1][9], "@E 9,999"))

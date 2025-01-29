@@ -314,6 +314,7 @@ Return cStyle
  | Obs.:  -                                                                       |
  '--------------------------------------------------------------------------------*/
 Static Function GeraX1(cPerg)
+
 Local _aArea	:= GetArea()
 Local aRegs     := {}
 Local nX		:= 0

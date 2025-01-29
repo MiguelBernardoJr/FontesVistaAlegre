@@ -14,8 +14,8 @@ User Function MA103OPC()
 	
 	aAdd(aRet,{'Observação NF'	 , "U_ObsNFSF1"		, 0, 5})
 	aadd(aRet,{"Visualiza Chave" , "u_VisChvNfe"	, 0, 6})  
-	//aadd(aRet,{"Boletos" 		 , "u_zCOMI01"		, 0, 5})  
 Return aRet
+
 
 /* MJ : 16/10/2018
 	-> Preencher informacao de observacao na nota fiscal

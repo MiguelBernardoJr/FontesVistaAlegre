@@ -169,7 +169,7 @@ Static Function PrintReport(oReport)
 		(cAlias)->(DbSkip())	
 	EndDo
 		
-	EndIf
+	
 	
 	oSection1:Finish()
 	oReport:SkipLine() // oReport:SetStartPage(.T.)

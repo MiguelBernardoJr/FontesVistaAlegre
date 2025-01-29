@@ -150,6 +150,33 @@ If cTipo == "VACOMM08"
 	_cQry += "     AND A2_LOJA = D1_LOJA  " + CRLF
 	_cQry += "     AND A2.D_E_L_E_T_ = ' '   " + CRLF
 	_cQry += "     WHERE F1_X_DTINC BETWEEN '"+DtoS(MV_PAR01)+"' AND '"+DtoS(MV_PAR02)+"' AND D1.D_E_L_E_T_ = ' '  " + CRLF
+	_cQry += "       AND D1_TIPO <> 'D'   " + CRLF
+	_cQry += "  UNION ALL   " + CRLF
+	_cQry += "  SELECT D1_FILIAL, D1_EMISSAO, D1_DTDIGIT, F1_X_DTINC, D1_DOC+'-'+D1_SERIE NOTA, A1_COD+'-'+A1_LOJA+'- '+RTRIM(A1_NOME) NOME,   " + CRLF
+	_cQry += "  	   RTRIM(D1_COD)+'-'+B1_DESC PRODUTO, D1_GRUPO, D1_QUANT, D1_LOCAL, D1_VUNIT, D1_TOTAL, D1_TES+'-'+F4_TEXTO TES, CASE WHEN F4_ESTOQUE = 'S' THEN 'SIM' WHEN F4_ESTOQUE = 'N' THEN 'NAO' END AS F4_ESTOQUE, D1_CC, D1_ITEMCTA, " +CRLF
+	_cQry += "    	   D1_CF, F1_ESPECIE, F4_SITTRIB, D1_PICM, D1_BASEICM, D1_VALICM, D1_VALPIS, D1_VALCOF, F4_CSTCOF, F4_CSTPIS" + CRLF
+	_cQry += "    FROM SD1010 D1  " + CRLF
+	_cQry += "    JOIN SF1010 F1 ON  " + CRLF
+	_cQry += "  	   F1_FILIAL = D1_FILIAL  " + CRLF
+	_cQry += "     AND F1_DOC = D1_DOC  " + CRLF
+	_cQry += "     AND F1_SERIE = D1_SERIE  " + CRLF
+	_cQry += "     AND F1_FORNECE = D1_FORNECE  " + CRLF
+	_cQry += "     AND F1_LOJA = D1_LOJA  " + CRLF
+	_cQry += "     AND F1_EMISSAO = D1_EMISSAO   " + CRLF
+	_cQry += "     AND F1.D_E_L_E_T_ = ' '   " + CRLF
+	_cQry += "    JOIN SB1010 B1 ON  " + CRLF
+	_cQry += "  	   B1_COD = D1_COD   " + CRLF
+	_cQry += "     AND B1.D_E_L_E_T_ = ' '   " + CRLF
+	_cQry += "    JOIN SF4010 F4 ON  " + CRLF
+	_cQry += "  	   F4_CODIGO = D1_TES   " + CRLF
+	_cQry += "     AND F4.D_E_L_E_T_ = ' '   " + CRLF
+	_cQry += "    JOIN SA1010 A1  ON  " + CRLF
+	_cQry += "  	   A1_FILIAL = ' '   " + CRLF
+	_cQry += "     AND A1_COD = D1_FORNECE   " + CRLF
+	_cQry += "     AND A1_LOJA = D1_LOJA  " + CRLF
+	_cQry += "     AND A1.D_E_L_E_T_ = ' '   " + CRLF
+	_cQry += "     WHERE F1_X_DTINC BETWEEN '"+DtoS(MV_PAR01)+"' AND '"+DtoS(MV_PAR02)+"' AND D1.D_E_L_E_T_ = ' '  " + CRLF
+	_cQry += "       AND D1_TIPO = 'D'   " + CRLF
 	//_cQry += "     WHERE F1_X_DTINC BETWEEN '"+DToS(MVPAR01)+"' AND '"+DToS(MVPAR02)+"'  " + CRLF
 EndIf 
 

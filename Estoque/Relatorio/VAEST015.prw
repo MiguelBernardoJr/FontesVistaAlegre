@@ -1804,7 +1804,7 @@ Local _cQry := ""
 	    _cQry += " PRODUTOS AS (" +CRLF
 	    _cQry += "     SELECT DISTINCT D1_FILIAL, D1_COD " +CRLF
 	    _cQry += "	  FROM "+RetSqlName("SD1")+" SD1" +CRLF
-	    _cQry += "	 WHERE D1_DTDIGIT >= (SELECT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SD1')+"' AND D_E_L_E_T_ =' ' )" +CRLF
+	    _cQry += "	 WHERE D1_DTDIGIT >= (SELECT DISTINCT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SX6')+"' AND D_E_L_E_T_ =' ' )" +CRLF
 	    _cQry += "	   AND D1_GRUPO IN ('01','05','BOV','BMS')" +CRLF
 	    _cQry += "	   AND SD1.D_E_L_E_T_ =' ' " +CRLF
         _cQry += "UNION ALL " + CRLF
@@ -1816,7 +1816,7 @@ Local _cQry := ""
 	    _cQry += "UNION ALL" +CRLF
 	    _cQry += "    SELECT DISTINCT D2_FILIAL, D2_COD " +CRLF
 	    _cQry += "	  FROM "+RetSqlName("SD2")+" SD2" +CRLF
-	    _cQry += "	 WHERE D2_EMISSAO>= (SELECT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SD2')+"' AND D_E_L_E_T_ =' ' )" +CRLF
+	    _cQry += "	 WHERE D2_EMISSAO>= (SELECT DISTINCT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SX6')+"' AND D_E_L_E_T_ =' ' )" +CRLF
 	    _cQry += "	   AND D2_GRUPO IN ('01','05','BOV','BMS')" +CRLF
 	    _cQry += "	   AND SD2.D_E_L_E_T_ =' ' " +CRLF
 	    _cQry += "UNION ALL " +CRLF
@@ -1831,14 +1831,14 @@ Local _cQry := ""
 	    _cQry += "	   --AND SUBSTRING(B9_COD,1,3) = 'BOV' " +CRLF
 	    _cQry += "	   AND (" +CRLF
 	    _cQry += "	     B9_DATA = ' ' OR" +CRLF
-	    _cQry += "	     B9_DATA = (SELECT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SB9')+"' AND D_E_L_E_T_ =' ' )" +CRLF
+	    _cQry += "	     B9_DATA = (SELECT DISTINCT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SX6')+"' AND D_E_L_E_T_ =' ' )" +CRLF
 	    _cQry += "		)" +CRLF
 	    _cQry += "	UNION ALL" +CRLF
 	    _cQry += "    SELECT DISTINCT D3_FILIAL, D3_COD " +CRLF
 	    _cQry += "	  FROM "+RetSqlName("SD3")+" SD3" +CRLF
 	    _cQry += "	 WHERE D3_GRUPO IN ('01','05','BOV','BMS')" +CRLF
 	    _cQry += "	   AND D3_ESTORNO = ' ' " +CRLF
-	    _cQry += "	   AND D3_EMISSAO >= (SELECT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SD3')+"' AND D_E_L_E_T_ =' ' )" +CRLF
+	    _cQry += "	   AND D3_EMISSAO >= (SELECT DISTINCT X6_CONTEUD FROM "+RetSqlName("SX6")+" WHERE X6_VAR = 'MV_ULMES' AND X6_FIL = '"+FWxFilial('SX6')+"' AND D_E_L_E_T_ =' ' )" +CRLF
 	    _cQry += "	   AND SD3.D_E_L_E_T_ = ' ' " +CRLF
 	    _cQry += " ), 		" +CRLF
 		_cQry += " ERA_ATUALIZADA AS (  " +  CRLF
