@@ -1,0 +1,292 @@
+#include 'protheus.ch'
+#include 'rwmake.ch'
+#include 'parmtype.ch'
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³RPONR100  ºAutor  ³Anderson Coelho     º Data ³  22/09/16   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Relatório Sintético de Horas.                              º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Protheus11 - Específico para a empresa Sanchez Cano (Fini).º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User Function RPONR100()
+
+Private oReport, oSection
+Private cTitulo  := OemToAnsi("Relatorio Sintético de Horas")
+Private _cRotina := "RPONR100"
+Private cPerg    := _cRotina
+Private _aCpos   := {}
+
+If FindFunction("TRepInUse") .And. TRepInUse()
+	ValidPerg()
+	If !Pergunte(cPerg,.T.)
+		Return
+	EndIf
+	oReport := ReportDef()
+	oReport:PrintDialog()
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ReportDef ºAutor  ³Anderson Coelho     º Data ³  22/09/16   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ A funcao estatica ReportDef devera ser criada para todos osº±±
+±±º          ³relatorios que poderao ser agendados pelo usuario.          º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºRetorno   ³ Exp01: Objeto do Relatório.                                º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Programa Principal                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function ReportDef()
+
+Local _aOrd    := {"Centro de Custo + Matrícula"}
+
+//ÃšÃ„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Â¿
+//Â³Criacao do componente de impressao                                      Â³
+//Â³TReport():New                                                           Â³
+//Â³ExpC1 : Nome do relatorio                                               Â³
+//Â³ExpC2 : Titulo                                                          Â³
+//Â³ExpC3 : Pergunte                                                        Â³
+//Â³ExpB4 : Bloco de codigo que sera executado na confirmacao da impressao  Â³
+//Â³ExpC5 : Descricao                                                       Â³
+//Ã€Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã™
+oReport := TReport():New(_cRotina,cTitulo,cPerg,{|oReport| PrintReport(oReport)},"Emissao do relatório, de acordo com o intervalo informado na opção de parâmetros.")
+oReport:SetLandscape()			//Paisagem
+oReport:SetTotalInLine(.F.)
+Pergunte(oReport:uParam,.F.)
+//ÃšÃ„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Â¿
+//Â³Criacao da secao utilizada pelo relatorio                               Â³
+//Â³TRSection():New                                                         Â³
+//Â³ExpO1 : Objeto TReport que a secao pertence                             Â³
+//Â³ExpC2 : Descricao da seção                                              Â³
+//Â³ExpA3 : Array com as tabelas utilizadas pela secao. A primeira tabela   Â³
+//Â³        sera considerada como principal para a seção.                   Â³
+//Â³ExpA4 : Array com as Ordens do relatório                                Â³
+//Â³ExpL5 : Carrega campos do SX3 como celulas                              Â³
+//Â³        Default : False                                                 Â³
+//Â³ExpL6 : Carrega ordens do Sindex                                        Â³
+//Â³        Default : False                                                 Â³
+//Ã€Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã™
+//ÃšÃ„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Â¿
+//Â³Criacao da celulas da secao do relatorio                                Â³
+//Â³                                                                        Â³
+//Â³TRCell():New                                                            Â³
+//Â³ExpO1 : Objeto TSection que a secao pertence                            Â³
+//Â³ExpC2 : Nome da celula do relatório. O SX3 será consultado              Â³
+//Â³ExpC3 : Nome da tabela de referencia da celula                          Â³
+//Â³ExpC4 : Titulo da celula                                                Â³
+//Â³        Default : X3Titulo()                                            Â³
+//Â³ExpC5 : Picture                                                         Â³
+//Â³        Default : X3_PICTURE                                            Â³
+//Â³ExpC6 : Tamanho                                                         Â³
+//Â³        Default : X3_TAMANHO                                            Â³
+//Â³ExpL7 : Informe se o tamanho esta em pixel                              Â³
+//Â³        Default : False                                                 Â³
+//Â³ExpB8 : Bloco de código para impressao.                                 Â³
+//Â³        Default : ExpC2                                                 Â³
+//Ã€Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã™
+//ÃšÃ„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Â¿
+//Â³ Secao dos itens do Pedido de Vendas                                    Â³
+//Ã€Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã™
+oSection := TRSection():New(oReport,"Banco de Horas",{"SPI","SRA","SP9"},_aOrd/*{Array com as ordens do relatório}*/,/*Campos do SX3*/,/*Campos do SIX*/)
+oSection:SetTotalInLine(.F.)
+//Definição das colunas do relatório
+TRCell():New(oSection,"PI_CC"       ,"TABTMP",RetTitle("PI_CC"     ),PesqPict  ("SPI","PI_CC"     ),TamSx3("PI_CC"     )[1],/*lPixel*/,{|| TABTMP->PI_CC        	})	// Centro de Custo
+TRCell():New(oSection,"PI_MAT"      ,"TABTMP",RetTitle("PI_MAT"    ),PesqPict  ("SPI","PI_MAT"    ),TamSx3("PI_MAT"    )[1],/*lPixel*/,{|| TABTMP->PI_MAT       	})	// Matrícula
+TRCell():New(oSection,"RA_NOME"     ,"TABTMP",RetTitle("RA_NOME"   ),PesqPict  ("SRA","RA_NOME"   ),TamSx3("RA_NOME"   )[1],/*lPixel*/,{|| TABTMP->RA_NOME       	})	// Nome
+TRCell():New(oSection,"PI_QUANT"    ,"TABTMP","Saldo em Horas"      ,PesqPictQt("PI_QUANT"	      ),TamSx3("PI_QUANT"  )[1],/*lPixel*/,{|| TABTMP->PI_QUANT			})	// Saldo de Horas
+/*
+oSection:SetEdit(.T.)
+oSection:SetUseQuery(.T.)
+oSection:SetEditCell(.T.)
+//oSection:DelUserCell(.F.)
+*/
+//oReport:Section(1):SetEdit(.T.) 
+//oReport:Section(1):SetUseQuery(.T.) // Novo componente tReport para adcionar campos de usuario no relatorio qdo utiliza query
+//ÃšÃ„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Â¿
+//Â³ Alinhamento a direita as colunas de valor                              Â³
+//Ã€Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã„Ã™
+oSection:Cell("PI_QUANT"):SetHeaderAlign("RIGHT")
+
+Return(oReport)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ReportDef ºAutor  ³Anderson Coelho     º Data ³  22/09/16   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Processamento das informações para impressão.              º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Programa Principal                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function PrintReport(oReport)
+
+Local _cOrder  := ""
+//Local _cField  := ""
+Local _cFilSPI := oSection:GetSqlExp("SPI")
+Local _cFilSP9 := oSection:GetSqlExp("SP9")
+Local _cFilSRA := oSection:GetSqlExp("SRA")
+
+If MV_PAR01 > MV_PAR02 .OR. MV_PAR03 > MV_PAR04 .OR. MV_PAR05 > MV_PAR06
+	MsgStop("Parâmetros informados incorretamente!",_cRotina+"_002")
+	Return
+EndIf
+If !Empty(_cFilSPI)
+	_cFilSPI := "%AND "+_cFilSPI+"%"
+EndIf
+If Empty(_cFilSPI)
+	_cFilSPI := "%AND 0 = 0%"
+EndIf
+If !Empty(_cFilSP9)
+	_cFilSP9 := "%AND "+_cFilSP9+"%"
+EndIf
+If Empty(_cFilSP9)
+	_cFilSP9 := "%AND 0 = 0%"
+EndIf
+If !Empty(_cFilSRA)
+	_cFilSRA := "%AND "+_cFilSRA+"%"
+EndIf
+If Empty(_cFilSRA)
+	_cFilSRA := "%AND 0 = 0%"
+EndIf
+//DefiniÃ§Ã£o da ordem de apresentação das informações
+If oReport:Section(1):GetOrder() == 1			//Ordem por Centro de Custo + Matrícula
+	_cOrder := "PI_FILIAL, PI_CC, PI_MAT"
+//ElseIf oReport:Section(1):GetOrder() == 2		//Ordem por ...
+//	_cOrder := "Definir aqui a segunda ordem almejada..."
+Else
+	_cOrder := "PI_FILIAL, PI_CC, PI_MAT"
+EndIf
+//_cField  := "%" + _cField  + "%"
+_cOrder  := "%" + _cOrder  + "%"
+/*
+oSection:SetEdit(.T.)
+oSection:SetUseQuery(.T.)
+oSection:SetEditCell(.T.)
+//oSection:DelUserCell(.F.)
+*/
+//Elimino os filtros do usuário para evitar duplicidades na query, uma vez que já estou tratando (este procedimento precisa ser realizado antes da montagem da Query)
+For _x := 1 To Len(oSection:aUserFilter)
+	oSection:aUserFilter[_x][02] := oSection:aUserFilter[_x][03] := ""
+Next
+oSection:CSQLEXP := ""
+//PROCESSAMENTO DAS INFORMAÇÕES PARA IMPRESSÃO
+//Transforma parâmetros do tipo Range em expressao SQL para ser utilizada na query 
+MakeSqlExpr(oReport:uParam)
+//MakeSqlExpr(cPerg)
+oSection:BeginQuery()
+	BeginSql alias "TABTMP"
+		SELECT PI_FILIAL, PI_MAT, RA_NOME, PI_CC, SUM(PI_QUANT) PI_QUANT
+		FROM (
+				SELECT PI_FILIAL, CAST(PI_DATA AS DATE) PI_DATA, PI_MAT, RA_NOME, PI_CC, PI_PD, P9_DESC
+				, ((CASE WHEN P9_TIPOCOD = '2' THEN -1 ELSE 1 END) * (CAST(PI_QUANT AS INT)+((PI_QUANT-CAST(PI_QUANT AS INT))/60*100))) 	PI_QUANT
+				, ((CASE WHEN P9_TIPOCOD = '2' THEN -1 ELSE 1 END) * (CAST(PI_QUANTV AS INT)+((PI_QUANTV-CAST(PI_QUANTV AS INT))/60*100))) 	PI_QUANTV
+//				%Exp:_cField%
+				FROM %table:SPI% SPI
+					INNER JOIN %table:SP9% SP9 ON SP9.P9_FILIAL     = %xFilial:SP9%
+											AND SP9.P9_CODIGO       = SPI.PI_PD
+											AND SP9.%NotDel%
+											%Exp:_cFilSP9%
+					INNER JOIN %table:SRA% SRA ON SRA.RA_FILIAL      = %xFilial:SRA%
+											AND SRA.RA_MAT         = SPI.PI_MAT
+											AND SRA.%NotDel%
+											%Exp:_cFilSRA%
+				WHERE SPI.PI_FILIAL      = %xFilial:SPI%
+				  AND SPI.PI_STATUS      = ''
+				  AND SPI.PI_CC    BETWEEN %Exp:MV_PAR01%       AND %Exp:MV_PAR02%
+				  AND SPI.PI_DATA       <= %Exp:DTOS(MV_PAR04)%						//BETWEEN %Exp:DTOS(MV_PAR03)% AND %Exp:DTOS(MV_PAR04)%
+				  AND SPI.PI_MAT   BETWEEN %Exp:MV_PAR05%       AND %Exp:MV_PAR06%
+				  AND SPI.%notDel%
+				  %Exp:_cFilSPI%
+			) TMP
+		GROUP BY PI_FILIAL, PI_MAT, RA_NOME, PI_CC
+		ORDER BY %Exp:_cOrder%
+	EndSql
+	/*
+	Prepara relatorio para executar a query gerada pelo Embedded SQL passando como 
+	parametro a pergunta ou vetor com perguntas do tipo Range que foram alterados 
+	pela funcao MakeSqlExpr para serem adicionados a query
+	*/
+oSection:EndQuery()
+
+MemoWrite("\"+_cRotina+"_QRY_001",oSection:CQUERY)
+
+oSection:Print()
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ReportDef ºAutor  ³Anderson Coelho     º Data ³  22/09/16   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Valida as perguntas na SX1                                 º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Programa Principal                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function ValidPerg()
+
+Local _aArea := GetArea()
+Local aRegs  := {}
+Local _aTam  := {}
+
+cPerg := PADR(cPerg,10)
+
+_aTam := TamSx3("PI_CC"    )
+AADD(aRegs,{cPerg,"01","Do Centro de Custo ?","","","mv_ch1",_aTam[03],_aTam[01],_aTam[02],0,"G",""          ,"mv_par01",""              ,"","","","",""            ,"","","","",""     ,"","","","","","","","","","","","","","CTT","",""})
+AADD(aRegs,{cPerg,"02","Ao Centro de Custo ?","","","mv_ch2",_aTam[03],_aTam[01],_aTam[02],0,"G","NAOVAZIO()","mv_par02",""              ,"","","","",""            ,"","","","",""     ,"","","","","","","","","","","","","","CTT","",""})
+_aTam := TamSx3("PI_DATA"  )
+AADD(aRegs,{cPerg,"03","De Data            ?","","","mv_ch3",_aTam[03],_aTam[01],_aTam[02],0,"G",""          ,"mv_par03",""              ,"","","","",""            ,"","","","",""     ,"","","","","","","","","","","","","",""   ,"",""})
+AADD(aRegs,{cPerg,"04","Até Data           ?","","","mv_ch4",_aTam[03],_aTam[01],_aTam[02],0,"G","NAOVAZIO()","mv_par04",""              ,"","","","",""            ,"","","","",""     ,"","","","","","","","","","","","","",""   ,"",""})
+_aTam := TamSx3("PI_MAT"   )
+AADD(aRegs,{cPerg,"05","Da Matrícula       ?","","","mv_ch5",_aTam[03],_aTam[01],_aTam[02],0,"G",""          ,"mv_par05",""              ,"","","","",""            ,"","","","",""     ,"","","","","","","","","","","","","","SRA","",""})
+AADD(aRegs,{cPerg,"06","Até a Matrícula    ?","","","mv_ch6",_aTam[03],_aTam[01],_aTam[02],0,"G","NAOVAZIO()","mv_par06",""              ,"","","","",""            ,"","","","",""     ,"","","","","","","","","","","","","","SRA","",""})
+
+For i := 1 To Len(aRegs)
+	dbSelectArea("SX1")
+	SX1->(dbSetOrder(1))
+	If !SX1->(dbSeek(cPerg+aRegs[i,2]))
+		RecLock("SX1",.T.)
+		For j := 1 To FCount()
+			If j <= Len(aRegs[i])
+				FieldPut(j,aRegs[i,j])
+			Else
+				Exit
+			EndIf
+		Next
+		SX1->(MsUnlock())
+	EndIf
+Next
+
+RestArea(_aArea)
+
+Return
