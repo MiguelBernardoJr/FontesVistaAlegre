@@ -297,26 +297,22 @@ Static Function fQuadro( nQuadro )
     nTotGeral := (nSubTot /* + nTotICMS */ + nTotIPI + nTotFRETE) - nTotDesc
     
     FimPagina(2)
-    oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "Sub Total:"                                                      , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
-    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nSubTot,"@R 999,999,999.99"))                   , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
-    //oPrinter:SayAlign ( nRow            , nPosSeq, "Ordem de compra aprovada eletronicamente por:"                    , oFLabel    ,  (((nPosUnit+nPosProd)/2)-nPosSeq)                    , 10, , PAD_LEFT,  )  
-    //oPrinter:SayAlign ( nRow            , (((nPosUnit+nPosProd+60)/2)-nPosSeq-30) , ALLTRIM(Posicione("SAK",1,FWxFilial("SAK")+aDados[1][13],"AK_NOME")) , oFInfoBold ,  (nBoxRight - (((nPosUnit+nPosProd+60)/2)-nPosSeq) + 10) , 10, , PAD_LEFT,  )//nome aprovador
+    oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "Sub Total:"                                                                      , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
+    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nSubTot,Alltrim(FWSX3Util():GetFieldStruct( "C7_TOTAL" )[5])))  , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
     oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "Frete:"                                                          , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
-    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotFRETE,"@R 999,999,999.99"))                     , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
+    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotFRETE,Alltrim(FWSX3Util():GetFieldStruct( "C7_FRETE" )[5])))                     , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
     oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "ICMS:"                                                           , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
     oPrinter:SayAlign ( nRow            , nPosSeq   , "Comprador:"                                                      , oFLabel    ,  (nPosUnd-nPosSeq)    , 10, , PAD_RIGHT,  )  
     oPrinter:SayAlign ( nRow            , nPosUnd+10, iif(EMPTY(aDados[1][27]),"",AllTrim(UsrFullName(aDados[1][27])))  , oFInfoBold ,  (nBoxRight - nPosUnd), 10, , PAD_LEFT,  ) // nome aprovador
-    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotICMS,"@R 999,999,999.99"))                      , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
+    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotICMS,Alltrim(FWSX3Util():GetFieldStruct( "C7_VALICM" )[5])))                      , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
     oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "IPI:"                                                            , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
-    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotIPI,"@R 999,999,999.99"))                       , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
-    //oPrinter:SayAlign ( nRow+=nTamLin-10, nPosUnit, "ST:"                                                             , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
-    //oPrinter:SayAlign ( nRow            , nPosVlr , AllTrim(Transform(0,"@R 999,999,999.99"))                             , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
+    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotIPI,Alltrim(FWSX3Util():GetFieldStruct( "C7_VALIPI" )[5])))                       , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
     oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "Descontos:"                                                      , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
-    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotDesc,"@R 999,999,999.99"))                      , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
+    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotDesc,Alltrim(FWSX3Util():GetFieldStruct( "C7_VLDESC" )[5])))                      , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
     oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "Acréscimos:"                                                     , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
-    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(0,"@R 999,999,999.99"))                             , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
+    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(0,Alltrim(FWSX3Util():GetFieldStruct( "C7_TOTAL" )[5])))                             , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
     oPrinter:SayAlign ( nRow+=nTamLin-10, nPosICMS  , "Total:"                                                          , oFLabel    ,  (nPosIPI - nPosICMS) , 10, , PAD_LEFT,  )  
-    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotGeral,"@R 999,999,999.99"))                     , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
+    oPrinter:SayAlign ( nRow            , nPosVlr   , AllTrim(Transform(nTotGeral,Alltrim(FWSX3Util():GetFieldStruct( "C7_TOTAL" )[5])))                     , oFInfoBold ,  (nBoxRight - nPosVlr), 10, , PAD_LEFT,  )  
     
     cTxtAux := "Página " + Alltrim(Str(nNumPag+=1))
     oPrinter:Say ( ((nTamLin*nTotLinha)*0.92)-10,nColLabel   , "Agropecuária Vista Alegre LTDA"   , oFInfo, /*nWidth*/, RGB(0,0,0)/*nClrText*/, /*nAngle*/ )
@@ -338,18 +334,18 @@ Static Function aColsGrid()
             nTotFRETE := aDados[nI][26]
             nTotDesc  += aDados[nI][30]
 //oPrinter:SayAlign ( nRow+=nTamLin-10, nPos  + 6.25, "COD"  , oFheader , /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-            oPrinter:SayAlign ( nRow+=nTamLin-11, nPosSeq, AllTrim(Str(nI))                                     , oFGrid,  (nPosQtd - nPosSeq),    10, , PAD_LEFT,  )   // Sequencia
-            oPrinter:SayAlign ( nRow            , nPosQtd, AllTrim(Transform(aDados[nI][6], "@r 999,999,999"))  , oFGrid,  (nPosUnd - nPosQtd),    10, , PAD_LEFT,  )   // Unidade
-            oPrinter:SayAlign ( nRow            , nPosUnd, aDados[nI][23]                                       , oFGrid,  (nPosCod - nPosUnd),    10, , PAD_LEFT,  )   // Codigo Interno
-            oPrinter:SayAlign ( nRow            , nPosCod, AllTrim(aDados[nI][24])                              , oFGrid,  (nPosProd - nPosCod),    10, , PAD_LEFT ,  )  // Marca
+            oPrinter:SayAlign ( nRow+=nTamLin-11, nPosSeq, AllTrim(Str(nI))                                                                         , oFGrid,  (nPosQtd - nPosSeq),    10, , PAD_LEFT,  )   // Sequencia
+            oPrinter:SayAlign ( nRow            , nPosQtd, AllTrim(Transform(aDados[nI][6], Alltrim(FWSX3Util():GetFieldStruct( "C7_QUANT" )[5])))  , oFGrid,  (nPosUnd - nPosQtd),    10, , PAD_LEFT,  )   // Unidade
+            oPrinter:SayAlign ( nRow            , nPosUnd, aDados[nI][23]                                                                           , oFGrid,  (nPosCod - nPosUnd),    10, , PAD_LEFT,  )   // Codigo Interno
+            oPrinter:SayAlign ( nRow            , nPosCod, AllTrim(aDados[nI][24])                                                                  , oFGrid,  (nPosProd - nPosCod),    10, , PAD_LEFT ,  )  // Marca
 
             QuebraTexto(AllTrim(aDados[nI][25]),nPosProd,nPosUnit,nPosProd,oFGrid,45) // NOME DO PRODUTO
 
             //oPrinter:SayAlign ( nRow, nPosProd , aDados[nI][23], oFGrid,  (nPosCod - nPosUnd),    10, , PAD_LEFT ,  )  
-            oPrinter:SayAlign ( nRow, nPosUnit, AllTrim(Transform(aDados[nI][8] , "@r 999,999,999.99")), oFGrid,  (nPosICMS - nPosUnit),    10, , PAD_LEFT ,  )  // ICMS
-            oPrinter:SayAlign ( nRow, nPosICMS, AllTrim(Transform(aDados[nI][15], "@r 999,999,999.99")), oFGrid,  (nPosIPI - nPosICMS) ,    10, , PAD_LEFT ,  )  // IPI
-            oPrinter:SayAlign ( nRow, nPosIPI , AllTrim(Transform(aDados[nI][16], "@r 999,999,999.99")), oFGrid,  (nPosVlr - nPosIPI)  ,    10, , PAD_LEFT ,  )  // ST
-            oPrinter:SayAlign ( nRow, nPosVlr , AllTrim(Transform(aDados[nI][09], "@r 999,999,999.99")), oFGrid,  (nBoxRight - nPosVlr),    10, , PAD_LEFT ,  )  // Valor Total
+            oPrinter:SayAlign ( nRow, nPosUnit, AllTrim(Transform(aDados[nI][8] , Alltrim(FWSX3Util():GetFieldStruct( "C7_PRECO" )[5])))    , oFGrid,  (nPosICMS - nPosUnit),    10, , PAD_LEFT ,  )  // ICMS
+            oPrinter:SayAlign ( nRow, nPosICMS, AllTrim(Transform(aDados[nI][15], Alltrim(FWSX3Util():GetFieldStruct( "C7_VALICM" )[5])))   , oFGrid,  (nPosIPI - nPosICMS) ,    10, , PAD_LEFT ,  )  // IPI
+            oPrinter:SayAlign ( nRow, nPosIPI , AllTrim(Transform(aDados[nI][16], Alltrim(FWSX3Util():GetFieldStruct( "C7_VALIPI" )[5])))   , oFGrid,  (nPosVlr - nPosIPI)  ,    10, , PAD_LEFT ,  )  // ST
+            oPrinter:SayAlign ( nRow, nPosVlr , AllTrim(Transform(aDados[nI][09], Alltrim(FWSX3Util():GetFieldStruct( "C7_TOTAL" )[5])))    , oFGrid,  (nBoxRight - nPosVlr),    10, , PAD_LEFT ,  )  // Valor Total
 
             nRow := nRowGray
 
