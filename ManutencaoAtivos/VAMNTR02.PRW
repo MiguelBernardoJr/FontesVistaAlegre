@@ -193,7 +193,6 @@ Static Function ReportDef()
 	TRCell():New(oSection7, "oPreCpa",, OEmToAnsi("Valor Litro") 	, "@E 999.999"       , 15,, {|| nPreCpa },,,,,,,,,)
 	TRCell():New(oSection7, "oNumDoc",, OEmToAnsi("Nota Fiscal") 	, "@999999999"       , 15,, {|| cNumDoc },,,,,,,,,)
 	TRCell():New(oSection7, "oSerDoc",, OEmToAnsi("Série")       	, "@!"               , 5 ,, {|| cSerDoc },,,,,,,,,)
-	TRCell():New(oSection7, "oFilDoc",, OEmToAnsi("Filial NF")      , "@!"               , 5 ,, {|| cFilDoc },,,,,,,,,)
 
 Return(oReport)
 
@@ -504,7 +503,7 @@ For nCntFor := 1 to Len(aVetImprime)
 			oSection2:PrintLine()
 
 			if aVetImprime[nIntCntFor,19] == "1" // Prestador de Serviço
-				cQuery := "SELECT ZAU.R_E_C_N_O_ FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.ZAU_FILIAL = '"+FWXFILIAL("ZAU")+"' AND ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE ZAU_FILIAL = '"+FWXFILIAL("ZAU")+"' AND D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
+				cQuery := "SELECT TOP 1 ZAU.R_E_C_N_O_ FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.ZAU_FILIAL = '"+FWXFILIAL("ZAU")+"' AND ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE ZAU_FILIAL = '"+FWXFILIAL("ZAU")+"' AND D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"') ORDER BY ZAU.ZAU_DATCPA DESC"
 			Else // If aVetImprime[nIntCntFor,19] == "2" // Transportadora
 				cQuery := "SELECT ZAT.R_E_C_N_O_ FROM "+RetSqlName("ZAT")+" ZAT WHERE ZAT.D_E_L_E_T_ = ' ' AND ZAT.ZAT_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAT.ZAT_DATCAD = (SELECT Max(ZAT_DATCAD) FROM "+RetSqlName("ZAT")+" WHERE D_E_L_E_T_ = ' ' AND ZAT_DATCAD <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAT_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
 			Endif
@@ -587,7 +586,6 @@ For nCntFor := 1 To Len(aRecCombs)
 		nPreCpa := ZAU->ZAU_VALCOM
 		cNumDoc := ZAU->ZAU_DOC
 		cSerDoc := ZAU->ZAU_SERIE
-		cFilDoc := ZAU->ZAU_FILDOC
 
 		oSection7:PrintLine()
 

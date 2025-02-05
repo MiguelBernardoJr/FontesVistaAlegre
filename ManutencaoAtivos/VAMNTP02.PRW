@@ -98,7 +98,7 @@ While !(cAlias)->(Eof())
 		lProcess := .t.
 
 		DbSelectArea("ZAU")
-		ZAU->(DbSetOrder(2))
+		ZAU->(DbSetOrder(1))
 
 		IF SD1->D1_FORNECE == '000025' // V@
 		
@@ -120,7 +120,7 @@ While !(cAlias)->(Eof())
 
 		ENDIF 
 
-		RecLock("ZAU",lRecLock := !DbSeek(xFilial("ZAU")+(cAlias)->TQN_CODCOM+Dtos(SD1->D1_DTDIGIT)+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FILIAL)) 
+		RecLock("ZAU",lRecLock := !DbSeek(xFilial("ZAU")+(cAlias)->TQN_CODCOM+Dtos(SD1->D1_DTDIGIT))) 
 			ZAU->ZAU_FILIAL := xFilial("ZAU")
 			ZAU->ZAU_CODCOM := (cAlias)->TQN_CODCOM
 			ZAU->ZAU_PRODUT := (cAlias)->TQI_PRODUT
@@ -132,7 +132,6 @@ While !(cAlias)->(Eof())
 			ZAU->ZAU_VALUNI := SD1->D1_VUNIT
 			ZAU->ZAU_VALACR := nAcres
 			ZAU->ZAU_VALCOM := SD1->D1_VUNIT + nAcres
-			ZAU->ZAU_FILDOC := SD1->D1_FILIAL
 		MsUnlock()
 
 		(cAliasS)->(DbSkip())	
