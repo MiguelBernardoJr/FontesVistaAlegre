@@ -52,14 +52,16 @@ Return
 Static Function FS_Proc01()
 Local lProcess  := .f.
 Local nAcres    := GetMv("VA_ACCMBI",,0.20) // Valor do Acescimo no preço do litro Combustivel do Prestadores de Serviço
-//Local nRecSD1   := 0
+Local cAlias    := ""
+Local cAliasS    := ""
+Local cAlias1    := ""
 
 DbSelectArea("ZAU")
 
 // Abastecimentos
-If Select("TMPTQN") > 0
-	TMPTQN->(dbCloseArea())
-EndIf
+//If Select(cAlias) > 0
+//	(cAlias)->(dbCloseArea())
+//EndIf
 
 cQuery := "SELECT DISTINCT TQN.TQN_CODCOM, TQI.TQI_PRODUT "
 cQuery += " FROM "+RetSqlName("TQN")+" TQN "
@@ -68,40 +70,60 @@ cQuery += "  AND ST9.D_E_L_E_T_ = ' ' AND ST9.T9_PROPRIE = '2' AND ST9.T9_XTPTER
 cQuery += " JOIN "+RetSqlName("TQI")+" TQI ON TQI.TQI_FILIAL = '"+xFilial("TQI")+"' AND TQN.TQN_CODCOM = TQI.TQI_CODCOM "
 cQuery += "  AND TQI.D_E_L_E_T_ = ' ' "
 cQuery += " WHERE TQN.TQN_FILIAL = '"+xFilial("TQN")+"' AND TQN.D_E_L_E_T_ = ' ' AND TQN.TQN_DTABAS BETWEEN '"+Dtos(dDatIni)+"' AND '"+Dtos(dDatFin)+"' "
-DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPTQN", .f., .f.)
+
+cAlias := GetNextAlias()
+MpSysOpenQry(cQuery, cAlias)
 
 oProcTTP:IncRegua1("Apuração de Preços de Compra de Combustiveis  ..")
 oProcTTP:SetRegua2(1000)
 
 Begin Transaction
 
-While !TMPTQN->(Eof())
+While !(cAlias)->(Eof())
 
 	oProcTTP:IncRegua2()
 
-	//cQuery := "   SELECT SD1.R_E_C_N_O_ RECSD1, D1_DTDIGIT, D1_COD, D1_VUNIT " + CRLF
 	cQuery := "   SELECT SD1.R_E_C_N_O_ RECSD1 "
 	cQuery += "     FROM "+RetSqlName("SD1")+" SD1 " + CRLF
 	cQuery += "    JOIN  "+RetSqlName("SF4")+" SF4 ON ( F4_FILIAL = '"+xFilial("SF4")+"' AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND SF4.D_E_L_E_T_ = ' '  ) " + CRLF
-	cQuery += "    WHERE SD1.D1_FILIAL = '"+xFilial("SD1")+"' AND SD1.D1_COD = '"+TMPTQN->TQI_PRODUT+"'" + CRLF
+	cQuery += "    WHERE SD1.D1_FILIAL = '"+xFilial("SD1")+"' AND SD1.D1_COD = '"+(cAlias)->TQI_PRODUT+"'" + CRLF
 	cQuery += "      AND SD1.D_E_L_E_T_ = ' ' AND SD1.D1_DTDIGIT BETWEEN '"+Dtos(dDatIni)+"' AND '"+Dtos(dDatFin)+"' " + CRLF
-	cQuery += " ORDER BY 1 DESC "
+	cQuery += " ORDER BY 1 DESC"
 
-	DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSD1", .f., .f.)
+	cAliasS := GetNextAlias()
+	MpSysOpenQry(cQuery, cAliasS)
 
-//	nRecSD1 := FM_Sql(cQuery)
-
-//	If nRecSD1 > 0
-
-	While !TMPSD1->(Eof())
-		SD1->(DbGoto(TMPSD1->(RECSD1)))
+	While !(cAliasS)->(Eof())
+		SD1->(DbGoto((cAliasS)->(RECSD1)))
 		lProcess := .t.
+
 		DbSelectArea("ZAU")
-		If !DbSeek(xFilial("ZAU")+TMPTQN->TQN_CODCOM+Dtos(SD1->D1_DTDIGIT))
-			RecLock("ZAU",!Found())
+		ZAU->(DbSetOrder(2))
+
+		IF SD1->D1_FORNECE == '000025' // V@
+		
+			cQuery := "   SELECT top 1 SD1.R_E_C_N_O_ RECSD1 "
+			cQuery += "     FROM "+RetSqlName("SD1")+" SD1 " + CRLF
+			cQuery += "    JOIN  "+RetSqlName("SF4")+" SF4 ON ( F4_FILIAL = '"+xFilial("SF4")+"' AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND SF4.D_E_L_E_T_ = ' '  ) " + CRLF
+			cQuery += "    WHERE SD1.D1_FILIAL = '"+ "01010"+SD1->D1_LOJA+"' AND SD1.D1_COD = '"+(cAlias)->TQI_PRODUT+"'" + CRLF
+			cQuery += "      AND SD1.D_E_L_E_T_ = ' ' 
+			cQuery += "	  	AND SD1.D1_DTDIGIT <= '"+dToS(SD1->D1_EMISSAO)+"' " + CRLF
+	  		cQuery += "		AND SD1.D1_FORNECE <> '"+SD1->D1_FORNECE+"' " + CRLF
+			cQuery += " ORDER BY SD1.R_E_C_N_O_ DESC"
+
+			cAlias1 := GetNextAlias()
+			MpSysOpenQry(cQuery, cAlias1)
+
+				SD1->(DbGoto((cAlias1)->RECSD1))
+
+			(cAlias1)->(dbCloseArea())
+
+		ENDIF 
+
+		RecLock("ZAU",lRecLock := !DbSeek(xFilial("ZAU")+(cAlias)->TQN_CODCOM+Dtos(SD1->D1_DTDIGIT)+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FILIAL)) 
 			ZAU->ZAU_FILIAL := xFilial("ZAU")
-			ZAU->ZAU_CODCOM := TMPTQN->TQN_CODCOM
-			ZAU->ZAU_PRODUT := TMPTQN->TQI_PRODUT
+			ZAU->ZAU_CODCOM := (cAlias)->TQN_CODCOM
+			ZAU->ZAU_PRODUT := (cAlias)->TQI_PRODUT
 			ZAU->ZAU_DATCPA := SD1->D1_DTDIGIT
 			ZAU->ZAU_DOC    := SD1->D1_DOC
 			ZAU->ZAU_SERIE  := SD1->D1_SERIE
@@ -110,21 +132,19 @@ While !TMPTQN->(Eof())
 			ZAU->ZAU_VALUNI := SD1->D1_VUNIT
 			ZAU->ZAU_VALACR := nAcres
 			ZAU->ZAU_VALCOM := SD1->D1_VUNIT + nAcres
-			MsUnlock()
-		Endif
-		TMPSD1->(DbSkip())	
-	Enddo
-	TMPSD1->(dbCloseArea())
+			ZAU->ZAU_FILDOC := SD1->D1_FILIAL
+		MsUnlock()
 
-	TMPTQN->(DbSkip())
+		(cAliasS)->(DbSkip())	
+	Enddo
+	(cAliasS)->(dbCloseArea())
+
+	(cAlias)->(DbSkip())
 
 Enddo
-TMPTQN->(dbCloseArea())
+(cAlias)->(dbCloseArea())
 
 // Lançamentos do ARLA
-If Select("TMPSTL") > 0
-	TMPSTL->(dbCloseArea())
-EndIf
 
 cQuery := "SELECT DISTINCT STL.TL_CODIGO "
 cQuery += " FROM "+RetSqlName("STL")+" STL "
@@ -136,13 +156,15 @@ cQuery += " JOIN "+RetSqlName("ST9")+" ST9 ON ST9.T9_FILIAL = '"+xFilial("ST9")+
 cQuery += "  AND ST9.D_E_L_E_T_ = ' ' AND ST9.T9_PROPRIE = '2' AND ST9.T9_XTPTER = '1' "
 cQuery += " WHERE STL.TL_FILIAL = '"+xFilial("STL")+"' AND STL.TL_CODIGO = '130011' AND STL.D_E_L_E_T_ = ' ' AND STJ.TJ_DTORIGI BETWEEN '"+Dtos(dDatIni)+"' AND '"+Dtos(dDatFin)+"' "
 cQuery += " AND STJ.D_E_L_E_T_ = ' ' "
-cQuery += " AND STJ.TJ_SERVICO = 'C00014' "
-DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSTL", .f., .f.)
+cQuery += " AND STJ.TJ_SERVICO = 'C00014' 
+
+cALias := GetNextAlias()
+MpSysOpenQry(cQuery, cAlias)
 
 oProcTTP:IncRegua1("Apuração de Preços de Compra de ARLA  ..")
 oProcTTP:SetRegua2(1000)
 
-While !TMPSTL->(Eof())
+While !(cAlias)->(Eof())
 
 	oProcTTP:IncRegua2()
 
@@ -153,14 +175,11 @@ While !TMPSTL->(Eof())
 	cQuery += "      AND SD1.D_E_L_E_T_ = ' ' AND SD1.D1_DTDIGIT BETWEEN '"+Dtos(dDatIni)+"' AND '"+Dtos(dDatFin)+"' " + CRLF
 	cQuery += " ORDER BY 2,1 DESC "
 
-	DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSD1", .f., .f.)
+	cAliasS := GetNextAlias()
+	MpSysOpenQry(cQuery, cAliasS)
 
-//	nRecSD1 := FM_Sql(cQuery)
-
-//	If nRecSD1 > 0
-
-	While !TMPSD1->(Eof())
-		SD1->(DbGoto(TMPSD1->(RECSD1)))
+	While !(cAliasS)->(Eof())
+		SD1->(DbGoto((cAliasS)->(RECSD1)))
 		lProcess := .t.
 		DbSelectArea("ZAU")
 		If !DbSeek(xFilial("ZAU")+"007"+Dtos(SD1->D1_DTDIGIT))
@@ -178,14 +197,14 @@ While !TMPSTL->(Eof())
 			ZAU->ZAU_VALCOM := SD1->D1_VUNIT + nAcres
 			MsUnlock()
 		Endif
-		TMPSD1->(DbSkip())	
+		(cAliasS)->(DbSkip())	
 	Enddo
-	TMPSD1->(dbCloseArea())
+	(cAliasS)->(dbCloseArea())
 
-	TMPSTL->(DbSkip())
+	(cAlias)->(DbSkip())
 
 Enddo
-TMPSTL->(dbCloseArea())
+(cAlias)->(dbCloseArea())
 
 End Transaction
 

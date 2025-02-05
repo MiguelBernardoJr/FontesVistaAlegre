@@ -186,13 +186,14 @@ Static Function ReportDef()
 	TRCell():New(oSection6, "oTitCpa",, ""                       , "@!"                ,100,, {|| cTitCpa },,,,,,,,,)
 	// Combustiveis (últimas Compras)
 	oSection7 := TRSection():New(oReport, "oCombUltCpa")
-	TRCell():New(oSection7, "oCmbCpa",, OEmToAnsi("Combustível") , "@!"               , 20,, {|| cCmbCpa },,,,,,,,,)
-	TRCell():New(oSection7, "oDatCpa",, OEmToAnsi("Data")        , "@D"               , 20,, {|| dDatCpa },,,,,,,,,)
-	TRCell():New(oSection7, "oCmbCpa",, OEmToAnsi("Cod Forn.") , "@!"                 , 15,, {|| cCodFor },,,,,,,,,)
-	TRCell():New(oSection7, "oCmbCpa",, OEmToAnsi("Fornecedor") , "@!"                , 50,, {|| cNome },,,,,,,,,)
-	TRCell():New(oSection7, "oPreCpa",, OEmToAnsi("Valor Litro") , "@E 999.999"       , 15,, {|| nPreCpa },,,,,,,,,)
-	TRCell():New(oSection7, "oNumDoc",, OEmToAnsi("Nota Fiscal") , "@999999999"       , 15,, {|| cNumDoc },,,,,,,,,)
-	TRCell():New(oSection7, "oSerDoc",, OEmToAnsi("Série")       , "@!"               , 5,, {|| cSerDoc },,,,,,,,,)
+	TRCell():New(oSection7, "oCmbCpa",, OEmToAnsi("Combustível") 	, "@!"               , 20,, {|| cCmbCpa },,,,,,,,,)
+	TRCell():New(oSection7, "oDatCpa",, OEmToAnsi("Data")        	, "@D"               , 20,, {|| dDatCpa },,,,,,,,,)
+	TRCell():New(oSection7, "oCmbCpa",, OEmToAnsi("Cod Forn.") 		, "@!"               , 15,, {|| cCodFor },,,,,,,,,)
+	TRCell():New(oSection7, "oCmbCpa",, OEmToAnsi("Fornecedor") 	, "@!"               , 50,, {|| cNome   },,,,,,,,,)
+	TRCell():New(oSection7, "oPreCpa",, OEmToAnsi("Valor Litro") 	, "@E 999.999"       , 15,, {|| nPreCpa },,,,,,,,,)
+	TRCell():New(oSection7, "oNumDoc",, OEmToAnsi("Nota Fiscal") 	, "@999999999"       , 15,, {|| cNumDoc },,,,,,,,,)
+	TRCell():New(oSection7, "oSerDoc",, OEmToAnsi("Série")       	, "@!"               , 5 ,, {|| cSerDoc },,,,,,,,,)
+	TRCell():New(oSection7, "oFilDoc",, OEmToAnsi("Filial NF")      , "@!"               , 5 ,, {|| cFilDoc },,,,,,,,,)
 
 Return(oReport)
 
@@ -211,7 +212,7 @@ Return(oReport)
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 User Function I_VAMNTR02(oReport)
-  
+
 Local cQuery      := ""
 Local oSection1   := oReport:Section(1)
 Local oSection2   := oReport:Section(2)
@@ -503,10 +504,11 @@ For nCntFor := 1 to Len(aVetImprime)
 			oSection2:PrintLine()
 
 			if aVetImprime[nIntCntFor,19] == "1" // Prestador de Serviço
-				cQuery := "SELECT ZAU.R_E_C_N_O_ FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
+				cQuery := "SELECT ZAU.R_E_C_N_O_ FROM "+RetSqlName("ZAU")+" ZAU WHERE ZAU.ZAU_FILIAL = '"+FWXFILIAL("ZAU")+"' AND ZAU.D_E_L_E_T_ = ' ' AND ZAU.ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAU.ZAU_DATCPA = (SELECT Max(ZAU_DATCPA) FROM "+RetSqlName("ZAU")+" WHERE ZAU_FILIAL = '"+FWXFILIAL("ZAU")+"' AND D_E_L_E_T_ = ' ' AND ZAU_DATCPA <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAU_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
 			Else // If aVetImprime[nIntCntFor,19] == "2" // Transportadora
 				cQuery := "SELECT ZAT.R_E_C_N_O_ FROM "+RetSqlName("ZAT")+" ZAT WHERE ZAT.D_E_L_E_T_ = ' ' AND ZAT.ZAT_CODCOM = '"+aVetImprime[nIntCntFor,7]+"' AND ZAT.ZAT_DATCAD = (SELECT Max(ZAT_DATCAD) FROM "+RetSqlName("ZAT")+" WHERE D_E_L_E_T_ = ' ' AND ZAT_DATCAD <= '"+aVetImprime[nIntCntFor,3]+"' AND ZAT_CODCOM = '"+aVetImprime[nIntCntFor,7]+"')"
 			Endif
+
 			nRecComb := FM_Sql(cQuery)
 			nPosVet  := aScan(aRecCombs,{|x| x[1]+Str(x[2]) == aVetImprime[nIntCntFor,19]+Str(nRecComb) })
 			If nPosVet == 0
@@ -582,9 +584,10 @@ For nCntFor := 1 To Len(aRecCombs)
 		cCodFor := ZAU->ZAU_FORNEC
 		cCodLoj := ZAU->ZAU_LOJA
 		cNome   := Posicione("SA2",1,xFilial("SA2")+ZAU->ZAU_FORNECE+ZAU->ZAU_LOJA, "A2_NOME")
-		nPreCpa := ZAU->ZAU_VALCOM	
+		nPreCpa := ZAU->ZAU_VALCOM
 		cNumDoc := ZAU->ZAU_DOC
 		cSerDoc := ZAU->ZAU_SERIE
+		cFilDoc := ZAU->ZAU_FILDOC
 
 		oSection7:PrintLine()
 

@@ -193,7 +193,7 @@ Return lRetMod2
  '--------------------------------------------------------------------------------*/
 User Function VA6LinOK()
 Local lRet := .T.
-
+Local nI, nJ 
 If Empty(oGetDados:aCols[ n, 1])
 	ShowHelpDlg("Vazio", ;
 				{"O campo: [DATA] não foi informado."+CRLF+"Linha: " + cValToChar(n) },,;
