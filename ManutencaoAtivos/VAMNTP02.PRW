@@ -118,7 +118,7 @@ While !(cAlias)->(Eof())
 
 			(cAlias1)->(dbCloseArea())
 
-		ENDIF 
+		ENDIF
 
 		RecLock("ZAU",lRecLock := !DbSeek(xFilial("ZAU")+(cAlias)->TQN_CODCOM+Dtos(SD1->D1_DTDIGIT))) 
 			ZAU->ZAU_FILIAL := xFilial("ZAU")

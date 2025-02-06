@@ -8,9 +8,7 @@
 /* 
 	MJ : 24.08.2017
 	1- Este PE estava implementado no arquivo VACOMLIB; 
-		1.1 - Trouxe ele para um FONTE exclusivo (
-			
-		), para melhor entendimento
+		1.1 - Trouxe ele para um FONTE exclusivo (MT100TOK), para melhor entendimento
 			do processo, apos inclusao de encerrametno de transacao;
 	2- Foi incluido neste PE bloco para encerrar transacao. Sug. do Andre, a fim de
 			conseguir finalizar um documento de entrada, que estava impedindo continuidade
@@ -46,7 +44,7 @@ EndException
  */	
 	cQryChv := " SELECT  F1_FILIAL, F1_CHVNFE, F1_DOC, F1_SERIE "
 	cQryChv += " FROM  "+RetSqlNAme('SF1')+"  "
-	cQryChv += " WHERE F1_CHVNFE = '"+cf1Chvnfe+"' AND D_E_L_E_T_<>'*' AND F1_FILIAL <> '"+cFilant+"' "  // executar apenas para produtos com o campo preenchido e que nao estejam bloqueados  
+	cQryChv += " WHERE F1_CHVNFE = '" + cf1Chvnfe + "' AND D_E_L_E_T_<>'*' AND F1_FILIAL <> '"+cFilant+"' "  // executar apenas para produtos com o campo preenchido e que nao estejam bloqueados  
 
 	If Select("QRYCHV") <> 0
 		QRYCHV->(dbCloseArea())
@@ -57,7 +55,7 @@ EndException
 	
 	If  !EMPTY(QRYCHV->F1_CHVNFE) .and. !Empty(cf1Chvnfe)
 		Alert('Chave da NF-e ja foi utilizada em outra filial! verifique!!!  ( Filial: '+QRYCHV->F1_FILIAL+' | Documento: '+QRYCHV->F1_DOC+'\'+QRYCHV->F1_SERIE+' ) ')
-        	aNfeDanfe[13] := space(tamsx3("F1_CHVNFE")[1])
+        	// aNfeDanfe[13] := space(tamsx3("F1_CHVNFE")[1])
         Return .F. 
     Endif
 	
