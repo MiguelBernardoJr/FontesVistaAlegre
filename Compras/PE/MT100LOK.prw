@@ -39,7 +39,7 @@ User Function MT100LOK()
 	REGRA PARA MILHO
 	*/
 	cCampos := ""
-	If AllTrim(GdFieldGet('D1_COD')) $ cSB1Milhos .and. SF4->F4_TRANFIL == "2" // 2 = NÃO
+	If cTipo == "N" .and. AllTrim(GdFieldGet('D1_COD')) $ cSB1Milhos .and. SF4->F4_TRANFIL == "2" // 2 = NÃO
 		If Empty( GdFieldGet('D1_X_PESOB') )
 			cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Bruto"
 		EndIf
