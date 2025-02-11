@@ -83,7 +83,8 @@ User Function mbMTFIL()
 
     Local cCODCOMP := POSICIONE('SY1', 3, xFilial('SY1')+RetCodUsr(), 'Y1_COD' )
 
-    Local cFiltro := " C8_CODCOMP=='" + cCODCOMP + "' .AND. C8_VALIDA >= '" + dToS(MsDate()) + "'"
+    // Local cFiltro := " C8_CODCOMP=='" + cCODCOMP + "' .AND. C8_VALIDA >= '" + dToS(MsDate()) + "'"
+    Local cFiltro := " C8_CODCOMP=='" + cCODCOMP + "'"
 
 Return cFiltro
 
@@ -135,5 +136,3 @@ Return cFiltro
 //     RestArea(aArea)
 // 
 // Return cFiltro
-
-// commmit Miguel
