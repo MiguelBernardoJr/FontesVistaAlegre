@@ -590,7 +590,7 @@ ElseIf (nOpc == 4 .or. nOpc == 5/*  .or. nOpc == 6 */) .and. ZCC->ZCC_STATUS$"FP
 
 // // MJ : 21.06.2018 => alterado para permitir alteracao, depois da reuniao com CAmila, solicit. por Luana
 // ElseIf ( nOpc == 6 .and. ZCC->ZCC_STATUS$"FP" )
-// Alert( 'Agora pode alterar' )
+	// Alert( 'Agora pode alterar' )
 
 ElseIf nOpc == 5 .and. !Empty(cVersao:= U_fVldVersao(ZCC->ZCC_CODIGO, ZCC->ZCC_VERSAO))
 	// Se retornou CODIGO de versao, entao nao posso continuar
@@ -803,13 +803,15 @@ If (nOpc == 8)
 	_aCpos := {}
 	aAdd( _aCpos, "ZCC_CODCOR" )
 	aAdd( _aCpos, "ZCC_QTTTAN" )
+
 EndIf
 
 oMGet  := MsMGet():New( cAlias, nReg, Iif(nGDOpc==0, 2, Iif(nOpc==8, 3, nOpc) ),,,,, ;
-				{ nDist+5, nDist, aPObjs[1,3]-nDist-nCut, aPObjs[1,4]-5 } /* aPObjs[1] */ ;
+				/* { aPObjs[1,1]-nDist, aPObjs[1,2], aPObjs[1,3], aPObjs[1,4] } */ aPObjs[1] ;
 				, _aCpos,,,,, oGrpF1Q1,/*lF3*/,/*lMemoria*/,/*lColumn*/,/*caTela*/,/*lNoFolder*/,/*lProperty*/,/* aField */,;
 			/* aFolder */,/*lCreate*/, .T./*lNoMDIStretch*/,/*cTela*/)
-//oMGet:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+oMGet:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+
 
 if M->ZCC_STATUS == 'N' .and. nOpc <> 8
 	oMGet:Disable()
@@ -817,9 +819,9 @@ if M->ZCC_STATUS == 'N' .and. nOpc <> 8
 //	oMGet:Disable()
 endIf
 
+
 // TGroup():New( [ nTop ], [ nLeft ], [ nBottom ], [ nRight ], [ cCaption ], [ oWnd ], [ nClrText ], [ nClrPane ], [ lPixel ], [ uParam10 ] )
-//oGrpF1Q2  := TGroup():New( aPObjs[2,1]-nCut, aPObjs[2,2]+nDist, aPObjs[2,3]-nDist-(nCut+10), aPObjs[2,4]-nDist, ;
-oGrpF1Q2  := TGroup():New( aPObjs[2,1]-nCut, aPObjs[2,2]+nDist, aPObjs[2,3]-nDist-(nCut+5), aPObjs[2,4]-nDist, ;
+oGrpF1Q2  := TGroup():New( aPObjs[2,1]-nCut, aPObjs[2,2]+nDist, aPObjs[2,3]-nDist-(nCut+10), aPObjs[2,4]-nDist, ;
 						"Configuração da Base Contratual", oTFoldeP:aDialogs[1],,, .T.,)
 // TFolder():New( [ nTop ], [ nLeft ], [ aPrompts ], [ aDialogs ], [ oWnd ], [ nOption ], [ nClrFore ], [ uParam8 ]
 // 				, [ lPixel ], [ uParam10 ], [ nWidth ], [ nHeight ], [ cMsg ], [ uParam14 ] )
@@ -833,18 +835,16 @@ If SXA->(DbSeek( "ZBC" ))
 	EndDo
 EndIf
 
-//oTFoldeG := TFolder():New( 0, 0, aFolderG,, oGrpF1Q2,,,,.T.,,0, 0 )
-
-/* TFOLDER PARTE DE BAIXO */
-oTFoldeG := TFolder():New( aPObjs[2,1]-nCut+5, aPObjs[2,2]+nDist, aFolderG,, oGrpF1Q2,,,,.T.,,aPObjs[2,4]-nDist-10 , aPObjs[2,3] / 2.5)
-//oTFoldeG:Align   := CONTROL_ALIGN_ALLCLIENT
-// oTFoldeG:bChange := {|| Processa({ || ProcessMessages(),;
+oTFoldeG := TFolder():New( 0, 0, aFolderG,, oGrpF1Q2,,,,.T.,,0, 0 )
+oTFoldeG:Align   := CONTROL_ALIGN_ALLCLIENT
+// oTFoldeG:bChange := {|| Processa({ || ProcessMessages(), ;
 // 									  ReLoadFolder( oTFoldeG:nOption ) }, ;
 // 									  "Atualizando Tabela da Aba: " + cValToChar(oTFoldeG:nOption) ) }
 
 /* if nOpc == 4 .and. ( __cUserID != cUserAlt[1]  .or. __cUserID != cUserAlt[2] )
 	oTFoldeG:Disable()
-endif*/
+endif  */
+
 
 oGZBCGDad := MsNewGetDados():New( 0, 0, 0, 0, nGDOpc, , , "+ZBC_ITEM" , , , , , , "u_ZBCDelOk(oGZBCGDad)", ;
 				oDlg, aClone(aGZBCHead), aClone( aGZBCCols ) )
@@ -952,7 +952,7 @@ nUsadEsp := len(aHeadEsp)
 
 // 										   GD_INSERT + GD_UPDATE + GD_DELETE
 oGetF2Q2:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,,oGrpF2Q2, aHeadEsp, aColsEsp)
-//oGetF2Q2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF2Q2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 oGetF2Q2:oBrowse:lUseDefaultColors := .F.
 oGetF2Q2:oBrowse:SetBlkBackColor({|| GETDCLR( oGetF2Q2 )})
 // oGetF2Q2:lCanEditLine := .F.
@@ -975,10 +975,10 @@ aAdd(aFldF2Q3, { "Total Comissão:"	 		, "_nTotCom"  , "N", TamSX3("D1_TOTAL")[1]
 aAdd(aFldF2Q3, { "Qtd Animais no Contrato:"	, "_nQtdCon"  , "N", TamSX3("D1_TOTAL")[1], TamSX3("D1_TOTAL")[2], X3Picture('D1_TOTAL'), /* { || VldCpo(2) } */,     .F.,     1, /* GetSX8Num('ZAD','ZAD_CODIGO') */, "",  "" ,    .T.,   .F.,   "",     "",         .F.,      "",    "N"} )
 aAdd(aFldF2Q3, { "Qtd Animais Receb. em NF:", "_nQtdReb"  , "N", TamSX3("D1_TOTAL")[1], TamSX3("D1_TOTAL")[2], X3Picture('D1_TOTAL'), /* { || VldCpo(2) } */,     .F.,     1, /* GetSX8Num('ZAD','ZAD_CODIGO') */, "",  "" ,    .T.,   .F.,   "",     "",         .F.,      "",    "N"} )
 
-oEnchF2Q3 := MsMGet():New(,, 3,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/, { nF2_3x*1.6+nDist+5, aPObjs[1,2]+nDist, nF2_3x*1.6, aPObjs[1,4]-nDist } /* aPObjs[1] */,/*aAlterEnch*/,/*nModelo*/,;
+oEnchF2Q3 := MsMGet():New(,, 3,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/, aPObjs[1],/*aAlterEnch*/,/*nModelo*/,;
 					/*nColMens*/,/*cMensagem*/, /*cTudoOk*/,oGrpF2Q3,/*lF3*/,/*lMemoria*/, .F./*lColumn*/,;
 					nil /*caTela*/,/*lNoFolder*/, .T./*lProperty*/,aFldF2Q3,/*aFolder*/,/*lCreate*/,/*lNoMDIStretch*/,/*cTela*/)
-//oEnchF2Q3:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+oEnchF2Q3:oBox:Align := CONTROL_ALIGN_ALLCLIENT
 
 // folder: ENTRADA ##########################################################################################
 
@@ -1003,8 +1003,8 @@ nF3_3x	  := aPObjs[2,3] / 3
 
 oGrpF3Q2  := TGroup():New( /* nF3_3x*0.5+ */nDist, aPObjs[1,2]+nDist, nF3_3x*1.6, aPObjs[1,4]-nDist,;
 							"Titulos Financeiros:",oTFoldeP:aDialogs[3],,, .T.,)
-oTFldF3Q2 := TFolder():New( nDist + 5, aPObjs[1,2]+nDist+5, {"Contas a Pagar", "Movimentação Bancária"},, oGrpF3Q2,,,,.T.,,aPObjs[1,4]-nDist-10, nF3_3x*1.6 )
-//oTFldF3Q2:Align   := CONTROL_ALIGN_ALLCLIENT
+oTFldF3Q2 := TFolder():New( 0, 0, {"Contas a Pagar", "Movimentação Bancária"},, oGrpF3Q2,,,,.T.,,0, 0 )
+oTFldF3Q2:Align   := CONTROL_ALIGN_ALLCLIENT
 
 aHeadEsp := {}
 aColsEsp := {}
@@ -1024,7 +1024,7 @@ nUsadEsp := len(aHeadEsp)
 // LoadNewGDados("oGetF3aQ2", aHeadEsp, @aColsEsp, nUsadEsp) => LoadGrids()
 
 oGetF3aQ2:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,,oTFldF3Q2:aDialogs[1], aHeadEsp, aColsEsp)
-//oGetF3aQ2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF3aQ2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 oGetF3aQ2:oBrowse:bHeaderClick := { |oGetF3aQ2,nCol| OrdenaF3aQ2(nCol) }
 
 // oGetF3aQ2:oBrowse:lUseDefaultColors := .F.
@@ -6876,7 +6876,7 @@ User Function ConZBD(cCondicao)
 	Local aDados 	:= {}
 	Local cRet 		:= "01"
 	Local nPedido 	:= o1ZBCGDad:aCols[nAt][nPZBCPed]
-	Local lRet 		:= .T.
+	Local lRet 		:= .T. 
     //Aciona a função condição, para buscar as duplicatas com os vencimentos e valores
     aDupl := Condicao(nValor, cCondicao, , dDataIni, )
     //FWAlertInfo("Existe(m) " + cValToChar(Len(aDupl)) + " parcela(s)", "Teste Condicao")
