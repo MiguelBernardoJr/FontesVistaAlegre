@@ -5800,44 +5800,48 @@ Static Function LoadNewGDados(cTipo, aHeadEsp, aColsEsp, nUsadEsp, _cProdut )
 		cSql += "  AND ED.D_E_L_E_T_ = ' '" + CRLF
 		cSql += "   WHERE ( " + CRLF
 		cSql += " 	  E2_FORNECE+E2_LOJA+RTRIM(E2_NUM) IN ( " + CRLF
-		cSql += " 		  						    SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_CODIGO)" + CRLF
-		cSql += " 		  						      FROM " + RetSQLName('ZBC') + "" + CRLF
-		cSql += " 		  							 WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "' " + CRLF
-		cSql += " 									   AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
-		cSql += " 									) " + CRLF
-		cSql += " 	 OR " + CRLF
-		cSql += " 	 E2_FORNECE+E2_LOJA+RTRIM(E2_NUM) IN ( " + CRLF
-		cSql += " 		  						    SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_PEDIDO)" + CRLF
-		cSql += " 		  						      FROM " + RetSQLName('ZBC') + "" + CRLF
-		cSql += " 		  							 WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "' " + CRLF
-		cSql += " 									   AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
-		cSql += " 									) " + CRLF
-		cSql += " 	OR " + CRLF
-		cSql += " 	E2_FORNECE+E2_LOJA+RTRIM(E2_NUM) IN ( " + CRLF
-		cSql += " 								  SELECT D1_FORNECE+D1_LOJA+RTRIM(D1_DOC)" + CRLF
-		cSql += " 								    FROM " + RetSQLName('SD1') + "" + CRLF
-		cSql += " 									WHERE D1_FORNECE+D1_LOJA+D1_PEDIDO  IN ( " + CRLF
-		cSql += " 																		 SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_PEDIDO)" + CRLF
-		cSql += " 		  																   FROM " + RetSQLName('ZBC') + "" + CRLF
-		cSql += " 		  																  WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "'" + CRLF
-		cSql += " 																		    AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
-		cSql += " 																		  ) " + CRLF
-		cSql += " 								 " + CRLF
-		cSql += " 								) " + CRLF
-		cSql += " 	OR " + CRLF
-		cSql += " 	E2_FORNECE+E2_LOJA+RTRIM(E2_NUM) IN ( " + CRLF
-		cSql += " 								  SELECT D1_FORNECE+D1_LOJA+RTRIM(D1_DOC)" + CRLF
-		cSql += " 								    FROM " + RetSQLName('SD1') + "" + CRLF
-		cSql += " 									WHERE D1_FORNECE+D1_LOJA+D1_COD IN ( " + CRLF
-		cSql += " 																		 SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_PRODUT)" + CRLF
-		cSql += " 		  																   FROM " + RetSQLName('ZBC') + "" + CRLF
-		cSql += " 		  																  WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "'" + CRLF
-		cSql += " 																		    AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
-		cSql += " 																		  ) " + CRLF
-		cSql += " 								 " + CRLF
-		cSql += " 								) " + CRLF
-		cSql += "" + CRLF
-		cSql += " ) " + CRLF
+	cSql += " 		  						    SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_CODIGO)" + CRLF
+	cSql += " 		  						      FROM " + RetSQLName('ZBC') + " ZBC" + CRLF
+	cSql += " 		  							 WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "' " + CRLF
+	cSql += " 									   AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
+	cSql += " 									   AND ZBC.D_E_L_E_T_ = ' '  " + CRLF
+	cSql += " 									) " + CRLF
+	cSql += " 	 OR " + CRLF
+	cSql += " 	 E2_FORNECE+E2_LOJA+RTRIM(E2_NUM) IN ( " + CRLF
+	cSql += " 		  						    SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_PEDIDO)" + CRLF
+	cSql += " 		  						      FROM " + RetSQLName('ZBC') + " ZBC" + CRLF
+	cSql += " 		  							 WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "' " + CRLF
+	cSql += " 									   AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
+	cSql += " 									   AND ZBC.D_E_L_E_T_ = ' '  " + CRLF
+	cSql += " 									) " + CRLF
+	cSql += " 	OR " + CRLF
+	cSql += " 	E2_FORNECE+E2_LOJA+RTRIM(E2_NUM) IN ( " + CRLF
+	cSql += " 								  SELECT D1_FORNECE+D1_LOJA+RTRIM(D1_DOC)" + CRLF
+	cSql += " 								    FROM " + RetSQLName('SD1') + "" + CRLF
+	cSql += " 									WHERE D1_FORNECE+D1_LOJA+D1_PEDIDO  IN ( " + CRLF
+	cSql += " 																		 SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_PEDIDO)" + CRLF
+	cSql += " 		  						                                          FROM " + RetSQLName('ZBC') + " ZBC" + CRLF
+	cSql += " 		  																  WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "'" + CRLF
+	cSql += " 																		    AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
+	cSql += " 									                                        AND ZBC.D_E_L_E_T_ = ' '  " + CRLF
+	cSql += " 																		  ) " + CRLF
+	cSql += " 								 " + CRLF
+	cSql += " 								) " + CRLF
+	cSql += " 	OR " + CRLF
+	cSql += " 	E2_FORNECE+E2_LOJA+RTRIM(E2_NUM) IN ( " + CRLF
+	cSql += " 								  SELECT D1_FORNECE+D1_LOJA+RTRIM(D1_DOC)" + CRLF
+	cSql += " 								    FROM " + RetSQLName('SD1') + "" + CRLF
+	cSql += " 									WHERE D1_FORNECE+D1_LOJA+D1_COD IN ( " + CRLF
+	cSql += " 																		 SELECT DISTINCT ZBC_CODFOR+ZBC_LOJFOR+RTRIM(ZBC_PRODUT)" + CRLF
+	cSql += " 		  						                                           FROM " + RetSQLName('ZBC') + " ZBC" + CRLF
+	cSql += " 		  																  WHERE ZBC_FILIAL = '" + M->ZCC_FILIAL + "'" + CRLF
+	cSql += " 																		    AND ZBC_CODIGO = '" + M->ZCC_CODIGO + "' " + CRLF
+	cSql += " 									                                        AND ZBC.D_E_L_E_T_ = ' '  " + CRLF
+	cSql += " 																		  ) " + CRLF
+	cSql += " 								 " + CRLF
+	cSql += " 								) " + CRLF
+	cSql += "" + CRLF
+	cSql += " ) " + CRLF
 		cSql += " AND E2.D_E_L_E_T_ = ' '" + CRLF
 		//cSql += " ORDER BY E2_EMISSAO, E2_TIPO, E2.R_E_C_N_O_ " + CRLF
 		MBSaveLog():FULLWrite(, .F., "LoadNewGDados() - "+cTipo+" - Fim")
