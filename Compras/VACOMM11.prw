@@ -3722,7 +3722,7 @@ User Function xAltStatus(cStatus)
 		%noParser%
 		select *
 		from %table:ZBC% ZBC
-		join %table:SC7% SC7 on (C7_FILIAL=%xFilial:SC7% and SC7.%notDel% and C7_NUM=ZBC_PEDIDO and C7_ITEM=ZBC_ITEMPC and C7_RESIDUO=' ')
+		join %table:SC7% SC7 on (C7_FILIAL=%xFilial:SC7% and C7_NUM=ZBC_PEDIDO and C7_ITEM=ZBC_ITEMPC and C7_RESIDUO=' ' and SC7.%notDel%)
 		where ZBC_FILIAL=%xFilial:ZBC% and ZBC.%notDel%
 		and ZBC_CODIGO=%exp:ZCC->ZCC_CODIGO% and ZBC_VERSAO=%exp:ZCC->ZCC_VERSAO%
 		and ZBC_PEDIDO <> '      '
