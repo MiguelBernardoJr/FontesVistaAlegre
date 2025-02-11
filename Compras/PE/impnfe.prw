@@ -44,11 +44,20 @@ User Function MT103IP2()
 Return Nil
 
 User Function MT116GRV()
+    Local nI := 0
+    Local nPosProd
+    Local nPosDesc
 
-   
     // Ponto de chamada ConexãoNF-e sempre como última instrução.
     U_GTPE008()
 
+    IF IsInCallStack("MATA116")
+        For nI := 1 to Len(aCols)
+            nPosProd := AScan(aHeader, {|x| AllTrim(x[2]) == "D1_COD"})
+             nPosDesc := AScan(aHeader, {|x| AllTrim(x[2]) == "D1_X_DESC"})
+            aCols[nI][nPosDesc] := Alltrim(Posicione("SB1",1,FWXFILIAL("SB1")+aCols[nI][nPosProd],"B1_DESC"))
+        Next nI 
+    ENDIF
 Return Nil
 
 User Function MT140CAB()
