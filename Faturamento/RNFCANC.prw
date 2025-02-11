@@ -46,11 +46,13 @@ User Function RNFCANC() //U_RNFCANC()
 	
 	Private jFontHeader := nil
 	Private jFontTitulo := nil
+	Private jFontText 	:= nil
 	Private JFLeft 		:= nil
 	Private jFData 		:= nil
 	Private jFormatTit 	:= nil
 	Private jFormatTot 	:= nil
 	Private jFormatHead := nil
+	Private JNOBORDER 	:= nil
 	Private jFMoeda 	:= nil
 	Private jFNum 		:= nil
 
