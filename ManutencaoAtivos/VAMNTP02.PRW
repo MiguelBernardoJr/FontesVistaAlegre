@@ -100,8 +100,8 @@ While !(cAlias)->(Eof())
 		DbSelectArea("ZAU")
 		ZAU->(DbSetOrder(1))
 
-		IF SD1->D1_FORNECE == '000025' // V@
-		
+		IF SD1->D1_FORNECE == '000025' // V@ 
+			// REGRE PARA SE O FORNECEDOR DE COMBUSTIVEL FOR OUTRA FILIAL DA V@, BUSCAR A NOTA DE COMPRA NAQUELA FILIAL.
 			cQuery := "   SELECT top 1 SD1.R_E_C_N_O_ RECSD1 "
 			cQuery += "     FROM "+RetSqlName("SD1")+" SD1 " + CRLF
 			cQuery += "    JOIN  "+RetSqlName("SF4")+" SF4 ON ( F4_FILIAL = '"+xFilial("SF4")+"' AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND SF4.D_E_L_E_T_ = ' '  ) " + CRLF
