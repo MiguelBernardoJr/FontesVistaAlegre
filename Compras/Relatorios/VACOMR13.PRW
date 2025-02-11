@@ -1,0 +1,872 @@
+#include 'FILEIO.CH'
+#include "TOTVS.CH"
+#include "TOPCONN.CH"
+#include "RWMAKE.CH"
+
+static oCellHorAlign    := FwXlsxCellAlignment():Horizontal()
+static oCellVertAlign   := FwXlsxCellAlignment():Vertical()
+static cNameRot         := "FECHAMENTO FRETES"
+/*---------------------------------------------------------------------------------,
+ | Analista : Igor Gomes Oliveira                                                  |
+ | Data		: 05.05.2023                                                           |
+ | Cliente  : V@                                                                   |
+ | Desc		: Relatorio com Informacoes de Pedido de Compras. 				       |
+ |                                                                                 |
+ |---------------------------------------------------------------------------------|
+ | Regras   :                                                                      |
+ |                                                                                 |
+ |---------------------------------------------------------------------------------|
+ | Obs.     : U_VACOMR13()                                                         |
+ '---------------------------------------------------------------------------------*/
+User Function VACOMR13()
+    Local cTimeIni	 	:= Time()
+    Local aArea         := GetArea()
+    Local cQry          := ''
+    Local aDados		:= {}
+    Local lRet          := .F.
+    Local nRet          := 0
+    Local cWorkSheet    := "Aba 1"
+    Local nBakRow, nRowTotal:= 0
+    Local nI := nJ := nX := 0
+    Local nTamLin
+    Local cAlias1       := ""
+    Local cDoc    := ""
+    Local cFilDoc := ""
+    Local nValor  := 0
+    Local nTotal  := 0
+    Local __oQry        := nil
+    Local cAlias        := GetNextAlias()
+    Local aHeaderRel    := {"TRANSPORTADORA",;
+                            "LOCAL",;
+                            "PECUARISTA",;
+                            "EMBARQUE",;
+                            "DESEMBARQUE",;
+                            "PLACA",;
+                            "Nº MINUTA",;
+                            "QTDE",;
+                            "KM",;
+                            "VALOR DO KM",;
+                            "VALOR FRETE",;
+                            "ADICIONAL",;
+                            "PEDAGIO",;
+                            "ICMS FRETE",;
+                            "Filial CTE",;
+                            "Nº CTE",;
+                            "VL. CTE EMITIDO",;
+                            "COMP. VALOR"}
+
+    Private cPerg		:= SubS(ProcName(),3)
+    Private _cAliasG	:= GetNextAlias()
+    Private cTitulo  	:= "Relatório de Fechamento de Frete"
+    Private cPath 	 	:= "C:\totvs_relatorios\"
+    Private cArquivo   	:= cPath + cPerg +; // __cUserID+"_"+;
+                                DtoS(dDataBase)+; 
+                                "_"+;
+                                StrTran(SubS(Time(),1,5),":","")+;
+                                ".rel"
+
+    GeraX1(cPerg)
+
+    If Pergunte(cPerg, .T.)
+	    U_PrintSX1(cPerg)
+
+        If Len( Directory(cPath + "*.*","D") ) == 0
+            If Makedir(cPath) == 0
+                ConOut('Diretorio Criado com Sucesso.')
+                MsgAlert('Diretorio Criado com Sucesso: ' + cPath, 'Aviso')
+            Else	
+                ConOut( "Não foi possivel criar o diretório. Erro: " + cValToChar( FError() ) )
+                MsgAlert( "Não foi possivel criar o diretório. Erro: " + cValToChar( FError() ), 'Aviso' )
+            EndIf
+        EndIF
+            
+            FWMsgRun(, {|| aDados := LoadQuery(@_cAliasG ) },;
+                            'Por Favor Aguarde...',; 
+                            'Processando Banco de Dados - Recebimento')
+
+            If Len(aDados) > 0
+
+                DefinirFormatacao()
+
+                If MV_PAR07 == 2 // Separa quadro por transportadora
+                    SA2->(DBSELECTAREA("SA2"))
+                    SA2->(DBSETORDER(1))
+                    
+                    ZFI->(DBSELECTAREA("ZFI"))
+                    ZFI->(DBSETORDER(1)) // ZFI_FILIAL+ZFI_CODIGO+ZFI_PLACA
+                    
+                    oExcel := FwPrinterXlsx():New()
+                    oExcel:Activate(cArquivo)
+
+                    cQry := " SELECT ZFI_FILDOC " + CRLF
+                    cQry += "		,SUBSTRING(ZFI_DOC, PATINDEX('%[^0]%', ZFI_DOC), LEN(ZFI_DOC)) + '-' + SUBSTRING(ZFI_SERIE, PATINDEX('%[^0]%', ZFI_SERIE), LEN(ZFI_SERIE)) AS ZFI_DOC " + CRLF
+                    cQry += "		,ZFI_VALOR  " + CRLF
+                    cQry += " FROM "+RetSqlName("ZFI")+"  " + CRLF
+                    cQry += " WHERE ZFI_CODIGO = ? " + CRLF
+                    cQry += " AND ZFI_FILIAL = ? " + CRLF
+                    cQry += " AND ZFI_PLACA = ? " + CRLF
+                    cQry += " AND D_E_L_E_T_ = '' " + CRLF
+
+	                __oQry := FwExecStatement():New(cQry)
+
+                    nTamTot := Len(aDados)
+                    For nI := 1 to nTamTot
+                        cWorkSheet := SUBSTR(ALLTRIM(aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "ZFF_ORIGEM"})][2] +;
+                                    "-" + aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "TRANSPORTADORA"})][2]),1,31)
+
+                        oExcel:AddSheet(cWorkSheet)
+
+                        nRow := 1
+                        nCol := 1
+
+                        oExcel:SetCellsFormatConfig(jFormatTit)
+                        oExcel:SetFontConfig(jFontTitulo)
+                        oExcel:MergeCells(nRow, nCol, nRow, Len(aHeaderRel))
+
+                        if Mes(mV_PAR01) != Mes(MV_PAR02)
+                            if Ano(mV_PAR01) != Ano(MV_PAR02)
+                                cNameRot := "FECHAMENTO FRETES " + " - " + dToC(MV_PAR01) + " - " +dToC(MV_PAR02)
+                            else
+                                cNameRot := "FECHAMENTO FRETES " + " - " + SubStr((dToC(mV_PAR01)),1,5) + " - " + SubStr((dToC(MV_PAR02)),1,5) + " (" +AllTrim(Str(Ano(mV_PAR02))) +")"
+                            endif
+                        Else
+                            cNameRot := "FECHAMENTO FRETES " + " - " + SubStr((dToC(mV_PAR01)),1,2) + " - " + SubStr((dToC(MV_PAR02)),1,2) + " / " +  Mes(mV_PAR01) + "-" + AllTrim(Str(Ano(mV_PAR02)))
+                        Endif
+                        
+                        oExcel:SetText(nRow, nCol, cNameRot)
+
+                        oExcel:SetCellsFormatConfig(jFormatHead)
+                        oExcel:SetFontConfig(jFontHeader)
+                        nRow += 1
+                        //Printando Cabeçalho
+                        For nX := nCol to Len(aHeaderRel)
+                            oExcel:SetValue(nRow, nX, aHeaderRel[nX])
+                        Next nX
+
+                        nTamLin := Len(aDados[nI][2])
+                        For nJ := 1 to nTamLin
+                            nRow += 1
+                            nCol := 1
+                            oExcel:SetFontConfig(jFontText)
+                            oExcel:SetCellsFormatConfig(JFLeft)
+                            oExcel:SetBorderConfig(jNoBorder)
+
+                            oExcel:SetValue(nRow, nCol,   aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "TRANSPORTADORA"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ENDFORN"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "FORNECEDOR"})][2] )
+                            
+                            oExcel:SetCellsFormatConfig(jFData)
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_DATA"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_DTDESE"})][2] )
+                            
+                            oExcel:SetCellsFormatConfig(JFLeft)
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_PLCVL"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_NUMMIN"})][2] )
+
+                            oExcel:SetCellsFormatConfig(jFNum)
+                            oExcel:SetFontConfig(jFontText)
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_QTDE"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_KM"})][2] )
+
+                            oExcel:SetCellsFormatConfig(jFMoeda)
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_VLKM"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_VFRETE"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_ADICIO"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_PEDAGI"})][2] )
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_ICMSF"})][2] )
+
+                            __oQry:SetString(1,aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_CODIGO"})][2])
+                            __oQry:SetString(2,aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_FILIAL"})][2])
+                            __oQry:SetString(3,aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_PLCVL"})][2])
+
+                            cAlias1 := __oQry:OpenAlias()
+                            cDoc    := ""
+                            cFilDoc := ""
+                            nValor  := 0
+                            nReg    := 1
+                            nTotal  := 0
+
+                            (cAlias1)->(DbEval({|| nTotal++ }))
+                            (cAlias1)->(DbGoTop())
+
+                            while !(cAlias1)->(EOF())
+
+                                cFilDoc += SubStr((cAlias1)->ZFI_FILDOC,6,2) + iif(nReg < nTotal," / ","")
+                                cDoc    += Alltrim((cAlias1)->ZFI_DOC) + iif(nReg < nTotal," / ","")
+                                nValor  += (cAlias1)->ZFI_VALOR
+                                nReg += 1
+                                (cAlias1)->(DBSKIP())
+                            EndDo
+
+                            (cAlias1)->(dbCloseArea())
+
+                            oExcel:SetCellsFormatConfig(JFLeft)
+                            oExcel:SetValue(nRow, ++nCol, cFilDoc ) 
+                            oExcel:SetValue(nRow, ++nCol, cDoc )
+                            oExcel:SetCellsFormatConfig(jFMoeda)
+                            oExcel:SetValue(nRow, ++nCol, nValor )
+
+                            oExcel:SetValue(nRow, ++nCol, aDados[nI][2][nJ][aScan(aDados[nI][2][nJ], {|x| Upper(x[1]) == "ZFF_VCOMP"})][2] )
+
+                        next nJ
+
+                        oExcel:ApplyAutoFilter(2,1,nRow,Len(aHeaderRel))
+                        oExcel:SetCellsFormatConfig(jFormatTot)
+                        nRowTotal := nRow
+                        nRow += 1
+                        oExcel:MergeCells(nRow, 11, nRow, 13)
+                        oExcel:SetFormula(nRow, 11, "=SUBTOTAL(9,K3:M"+AllTrim(cValToChar(nRowTotal))+")" ) // Frete + Pedagio 
+                        oExcel:SetFormula(nRow, 14, "=SUBTOTAL(9,N3:N"+AllTrim(cValToChar(nRowTotal))+")" ) // ICMS
+                        oExcel:SetFormula(nRow, 17, "=SUBTOTAL(9,Q3:Q"+AllTrim(cValToChar(nRowTotal))+")" ) // CTE
+                        oExcel:SetFormula(nRow, 18, "=SUBTOTAL(9,R3:R"+AllTrim(cValToChar(nRowTotal))+")" ) // COMPLEMENTO
+                        
+                        nRow += 2
+                        nCol := 1
+                        oExcel:MergeCells(nRow, 1, nRow, 2)
+                        oExcel:SetFontConfig(jFontHeader)
+                        oExcel:SetBorderConfig(jBorderLeft)
+                        oExcel:SetCellsFormatConfig(jFormatGD)
+                        oExcel:SetValue(nRow, nCol  , ALLTRIM(aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "TRANSPORTADORA"})][2] + " " + aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "ZFF_ORIGEM"})][2]))
+                        oExcel:SetBorderConfig(jBorderRight)
+                        oExcel:SetValue(nRow, nCol+1, ALLTRIM(aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "TRANSPORTADORA"})][2] + " " + aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "ZFF_ORIGEM"})][2]))
+                        
+                        nBakRow := nRow += 1
+                        oExcel:SetFontConfig(jFontText)
+                        oExcel:SetCellsFormatConfig(JFLeft)
+                        oExcel:SetBorderConfig(jBorderLeft)
+                        oExcel:SetValue(nRow  , nCol, "Valor dos CTE")
+                        oExcel:SetValue(++nRow, nCol, "Valor a Compensar")
+                        oExcel:SetValue(++nRow, nCol, "Total a Receber")
+                        oExcel:SetValue(++nRow, nCol, "Lavagem Carreta")
+                        oExcel:SetValue(++nRow, nCol, "Abastecimento Better")
+                        oExcel:SetValue(++nRow, nCol, "Abastecimento V@")
+                        oExcel:SetValue(++nRow, nCol, "Ted")
+                        oExcel:SetValue(++nRow, nCol, "")
+                        
+                        nRow := nBakRow
+                        nCol := 2
+                        oExcel:SetCellsFormatConfig(jFMoeda)
+                        oExcel:SetBorderConfig(jBorderRight)
+                        oExcel:SetFormula(nRow,   nCol, "=SUBTOTAL(9,K3:M"+AllTrim(cValToChar(nRowTotal))+",N3:N"+AllTrim(cValToChar(nRowTotal))+")")
+                        oExcel:SetFormula(++nRow, nCol, "=SUBTOTAL(9,N3:N"+AllTrim(cValToChar(nRowTotal))+")")
+                        oExcel:SetFormula(++nRow, nCol, "=SUBTOTAL(9,K3:M"+AllTrim(cValToChar(nRowTotal))+")")
+                        oExcel:SetValue(++nRow, nCol, 0)
+                        oExcel:SetValue(++nRow, nCol, 0)
+                        oExcel:SetValue(++nRow, nCol, 0)
+                        oExcel:SetFormula(++nRow, nCol, "=B"+AllTrim(cValToChar(nRow-4))+"-(B"+AllTrim(cValToChar(nRow-1))+"+B"+AllTrim(cValToChar(nRow-2))+"+B"+AllTrim(cValToChar(nRow-3))+")")
+                        oExcel:SetValue(++nRow, nCol, "")
+                        
+                        nBakRow := nRow += 1
+                        nCol := 1
+                        oExcel:SetCellsFormatConfig(JFLeft)
+                        oExcel:SetBorderConfig(jBorderLeft)
+                        oExcel:SetValue(nRow  , nCol, "Banco")
+                        oExcel:SetValue(++nRow  , nCol, "CNPJ")
+                        oExcel:SetValue(++nRow  , nCol, "AGÊNCIA")
+                        oExcel:SetValue(++nRow  , nCol, "CONTA")
+                        oExcel:SetBorderConfig(jBottomLeft)
+                        oExcel:SetValue(++nRow  , nCol, "PIX")
+
+                        nRow := nBakRow
+                        nCol := 2
+                        oExcel:SetCellsFormatConfig(JFRight)
+
+                        IF SA2->(DBSEEK(FwXFilial("SA2")+aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "ZFF_ORIGEM"})][2]  + aDados[nI][2][1][aScan(aDados[nI][2][1], {|x| Upper(x[1]) == "ZFF_RLOJA"})][2]))
+                            oExcel:SetCellsFormatConfig(JFRight)
+                            oExcel:SetBorderConfig(jBorderRight)
+                            oExcel:SetValue(nRow    , nCol, ALLTRIM(SA2->A2_BANCO))
+                            oExcel:SetValue(++nRow  , nCol, iif( Len( ALLTRIM(SA2->A2_CGC))==11 ,Alltrim(Transform(SA2->A2_CGC, "@R 999.999.999-99")),Alltrim(Transform(SA2->A2_CGC, "@R 99.999.999/9999-99"))))
+                            oExcel:SetValue(++nRow  , nCol, ALLTRIM(SA2->A2_AGENCIA)+ IIF(!EMPTY(ALLTRIM(SA2->A2_DVAGE)),"-"+ALLTRIM(SA2->A2_DVAGE),""))
+                            oExcel:SetValue(++nRow  , nCol, ALLTRIM(SA2->A2_NUMCON)+ IIF(!EMPTY(ALLTRIM(SA2->A2_DVCTA)),"-"+ALLTRIM(SA2->A2_DVCTA),""))
+                            cQry := " SELECT * " + CRLF
+                            cQry += " FROM "+RetSqlName("F72")+"" + CRLF
+                            cQry += " WHERE F72_COD = '"+SA2->A2_COD+"'" + CRLF
+                            cQry += " AND F72_LOJA = '"+SA2->A2_LOJA+"'" + CRLF
+                            cQry += " AND F72_ACTIVE = '1' " + CRLF
+                            cQry += " AND D_E_L_E_T_ = ''" + CRLF
+
+                            oExcel:SetBorderConfig(jBottomRight)
+                            MpSysOpenQuery(cQry, cAlias)
+                            IF !(cAlias)->(EOF())
+                                if (cAlias)->F72_TPCHV = '01'
+                                    oExcel:SetValue(++nRow  , nCol,  Alltrim(Transform((cAlias)->F72_CHVPIX, "@R (99) 9 9999-9999")))
+                                elseif (cAlias)->F72_TPCHV = '03'
+                                    if Len(AllTrim((cAlias)->F72_CHVPIX)) == 11
+                                        oExcel:SetValue(++nRow  , nCol,  Alltrim(Transform((cAlias)->F72_CHVPIX, "@R 999.999.999-99")))
+                                    else
+                                        oExcel:SetValue(++nRow  , nCol,  Alltrim(Transform((cAlias)->F72_CHVPIX, "@R 99.999.999/9999-99")))
+                                    EndIf 
+                                else 
+                                    oExcel:SetValue(++nRow  , nCol,  Alltrim((cAlias)->F72_CHVPIX))
+                                Endif
+                            else 
+                                oExcel:SetValue(++nRow  , nCol, "")
+                            EndIf
+                            
+                            (cAlias)->(DBCLOSEAREA())
+                        EndIf
+                        
+                    Next nI
+                    
+                    IF __oQry <> NIL
+                        __oQry:Destroy()
+                        __oQry := Nil
+				    ENDIF 
+
+                    SA2->(DBCLOSEAREA())
+
+                    lRet := oExcel:toXlsx() 
+
+                    nRet := ShellExecute("open", SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx", "", "", 1)
+     
+                    //Se houver algum erro
+                    If nRet <= 32
+                        MsgStop("Não foi possível abrir o arquivo "+SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx"+ "!", "Atenção")
+                    EndIf 
+
+                    oExcel:DeActivate()
+                else    // NAO SEPARAR TRANSPORTADORAS
+                    oExcel := FwPrinterXlsx():New()
+                
+                    oExcel:Activate(cArquivo)
+                    oExcel:AddSheet("ABA01")
+
+                    nRow := 1
+                    nCol := 1
+                    
+                    oExcel:SetCellsFormatConfig(jFormatTit)
+                    oExcel:SetFontConfig(jFontTitulo)
+                    oExcel:MergeCells(nRow, nCol, nRow, Len(aHeaderRel))
+                    oExcel:SetBorderConfig(jNoBorder)
+
+                    if Mes(mV_PAR01) != Mes(mV_PAR02)
+                        if Ano(mV_PAR01) != Ano(mV_PAR02)
+                            cNameRot := "FECHAMENTO FRETES " + " - " + dToC(mV_PAR01) + " - " +dToC(mV_PAR02)
+                        else
+                            cNameRot := "FECHAMENTO FRETES " + " - " + SubStr((dToC(mV_PAR01)),1,5) + " - " + SubStr((dToC(mV_PAR02)),1,5) + " (" +AllTrim(Str(Ano(mV_PAR02))) +")"
+                        endif
+                    Else
+                        cNameRot := "FECHAMENTO FRETES " + " - " + SubStr((dToC(mV_PAR01)),1,2) + " - " + SubStr((dToC(mV_PAR02)),1,2) + " / " +  Mes(mV_PAR01) + "-" + AllTrim(Str(Ano(mV_PAR02)))
+                    Endif
+                    
+                    oExcel:SetText(nRow, nCol, cNameRot)
+
+                    oExcel:SetCellsFormatConfig(jFormatHead)
+                    oExcel:SetFontConfig(jFontHeader)
+                    nRow += 1
+                    nCol := 1
+                    //Printando Cabeçalho
+                    For nX := nCol to Len(aHeaderRel)
+                        oExcel:SetValue(nRow, nX, aHeaderRel[nX])
+                    Next nX
+
+                    cQry := " SELECT ZFI_FILDOC " + CRLF
+                    cQry += "		,SUBSTRING(ZFI_DOC, PATINDEX('%[^0]%', ZFI_DOC), LEN(ZFI_DOC)) + '-' + SUBSTRING(ZFI_SERIE, PATINDEX('%[^0]%', ZFI_SERIE), LEN(ZFI_SERIE)) AS ZFI_DOC " + CRLF
+                    cQry += "		,ZFI_VALOR  " + CRLF
+                    cQry += " FROM "+RetSqlName("ZFI")+"  " + CRLF
+                    cQry += " WHERE ZFI_CODIGO = ? " + CRLF
+                    cQry += " AND ZFI_FILIAL = ? " + CRLF
+                    cQry += " AND ZFI_PLACA = ? " + CRLF
+                    cQry += " AND D_E_L_E_T_ = '' " + CRLF
+
+	                __oQry := FwExecStatement():New(cQry)
+
+                    nTamTot := Len(aDados)
+                    For nI := 1 to nTamTot
+
+                        nRow += 1
+                        nCol := 1
+
+                        oExcel:SetFontConfig(jFontText)
+                        oExcel:SetCellsFormatConfig(JFLeft)
+                        oExcel:SetBorderConfig(jNoBorder)
+
+                        oExcel:SetValue(nRow, nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "TRANSPORTADORA"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ENDFORN"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "FORNECEDOR"})][2] )
+                        
+                        oExcel:SetCellsFormatConfig(jFData)
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_DATA"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_DTDESE"})][2] )
+                        
+                        oExcel:SetCellsFormatConfig(JFLeft)
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_PLCVL"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_NUMMIN"})][2] )
+
+                        oExcel:SetCellsFormatConfig(jFNum)
+                        oExcel:SetFontConfig(jFontText)
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_QTDE"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_KM"})][2] )
+
+                        oExcel:SetCellsFormatConfig(jFMoeda)
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_VLKM"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_VFRETE"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_ADICIO"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_PEDAGI"})][2] )
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_ICMSF"})][2] )
+                        
+                        __oQry:SetString(1,aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_CODIGO"})][2])
+                        __oQry:SetString(2,aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_FILIAL"})][2])
+                        __oQry:SetString(3,aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_PLCVL"})][2])
+                        
+                        cAlias1 := __oQry:OpenAlias()
+                        cDoc    := ""
+                        cFilDoc := ""
+                        nValor  := 0
+                        nReg    := 1
+                        nTotal  := 0
+
+                        (cAlias1)->(DbEval({|| nTotal++ }))
+                        (cAlias1)->(DbGoTop())
+
+                        while !(cAlias1)->(EOF())
+
+                            cFilDoc += SubStr((cAlias1)->ZFI_FILDOC,6,2) + iif(nReg < nTotal," / ","")
+                            cDoc    += Alltrim((cAlias1)->ZFI_DOC) + iif(nReg < nTotal," / ","")
+                            nValor  += (cAlias1)->ZFI_VALOR
+                            nReg += 1
+                            (cAlias1)->(DBSKIP())
+                        EndDo
+
+                        (cAlias1)->(dbCloseArea())
+
+                        oExcel:SetCellsFormatConfig(JFLeft)
+                        oExcel:SetValue(nRow, ++nCol, cFilDoc )
+                        oExcel:SetValue(nRow, ++nCol, cDoc )
+                        oExcel:SetCellsFormatConfig(jFMoeda)
+                        oExcel:SetValue(nRow, ++nCol, nValor )
+
+                        oExcel:SetValue(nRow, ++nCol, aDados[nI][aScan(aDados[1], {|x| Upper(x[1]) == "ZFF_VCOMP"})][2] )
+
+                    Next nI
+
+                    IF __oQry <> NIL
+                        __oQry:Destroy()
+                        __oQry := Nil
+				    ENDIF
+
+                    oExcel:ApplyAutoFilter(2,1,nRow,Len(aHeaderRel))
+                    oExcel:SetCellsFormatConfig(jFormatTot)
+                    nRow += 1
+                    oExcel:MergeCells(nRow, 11, nRow, 13)
+                    oExcel:SetFormula(nRow, 11, "=SUBTOTAL(9,K3:M"+AllTrim(cValToChar(nRow-1))+")" ) // Frete + Pedagio 
+                    oExcel:SetFormula(nRow, 14, "=SUBTOTAL(9,N3:N"+AllTrim(cValToChar(nRow-1))+")" ) // ICMS
+                    oExcel:SetFormula(nRow, 17, "=SUBTOTAL(9,Q3:Q"+AllTrim(cValToChar(nRow-1))+")" ) // CTE
+                    oExcel:SetFormula(nRow, 18, "=SUBTOTAL(9,R3:R"+AllTrim(cValToChar(nRow-1))+")" ) // COMPLEMENTO
+
+                    lRet := oExcel:toXlsx()
+
+                    nRet := ShellExecute("open", SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx", "", "", 1)
+     
+                    //Se houver algum erro
+                    If nRet <= 32
+                        MsgStop("Não foi possível abrir o arquivo "+SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx"+ "!", "Atenção")
+                    EndIf 
+
+                    oExcel:DeActivate()
+                EndIf
+            else 
+                MsgAlert("Não há dados para os parametros informados!")
+            EndIf
+        //Endif
+        (_cAliasG)->(DbCloseArea())
+    Endif
+
+    If lower(cUserName) $ 'bernardo,ioliveira,atoshio,admin,administrador'
+        Alert('Tempo de processamento: ' + ElapTime( cTimeINI, Time() ) )
+    EndIf
+    
+    RestArea(aArea)
+    
+    ConOut('Activate: ' + Time())
+Return 
+
+Static Function LoadQuery(_cAlias)
+    Local cQry      := ""
+    Local cTransp   := ''
+    Local nPosD     := 0
+    Local aDados    := {}
+
+    cQry := "select	ZFF.ZFF_FILIAL " + CRLF
+    cQry += " 	,	ZFF.ZFF_CODIGO " + CRLF
+    cQry += " 	,	ZFF.ZFF_PLCVL		            --Placa Cavalo " + CRLF
+    cQry += " 	,	ZFF.ZFF_PLCC1		            --Placa Carreta 1 " + CRLF
+    cQry += " 	,	ZFF.ZFF_PLCC2		            --Placa Carreta 2 " + CRLF
+    cQry += " 	,	ZFF.ZFF_NUMMIN		            --Número da Minuta " + CRLF
+    cQry += " 	,	ZFF.ZFF_MOTOR		            --Motorista " + CRLF
+    cQry += " 	,	DA4.DA4_NOME		            --Nome do Motorista " + CRLF
+    cQry += " 	,	ZFF.ZFF_ORIGEM		            --Transportadora " + CRLF
+    cQry += " 	,	ZFF.ZFF_RLOJA		            --Loja da Transportadora " + CRLF
+    cQry += " 	,	A22.A2_NOME	AS TRANSPORTADORA 	--Nome do Destinatário " + CRLF
+    cQry += " 	,	ZFF.ZFF_FORNEC		            --Fornecedor " + CRLF
+    cQry += " 	,	ZFF.ZFF_FLOJA		            --Loja do Fornecedor " + CRLF
+    cQry += " 	,	A21.A2_NOME AS FORNECEDOR		--Nome do Fornecedor " + CRLF
+    cQry += "   ,	TRIM(A21.A2_END) + ' - ' + TRIM(A21.A2_MUN) + ' - ' + TRIM(A21.A2_EST) ENDFORN -- Endereço do Fornecedor " + CRLF 
+    cQry += " 	,	ZFF.ZFF_DESTIN		            --Destinatário " + CRLF
+    cQry += " 	,	ZFF.ZFF_DLOJA		            --Loja do Destinatário " + CRLF
+    cQry += " 	,	A1.A1_NOME AS DESTINATARIO      --Nome do Destinatário " + CRLF
+    cQry += " 	,	ZFF.ZFF_DATA		            --Data do Embarque " + CRLF
+    cQry += " 	,	ZFF.ZFF_HREMB		            --Hora do Embarque " + CRLF
+    cQry += " 	,	ZFF.ZFF_DTDESE		            --Data do Desembarque " + CRLF
+    cQry += " 	,	ZFF.ZFF_HRDESE		            --Hora do Desembarque " + CRLF
+    cQry += " 	,	ZFF.ZFF_QTDE		            --Quantidade de Animais " + CRLF
+    cQry += " 	,	ZFF.ZFF_MUN			            --Municipio de Partida " + CRLF
+    cQry += " 	,	C2.CC2_MUN			             " + CRLF
+    cQry += " 	,   ZFF.ZFF_KM			            --Total de KMs " + CRLF
+    cQry += " 	,	ZFF.ZFF_PEDAGI		            --Pedagio " + CRLF
+    cQry += " 	,	ZFF.ZFF_VLKM		            --Valor do KM " + CRLF
+    cQry += " 	,	ZFF.ZFF_VCOMP		            --Complemento " + CRLF
+    cQry += " 	,	ZFF.ZFF_ICMSF		            --ICMS " + CRLF
+    cQry += " 	,	ZFF.ZFF_VFRETE		            --Valor do Frete " + CRLF
+    //cQry += "   ,	SUBSTRING(ZFI.ZFI_DOC, PATINDEX('%[^0]%', ZFI.ZFI_DOC), LEN(ZFI.ZFI_DOC)) AS ZFI_DOC		--DOC CTE  " + CRLF 
+	//cQry += "   ,	SUBSTRING(ZFI.ZFI_SERIE, PATINDEX('%[^0]%', ZFI.ZFI_SERIE), LEN(ZFI.ZFI_SERIE)) AS ZFI_SERIE--SERIE CTE " + CRLF 
+    //cQry += " 	,	SF1.F1_VALBRUT		            --Valor CTE " + CRLF
+    cQry += " 	,	ZFF.ZFF_ADICIO		            --Valor Adicional " + CRLF
+    //cQry += " 	,	ZFI.ZFI_FILDOC		            --FILIAL DOC " + CRLF
+    cQry += " 	,	ZFF.R_E_C_N_O_		            --RECNO ZFF " + CRLF
+    cQry += " FROM "+RetSqlName("ZFF")+" ZFF " + CRLF  
+    cQry += "  LEFT JOIN "+RetSqlName("DA4")+" DA4 ON ZFF.ZFF_MOTOR = DA4.DA4_COD " + CRLF
+    cQry += " AND DA4.D_E_L_E_T_ = '' " + CRLF
+    cQry += "  LEFT JOIN "+RetSqlName("SA2")+" A21 ON A21.A2_COD = ZFF.ZFF_FORNEC " + CRLF
+    cQry += " AND A21.A2_LOJA = ZFF.ZFF_FLOJA " + CRLF
+    cQry += " AND A21.D_E_L_E_T_ = '' " + CRLF
+    cQry += "  LEFT JOIN "+RetSqlName("SA2")+" A22 ON A22.A2_COD = ZFF.ZFF_ORIGEM " + CRLF
+    cQry += " AND A22.A2_LOJA = ZFF.ZFF_RLOJA " + CRLF
+    cQry += " AND A22.D_E_L_E_T_ = '' " + CRLF
+    cQry += "  LEFT JOIN "+RetSqlName("SA1")+" A1 ON A1.A1_COD = ZFF.ZFF_DESTIN " + CRLF
+    cQry += " AND A1.A1_LOJA = ZFF.ZFF_DLOJA " + CRLF
+    cQry += " AND A1.D_E_L_E_T_ = '' " + CRLF
+    cQry += "  LEFT JOIN "+RetSqlName("CC2")+" C2 ON C2.CC2_CODMUN = ZFF.ZFF_MUN " + CRLF
+    cQry += " AND C2.CC2_EST = ZFF.ZFF_EST " + CRLF
+    cQry += " AND C2.D_E_L_E_T_ = '' " + CRLF
+    //cQry += "  LEFT JOIN "+RetSqlName("ZFI")+" ZFI ON ZFI.ZFI_FILIAL = ZFF.ZFF_FILIAL " + CRLF
+    //cQry += " AND ZFI.ZFI_CODIGO = ZFF.ZFF_CODIGO " + CRLF
+    //cQry += "  AND ZFI.ZFI_PLACA = ZFF.ZFF_PLCVL " + CRLF
+    //cQry += " AND ZFI.D_E_L_E_T_ = '' " + CRLF
+    //cQry += "  LEFT JOIN "+RetSqlName("SF1")+" SF1 ON ZFI.ZFI_FILDOC = SF1.F1_FILIAL 
+    //cQry += " AND SF1.F1_FORNECE = ZFI.ZFI_FORNEC " + CRLF
+    //cQry += " AND SF1.F1_LOJA = ZFI.ZFI_LOJA " + CRLF
+    //cQry += " AND SF1.F1_DOC = ZFI.ZFI_DOC " + CRLF
+    //cQry += " AND SF1.D_E_L_E_T_ = '' " + CRLF
+    cQry += " WHERE ZFF.ZFF_DTDESE BETWEEN '"+dToS(mv_par01)+"' AND '"+dToS(mv_par02)+"'" + CRLF 
+    if !EMPTY( mv_par03 ) .and. !EMPTY( mv_par04 )
+        cQry += " AND ZFF.ZFF_ORIGEM BETWEEN '"+mv_par03+"' AND '"+mv_par04+"' " + CRLF 
+    endif
+    if !EMPTY( mv_par05 ) .and. !EMPTY( mv_par06 )
+        cQry += " AND ZFF.ZFF_FORNEC BETWEEN '"+mv_par05+"' AND '"+mv_par06+"'" + CRLF 
+    endif
+    cQry += " AND ZFF.D_E_L_E_T_ = '' " + CRLF
+    cQry += " ORDER BY ZFF_ORIGEM, ZFF_CODIGO " + CRLF
+    
+    memowrite("C:\TOTVS_RELATORIOS\VACOMR13.sql", cQry)
+    
+    MpSysOpenQuery(cQry, _cAlias)
+    
+    if MV_PAR07 == 2
+        While !(_cAliasG)->(EOF())
+            if cTransp != (_cAliasG)->ZFF_ORIGEM
+                nPosD += 1
+                cTransp := (_cAliasG)->ZFF_ORIGEM
+                aAdd(aDados,{{AllTrim((_cAliasG)->ZFF_ORIGEM)},;
+                            {   {{"TRANSPORTADORA"   ,AllTrim((_cAliasG)->Transportadora)},;
+                                {"ENDFORN"          ,AllTrim((_cAliasG)->ENDFORN)},;
+                                {"ZFF_CODIGO"       ,AllTrim((_cAliasG)->ZFF_CODIGO)},;
+                                {"FORNECEDOR"       ,AllTrim((_cAliasG)->FORNECEDOR)},;
+                                {"ZFF_ORIGEM"       ,AllTrim((_cAliasG)->ZFF_ORIGEM)},;
+                                {"ZFF_RLOJA"        ,AllTrim((_cAliasG)->ZFF_RLOJA)},;
+                                {"ZFF_FORNEC"       ,AllTrim((_cAliasG)->ZFF_FORNEC)},;
+                                {"FORNECEDOR"       ,AllTrim((_cAliasG)->FORNECEDOR)},;
+                                {"ZFF_FLOJA"        ,AllTrim((_cAliasG)->ZFF_FLOJA)},;
+                                {"ZFF_DESTIN"       ,AllTrim((_cAliasG)->ZFF_DESTIN)},;
+                                {"ZFF_DLOJA"        ,AllTrim((_cAliasG)->ZFF_DLOJA)},;
+                                {"DESTINATARIO"     ,AllTrim((_cAliasG)->DESTINATARIO)},;
+                                {"ZFF_DATA"         ,sToD((_cAliasG)->ZFF_DATA)},;
+                                {"ZFF_DTDESE"       ,sToD((_cAliasG)->ZFF_DTDESE)},;
+                                {"ZFF_HREMB"        ,(_cAliasG)->ZFF_HREMB},;
+                                {"ZFF_HRDESE"       ,(_cAliasG)->ZFF_HRDESE},;
+                                {"ZFF_MUN"          ,AllTrim((_cAliasG)->ZFF_MUN)},;
+                                {"CC2_MUN"          ,AllTrim((_cAliasG)->CC2_MUN)},;
+                                {"ZFF_PLCVL"        ,AllTrim((_cAliasG)->ZFF_PLCVL)},;
+                                {"ZFF_PLCC1"        ,AllTrim((_cAliasG)->ZFF_PLCC1)},;
+                                {"ZFF_PLCC2"        ,AllTrim((_cAliasG)->ZFF_PLCC2)},;
+                                {"ZFF_NUMMIN"       ,AllTrim((_cAliasG)->ZFF_NUMMIN)},;
+                                {"ZFF_QTDE"         ,(_cAliasG)->ZFF_QTDE},;
+                                {"ZFF_KM"           ,(_cAliasG)->ZFF_KM},;
+                                {"ZFF_VLKM"         ,(_cAliasG)->ZFF_VLKM},;
+                                {"ZFF_VFRETE"       ,(_cAliasG)->ZFF_VFRETE},;
+                                {"ZFF_ADICIO"       ,(_cAliasG)->ZFF_ADICIO},;
+                                {"ZFF_PEDAGI"       ,(_cAliasG)->ZFF_PEDAGI},;
+                                {"ZFF_ICMSF"        ,(_cAliasG)->ZFF_ICMSF},;
+                                {"ZFF_VCOMP"        ,(_cAliasG)->ZFF_VCOMP},;
+                                {"ZFF_FILIAL"        ,(_cAliasG)->ZFF_FILIAL},;
+                                {"DA4_NOME"         ,AllTrim((_cAliasG)->DA4_NOME)}}}})
+            else 
+                aAdd(aDados[nPosD][2], {   {"TRANSPORTADORA"   ,AllTrim((_cAliasG)->Transportadora)},;
+                                            {"ENDFORN"          ,AllTrim((_cAliasG)->ENDFORN)},;
+                                            {"ZFF_CODIGO"       ,AllTrim((_cAliasG)->ZFF_CODIGO)},;
+                                            {"FORNECEDOR"       ,AllTrim((_cAliasG)->FORNECEDOR)},;
+                                            {"ZFF_ORIGEM"       ,AllTrim((_cAliasG)->ZFF_ORIGEM)},;
+                                            {"ZFF_RLOJA"        ,AllTrim((_cAliasG)->ZFF_RLOJA)},;
+                                            {"ZFF_FORNEC"       ,AllTrim((_cAliasG)->ZFF_FORNEC)},;
+                                            {"FORNECEDOR"       ,AllTrim((_cAliasG)->FORNECEDOR)},;
+                                            {"ZFF_FLOJA"        ,AllTrim((_cAliasG)->ZFF_FLOJA)},;
+                                            {"ZFF_DESTIN"       ,AllTrim((_cAliasG)->ZFF_DESTIN)},;
+                                            {"ZFF_DLOJA"        ,AllTrim((_cAliasG)->ZFF_DLOJA)},;
+                                            {"DESTINATARIO"     ,AllTrim((_cAliasG)->DESTINATARIO)},;
+                                            {"ZFF_DATA"         ,sToD((_cAliasG)->ZFF_DATA)},;
+                                            {"ZFF_DTDESE"       ,sToD((_cAliasG)->ZFF_DTDESE)},;
+                                            {"ZFF_HREMB"        ,(_cAliasG)->ZFF_HREMB},;
+                                            {"ZFF_HRDESE"       ,(_cAliasG)->ZFF_HRDESE},;
+                                            {"ZFF_MUN"          ,AllTrim((_cAliasG)->ZFF_MUN)},;
+                                            {"CC2_MUN"          ,AllTrim((_cAliasG)->CC2_MUN)},;
+                                            {"ZFF_PLCVL"        ,AllTrim((_cAliasG)->ZFF_PLCVL)},;
+                                            {"ZFF_PLCC1"        ,AllTrim((_cAliasG)->ZFF_PLCC1)},;
+                                            {"ZFF_PLCC2"        ,AllTrim((_cAliasG)->ZFF_PLCC2)},;
+                                            {"ZFF_NUMMIN"       ,AllTrim((_cAliasG)->ZFF_NUMMIN)},;
+                                            {"ZFF_QTDE"         ,(_cAliasG)->ZFF_QTDE},;
+                                            {"ZFF_KM"           ,(_cAliasG)->ZFF_KM},;
+                                            {"ZFF_VLKM"         ,(_cAliasG)->ZFF_VLKM},;
+                                            {"ZFF_VFRETE"       ,(_cAliasG)->ZFF_VFRETE},;
+                                            {"ZFF_ADICIO"       ,(_cAliasG)->ZFF_ADICIO},;
+                                            {"ZFF_PEDAGI"       ,(_cAliasG)->ZFF_PEDAGI},;
+                                            {"ZFF_ICMSF"        ,(_cAliasG)->ZFF_ICMSF},;
+                                            {"ZFF_VCOMP"        ,(_cAliasG)->ZFF_VCOMP},;
+                                            {"ZFF_FILIAL"        ,(_cAliasG)->ZFF_FILIAL},;
+                                            {"DA4_NOME"         ,AllTrim((_cAliasG)->DA4_NOME)}})
+            endif 
+            (_cAliasG)->(DBSKIP(  ))
+        ENDDO
+    else 
+        While !(_cAliasG)->(EOF())
+            aAdd(aDados,{   {"TRANSPORTADORA"   ,AllTrim((_cAliasG)->Transportadora)},;
+                            {"ENDFORN"          ,AllTrim((_cAliasG)->ENDFORN)},;
+                            {"ZFF_CODIGO"       ,AllTrim((_cAliasG)->ZFF_CODIGO)},;
+                            {"FORNECEDOR"       ,AllTrim((_cAliasG)->FORNECEDOR)},;
+                            {"ZFF_ORIGEM"       ,AllTrim((_cAliasG)->ZFF_ORIGEM)},;
+                            {"ZFF_RLOJA"        ,AllTrim((_cAliasG)->ZFF_RLOJA)},;
+                            {"ZFF_FORNEC"       ,AllTrim((_cAliasG)->ZFF_FORNEC)},;
+                            {"FORNECEDOR"       ,AllTrim((_cAliasG)->FORNECEDOR)},;
+                            {"ZFF_FLOJA"        ,AllTrim((_cAliasG)->ZFF_FLOJA)},;
+                            {"ZFF_DESTIN"       ,AllTrim((_cAliasG)->ZFF_DESTIN)},;
+                            {"ZFF_DLOJA"        ,AllTrim((_cAliasG)->ZFF_DLOJA)},;
+                            {"DESTINATARIO"     ,AllTrim((_cAliasG)->DESTINATARIO)},;
+                            {"ZFF_DATA"         ,sToD((_cAliasG)->ZFF_DATA)},;
+                            {"ZFF_DTDESE"       ,sToD((_cAliasG)->ZFF_DTDESE)},;
+                            {"ZFF_HREMB"        ,(_cAliasG)->ZFF_HREMB},;
+                            {"ZFF_HRDESE"       ,(_cAliasG)->ZFF_HRDESE},;
+                            {"ZFF_MUN"          ,AllTrim((_cAliasG)->ZFF_MUN)},;
+                            {"CC2_MUN"          ,AllTrim((_cAliasG)->CC2_MUN)},;
+                            {"ZFF_PLCVL"        ,AllTrim((_cAliasG)->ZFF_PLCVL)},;
+                            {"ZFF_PLCC1"        ,AllTrim((_cAliasG)->ZFF_PLCC1)},;
+                            {"ZFF_PLCC2"        ,AllTrim((_cAliasG)->ZFF_PLCC2)},;
+                            {"ZFF_NUMMIN"       ,AllTrim((_cAliasG)->ZFF_NUMMIN)},;
+                            {"ZFF_QTDE"         ,(_cAliasG)->ZFF_QTDE},;
+                            {"ZFF_KM"           ,(_cAliasG)->ZFF_KM},;
+                            {"ZFF_VLKM"         ,(_cAliasG)->ZFF_VLKM},;
+                            {"ZFF_VFRETE"       ,(_cAliasG)->ZFF_VFRETE},;
+                            {"ZFF_ADICIO"       ,(_cAliasG)->ZFF_ADICIO},;
+                            {"ZFF_PEDAGI"       ,(_cAliasG)->ZFF_PEDAGI},;
+                            {"ZFF_ICMSF"        ,(_cAliasG)->ZFF_ICMSF},;
+                            {"ZFF_VCOMP"        ,(_cAliasG)->ZFF_VCOMP},;
+                            {"ZFF_FILIAL"        ,(_cAliasG)->ZFF_FILIAL},;
+                            {"DA4_NOME"         ,AllTrim((_cAliasG)->DA4_NOME)}})
+
+            (_cAliasG)->(DBSKIP())
+        End
+    endif 
+Return aDados
+
+Static Function DefinirFormatacao()
+    Local cCVerde       := '00A85A'
+    Local cCCinza       := "A0A0A0"
+    Local cCAmarelo     := "FFFF00"
+
+    jFontHeader := FwXlsxPrinterConfig():MakeFont()
+    jFontHeader['font'] := FwPrinterFont():Calibri()
+    jFontHeader['size'] := 12
+    jFontHeader['bold'] := .T.
+
+    jFontTitulo := FwXlsxPrinterConfig():MakeFont()
+    jFontTitulo['font'] := FwPrinterFont():Calibri()
+    jFontTitulo['size'] := 14
+    jFontTitulo['bold'] := .T.
+    jFontTitulo['underline'] := .T.
+
+    jFontText := FwXlsxPrinterConfig():MakeFont()
+    jFontText['font'] := FwPrinterFont():Calibri()
+    jFontText['size'] := 12
+    jFontText['italic'] := .F.
+
+    JFLeft := FwXlsxPrinterConfig():MakeFormat()
+    JFLeft['hor_align']        := oCellHorAlign:Left()
+    JFLeft['vert_align']       := oCellVertAlign:Center()
+
+    JFRight := FwXlsxPrinterConfig():MakeFormat()
+    JFRight['hor_align']        := oCellHorAlign:RIGHT()
+    JFRight['vert_align']       := oCellVertAlign:Center()
+    
+    jFData := FwXlsxPrinterConfig():MakeFormat()
+    jFData['custom_format']    := "dd/mm/yyyy"
+    jFData['hor_align']        := oCellHorAlign:Left()
+    jFData['vert_align']       := oCellVertAlign:Center()
+
+    jFormatTit := FwXlsxPrinterConfig():MakeFormat()
+    jFormatTit['hor_align']         := oCellHorAlign:Center()
+    jFormatTit['vert_align']        := oCellVertAlign:Center()
+    jFormatTit['background_color']  := cCVerde
+
+    jFormatGD := FwXlsxPrinterConfig():MakeFormat()
+    jFormatGD['hor_align']         := oCellHorAlign:Center()
+    jFormatGD['vert_align']        := oCellVertAlign:Center()
+    jFormatGD['background_color']  := cCAmarelo
+    
+    jFormatTot := FwXlsxPrinterConfig():MakeFormat()
+    jFormatTot['custom_format']     := "\R$ ###,##0.00"
+    jFormatTot['hor_align']         := oCellHorAlign:Center()
+    jFormatTot['vert_align']        := oCellVertAlign:Center()
+    jFormatTot['background_color']  := cCCinza
+
+    jFormatHead := FwXlsxPrinterConfig():MakeFormat()
+    jFormatHead['hor_align']         := oCellHorAlign:LEFT()
+    jFormatHead['vert_align']        := oCellVertAlign:Center()
+    jFormatHead['background_color']  := "A0A0A0" //amarelo
+
+    jFMoeda := FwXlsxPrinterConfig():MakeFormat()
+    jFMoeda['custom_format']    := "\R$ ###,##0.00"
+    jFMoeda['hor_align']        := oCellHorAlign:RIGHT()
+    jFMoeda['vert_align']       := oCellVertAlign:Center()
+
+    jFNum := FwXlsxPrinterConfig():MakeFormat()
+    jFNum['hor_align']        := oCellHorAlign:Left()
+    jFNum['vert_align']       := oCellVertAlign:Center()
+
+    // Bordas para o header
+    jNoBorder := FwXlsxPrinterConfig():MakeBorder()
+    jNoBorder['top']    := .F.
+    jNoBorder['bottom'] := .F.
+    jNoBorder['left']   := .F.
+    jNoBorder['right']  := .F.
+    jNoBorder['border_color'] := "000000"
+    jNoBorder['style'] := FwXlsxBorderStyle():None()
+
+    jBHeaderLeft := FwXlsxPrinterConfig():MakeBorder()
+    jBHeaderLeft['top']    := .T.
+    jBHeaderLeft['bottom'] := .F.
+    jBHeaderLeft['left']   := .T.
+    jBHeaderLeft['right']  := .F.
+    jBHeaderLeft['border_color'] := "000000"
+    jBHeaderLeft['style'] := FwXlsxBorderStyle():Thick()
+
+    jBHeaderRight := FwXlsxPrinterConfig():MakeBorder()
+    jBHeaderRight['top']    := .T.
+    jBHeaderRight['bottom'] := .F.
+    jBHeaderRight['left']   := .F.
+    jBHeaderRight['right']  := .T.
+    jBHeaderRight['border_color'] := "000000"
+    jBHeaderRight['style'] := FwXlsxBorderStyle():Thick()
+    
+    jBottomLeft := FwXlsxPrinterConfig():MakeBorder()
+    jBottomLeft['top']    := .F.
+    jBottomLeft['bottom'] := .T.
+    jBottomLeft['left']   := .T.
+    jBottomLeft['right']  := .F.
+    jBottomLeft['border_color'] := "000000"
+    jBottomLeft['style'] := FwXlsxBorderStyle():Thick()
+
+    jBottomRight := FwXlsxPrinterConfig():MakeBorder()
+    jBottomRight['top']    := .F.
+    jBottomRight['bottom'] := .T.
+    jBottomRight['left']   := .F.
+    jBottomRight['right']  := .T.
+    jBottomRight['border_color'] := "000000"
+    jBottomRight['style'] := FwXlsxBorderStyle():Thick()
+
+    jBorderLeft := FwXlsxPrinterConfig():MakeBorder()
+    jBorderLeft['left'] := .T.
+    jBorderLeft['border_color'] := "000000"
+    jBorderLeft['style'] := FwXlsxBorderStyle():Thick()
+    
+    jBorderCenter := FwXlsxPrinterConfig():MakeBorder()
+    jBorderCenter['left'] := .T.
+    jBorderCenter['right'] := .T.
+    jBorderCenter['border_color'] := "000000"
+    jBorderCenter['style'] := FwXlsxBorderStyle():Thick()
+    
+    jBorderRight := FwXlsxPrinterConfig():MakeBorder()
+    jBorderRight['right'] := .T.
+    jBorderRight['border_color'] := "000000"
+    jBorderRight['style'] := FwXlsxBorderStyle():Thick()
+
+Return 
+
+/*--------------------------------------------------------------------------------,
+ | Principal: 					U_VACOMR13()             	            	      |
+ | Func:  GeraX1()  	            	          	            	              |
+ | Autor: Miguel Martins Bernardo Junior	            	          	          |
+ | Data:  11.03.2019	            	          	            	              |
+ | Desc:  Criação de planilha em excel. Define COLUNAS e imprime DADOS;           |
+ |         	            	            										  |
+ | Obs.:  -	            	            										  |
+ '--------------------------------------------------------------------------------*/
+Static Function GeraX1(cPerg)
+
+Local _aArea	:= GetArea()
+Local aRegs     := {}
+Local nX		:= 0
+Local nPergs	:= 0
+Local i, j
+
+//Conta quantas perguntas existem ualmente.
+DbSelectArea('SX1')
+DbSetOrder(1)
+SX1->(DbGoTop())
+If SX1->(DbSeek(cPerg))
+	While !SX1->(Eof()) .And. X1_GRUPO = cPerg
+		nPergs++
+		SX1->(DbSkip())
+	EndDo
+EndIf
+
+	aAdd(aRegs,{cPerg,"01", "Data de:               ", "", "", "MV_CH1", "D", 8, 0, 0                                    , "G", "", "MV_PAR01", "", "", "", ""      , "", "","","","","","","","","","","","","","","","","","","","","U","","","",""})
+	aAdd(aRegs,{cPerg,"02", "Data até:              ", "", "", "MV_CH2", "D", 8, 0, 0                                    , "G", "", "MV_PAR02", "", "", "", ""      , "", "","","","","","","","","","","","","","","","","","","","","U","","","",""})
+	aAdd(aRegs,{cPerg,"03", "Transportadora de:     ", "", "", "MV_CH3", "C", TAMSX3("A2_COD")[1], TAMSX3("A2_COD")[2], 0, "G", "", "MV_PAR03", "", "", "", ""      , "", "","","","","","","","","","","","","","","","","","","","SA2","U","","","",""})
+	aAdd(aRegs,{cPerg,"04", "Transportadora ate:    ", "", "", "MV_CH4", "C", TAMSX3("A2_COD")[1], TAMSX3("A2_COD")[2], 0, "G", "", "MV_PAR04", "", "", "", "ZZZZZZ", "", "","","","","","","","","","","","","","","","","","","","SA2","U","","","",""})
+	aAdd(aRegs,{cPerg,"05", "Fornecedor de:         ", "", "", "MV_CH5", "C", TAMSX3("A2_COD")[1], TAMSX3("A2_COD")[2], 0, "G", "", "MV_PAR05", "", "", "", ""      , "", "","","","","","","","","","","","","","","","","","","","SA2","U","","","",""})
+	aAdd(aRegs,{cPerg,"06", "Fornecedor ate:        ", "", "", "MV_CH6", "C", TAMSX3("A2_COD")[1], TAMSX3("A2_COD")[2], 0, "G", "", "MV_PAR06", "", "", "", "ZZZZZZ", "", "","","","","","","","","","","","","","","","","","","","SA2","U","","","",""})
+	aAdd(aRegs,{cPerg,"07", "Separa por Fornecedor? ", "", "", "MV_CH7", "C", 1,                 0                    , 0, "C", "", "MV_PAR07", "Não", "", ""       , "", "", "Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
+//aAdd(aRegs,{cPergBG,"04", "Exibe abates vinculados?" , "", "", "MV_CH4", "C", 1, 0, 1, "G", "", "MV_PAR04", "Não", "", "", "", "", "Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
+
+
+//Se quantidade de perguntas for diferente, apago todas
+SX1->(DbGoTop())
+If nPergs <> Len(aRegs)
+	For nX:=1 To nPergs
+		If SX1->(DbSeek(cPerg))
+			If RecLock('SX1',.F.)
+				SX1->(DbDelete())
+				SX1->(MsUnlock())
+			EndIf
+		EndIf
+	Next nX
+EndIf
+
+// gravação das perguntas na tabela SX1
+If nPergs <> Len(aRegs)
+	dbSelectArea("SX1")
+	dbSetOrder(1)
+	For i := 1 to Len(aRegs)
+		If !dbSeek(cPerg+aRegs[i,2])
+			RecLock("SX1",.T.)
+				For j := 1 to FCount()
+					If j <= Len(aRegs[i])
+						FieldPut(j,aRegs[i,j])
+					Endif
+				Next j
+			MsUnlock()
+		EndIf
+	Next i
+EndIf
+
+RestArea(_aArea)
+
+Return nil

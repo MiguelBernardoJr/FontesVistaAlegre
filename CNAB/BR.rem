@@ -1,0 +1,63 @@
+Ident. Registro00100100                                                           
+Ident. Fita Rem00200201                                                           
+Literal Remessa0030090'REMESSA'                                                   
+Cod. Servico   010011001                                                          
+Literal Servico0120260'COBRANCA'                                                  
+Codigo Empresa 02704605556863                                                     
+Nome da Empresa0470760SUBSTR(SM0->M0_NOMECOM,1,40)                                
+Numero do Banco0770790237                                                         
+Nome do Banco  0800940'BRADESCO'                                                  
+Data da Gravaca0951000GravaData(dDataBase,.f.)                                    
+branco         1011080SPACE(8)                                                    
+Ident. Sistema 1091100"MX"                                                        
+Nr. Remessa    1111170STRZERO(VAL(SEE->EE_ULTDSK),7)                              
+Branco         1183940SPACE(286)                                                  
+Nr. Sequencial 3954000Incrementa()-1                                              
+Ident. Registro00100101                                                           
+Agencia Debito 002006000000                                                       
+Dig Agen Deb   00700700                                                           
+Razao CC       008012000000                                                       
+Conta Corrente 01301900000000                                                     
+Dig CC         02002000                                                           
+Ident Emp Banc 0210370'00040338605219000'                                         
+Nº Cont Parti  0380620Space(25)                                                   
+Cod Banco Deb  0630650000                                                         
+Multa          0660660Iif(SE1->E1_MULTA>0,2,0)                                    
+Percen Multa   0670700IIF(SE1->E1_MULTA>0,SE1->E1_MULTA,0000)                     
+Ident Titu Banc0710810SE1->E1_NUMBOL                                              
+Dig Auto Banco 0820820SE1->E1_DVNSNUM                                             
+Desc Boni Dia  08309200000000000                                                  
+Cond Emis Papel09309302                                                           
+Iden Bole Deb A0940940SPACE(1)                                                    
+Ident Oper Banc0951040SPACE(10)                                                   
+Ident Rateio   1051050SPACE(1)                                                    
+End Avi Db Auto1061060                                                            
+Qtd Pagamentos 1071080                                                            
+Ocorrencia     1091100IIF(AllTrim(SE1->E1_OCORREN) == "",01,SE1->E1_OCORREN)      
+Nº Documento   1111200SE1->E1_NUM+AllTrim(SE1->E1_SERIE)+SE1->E1_PARCELA          
+Dt Vencimento  1211260GRAVADATA(SE1->E1_VENCTO,.F.)                               
+Valor Titulo   1271390STRZERO(INT(ROUND(SE1->E1_VALOR*100,2)),13)                 
+Banco Encarrega1401420000                                                         
+Agencia Deposit1431470000                                                         
+Especie de Titu148149099                                                          
+Identificacao  1501500'N'                                                         
+Dt Emissao     1511560GRAVADATA(SE1->E1_EMISSAO,.F.)                              
+1º Instrucao   1571580IIF(AllTrim(SE1->E1_INSTR1) == "",00,SE1->E1_INSTR1)        
+2º Instrucao   1591600IIF(AllTrim(SE1->E1_INSTR2) == "",00,SE1->E1_INSTR2)        
+Vlr Atraso     1611730Strzero(Int(SE1->E1_VALJUR*100),13)                         
+Dt Limite Desco1741790000000                                                      
+Vlr Desconto   18019200000000000000                                               
+Valor IOF      19320500000000000000                                               
+Vlr Abatimento 20621800000000000000                                               
+ident Tp Pessoa2192200IIF(SA1->A1_TIPO ="F",01,02)                                
+Nº Insc Pagador2212340U_CNABIG02()                                                
+Nome Pagador   2352740SUBSTR(ALLTRIM(SA1->A1_NOME),1,40)                          
+Endereco Comple2753140SUBSTR(ALLTRIM(SA1->A1_END),1,40)                           
+1a. mensagem   3153260SPACE(12)                                                   
+CEP            3273310SUBSTR(SA1->A1_CEP,1,5)                                     
+Sulfixo CEP    3323340SUBSTR(SA1->A1_CEP,6,3)                                     
+Benef / 2a Mens335394 U_CNABIG03()                                                
+Nº Sequencial  3954000Incrementa()                                                
+Ident.Registro 00100109                                                           
+branco         0023940                                                            
+Sequencial     3954000Incrementa()                                                
