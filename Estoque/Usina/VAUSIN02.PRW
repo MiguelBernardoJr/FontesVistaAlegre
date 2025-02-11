@@ -21,7 +21,7 @@ User Function VAUSIN02()
 
 	oBrowse := FWMBrowse():New()
 	oBrowse:SetAlias("ZAL")
-	oBrowse:SetOnlyFields({'ZAL_CODIGO','ZAL_HORA','ZAL_DATA','ZAL_TURNO','ZAL_TFERM','ZAL_TALCOL','ZAL_MATSEX','ZAL_PESOF'})
+	oBrowse:SetOnlyFields({'ZAL_CODIGO','ZAL_HORA','ZAL_DATA','ZAL_TURNO','ZAL_TFERM','ZAL_TALCOL','ZAL_MATSEX','ZAL_PESOL'})
 	oBrowse:SetFilterDefault("ZAL->ZAL_TIPO == '2'")
 	oBrowse:SetDescription(cTitulo)
 	oBrowse:Activate()
@@ -31,14 +31,13 @@ Return
 
 Static Function ModelDef()
 	Local oModel 		:= nil
-	Local oCab   		:= FWFormStruct(1, 'ZAL', {|cCampo| AllTrim(cCampo) $ "ZAL_CODIGO|ZAL_HORA|ZAL_TIPO|ZAL_DATA|ZAL_TURNO|ZAL_TFERM|ZAL_TALCOL|ZAL_MATSEX|ZAL_PESOF" })
+	Local oCab   		:= FWFormStruct(1, 'ZAL', {|cCampo| AllTrim(cCampo) $ "ZAL_CODIGO|ZAL_HORA|ZAL_TIPO|ZAL_DATA|ZAL_TURNO|ZAL_TFERM|ZAL_TALCOL|ZAL_MATSEX|ZAL_PESOL" })
 	Local aGatilhos 	:= {}
 	Local nI
 
 	oCab:SetProperty("ZAL_MATSEX", MODEL_FIELD_WHEN, {|| .F.})
 
-
-/*     aAdd(aGatilhos, FWStruTriggger( "ZAL_PESOF"	,"ZAL_MATSEX" ,"",.f.,"",,"100-M->ZAL_PESOF",NIL,"01"))
+	/*aAdd(aGatilhos, FWStruTriggger( "ZAL_PESOL"	,"ZAL_MATSEX" ,"",.f.,"",,"100-M->ZAL_PESOL",NIL,"01"))
 
 	For nI := 1 To Len(aGatilhos)
         oCab:AddTrigger(  aGatilhos[nI][01],; //Campo Origem
@@ -62,7 +61,7 @@ Return oModel
 
 Static Function ViewDef()
 	Local oModel     	:= FWLoadModel("VAUSIN02")
-	Local oCab   		:= FWFormStruct(2, 'ZAL', {|cCampo| AllTrim(cCampo) $ "ZAL_CODIGO|ZAL_HORA|ZAL_TIPO|ZAL_DATA|ZAL_TURNO|ZAL_TFERM|ZAL_TALCOL|ZAL_MATSEX|ZAL_PESOF" })
+	Local oCab   		:= FWFormStruct(2, 'ZAL', {|cCampo| AllTrim(cCampo) $ "ZAL_CODIGO|ZAL_HORA|ZAL_TIPO|ZAL_DATA|ZAL_TURNO|ZAL_TFERM|ZAL_TALCOL|ZAL_MATSEX|ZAL_PESOL" })
 	Local oView
 
 	oView := FWFormView():New()
