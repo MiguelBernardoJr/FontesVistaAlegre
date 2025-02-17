@@ -2930,7 +2930,7 @@ endIf
 	aAdd( aProd, {"B1_POSIPI"	, GetMV("JR_POSIPI",,"01022919"), nil })
 	aAdd( aProd, {"B1_ORIGEM"	, "0"				, nil })
 	aAdd( aProd, {"B1_X_TRATO"	, "2"				, nil })
-	aAdd( aProd, {"B1_X_PRDES"	, "1"				, nil })
+	aAdd( aProd, {"B1_X_PRDES"	, "E"				, nil })
 	aAdd( aProd, {"B1_PICM"		, 0					, nil })
 	aAdd( aProd, {"B1_IPI"		, 0					, nil })
 	aAdd( aProd, {"B1_CONTRAT"	, "N"				, nil })

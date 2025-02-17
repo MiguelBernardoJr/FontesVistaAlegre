@@ -8,6 +8,16 @@
 */
 User Function MT120LOK()
 Local lRet 		 := .T.
+//local nLen := 0
+//local cMsg := ""
+//local i    := 0
+//local nPosItem := aScan(aHeader, {|aCols| AllTrim(aCols[2]) == 'C7_ITEM'} )
+//local nPosProd := aScan(aHeader, {|aCols| AllTrim(aCols[2]) == 'C7_PRODUTO'} )
+//local nPosCC := aScan(aHeader, {|aCols| AllTrim(aCols[2]) == 'C7_CC'} )
+//local nPosIC := aScan(aHeader, {|aCols| AllTrim(aCols[2]) == 'C7_ITEMCTA'} )
+//local nPosOP := aScan(aHeader, {|aCols| AllTrim(aCols[2]) == 'C7_OP'} )
+////local nPosOS := aScan(aHeader, {|aCols| AllTrim(aCols[2]) == 'C7_ORDEM'} )
+//local nPosAP := aScan(aHeader, {|aCols| AllTrim(aCols[2]) == 'C7_XAPLICA'} )
 
 If !IsInCallStack( "U_VACOMM07") .AND.;
 	!IsInCallStack( "U_VACOMM11") .AND.;
@@ -17,6 +27,29 @@ If !IsInCallStack( "U_VACOMM07") .AND.;
 	If !(lRet := !Empty( CTPFRETE ))
 		Alert("O campo Tipo Frete na 3 ABA não foi informado. Este campo é obrigatorio.")
 	EndIf
+
+	//if lRet 
+	//	nLen := Len(aCols)
+	//	for i := 1 to nLen
+	//		if aCols[i][nPosAP] == 'D' .and. Empty(aCols[i][nPosCC])
+	//			cMsg += Iif(Empty(cMsg), "A(s) linha(s) abaixo precisa(m) de identificar o centro de custo para quem a solicitação foi feita." + CRLF, "") + aCols[i][nPosItem] + " - " + aCols[i][nPosProd] + CRLF
+	//		elseif aCols[i][nPosAP] == 'D' .and. Empty(aCols[i][nPosIC]) 
+	//			cMsg += Iif(Empty(cMsg), "A(s) linha(s) abaixo precisa(m) de identificar o item contabil para quem a solicitação foi feita." + CRLF, "") + aCols[i][nPosItem] + " - " + aCols[i][nPosProd] + CRLF
+	//			
+	//			if Empty(aCols[i][nPosOP])
+	//				cMsg += Iif(Empty(cMsg), "A(s) linha(s) abaixo precisa(m) de identificar a Ordem de Producao." + CRLF, "") + aCols[i][nPosItem] + " - " + aCols[i][nPosProd] + CRLF
+	//			endif
+	//		elseif aCols[i][nPosAP] == 'E'
+	//			aCols[i][nPosCC] := CriaVar("C1_CC", .f.)
+	//			aCols[i][nPosIC] := CriaVar("C1_ITEMCTA", .f.)
+	//		endif
+	//	next i
+	//endif
+//
+	//if !Empty(cMsg)
+	//	ShowHelpDlg("MT120LOK", {cMsg}, 1, {"Por favor, preencha o centro de custo ou item conttábil a que se destinam os itens solicitados."}, 1)
+	//	lRet := .f.
+	//endif
 EndIf
 
 Return lRet
