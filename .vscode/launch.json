@@ -29,6 +29,9 @@
 		},
 		{
 			"label": "sigacfg"
+		},
+		{
+			"label": "apsdu"
 		}
 	],
 	"lastProgramExecuted": "sigamdi",
