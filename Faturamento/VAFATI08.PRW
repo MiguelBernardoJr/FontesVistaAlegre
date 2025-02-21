@@ -39,11 +39,12 @@ Static Function ModelDef()
  //  Local oGrid     := FWFormStruct(1, 'ZVD', {|cCampo| !(AllTrim(cCampo) $ "ZVD_FILIAL|ZVD_COD|ZVD_LOTE|ZVD_TIPOLA") })
     Local oMaster   := FWFormStruct(1, 'ZVD')
     Local oGrid     := FWFormStruct(1, 'ZVD')
+    Local bPre      := {|| zVldMD()}
     Local aZVDRel   := {}
 
     //oGrid:SetProperty('ZVD_ITZ09'    ,   MODEL_FIELD_VALID, {|| FAT08G()})
 
-	oModel := MPFormModel():New("FATI08M", /*Pre-Validacao*/,/*Pos-Validacao*/,/* {|oModel| bSaveCom(oModel)} */,/*Cancel*/)
+	oModel := MPFormModel():New("FATI08M", /*Pre-Validacao*/,bPre/*Pos-Validacao*/,/* {|oModel| bSaveCom(oModel)} */,/*Cancel*/)
 
 	oModel:AddFields("ZVDMASTER",/*cOwner*/  ,oMaster		, /*bPreValidacao*/, /*bPosValidacao*/, /*bCarga*/)///* ,/*cOwner*/ ,oStPai  */ )
 	oModel:AddGrid('ZVDDETAIL', 'ZVDMASTER'	, oGrid, /*bLinePre*/, /*bLinePos*/,/* bPre */,/* bPos */,/* {|| LoadGPrincipal()} */  )
@@ -58,7 +59,7 @@ Static Function ModelDef()
     
     oMaster:SetProperty('ZVD_LOTE', MODEL_FIELD_VALID, {|| FI08LT()})
 
-    oGrid:SetProperty('ZVD_PROBOV', MODEL_FIELD_VALID, {|| FI08PR()})
+    oGrid:SetProperty('ZVD_BOV', MODEL_FIELD_VALID, {|| FI08PR()})
     oGrid:SetProperty('ZVD_IDADEP', MODEL_FIELD_VALID, {|| FAT08G()})
     
 	//Setando outras informações do Modelo de Dados
@@ -102,7 +103,6 @@ Static Function ViewDef()
     oMaster:RemoveField('ZVD_IDADE')
     oMaster:RemoveField('ZVD_Z09ANT')
     oMaster:RemoveField('ZVD_9ITANT')
-    oMaster:RemoveField('ZVD_PROBOV')
     oMaster:RemoveField('ZVD_PRODES')
     oMaster:RemoveField('ZVD_IDADEP')
     oMaster:RemoveField('ZVD_CODZ09')
@@ -112,7 +112,7 @@ Static Function ViewDef()
 	oGrid:RemoveField('ZVD_FILIAL')
 	oGrid:RemoveField('ZVD_COD')
 	oGrid:RemoveField('ZVD_LOTE')
-	oGrid:RemoveField('ZVD_TIPOLA')
+	//oGrid:RemoveField('ZVD_TIPOLA')
 
     oView:AddIncrementField( 'GRID_ZVD', 'ZVD_ITEM' )
 	
@@ -129,19 +129,20 @@ Static Function MenuDef()
 Return aRotina
 
 Static Function FI08PR()
-    Local aArea := GetArea()
+    Local aArea     := GetArea()
     Local oModel    := FWModelActive()
     Local oView     := FWViewActive()
     Local oCab      := oModel:GetModel("ZVDMASTER")
     Local oGrid     := oModel:GetModel("ZVDDETAIL")
     Local lRet      := .T.
     Local cQry      := ""
-    Local cValue      := &(ReadVar())
-
-    IF oCab:GetValue("ZVD_TIPOLA") == '1'
-        oModel:SetErrorMessage("","","","","Não permitido", 'Não é permitido inserir esse campo no Tipo 1 - [Evoluir Era]!', "") 
-        lRet := .F.
-    endif
+    Local cValue    := &(ReadVar())
+    Local cBov      := GETMV("MV_BOVPADR")
+    Local cAlias    := ""
+    //IF oCab:GetValue("ZVD_TIPOLA") == '1'
+    //    oModel:SetErrorMessage("","","","","Não permitido", 'Não é permitido inserir esse campo no Tipo 1 - [Evoluir Era]!', "") 
+    //    lRet := .F.
+    //endif
 
     if lRet
         DBSelectArea("SB1")
@@ -149,13 +150,19 @@ Static Function FI08PR()
 
         if SB1->(DbSeek(FwXFilial("SB1")+PadR(AllTrim(cValue),TamSx3("B1_COD")[1])))
             if AllTrim(SB1->B1_GRUPO) == 'BMS'
+
+                if AllTrim(SB1->B1_COD) $ cBov
+                    MsgStop("Era do Produto ["+AllTrim(SB1->B1_COD)+"] não pode ser alterada!")
+                    lRet := .F.
+                endif
+
                 if "BOVINO" $ AllTrim(SB1->B1_DESC)
                     oModel:SetErrorMessage("","","","","Produto inválido", 'Produto não é Bovino!', "") 
                     lRet := .F.
                 endif
             else
-            oModel:SetErrorMessage("","","","","Produto inválido", 'Produto deve pertencer!', "") 
-            lRet := .F.
+                oModel:SetErrorMessage("","","","","Produto inválido", 'Produto deve pertencer!', "") 
+                lRet := .F.
             endif
         else
             oModel:SetErrorMessage("","","","","Produto inválido", 'Produto não encontrado!', "") 
@@ -164,7 +171,9 @@ Static Function FI08PR()
     endif
 
     If !(oGrid:IsEmpty())
-        oGrid:ClearData()
+        if oGrid:CanClearData()
+            oGrid:ClearData()
+        endif
     endif
     
     cQry := " SELECT B8_PRODUTO, B1_DESC, B8_SALDO,B1_XIDADE,B1_XANIMAL,B1_XANIITE,B1_X_SEXO, Z09_IDAINI, Z09_IDAFIM" + CRLF 
@@ -180,44 +189,44 @@ Static Function FI08PR()
     cQry += " AND SB8.D_E_L_E_T_ = ' '   " + CRLF 
     cQry += " ORDER BY B1_DESC,B8_SALDO " + CRLF 
 
-    MpSysOpenQuery(cQry,"TMP")
+    cAlias:= MpSysOpenQuery(cQry)
     
     oGrid:SetNoInsertLine(.F.)
     oGrid:SetNoDeleteLine(.F.)
-    while !TMP->(EOF())
+    while !(cAlias)->(EOF())
         oGrid:AddLine()
-        oGrid:SetValue("ZVD_BOV"    ,ALLTRIM(TMP->B8_PRODUTO))
-        oGrid:SetValue("ZVD_IDADE"  ,Val(TMP->B1_XIDADE))
-        IF TMP->Z09_IDAINI < 36
-            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( TMP->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( TMP->B1_X_SEXO )) +;
-                                        " DE " + ALLTRIM( STR(TMP->Z09_IDAINI )) +;
-                                        " A "  + ALLTRIM( STR(TMP->Z09_IDAFIM ))+;
+        oGrid:LoadValue("ZVD_BOV"    ,ALLTRIM((cAlias)->B8_PRODUTO))
+        oGrid:SetValue("ZVD_IDADE"  ,Val((cAlias)->B1_XIDADE))
+        IF (cAlias)->Z09_IDAINI < 36
+            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
+                                        " DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
+                                        " A "  + ALLTRIM( STR((cAlias)->Z09_IDAFIM ))+;
                                         " MESES")
         ELSE 
-            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( TMP->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( TMP->B1_X_SEXO )) +;
-                                        " ACIMA DE " + ALLTRIM( STR(TMP->Z09_IDAINI )) +;
+            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
+                                        " ACIMA DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
                                         " MESES")
         ENDIF 
-        oGrid:SetValue("ZVD_SEXO  " ,IIF(ALLTRIM(TMP->B1_X_SEXO) == 'CAPAO','MACHO',ALLTRIM( TMP->B1_X_SEXO )))
-        oGrid:SetValue("ZVD_Z09ANT" ,TMP->B1_XANIMAL)
-        oGrid:SetValue("ZVD_9ITANT" ,TMP->B1_XANIITE)
-        oGrid:SetValue("ZVD_CODZ09" ,TMP->B1_XANIMAL)
-        oGrid:SetValue("ZVD_ITZ09"  ,TMP->B1_XANIITE)
+        oGrid:SetValue("ZVD_SEXO  " ,IIF(ALLTRIM((cAlias)->B1_X_SEXO) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )))
+        oGrid:SetValue("ZVD_Z09ANT" ,(cAlias)->B1_XANIMAL)
+        oGrid:SetValue("ZVD_9ITANT" ,(cAlias)->B1_XANIITE)
+        oGrid:SetValue("ZVD_CODZ09" ,(cAlias)->B1_XANIMAL)
+        oGrid:SetValue("ZVD_ITZ09"  ,(cAlias)->B1_XANIITE)
 
-        TMP->(DBSKIP())
+        (cAlias)->(DBSKIP())
     enddo
     
     if oGrid:GetQtdLine() > 1
         oGrid:GoLine(1)
-    endif 
+    endif
 
     oGrid:SetNoInsertLine(.T.)
     oGrid:SetNoDeleteLine(.T.)
 
     oView:Refresh()
-    TMP->(DBCLOSEAREA(  ))
+    (cAlias)->(DBCLOSEAREA(  ))
     RestArea(aArea)
-Return lRet 
+Return lRet
 
 Static Function FI08LT()
     Local aArea := GetArea()
@@ -225,8 +234,10 @@ Static Function FI08LT()
     Local oView     := FWViewActive()
     Local oCab      := oModel:GetModel("ZVDMASTER")
     Local oGrid     := oModel:GetModel("ZVDDETAIL")
-    Local lRet  := .T.
-    Local cQry  := ""
+    Local lRet      := .T.
+    Local cQry      := ""
+    Local cAlias    := ""
+    Local cBov      := GETMV("MV_BOVPADR")
 
     If !(oGrid:IsEmpty())
         oGrid:ClearData()
@@ -242,35 +253,40 @@ Static Function FI08LT()
     cQry += " WHERE B8_PRODUTO LIKE 'BOV%'  " + CRLF 
     cQry += " and B8_LOTECTL = '"+oCab:GetValue("ZVD_LOTE")+"'  " + CRLF 
     cQry += " AND B8_SALDO > 0  " + CRLF 
-    cQry += " AND SB8.D_E_L_E_T_ = ' '   " + CRLF 
-    cQry += " ORDER BY B1_DESC,B8_SALDO " + CRLF 
+    cQry += " AND SB8.D_E_L_E_T_ = ' '   " + CRLF
+    cQry += " ORDER BY B1_DESC,B8_SALDO " + CRLF
 
-    MpSysOpenQuery(cQry,"TMP")
+    cAlias := MpSysOpenQuery(cQry)
     
     oGrid:SetNoInsertLine(.F.)
     oGrid:SetNoDeleteLine(.F.)
-    while !TMP->(EOF())
-        oGrid:AddLine()
-        oGrid:SetValue("ZVD_BOV"    ,ALLTRIM(TMP->B8_PRODUTO))
-        oGrid:SetValue("ZVD_IDADE"  ,Val(TMP->B1_XIDADE))
-        IF TMP->Z09_IDAINI < 36
-            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( TMP->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( TMP->B1_X_SEXO )) +;
-                                        " DE " + ALLTRIM( STR(TMP->Z09_IDAINI )) +;
-                                        " A "  + ALLTRIM( STR(TMP->Z09_IDAFIM ))+;
-                                        " MESES")
-        ELSE 
-            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( TMP->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( TMP->B1_X_SEXO )) +;
-                                        " ACIMA DE " + ALLTRIM( STR(TMP->Z09_IDAINI )) +;
-                                        " MESES")
-        ENDIF 
-        oGrid:SetValue("ZVD_SEXO  " ,IIF(ALLTRIM(TMP->B1_X_SEXO) == 'CAPAO','MACHO',ALLTRIM( TMP->B1_X_SEXO )))
-        oGrid:SetValue("ZVD_Z09ANT" ,TMP->B1_XANIMAL)
-        oGrid:SetValue("ZVD_9ITANT" ,TMP->B1_XANIITE)
-        oGrid:SetValue("ZVD_CODZ09" ,TMP->B1_XANIMAL)
-        oGrid:SetValue("ZVD_ITZ09"  ,TMP->B1_XANIITE)
-
-        TMP->(DBSKIP())
+    while !(cAlias)->(EOF())
+        if ALLTRIM((cAlias)->B8_PRODUTO) $ cBov
+            MsgALert("O Produto [" + ALLTRIM((cAlias)->B8_PRODUTO) + "] Não será adicionado pois está bloqueado para evoluir era! " + CRLF +;
+                        "Faça a transferência para outro BOV com a idade correta!")
+        else
+            oGrid:AddLine()
+            oGrid:LoadValue("ZVD_BOV"    ,ALLTRIM((cAlias)->B8_PRODUTO))
+            oGrid:SetValue("ZVD_IDADE"  ,Val((cAlias)->B1_XIDADE))
+            IF (cAlias)->Z09_IDAINI < 36
+                oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
+                                            " DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
+                                            " A "  + ALLTRIM( STR((cAlias)->Z09_IDAFIM ))+;
+                                            " MESES")
+            ELSE 
+                oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
+                                            " ACIMA DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
+                                            " MESES")
+            ENDIF 
+            oGrid:SetValue("ZVD_SEXO  " ,IIF(ALLTRIM((cAlias)->B1_X_SEXO) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )))
+            oGrid:SetValue("ZVD_Z09ANT" ,(cAlias)->B1_XANIMAL)
+            oGrid:SetValue("ZVD_9ITANT" ,(cAlias)->B1_XANIITE)
+            oGrid:SetValue("ZVD_CODZ09" ,(cAlias)->B1_XANIMAL)
+            oGrid:SetValue("ZVD_ITZ09"  ,(cAlias)->B1_XANIITE)
+        endif 
+        (cAlias)->(DBSKIP())
     enddo
+    (cAlias)->(DBCLOSEAREA(  ))
     
     if oGrid:GetQtdLine() > 1
         oGrid:GoLine(1)
@@ -280,7 +296,6 @@ Static Function FI08LT()
     oGrid:SetNoDeleteLine(.T.)
 
     oView:Refresh()
-    TMP->(DBCLOSEAREA(  ))
     RestArea(aArea)
 Return lRet 
 
@@ -291,6 +306,7 @@ Static Function FAT08G()
     Local cQry 
     Local lRet      := .T.
     local cDesc     
+    Local cAlias    := ""
     
     cQry := "  SELECT *  " + CRLF 
     cQry += " FROM "+RetSqlName("Z09")+" " + CRLF 
@@ -299,17 +315,17 @@ Static Function FAT08G()
     cQry += " AND Z09_IDAFIM >= "+ALLTRIM(Str(oGrid:GetValue("ZVD_IDADEP")))+" " + CRLF 
     cQry += " AND D_E_L_E_T_ = '' " + CRLF
 
-    MpSysOpenQuery(cQry,"TMP")
+    cAlias := MpSysOpenQuery(cQry)
 
-    IF !TMP->(EOF())
-        if TMP->Z09_IDAINI < 36
-            cDesc := "BOVINO " + IIF(ALLTRIM( TMP->Z09_SEXO ) == 'CAPAO','MACHO',ALLTRIM( TMP->Z09_SEXO ))  + " DE " + ALLTRIM( STR(TMP->Z09_IDAINI)) + " A " + ALLTRIM( STR(TMP->Z09_IDAFIM) )  + " MESES"
+    IF !(cAlias)->(EOF())
+        if (cAlias)->Z09_IDAINI < 36
+            cDesc := "BOVINO " + IIF(ALLTRIM( (cAlias)->Z09_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->Z09_SEXO ))  + " DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI)) + " A " + ALLTRIM( STR((cAlias)->Z09_IDAFIM) )  + " MESES"
         else 
-            cDesc := "BOVINO " + IIF(ALLTRIM( TMP->Z09_SEXO ) == 'CAPAO','MACHO',ALLTRIM( TMP->Z09_SEXO )) + " ACIMA DE " + ALLTRIM( STR(TMP->Z09_IDAINI)) + " MESES"
+            cDesc := "BOVINO " + IIF(ALLTRIM( (cAlias)->Z09_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->Z09_SEXO )) + " ACIMA DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI)) + " MESES"
         endif
         oGrid:SetValue("ZVD_DESCP"  , cDesc)
-        oGrid:SetValue("ZVD_CODZ09" ,ALLTRIM( TMP->Z09_CODIGO ))
-        oGrid:SetValue("ZVD_ITZ09"  ,ALLTRIM( TMP->Z09_ITEM ))
+        oGrid:SetValue("ZVD_CODZ09" ,ALLTRIM( (cAlias)->Z09_CODIGO ))
+        oGrid:SetValue("ZVD_ITZ09"  ,ALLTRIM( (cAlias)->Z09_ITEM ))
     else
         oModel:SetErrorMessage("","","","","Idade Inválida", 'Valor não encontrado no intervalo de idade permitido!', "") 
         lRet := .F.
@@ -387,17 +403,18 @@ Static Function ReplicaLinha()
         endif
         
         if cDescA ==  oGrid:GetValue("ZVD_DESCA") .and. nBakLin != oGrid:GetLine()
-            oGrid:SetValue("ZVD_IDADEP" , nBakId)
-            oGrid:SetValue("ZVD_DESCP"  , cDescP)
+            oGrid:SetValue("ZVD_IDADEP" , nBakId )
+            oGrid:SetValue("ZVD_DESCP"  , cDescP )
             oGrid:SetValue("ZVD_CODZ09" , cCodZ09)
-            oGrid:SetValue("ZVD_ITZ09"  , cItZ09)
+            oGrid:SetValue("ZVD_ITZ09"  , cItZ09 )
         endif
     Next nI 
 
     oGrid:Goline(1)
 Return 
 
-/*/{Protheus.doc} cFati08
+/*/
+{Protheus.doc} cFati08
 Declara a Classe vinda da FWModelEvent e os métodos que serão utilizados
 @author Atilio
 @since 27/01/2023
@@ -461,7 +478,7 @@ Method After(oModel) Class cFati08
                     SB1->B1_X_ERA   := ALLTRIM( POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_DESCRI"))
                 SB1->(MSUNLOCK())
             ENDIF
-        ENDIF 
+        ENDIF
     ENDIF
     
     SB1->(DBCLOSEAREA(  ))
@@ -572,3 +589,15 @@ User Function F08INIT(cCampo)
     ENDIF 
     RestArea(aArea)
 Return cRet 
+
+Static Function zVldMD()
+    Local lRet := .T. 
+    Local oModel    := FWModelActive()
+	Local oCab     := oModel:GetModel('ZVDMASTER')
+
+    if Empty(oCab:GetValue("ZVD_LOTE"))
+        MsgStop("Informe o Lote")
+        lRet := .F.
+    endif
+
+Return lRet 
