@@ -6,7 +6,7 @@ User Function zValDesc() //u_zValDesc()
     Local cCampo    := SubStr(ReadVar(),at('>',ReadVar())+1,Len(ReadVar()))
     Local cTitulo   := FWX3Titulo( cCampo )
 
-    /*
+    /*  
         BOVS QUE A DESCRIÇÃO NÃO PODE SER ALTERADA - CONTEUDO NO PARAMETRO MV_BOVPADR
 
         'B1_DESC|B1_XIDADE|B1_XANIMAL|B1_XANIITE|B1_X_ERA'

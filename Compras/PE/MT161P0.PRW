@@ -26,8 +26,8 @@ User Function MT161CPO()
                         if aPropostas[nX][nY][2][nI][13] < aPreco[nI][2] .and. aPropostas[nX][nY][2][nI][13] != 0
                             aPreco[nI][2] := aPropostas[nX][nY][2][nI][13]
                         endif
-                    endif 
-                next nI 
+                    endif
+                next nI
             Next nZ
         Next nY
     Next nX
