@@ -1825,7 +1825,7 @@ if Z0C->Z0C_TPMOV != '6'
 		cQry += " AND Z0F_MOVTO  = ?  " + CRLF 
 		cQry += " AND Z0F_PROD   = ?  " + CRLF 
 		cQry += " AND Z0F_LOTE   = ?  " + CRLF 
-		cQry += " AND Z0F_RACA   = ?  " + CRLF 
+		cQry += " AND Z0F_RACA   = ?  " + CRLF
 		cQry += " AND Z0F_SEXO   = ?  " + CRLF
 
 		oQryCache := FwExecStatement():New(cQry)
@@ -5231,26 +5231,26 @@ User Function SB1Create( __aProd, lCriaSaldoSB9 )
 	EndIf
 	aAdd( aProd, {"B1_COD"		, _cCodPrd			, nil })
 
-	aAdd( aProd, {"B1_DESC"		, Iif(Empty(__aProd[4]),SB1->B1_DESC,__aProd[4]), nil })
-	aAdd( aProd, {"B1_TIPO"		, "PA"				, nil })
-	aAdd( aProd, {"B1_UM"		, "UN"				, nil })
-	aAdd( aProd, {"B1_LOCPAD"	, "01"				, nil })
-	aAdd( aProd, {"B1_CONTA"	, "1140200001"      , nil })
-	aAdd( aProd, {"B1_ORIGEM"	, "0"				, nil })
-	aAdd( aProd, {"B1_X_TRATO"	, "2"				, nil })
-	aAdd( aProd, {"B1_X_PRDES"	, "E"				, nil })
-	aAdd( aProd, {"B1_PICM"		, 0					, nil })
-	aAdd( aProd, {"B1_IPI"		, 0					, nil })
-	aAdd( aProd, {"B1_CONTRAT"	, "N"				, nil })
-	aAdd( aProd, {"B1_LOCALIZ"	, "N"				, nil })
-	aAdd( aProd, {"B1_GRTRIB"	, "001"				, nil })
-	aAdd( aProd, {"B1_CODBAR"	, "SEM GTIN"        , nil }) // SEM GTIN => layout 4.0
-	aAdd( aProd, {"B1_TIPCAR"	, "005"				, nil })
-	aAdd( aProd, {"B1_TPREG"	, "2"				, nil })
-	aAdd( aProd, {"B1_CONTSOC"	, 'N'				, nil })
-	aAdd( aProd, {"B1_MSBLQL"	, "2"				, nil })
-	aAdd( aProd, {"B1_X_TRATO"	, "2"				, nil })
-	aAdd( aProd, {"B1_MCUSTD"	, "1"				, nil })
+	aAdd( aProd, {"B1_DESC"		, Alltrim(Iif(Empty(__aProd[4]),SB1->B1_DESC,__aProd[4])), nil })
+	aAdd( aProd, {"B1_TIPO"		, "PA"						, nil })
+	aAdd( aProd, {"B1_UM"		, "UN"						, nil })
+	aAdd( aProd, {"B1_LOCPAD"	, "01"						, nil })
+	aAdd( aProd, {"B1_CONTA"	, "1140200001"      		, nil })
+	aAdd( aProd, {"B1_ORIGEM"	, "0"						, nil })
+	aAdd( aProd, {"B1_X_TRATO"	, "2"						, nil })
+	aAdd( aProd, {"B1_X_PRDES"	, "E"						, nil })
+	aAdd( aProd, {"B1_PICM"		, 0							, nil })
+	aAdd( aProd, {"B1_IPI"		, 0							, nil })
+	aAdd( aProd, {"B1_CONTRAT"	, "N"						, nil })
+	aAdd( aProd, {"B1_LOCALIZ"	, "N"						, nil })
+	aAdd( aProd, {"B1_GRTRIB"	, "001"						, nil })
+	aAdd( aProd, {"B1_CODBAR"	, "SEM GTIN"        		, nil }) // SEM GTIN => layout 4.0
+	aAdd( aProd, {"B1_TIPCAR"	, "005"						, nil })
+	aAdd( aProd, {"B1_TPREG"	, "2"						, nil })
+	aAdd( aProd, {"B1_CONTSOC"	, 'N'						, nil })
+	aAdd( aProd, {"B1_MSBLQL"	, "2"						, nil })
+	aAdd( aProd, {"B1_X_TRATO"	, "2"						, nil })
+	aAdd( aProd, {"B1_MCUSTD"	, "1"						, nil })
 	aAdd( aProd, {"B1_TE"		, GetMV("JR_M11TESC",,"005"), nil })
 	aAdd( aProd, {"B1_POSIPI"	, GetMV("JR_POSIPI",,"01022919"), nil })
 

@@ -4,7 +4,7 @@ User Function MT161CPO()
     Local aPropostas := PARAMIXB[1] // Array com os dados das propostas dos Fornecedores
     Local aItens     := PARAMIXB[2] // Array com os dados da grid "Produtos"
     Local aCampos    := {} // Array com os campos adicionados na grid "Item da Proposta"
-    Local aCposProd  := {"C8_VAUNIT "} // Array com os campos adicionados na grid "Produtos"
+    Local aCposProd  := {"C8_VAUNIT"} // Array com os campos adicionados na grid "Produtos"
     Local aRetorno   := {}
     Local nX         := 0
     Local nY         := 0
@@ -36,9 +36,9 @@ User Function MT161CPO()
         AADD(aItens[nX], aPreco[nX][2])
     Next nX
 
-    AADD(aRetorno, aPropostas)
-    AADD(aRetorno, aCampos)
-    AADD(aRetorno, aItens)
-    AADD(aRetorno, aCposProd)
+    AADD(aRetorno, aPropostas )
+    AADD(aRetorno, aCampos    )
+    AADD(aRetorno, aItens     )
+    AADD(aRetorno, aCposProd  )
     
 Return aRetorno
