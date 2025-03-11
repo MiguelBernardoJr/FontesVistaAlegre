@@ -20,15 +20,17 @@ User Function zValDesc() //u_zValDesc()
         'BOV000000022323',
         'BOV000000022328',
         'BOV000000022329',
-        'BOV000000049358' 
+        'BOV000000049358'
     */
 
     //"BOV000000022324,BOV000000022325,BOV000000022326,BOV000000022327,BOV000000022333,BOV000000022322,BOV000000022323,BOV000000022328,BOV000000022329,BOV000000049358"
-
-    if AllTrim(SB1->B1_COD) $ cBov
-        MsgStop("Campo ["+cCampo+" - "+Alltrim(cTitulo)+"] do produto ["+AllTrim(SB1->B1_COD)+"] não pode ser alterada por se tratar de BOV PADRÃO!" + CRLF +;
-                "Faça a transferência para outro BOV com a idade correta!")
-        lRet := .F.
+    
+    IF !IsInCallStack("U_VAMVCA01")
+        if AllTrim(SB1->B1_COD) $ cBov
+            MsgStop("Campo ["+cCampo+" - "+Alltrim(cTitulo)+"] do produto ["+AllTrim(SB1->B1_COD)+"] não pode ser alterada por se tratar de BOV PADRÃO!" + CRLF +;
+                    "Faça a transferência para outro BOV com a idade correta!")
+            lRet := .F.
+        endif
     endif
 
 Return lRet

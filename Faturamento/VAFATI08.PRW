@@ -170,61 +170,63 @@ Static Function FI08PR()
         endif
     endif
 
-    If !(oGrid:IsEmpty())
-        if oGrid:CanClearData()
-            oGrid:ClearData()
+    if lRet
+        If !(oGrid:IsEmpty())
+            if oGrid:CanClearData()
+                oGrid:ClearData()
+            endif
         endif
+        
+        cQry := " SELECT B8_PRODUTO, B1_DESC, B8_SALDO,B1_XIDADE,B1_XANIMAL,B1_XANIITE,B1_X_SEXO, Z09_IDAINI, Z09_IDAFIM" + CRLF 
+        cQry += " FROM "+RetSqlName("SB8")+" SB8 " + CRLF 
+        cQry += " JOIN "+RetSqlName("SB1")+" SB1 ON  B8_PRODUTO = B1_COD  " + CRLF
+        cQry += " AND SB1.D_E_L_E_T_ = ''  " + CRLF
+        cQry += " JOIN "+RetSqlName("Z09")+" Z09 ON B1_XANIMAL = Z09_CODIGO " + CRLF 
+        cQry += " AND B1_XANIITE = Z09_ITEM " + CRLF 
+        cQry += " AND Z09.D_E_L_E_T_ = '' " + CRLF 
+        cQry += " WHERE B8_PRODUTO LIKE 'BOV%'  " + CRLF 
+        cQry += " and B8_LOTECTL = '"+oCab:GetValue("ZVD_LOTE")+"'  " + CRLF 
+        cQry += " AND B8_SALDO > 0  " + CRLF 
+        cQry += " AND SB8.D_E_L_E_T_ = ' '   " + CRLF 
+        cQry += " ORDER BY B1_DESC,B8_SALDO " + CRLF 
+
+        cAlias:= MpSysOpenQuery(cQry)
+        
+        oGrid:SetNoInsertLine(.F.)
+        oGrid:SetNoDeleteLine(.F.)
+        while !(cAlias)->(EOF())
+            oGrid:AddLine()
+            oGrid:LoadValue("ZVD_BOV"    ,ALLTRIM((cAlias)->B8_PRODUTO))
+            oGrid:SetValue("ZVD_IDADE"  ,Val((cAlias)->B1_XIDADE))
+            IF (cAlias)->Z09_IDAINI < 36
+                oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
+                                            " DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
+                                            " A "  + ALLTRIM( STR((cAlias)->Z09_IDAFIM ))+;
+                                            " MESES")
+            ELSE 
+                oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
+                                            " ACIMA DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
+                                            " MESES")
+            ENDIF 
+            oGrid:SetValue("ZVD_SEXO  " ,IIF(ALLTRIM((cAlias)->B1_X_SEXO) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )))
+            oGrid:SetValue("ZVD_Z09ANT" ,(cAlias)->B1_XANIMAL)
+            oGrid:SetValue("ZVD_9ITANT" ,(cAlias)->B1_XANIITE)
+            oGrid:SetValue("ZVD_CODZ09" ,(cAlias)->B1_XANIMAL)
+            oGrid:SetValue("ZVD_ITZ09"  ,(cAlias)->B1_XANIITE)
+
+            (cAlias)->(DBSKIP())
+        enddo
+        
+        if oGrid:GetQtdLine() > 1
+            oGrid:GoLine(1)
+        endif
+
+        oGrid:SetNoInsertLine(.T.)
+        oGrid:SetNoDeleteLine(.T.)
+
+        oView:Refresh()
+        (cAlias)->(DBCLOSEAREA(  ))
     endif
-    
-    cQry := " SELECT B8_PRODUTO, B1_DESC, B8_SALDO,B1_XIDADE,B1_XANIMAL,B1_XANIITE,B1_X_SEXO, Z09_IDAINI, Z09_IDAFIM" + CRLF 
-    cQry += " FROM "+RetSqlName("SB8")+" SB8 " + CRLF 
-    cQry += " JOIN "+RetSqlName("SB1")+" SB1 ON  B8_PRODUTO = B1_COD  " + CRLF
-    cQry += " AND SB1.D_E_L_E_T_ = ''  " + CRLF
-    cQry += " JOIN "+RetSqlName("Z09")+" Z09 ON B1_XANIMAL = Z09_CODIGO " + CRLF 
-    cQry += " AND B1_XANIITE = Z09_ITEM " + CRLF 
-    cQry += " AND Z09.D_E_L_E_T_ = '' " + CRLF 
-    cQry += " WHERE B8_PRODUTO LIKE 'BOV%'  " + CRLF 
-    cQry += " and B8_LOTECTL = '"+oCab:GetValue("ZVD_LOTE")+"'  " + CRLF 
-    cQry += " AND B8_SALDO > 0  " + CRLF 
-    cQry += " AND SB8.D_E_L_E_T_ = ' '   " + CRLF 
-    cQry += " ORDER BY B1_DESC,B8_SALDO " + CRLF 
-
-    cAlias:= MpSysOpenQuery(cQry)
-    
-    oGrid:SetNoInsertLine(.F.)
-    oGrid:SetNoDeleteLine(.F.)
-    while !(cAlias)->(EOF())
-        oGrid:AddLine()
-        oGrid:LoadValue("ZVD_BOV"    ,ALLTRIM((cAlias)->B8_PRODUTO))
-        oGrid:SetValue("ZVD_IDADE"  ,Val((cAlias)->B1_XIDADE))
-        IF (cAlias)->Z09_IDAINI < 36
-            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
-                                        " DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
-                                        " A "  + ALLTRIM( STR((cAlias)->Z09_IDAFIM ))+;
-                                        " MESES")
-        ELSE 
-            oGrid:SetValue("ZVD_DESCA","BOVINO " + IIF(ALLTRIM( (cAlias)->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )) +;
-                                        " ACIMA DE " + ALLTRIM( STR((cAlias)->Z09_IDAINI )) +;
-                                        " MESES")
-        ENDIF 
-        oGrid:SetValue("ZVD_SEXO  " ,IIF(ALLTRIM((cAlias)->B1_X_SEXO) == 'CAPAO','MACHO',ALLTRIM( (cAlias)->B1_X_SEXO )))
-        oGrid:SetValue("ZVD_Z09ANT" ,(cAlias)->B1_XANIMAL)
-        oGrid:SetValue("ZVD_9ITANT" ,(cAlias)->B1_XANIITE)
-        oGrid:SetValue("ZVD_CODZ09" ,(cAlias)->B1_XANIMAL)
-        oGrid:SetValue("ZVD_ITZ09"  ,(cAlias)->B1_XANIITE)
-
-        (cAlias)->(DBSKIP())
-    enddo
-    
-    if oGrid:GetQtdLine() > 1
-        oGrid:GoLine(1)
-    endif
-
-    oGrid:SetNoInsertLine(.T.)
-    oGrid:SetNoDeleteLine(.T.)
-
-    oView:Refresh()
-    (cAlias)->(DBCLOSEAREA(  ))
     RestArea(aArea)
 Return lRet
 

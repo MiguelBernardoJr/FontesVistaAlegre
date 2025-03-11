@@ -7219,3 +7219,18 @@ Static Function Disp()
 	oMark:oBrowse:Refresh()
 	MBSaveLog():FULLWrite(, .F., "Fim: Disp()")
 Return 
+User Function c11lMark()
+	Local lRet 	:= .T.
+	Local nI  
+	Local nAt 	:= o1ZBCGDad:nAt
+	Local cPed 	:= o1ZBCGDad:aCols[nAt][nPZBCPed]
+	Local cOpc  := o1ZBCGDad:aCols[ nI, nPMrkZBC]
+
+	For nI := 1 to Len(o1ZBCGDad:aCols)
+		if nI != nAt .and. cPed == o1ZBCGDad:aCols[ nI, nPZBCPed ]
+			o1ZBCGDad:aCols[ nI, nPMrkZBC] := cOpc
+		endif
+	Next nI
+
+	o1ZBCGDad:GoTo(nAt)
+Return lRet
