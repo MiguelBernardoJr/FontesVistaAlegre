@@ -524,10 +524,10 @@ oGrpF1Q1  := TGroup():New( nDist, aPObjs[1,2]+nDist, aPObjs[1,3]-nDist-nCut, aPO
 // MsmGet(): New ( [ cAlias], [ uPar2], < nOpc>, [ uPar4], [ uPar5], [ uPar6], [ aAcho], ;
 //				   [ aPos]/*{"TOP","LEFT","BOTTOM","RIGHT"}*/, [ aCpos], [ nModelo], [ uPar11], [ uPar12], [ uPar13], [ oWnd], [ lF3], [ lMemoria], [ lColumn], [ caTela], [ lNoFolder], [ lProperty], [ aField], [ aFolder], [ lCreate], [ lNoMDIStretch], [ uPar25] )
 oMGet  := MsMGet():New( cAlias, nReg, Iif(nGDOpc==0,2,nOpc),,,,, ;
-				/* { aPObjs[1,1]-nDist, aPObjs[1,2], aPObjs[1,3], aPObjs[1,4] } */ aPObjs[1] ;
+				{nDist+5, aPObjs[1,2]+nDist, aPObjs[1,3]-nDist-nCut-1, aPObjs[1,4]-nDist-1} ;
 				,,,,,, oGrpF1Q1,/*lF3*/,/*lMemoria*/,/*lColumn*/,/*caTela*/,/*lNoFolder*/,/*lProperty*/,/* aField */,;
 			/* aFolder */,/*lCreate*/, .T./*lNoMDIStretch*/,/*cTela*/)
-oMGet:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+//oMGet:oBox:Align := CONTROL_ALIGN_ALLCLIENT
 
 if M->ZCC_STATUS == 'N'
 	oMGet:Disable()
@@ -536,25 +536,9 @@ EndIf
 // TGroup():New( [ nTop ], [ nLeft ], [ nBottom ], [ nRight ], [ cCaption ], [ oWnd ], [ nClrText ], [ nClrPane ], [ lPixel ], [ uParam10 ] )
 oGrpF1Q2  := TGroup():New( aPObjs[2,1]-nCut, aPObjs[2,2]+nDist, aPObjs[2,3]-nDist-(nCut+10), aPObjs[2,4]-nDist, ;
 						"Configuração da Base Contratual", oTFoldeP:aDialogs[1],,, .T.,)
-// TFolder():New( [ nTop ], [ nLeft ], [ aPrompts ], [ aDialogs ], [ oWnd ], [ nOption ], [ nClrFore ], [ uParam8 ]
-// 				, [ lPixel ], [ uParam10 ], [ nWidth ], [ nHeight ], [ cMsg ], [ uParam14 ] )
 
-// // quando tiver mais que 1 folder, leitura automatica na SX3
-// SXA->(DbSetOrder(1))
-// If SXA->(DbSeek( "ZBC" ))
-// 	While !SXA->(Eof()) .and. SXA->XA_ALIAS == "ZBC"
-//
-// 		aAdd( aFolderG, SXA->XA_DESCRIC )
-//
-// 		SXA->(DbSkip())
-// 	EndDo
-// EndIf
-
-oTFoldeG := TFolder():New( 0, 0, aFolderG,, oGrpF1Q2,,,,.T.,,0, 0 )
-oTFoldeG:Align   := CONTROL_ALIGN_ALLCLIENT
-// oTFoldeG:bChange := {|| Processa({ || ProcessMessages(), ;
-// 									  ReLoadFolder( oTFoldeG:nOption ) }, ;
-// 									  "Atualizando Tabela da Aba: " + cValToChar(oTFoldeG:nOption) ) }
+oTFoldeG := TFolder():New( aPObjs[2,1]-nCut+5, aPObjs[2,2]+nDist, aFolderG,, oGrpF1Q2,,,,.T.,,aPObjs[2,4]-nDist, aPObjs[2,3] / 2.5 )
+//oTFoldeG:Align   := CONTROL_ALIGN_ALLCLIENT
 
 oGZBCGDad := MsNewGetDados():New( 0, 0, 0, 0, nGDOpc, , , "+ZBC_ITEM" , , , , , , "u_ZBCDelOk(oGZBCGDad)", ;
 				oDlg, aClone(aGZBCHead), aClone( aGZBCCols ) )
@@ -614,8 +598,8 @@ aColsEsp := {}
 nUsadEsp := len(aHeadEsp)
 
 // 										   GD_INSERT + GD_UPDATE + GD_DELETE
-oGetF2Q2:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,,oGrpF2Q2, aHeadEsp, aColsEsp)
-oGetF2Q2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF2Q2:= MsNewGetDados():New(nDist+5, nDist, (nF2_3x*1.6)-1, aPObjs[1,4]-nDist-1, GD_UPDATE,,,,,,,,,,oGrpF2Q2, aHeadEsp, aColsEsp)
+//oGetF2Q2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 oGetF2Q2:oBrowse:lUseDefaultColors := .F.
 oGetF2Q2:oBrowse:SetBlkBackColor({|| GETDCLR( oGetF2Q2 )})
 // oGetF2Q2:lCanEditLine := .F.
@@ -639,10 +623,10 @@ aAdd(aFldF2Q3, { "Total Comissão:"	 		, "_nTotCom"  , "N", TamSX3("D1_TOTAL")[1]
 aAdd(aFldF2Q3, { "Qtd Animais no Contrato:"	, "_nQtdCon"  , "N", TamSX3("D1_TOTAL")[1], TamSX3("D1_TOTAL")[2], X3Picture('D1_TOTAL'), /* { || VldCpo(2) } */,     .F.,     1, /* GetSX8Num('ZAD','ZAD_CODIGO') */, "",  "" ,    .T.,   .F.,   "",     "",         .F.,      "",    "N"} )
 aAdd(aFldF2Q3, { "Qtd Animais Receb. em NF:", "_nQtdReb"  , "N", TamSX3("D1_TOTAL")[1], TamSX3("D1_TOTAL")[2], X3Picture('D1_TOTAL'), /* { || VldCpo(2) } */,     .F.,     1, /* GetSX8Num('ZAD','ZAD_CODIGO') */, "",  "" ,    .T.,   .F.,   "",     "",         .F.,      "",    "N"} )
 
-oEnchF2Q3 := MsMGet():New(,, 3,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/, aPObjs[1],/*aAlterEnch*/,/*nModelo*/,;
+oEnchF2Q3 := MsMGet():New(,, 3,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/, {nF2_3x*1.6+nDist+5, aPObjs[1,2]+nDist, aPObjs[2,3]-nDist-(nCut+10)-1, aPObjs[1,4]-nDist-1}/* aPObjs[1] */,/*aAlterEnch*/,/*nModelo*/,;
 					/*nColMens*/,/*cMensagem*/, /*cTudoOk*/,oGrpF2Q3,/*lF3*/,/*lMemoria*/, .F./*lColumn*/,;
 					nil /*caTela*/,/*lNoFolder*/, .T./*lProperty*/,aFldF2Q3,/*aFolder*/,/*lCreate*/,/*lNoMDIStretch*/,/*cTela*/)
-oEnchF2Q3:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+//oEnchF2Q3:oBox:Align := CONTROL_ALIGN_ALLCLIENT
 
 // folder: ENTRADA ##########################################################################################
 
@@ -667,8 +651,8 @@ nF3_3x	  := aPObjs[2,3] / 3
 
 oGrpF3Q2  := TGroup():New( /* nF3_3x*0.5+ */nDist, aPObjs[1,2]+nDist, nF3_3x*1.6, aPObjs[1,4]-nDist,;
 							"Titulos Financeiros:",oTFoldeP:aDialogs[3],,, .T.,)
-oTFldF3Q2 := TFolder():New( 0, 0, {"Contas a Pagar", "Movimentação Bancária"},, oGrpF3Q2,,,,.T.,,0, 0 )
-oTFldF3Q2:Align   := CONTROL_ALIGN_ALLCLIENT
+oTFldF3Q2 := TFolder():New( nDist+5, aPObjs[1,2]+nDist, {"Contas a Pagar", "Movimentação Bancária"},, oGrpF3Q2,,,,.T.,,aPObjs[1,4]-nDist-1, (nF3_3x*1.6)-5 )
+//oTFldF3Q2:Align   := CONTROL_ALIGN_ALLCLIENT
 
 aHeadEsp := {}
 aColsEsp := {}
@@ -687,8 +671,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF3aQ2", aHeadEsp, @aColsEsp, nUsadEsp) => LoadGrids()
 
-oGetF3aQ2:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,,oTFldF3Q2:aDialogs[1], aHeadEsp, aColsEsp)
-oGetF3aQ2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF3aQ2:= MsNewGetDados():New(nDist+5, aPObjs[1,2]+nDist, (nF3_3x*1.6)-5, (aPObjs[1,4]-nDist)-1, GD_UPDATE,,,,,,,,,,oTFldF3Q2:aDialogs[1], aHeadEsp, aColsEsp)
+//oGetF3aQ2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 oGetF3aQ2:oBrowse:bHeaderClick := { |oGetF3aQ2,nCol| OrdenaF3aQ2(nCol) }
 
 // oGetF3aQ2:oBrowse:lUseDefaultColors := .F.
@@ -712,8 +696,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF3bQ2", aHeadEsp, @aColsEsp, nUsadEsp)
 
-oGetF3bQ2:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,,oTFldF3Q2:aDialogs[2], aHeadEsp, aColsEsp)
-oGetF3bQ2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF3bQ2:= MsNewGetDados():New(nDist+5, aPObjs[1,2]+nDist, (nF3_3x*1.6)-1, (aPObjs[1,4]-nDist)-1, GD_UPDATE,,,,,,,,,,oTFldF3Q2:aDialogs[2], aHeadEsp, aColsEsp)
+//oGetF3bQ2:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 oGetF3bQ2:oBrowse:bHeaderClick := { |oGetF3bQ2,nCol| OrdenaF3bQ2(nCol) }
 
 oGrpF3Q3  := TGroup():New( nF3_3x*1.6+nDist, aPObjs[1,2]+nDist, aPObjs[2,3]-nDist-(nCut+10), aPObjs[1,4]-nDist,;
@@ -730,8 +714,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF3Q3", aHeadEsp, @aColsEsp, nUsadEsp)
 
-oGetF3Q3:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,,oGrpF3Q3, aHeadEsp, aColsEsp)
-oGetF3Q3:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF3Q3:= MsNewGetDados():New(nF3_3x*1.6+nDist+5, aPObjs[1,2]+nDist, aPObjs[2,3]-nDist-(nCut+10)-1, aPObjs[1,4]-nDist-1, GD_UPDATE,,,,,,,,,,oGrpF3Q3, aHeadEsp, aColsEsp)
+//oGetF3Q3:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 oGetF3Q3:oBrowse:bHeaderClick := { |oGetF3Q3,nCol| OrdenaF3Q3(nCol) }
 
 // folder: FINANCEIRO ##########################################################################################
@@ -756,8 +740,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF4Q4E", aHeadEsp, @aColsEsp, nUsadEsp)
 
-oGetF4Q4E:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,, oGrpF4Q4E, aHeadEsp, aColsEsp)
-oGetF4Q4E:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF4Q4E:= MsNewGetDados():New(nDist+5, aPObjs[1,2]+nDist, nF4_3x-1, nF4C2-nDist-1, GD_UPDATE,,,,,,,,,, oGrpF4Q4E, aHeadEsp, aColsEsp)
+//oGetF4Q4E:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 
 oGrpF4Q5D := TGroup():New( nDist, nF4C2+nDist, nF4_3x, aPObjs[1,4]-nDist,;
 							"Faturamento:",oTFoldeP:aDialogs[4],,, .T.,)
@@ -772,8 +756,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF4Q5D", aHeadEsp, @aColsEsp, nUsadEsp)
 
-oGetF4Q5D:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,, oGrpF4Q5D, aHeadEsp, aColsEsp)
-oGetF4Q5D:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF4Q5D:= MsNewGetDados():New(nDist+5, nF4C2+nDist, nF4_3x-1, aPObjs[1,4]-nDist-1, GD_UPDATE,,,,,,,,,, oGrpF4Q5D, aHeadEsp, aColsEsp)
+//oGetF4Q5D:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 
 oGrpF4Q2E := TGroup():New( nF4_3x+nDist, aPObjs[1,2]+nDist, nF4_3x*2+nDist, nF4C2-nDist,;
 							"Morte:",oTFoldeP:aDialogs[4],,, .T.,)
@@ -790,8 +774,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF4Q2E", aHeadEsp, @aColsEsp, nUsadEsp)
 
-oGetF4Q2E:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,, oGrpF4Q2E, aHeadEsp, aColsEsp)
-oGetF4Q2E:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF4Q2E:= MsNewGetDados():New(nF4_3x+nDist+5, aPObjs[1,2]+nDist, nF4_3x*2+nDist-1, nF4C2-nDist-1, GD_UPDATE,,,,,,,,,, oGrpF4Q2E, aHeadEsp, aColsEsp)
+//oGetF4Q2E:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 
 oGrpF4Q3D := TGroup():New( nF4_3x+nDist, nF4C2+nDist, nF4_3x*2+nDist, aPObjs[1,4]-nDist,;
 							"Nascimento:",oTFoldeP:aDialogs[4],,, .T.,)
@@ -808,8 +792,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF4Q3D", aHeadEsp, @aColsEsp, nUsadEsp)
 
-oGetF4Q3D:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,, oGrpF4Q3D, aHeadEsp, aColsEsp)
-oGetF4Q3D:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF4Q3D:= MsNewGetDados():New(nF4_3x+nDist+5, nF4C2+nDist, nF4_3x*2+nDist-1, aPObjs[1,4]-nDist-1, GD_UPDATE,,,,,,,,,, oGrpF4Q3D, aHeadEsp, aColsEsp)
+//oGetF4Q3D:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 
 oGrpF4Q1  := TGroup():New( nF4_3x*2+nDist, aPObjs[1,2]+nDist, nF4_3x*3+nDist, aPObjs[1,4]-nDist,;
 							"Resumo:",oTFoldeP:aDialogs[4],,, .T.,)
@@ -827,8 +811,8 @@ nUsadEsp := len(aHeadEsp)
 
 // LoadNewGDados("oGetF4Q1", aHeadEsp, @aColsEsp, nUsadEsp)
 
-oGetF4Q1:= MsNewGetDados():New(0, 0, 0, 0, GD_UPDATE,,,,,,,,,, oGrpF4Q1, aHeadEsp, aColsEsp)
-oGetF4Q1:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+oGetF4Q1:= MsNewGetDados():New(nF4_3x*2+nDist+5, aPObjs[1,2]+nDist, nF4_3x*3+nDist, aPObjs[1,4]-nDist, GD_UPDATE,,,,,,,,,, oGrpF4Q1, aHeadEsp, aColsEsp)
+//oGetF4Q1:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 
 // folder: ESTOQUE ##########################################################################################
 

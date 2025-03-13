@@ -55,7 +55,7 @@ user function VaEstR08()
 		select B1_X_PRDES, B1_COD, B1_DESC, B1_UM, B1_LOCPAD, B1_GRUPO, B1_X_RUA, B1_X_MODUL, B1_X_NIVEL, B1_X_POSIC
 		  from %table:SB1% sb1
 		 where sb1.B1_FILIAL=%xFilial:SB1% and sb1.%notDel%
-		   and sb1.B1_X_PRDES='1' and sb1.B1_GRUPO not in ('BOV','01 ','05 ')
+		   and sb1.B1_X_PRDES='E' and sb1.B1_GRUPO not in ('BOV','01 ','05 ')
 		 order by B1_COD
 	endSQL
 	

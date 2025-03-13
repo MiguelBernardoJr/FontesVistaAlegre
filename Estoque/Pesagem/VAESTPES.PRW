@@ -1,4 +1,4 @@
-#INCLUDE 'PROTHEUS.CH'
+s#INCLUDE 'PROTHEUS.CH'
 #INCLUDE "TOTVS.CH"
 #INCLUDE "TBICONN.CH"
 #INCLUDE "COLORS.CH"
@@ -550,6 +550,10 @@ Static Function UltPesagemXPlaca(cPlaca)
 	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),"TEMPSQL",.F.,.F.)
 	if !TEMPSQL->(Eof())
 		ZPB->(DbGoTo(TEMPSQL->RECNO))
+
+		cObserv := Replace( ZPB->ZPB_OBSERV, Chr(13)+Chr(10), " " )
+		cObserv := Replace( cObserv, '"', "'" )
+
 		aAdd( aRetorno, {   ZPB->ZPB_CODMOT ,;
 							ZPB->ZPB_CPFMOT ,;
 							ZPB->ZPB_NOMMOT ,;
@@ -561,7 +565,7 @@ Static Function UltPesagemXPlaca(cPlaca)
 							ZPB->ZPB_NOMFOR ,;
 							ZPB->ZPB_LOCAL  ,;
 							ZPB->ZPB_BAIA   ,;
-							Replace( ZPB->ZPB_OBSERV, Chr(13)+Chr(10), " " ) } )
+							cObserv } )
 	EndIf
 	TEMPSQL->(DbCloseArea())
 	RestArea(aArea)

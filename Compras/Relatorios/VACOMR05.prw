@@ -13,6 +13,8 @@ user function rvacr05()
 return nil
 
 user function vacomr05(cAlias, nReg, nOpc)
+	Private oMBSaveLog	:= MBSaveLog():New() as object
+
     GeraPlan(SC8->C8_NUM)
 return nil
 
@@ -20,18 +22,31 @@ user function SC8Plan(cNumCot)
 return GeraPlan(cNumCot, .f.)
 
 static function GeraPlan(cNumCot, lAbreCliente)
-local aAreaSC8 := {}
-local aCotacao := {}
-local aFornece := {}
-local cSql := ""
-local nPosFornec := 0 
-local nPosProd := 0
-local lContinua := .t.
+local aAreaSC8      := {}
+local aCotacao      := {}
+local aFornece      := {}
+local cSql          := ""
+local nPosFornec    := 0 
+local nPosProd      := 0
+local lContinua     := .t.
 
 private dEmissao := SToD("")
 private cNumCotacao := ""
+Private cPath 	 	:= "C:\totvs_relatorios\"
 
 default lAbreCliente := .t.
+
+    If Len( Directory(cPath + "*.*","D") ) == 0
+        If Makedir(cPath) == 0
+            ConOut('Diretorio Criado com Sucesso.')
+            MsgAlert('Diretorio Criado com Sucesso: ' + cPath, 'Aviso')
+        Else	
+            ConOut( "Não foi possivel criar o diretório. Erro: " + cValToChar( FError() ) )
+            MsgAlert( "Não foi possivel criar o diretório. Erro: " + cValToChar( FError() ), 'Aviso' )
+        EndIf
+    EndIF
+
+	MBSaveLog():FULLWrite(, .F., "38")
 
     DbSelectArea("SC8")
     DbSetOrder(1) //
@@ -44,7 +59,9 @@ default lAbreCliente := .t.
     endif
 
     if lContinua
-    
+
+    	MBSaveLog():FULLWrite(, .F., "52")
+
         cNumCotacao := Iif(cNumCot == nil, SC8->C8_NUM, cNumCot)
         if Empty(dEmissao)
             dEmissao := SC8->C8_EMISSAO
@@ -91,8 +108,12 @@ default lAbreCliente := .t.
         
         DbUseArea(.t., "TOPCONN", TCGenQry(,, cSql), "TMPSC8", .f., .f.)
         
+    	MBSaveLog():FULLWrite(, .F., "100")
+
         while !TMPSC8->(Eof())
-        
+
+    	    MBSaveLog():FULLWrite(, .F., "TMPSC8")
+
             if (nPosProd := AScan(aCotacao, {|aMat| aMat[1] == TMPSC8->C8_PRODUTO})) == 0
                 AAdd(aCotacao, {TMPSC8->C8_PRODUTO, TMPSC8->C8_UM, TMPSC8->C8_QUANT, SaldoTot(TMPSC8->C8_PRODUTO), aClone(aFornece) })
                 nPosProd := Len(aCotacao)
@@ -113,25 +134,37 @@ default lAbreCliente := .t.
         end
         TMPSC8->(DbCloseArea())
         
+    	MBSaveLog():FULLWrite(, .F., "126")
+
         //MemoWrite("acotacao.txt", u_AToS(aCotacao))
         
         if !Empty(aCotacao)
+    	    MBSaveLog():FULLWrite(, .F., "131")
+
             cFileName := CriaArqExcel( aCotacao )
-            if lAbreCliente 
-                if (CpyS2T(cFileName, Alltrim(GetTempPath())))
+    	    MBSaveLog():FULLWrite(, .F., "134")
+            if lAbreCliente
+    	        MBSaveLog():FULLWrite(, .F., "136")
+                if (CpyS2T(cFileName, cPath))
+    	            MBSaveLog():FULLWrite(, .F., "138")
                     fErase(cFileName)
+    	            MBSaveLog():FULLWrite(, .F., "140")
                     cFileName := SubStr(cFileName, RAt("\", cFileName)+1)
+    	            MBSaveLog():FULLWrite(, .F., "142")
                     
                     // Abre excell
-                    if !ApOleClient( 'MsExcel' )
-                        MsgAlert("O excel não foi encontrado. Arquivo " + cFileName + " gerado em " + GetTempPath() + ".", "MsExcel não encontrado" )
-                    else
-                        oExcelApp := MsExcel():New()
-                        oExcelApp:WorkBooks:Open(GetTempPath()+cFileName)
-                        oExcelApp:SetVisible(.T.)
-                    endif
+                    //if !ApOleClient( 'MsExcel' )
+    	            //    MBSaveLog():FULLWrite(, .F., "146")
+                    //    MsgAlert("O excel não foi encontrado. Arquivo " + cFileName + " gerado em " + GetTempPath() + ".", "MsExcel não encontrado" )
+                    //else
+                    MBSaveLog():FULLWrite(, .F., "149")
+                        oExcelApp := FWMsExcel():New()
+                    MBSaveLog():FULLWrite(, .F., "151")
+                        ShellExecute("open", cPath+cFileName, "", "", 1)
+                    MBSaveLog():FULLWrite(, .F., "155")
+                    //endif
                 else
-                    MsgAlert("Não foi possivel criar o arquivo " + cFileName + " no cliente no diretório " + GetTempPath() + ". Por favor, contacte o suporte.", "Não foi possivel criar Planilha." )
+                    MsgAlert("Não foi possivel criar o arquivo " + cFileName + " no cliente no diretório " + cPath + ". Por favor, contacte o suporte.", "Não foi possivel criar Planilha." )
                 endif
                 cFileName := nil
             endif
@@ -150,12 +183,14 @@ local cFileName := ""
 Local i       := 0
 Local J       := 0
 
+    MBSaveLog():FULLWrite(, .F., "172")
+
     aVetDir := Directory("\workflow\*.","D")
     if aScan(aVetDir,{|aMat| aMat[1] == "TEMP" .and. aMat[5] == "D"}) == 0
         MakeDir("\workflow\temp")
-    endif 
+    endif
 
-    nHandle := FCreate(cFileName := "\workflow\temp\cotac_" + cNumCotacao + ".xml")
+    nHandle := FCreate(cFileName := "\workflow\temp\cotac_" + cNumCotacao + StrTran(Time(),":","-") + ".xml")
 
     FWrite(nHandle, '<?xml version="1.0"?>' + CRLF)
     FWrite(nHandle, '<?mso-application progid="Excel.Sheet"?>' + CRLF)
@@ -165,7 +200,7 @@ Local J       := 0
                     '          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"' + CRLF +;
                     '          xmlns:html="http://www.w3.org/TR/REC-html40">' + CRLF)
     FWrite(nHandle, '    <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">' + CRLF)
-    FWrite(nHandle, '        <Keywords>Cotação Nro ' + cNumCotacao + '</Keywords>' + CRLF)
+    FWrite(nHandle, '        <Keywords>Cotacao Nro ' + cNumCotacao + '</Keywords>' + CRLF)
     FWrite(nHandle, '        <Created>' + TimeStamp() + 'Z</Created>' + CRLF)
     FWrite(nHandle, '        <Version>16.00</Version>' + CRLF)
     FWrite(nHandle, '    </DocumentProperties>' + CRLF)
@@ -749,16 +784,19 @@ Local J       := 0
 
 
     FWrite(nHandle, '    </Styles>' + CRLF)
-    FWrite(nHandle, '    <Worksheet ss:Name="Cotação ' + FrmtValorExcel(cNumCotacao) + '">' + CRLF)
+    FWrite(nHandle, '    <Worksheet ss:Name="Cotacao ' + FrmtValorExcel(cNumCotacao) + '">' + CRLF)
     FWrite(nHandle, '        <Table x:FullColumns="1" x:FullRows="1" ss:StyleID="s18" ss:DefaultRowHeight="20.0625">' + CRLF)
     FWrite(nHandle, '            <Column ss:StyleID="s18" ss:AutoFitWidth="0" ss:Width="177"/>' + CRLF )
     FWrite(nHandle, '            <Column ss:StyleID="s18" ss:AutoFitWidth="0" ss:Width="63"/>' + CRLF)
     FWrite(nHandle, '            <Column ss:StyleID="s18" ss:AutoFitWidth="0" ss:Width="66"/>' + CRLF)
     FWrite(nHandle, '            <Column ss:StyleID="s18" ss:AutoFitWidth="0" ss:Width="34"/>' + CRLF)
 
+    MBSaveLog():FULLWrite(, .F., "14")
+
     aFornece := aCotacao[1][5]
     nLenFornec := Len(aFornece)
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "785")
         FWrite(nHandle, '            <Column ss:StyleID="s18" ss:AutoFitWidth="0" ss:Width="60"/>' + CRLF +;
                         '            <Column ss:StyleID="s18" ss:AutoFitWidth="0" ss:Width="60"/>' + CRLF +;
                         '            <Column ss:StyleID="s18" ss:AutoFitWidth="0" ss:Width="60"/>' + CRLF)
@@ -783,6 +821,8 @@ Local J       := 0
     aFornece := aCotacao[1][5]
     nLenFornec := Len(aFornece)
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "810")
+
         FWrite(nHandle, '                <Cell ss:MergeAcross="2" ss:StyleID="s87"><Data ss:Type="String">' + FrmtValorExcel( AllTrim(Posicione("SA2", 1, xFilial("SA2")+aFornece[i][1], "A2_NREDUZ"))) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>')
     next
     FWrite(nHandle, '                <Cell ss:MergeAcross="1" ss:StyleID="s87"><Data ss:Type="String">VALOR MINIMO</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
@@ -794,6 +834,8 @@ Local J       := 0
                     '                <Cell ss:StyleID="s34"><Data ss:Type="String">UDM</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF)
 
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "823")
+
         FWrite(nHandle, '                <Cell ss:StyleID="s35"><Data ss:Type="String">R$ Unit</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '                <Cell ss:StyleID="s36"><Data ss:Type="String">R$ Total</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '                <Cell ss:StyleID="s36"><Data ss:Type="String">Marca</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF) 
@@ -812,6 +854,8 @@ Local J       := 0
     nLenProdutos := Len(aCotacao)
     
     for i := 1 to nLenProdutos
+    	MBSaveLog():FULLWrite(, .F., "843")
+
         FWrite(nHandle, '            <Row ss:AutoFitHeight="0" ss:Height="33.75">' + CRLF +;
                         '                <Cell ss:StyleID="s37"><Data ss:Type="String">' + FrmtValorExcel(AllTrim(aCotacao[i][1]) + " - " + AllTrim(Posicione("SB1", 1, xFilial("SB1")+aCotacao[i][1], "B1_DESC"))) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
                         '                <Cell ss:StyleID="s38"><Data ss:Type="Number">' + FrmtValorExcel(aCotacao[i][3]) + '</Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
@@ -821,6 +865,8 @@ Local J       := 0
         cFormula := ""
         
         for j := 1 to nLenFornec
+        	MBSaveLog():FULLWrite(, .F., "854")
+
             If(aCotacao[i][5][j][5] == 0)
                 FWrite(nHandle, '            <Cell ss:StyleID="s39"/>' + CRLF +;
                             '                <Cell ss:StyleID="s40" ss:Formula="=IF(RC[-1]=&quot;&quot;,&quot;&quot;,RC[-1]*RC2)"><Data ss:Type="Number"></Data><NamedCell ss:Name="Print_Area"/></Cell>' + CRLF +;
@@ -853,6 +899,8 @@ Local J       := 0
     FWrite(nHandle, '            <Row ss:AutoFitHeight="0">' + CRLF +;
                     '                <Cell ss:MergeAcross="3" ss:StyleID="m320402740"><Data ss:Type="String">TOTAL</Data></Cell>' + CRLF)
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "888")
+
         FWrite(nHandle, '                <Cell ss:MergeAcross="2" ss:StyleID="m2126159379956" ss:Formula="=SUM(R[-' + AllTrim(Str(nLenProdutos+1)) + ']C[1]:R[-1]C[1])"><Data ss:Type="Number"></Data></Cell>' + CRLF)
     next
     FWrite(nHandle, '                <Cell ss:MergeAcross="1" ss:StyleID="m2126159379956" ss:Formula="=SUM(R[-' + AllTrim(Str(nLenProdutos+1)) + ']C[1]:R[-1]C[1])"><Data ss:Type="Number"></Data></Cell>' + CRLF)
@@ -861,12 +909,16 @@ Local J       := 0
     FWrite(nHandle, '            <Row ss:AutoFitHeight="0">' + CRLF +;
                     '                <Cell ss:MergeAcross="3" ss:StyleID="m320402740"><Data ss:Type="String">Condicao Pagamento</Data></Cell>' + CRLF)
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "898")
+
         FWrite(nHandle, '                <Cell ss:MergeAcross="2" ss:StyleID="m320402760"><Data ss:Type="String">' + FrmtValorExcel( aFornece[i][3] ) + '</Data></Cell>' + CRLF)
     next
     FWrite(nHandle, '            </Row>' + CRLF)
     FWrite(nHandle, '            <Row ss:AutoFitHeight="0">' + CRLF +;
                     '                <Cell ss:MergeAcross="3" ss:StyleID="m320402740"><Data ss:Type="String">Contato</Data></Cell>' + CRLF)
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "906")
+
         FWrite(nHandle, '                <Cell ss:MergeAcross="2" ss:StyleID="m320402760"><Data ss:Type="String">' + FrmtValorExcel(Posicione("SA2",1,xFilial("SA2")+aFornece[i][1],"A2_CONTATO") + "-" + Iif(!Empty(SA2->A2_DDD),"(" + AllTrim(SA2->A2_DDD) + ")", "") + AllTrim(SA2->A2_TEL)) + '</Data></Cell>' + CRLF)
     next
     FWrite(nHandle, '            </Row>' + CRLF)
@@ -922,6 +974,8 @@ Local J       := 0
     nCol := 5
     cRange := ""
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "963")
+
         cRange += Iif(Empty(cRange), "", ",") + "R6C" + AllTrim(Str(nCol)) + ":R" + AllTrim(Str(5+nLenProdutos)) + "C" + AllTrim(Str(nCol))
         nCol += 3
     next
@@ -941,6 +995,8 @@ Local J       := 0
     nCol := 6
     cRange := ""
     for i := 1 to nLenFornec
+    	MBSaveLog():FULLWrite(, .F., "984")
+
         cRange += Iif(Empty(cRange), "", ",") + "R6C" + AllTrim(Str(nCol)) + ":R" + AllTrim(Str(5+nLenProdutos)) + "C" + AllTrim(Str(nCol))
         nCol += 3
     next
@@ -995,11 +1051,13 @@ Local J       := 0
                     '            <ProtectObjects>False</ProtectObjects>' + CRLF +;
                     '            <ProtectScenarios>False</ProtectScenarios>' + CRLF +;
                     '        </WorksheetOptions>' + CRLF +;
-                    '    </Worksheet>' + CRLF)
+                    '    </Worksheet>' + CRLF )
 
     FWrite(nHandle, '</Workbook>' + CRLF)
 
     FClose(nHandle)
+    
+    MBSaveLog():FULLWrite(, .F., "1046")
     
 return cFileName
 
@@ -1007,6 +1065,8 @@ static function AdFornec(cFornece, aFornece, aCotacao)
 local nPosForn := 0
 local aModForn := {cFornece, "", "", "", 0, 0}
 local i, nLen
+
+    MBSaveLog():FULLWrite(, .F., "1055")
 
 AAdd(aFornece, aModForn)
 nPosForn := Len(aFornece)
@@ -1016,6 +1076,7 @@ for i := 1 to nLen
     AAdd(aCotacao[i][5], aClone(aModForn))
 next
 
+    MBSaveLog():FULLWrite(, .F., "1065")
 return nPosForn
 
 /*/{Protheus.doc} SaldoTot
@@ -1024,6 +1085,7 @@ static function SaldoTot(cProduto)
 local aArea := GetArea()
 local nSaldo := 0
 
+    MBSaveLog():FULLWrite(, .F., "1074")
     DbSelectArea("SB2")
     DbSetOrder(1) // B2_FILIAL + B2_COD + B2_LOCAL
     SB2->(DbSeek(xFilial("SB2")+cProduto))
@@ -1031,6 +1093,7 @@ local nSaldo := 0
 		nSaldo += SaldoSB2()
 		SB2->(DbSkip())
 	end
+    MBSaveLog():FULLWrite(, .F., "1082")
 
 if !Empty(aArea)
     RestArea(aArea)
@@ -1043,6 +1106,8 @@ return nSaldo
 static function FrmtValorExcel( xVar )
 local cRet  := ""
 local cType := ValType(xVar)
+
+    MBSaveLog():FULLWrite(, .F., "1096")
 
     if cType == "U"
         cRet := ""
