@@ -52,8 +52,9 @@ User Function VACOMR11()
     Private cMailFornece    
     Private nTamVerPx       
     Private nTamHorPx       
-    Private oBrushCinza    := TBRUSH():New(,nCorCinza)
-    Private oBrushRoxo     := TBRUSH():New(,nCorRoxo)
+    Private oBrushCinza     := TBRUSH():New(,nCorCinza)
+    Private oBrushRoxo      := TBRUSH():New(,nCorRoxo)
+	Private lMata094		:= IsInCallStack("MATA094")
 
     aDados := fGetDados()
 
@@ -74,8 +75,8 @@ User Function VACOMR11()
     cArqName := AllTrim(aDados[01][02]) + "-"+ StrTran(cTimeIni,":","-",,)
     
     oPrinter := FWMSPrinter():New( cArqName, IMP_PDF/*nDevice*/ , .F./*lAdjustToLegacy*/, /*cPathInServer*/, .T./*lDisabeSetup*/,;
-        /*lTReport*/, /*@oPrintSetup*/, /*cPrinter*/, /*lServer*/, .F./*lPDFAsPNG*/, /*lRaw*/,;
-        .T. /*lViewPDF*/, /*nQtdCopy*/ )
+        /*lTReport*/    , /*@oPrintSetup*/, /*cPrinter*/, /*lServer*/, .F./*lPDFAsPNG*/, /*lRaw*/,;
+        IIF(lMata094,.F.,.T.) /*lViewPDF*/, /*nQtdCopy*/ )
     oPrinter:StartPage()
     oPrinter:SetPortrait()
     oPrinter:SetPaperSize(DMPAPER_A4) // DMPAPER_A4 = A4 210 x 297 mm
@@ -83,12 +84,16 @@ User Function VACOMR11()
     nTamHorPx := oPrinter:nLogPixelY()
     oPrinter:SetMargin(60,60,60,60) // nEsquerda, nSuperior, nDireita, nInferior
     oPrinter:cPathPDF := cLocalPath // Caso seja utilizada impressão em IMP_PDF
+	
+	if lMata094
+		ImpTicket(@lEnd)
+	Else 	
+		RptStatus({|lEnd| ImpTicket(@lEnd)}, "Imprimindo relatorio...") //"A imprimir relatório..."
+	endif
+	
+	__CopyFile(cLocalPath+cArqName+".pdf", cServPath+cArqName+".pdf")
 
-    RptStatus({|lEnd| ImpTicket(@lEnd)}, "Imprimindo relatorio...") //"A imprimir relatório..."
-
-    //__CopyFile(cLocalPath+cArqName+".pdf", cServPath+cArqName+".pdf")
-
-Return
+Return iif(lMata094,cArqName+".pdf",nil)
 /*--------------------------------------------------------------------------------,
  | Principal: 					     U_MBESTPES()          		                  |
  | Func:  ImpTicket 	            	          	            	              |
@@ -125,7 +130,9 @@ Static Function ImpTicket( lEnd )
     fQuadro(1)
 
     oPrinter:EndPage()
-    oPrinter:Preview()
+
+	oPrinter:Preview()
+
     FreeObj(oPrinter)
     oPrinter := Nil
 
@@ -335,7 +342,7 @@ Static Function aColsGrid()
 		nTotIPI   += aDados[nI][16]
 		nTotFRETE := aDados[nI][26]
 		nTotDesc  += aDados[nI][30]
-//oPrinter:SayAlign ( nRow+=nTamLin-10, nPos  + 6.25, "COD"  , oFheader , /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+		//oPrinter:SayAlign ( nRow+=nTamLin-10, nPos  + 6.25, "COD"  , oFheader , /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 		oPrinter:SayAlign ( nRow+=nTamLin-11, nPosSeq, AllTrim(Str(nI))                                                                         , oFGrid,  (nPosQtd - nPosSeq),    10, , PAD_LEFT,  )   // Sequencia
 		oPrinter:SayAlign ( nRow            , nPosQtd, AllTrim(Transform(aDados[nI][6], Alltrim(FWSX3Util():GetFieldStruct( "C7_QUANT" )[5])))  , oFGrid,  (nPosUnd - nPosQtd),    10, , PAD_LEFT,  )   // Unidade
 		oPrinter:SayAlign ( nRow            , nPosUnd, aDados[nI][23]                                                                           , oFGrid,  (nPosCod - nPosUnd),    10, , PAD_LEFT,  )   // Codigo Interno

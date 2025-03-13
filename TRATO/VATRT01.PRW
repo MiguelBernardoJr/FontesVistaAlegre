@@ -94,7 +94,6 @@ User Function VATST01()
 
 				FWExecView("Roteirização","VATRT01",3,,{|| .T.})
 			
-			oTmpCon:Delete()
 			oTmpLin:Delete()
 			oTmpCur:Delete()
 			oTmpRac:Delete()
@@ -124,14 +123,14 @@ Return NIL
 Static Function ModelDef()
 	Local oModel 		:= nil
 	Local oStCab   		:= FWFormStruct(1, "TMPCAB")
-	Local oStCon   		:= FWFormStruct(1, "TMPCON")
+	//Local oStCon   		:= FWFormStruct(1, "TMPCON")
 	Local oStLin   		:= FWFormStruct(1, "TMPLIN")
 	Local oStCur   		:= FWFormStruct(1, "TMPCUR")
 	Local oStRac   		:= FWFormStruct(1, "TMPRAC")
 	Local bLoad 		:= {|oModel| fLoadGrid(oModel)}
 
     oStCab := gMdCab(oModel,oStCab)
-    oStCon := gMdCon(oModel,oStCon)
+    //oStCon := gMdCon(oModel,oStCon)
     oStLin := gMdLin(oModel,oStLin)
     oStCur := gMdCur(oModel,oStCur)
     oStRac := gMdRac(oModel,oStRac)
@@ -139,36 +138,39 @@ Static Function ModelDef()
 	oModel := MPFormModel():New("TRTVA01",/*Pre-Validacao*/, /* bVldPos */ /*Pos-Validacao*/, /* bVldCom */ /*Commit*/,/*Cancel*/)
 
 	oModel:AddFields("TMPCAB",/*cOwner*/  ,oStCab, /*bPreValidacao*/,/*  {|| U_I04PREM()} *//*bPosValidacao*/,bLoad /* {|| CABLOAD()} *//*bCarga*/)///* ,/*cOwner*/ ,oStPai  */ )
-	oModel:AddGrid('TMPCON', 'TMPCAB'	, oStCon , /*bLinePre*/, /* {|| U_I04PREG()} *//*bLinePos*/,/* bPre */,/* bPos */,bLoad /* {|| LINLOAD()} */)
-	oModel:AddGrid('TMPLIN', 'TMPCON'	, oStLin , /*bLinePre*/, /* {|| U_I04PREG()} *//*bLinePos*/,/* bPre */,/* bPos */,bLoad /* {|| LINLOAD()} */)
+	//oModel:AddGrid('TMPCON', 'TMPCAB'	, oStCon , /*bLinePre*/, /* {|| U_I04PREG()} *//*bLinePos*/,/* bPre */,/* bPos */,bLoad /* {|| LINLOAD()} */)
+	oModel:AddGrid('TMPLIN', 'TMPCAB'	, oStLin , /*bLinePre*/, /* {|| U_I04PREG()} *//*bLinePos*/,/* bPre */,/* bPos */,bLoad /* {|| LINLOAD()} */)
 	oModel:AddGrid('TMPCUR', 'TMPLIN'	, oStCur , /*bLinePre*/, /*bLinePos*/,/* bPre */,/* bPos */,bLoad/* {|| CURLOAD()} *//*  {|| U_I04LOAD()} */)
 	oModel:AddGrid('TMPRAC', 'TMPCAB'	, oStRac , /*bLinePre*/, /*bLinePos*/,/* bPre */,/* bPos */,bLoad/* {|| RACLOAD()} *//*  {|| U_I04LOAD()} */)
 
-	oModel:SetRelation('TMPLIN', {{cAliaCon+"_CONF"  , cAliasLin+"_CONF"}})
-	oModel:SetRelation('TMPCUR', {{cAliasLin+"_LINHA", cAliasCur+"_CONF"}})
+	//oModel:SetRelation('TMPLIN', {{"CONF" , "CONF"}})
+	oModel:SetRelation('TMPCUR', {{"LINHA", "LINHA"}})
+//	oModel:SetRelation('TMPLIN', {{cAliaCon+"_CONF"  , cAliasLin+"_CONF"}})
+//	oModel:SetRelation('TMPCUR', {{cAliasLin+"_LINHA", cAliasCur+"_CONF"}})
 	//oModel:SetRelation('TMPRAC', {{cAliasRac+"_LINHA", cAliasCur+"_CONF"}})
 
 	oModel:SetPrimaryKey({})
 
 	//oModel:GetModel( "ZFFDETAIL" ):SetUniqueLine( { "ZFF_FILIAL","ZFF_CODIGO","ZFF_ITEM" } )
 	oModel:GetModel('TMPLIN'):SetOptional(.T.)
+	//oModel:GetModel('TMPCON'):SetOptional(.T.)
 	oModel:GetModel('TMPCUR'):SetOptional(.T.)
 	oModel:GetModel('TMPRAC'):SetOptional(.T.)
 
 	//Setando outras informações do Modelo de Dados
 	oModel:SetDescription("Dados do Cadastro")
 	oModel:GetModel("TMPCAB"):SetDescription("Roteirização")
-	oModel:GetModel("TMPCON"):SetDescription("Confinamento")
+	//oModel:GetModel("TMPCON"):SetDescription("Confinamento")
 	oModel:GetModel("TMPLIN"):SetDescription("Linhas")
 	oModel:GetModel("TMPCUR"):SetDescription("Currais")
 	oModel:GetModel("TMPRAC"):SetDescription("Rações")
 
-	oModel:GetModel("TMPCON"):SetNoDeleteLine(.T.)
+	//oModel:GetModel("TMPCON"):SetNoDeleteLine(.T.)
 	oModel:GetModel("TMPLIN"):SetNoDeleteLine(.T.)
 	oModel:GetModel("TMPCUR"):SetNoDeleteLine(.T.)
 	oModel:GetModel("TMPRAC"):SetNoDeleteLine(.T.)
 
-	oModel:GetModel("TMPCON"):SetNoInsertLine(.T.)
+	//oModel:GetModel("TMPCON"):SetNoInsertLine(.T.)
 	oModel:GetModel("TMPLIN"):SetNoInsertLine(.T.)
 	oModel:GetModel("TMPCUR"):SetNoInsertLine(.T.)
 	oModel:GetModel("TMPRAC"):SetNoInsertLine(.T.)
@@ -178,13 +180,13 @@ Static Function ViewDef()
     Local oView     := nil
 	Local oModel    := FWLoadModel("VATRT01")
 	Local oStCab    := FWFormStruct(2, "TMPCAB")
-	Local oStCon    := FWFormStruct(2, "TMPCON")
+	//Local oStCon    := FWFormStruct(2, "TMPCON")
 	Local oStLin    := FWFormStruct(2, "TMPLIN")
 	Local oStCur    := FWFormStruct(2, "TMPCUR")
 	Local oStRac    := FWFormStruct(2, "TMPRAC")
 
     oStCab := gVwCab(oModel,oStCab)
-    oStCon := gVwCon(oModel,oStCon)
+    //oStCon := gVwCon(oModel,oStCon)
     oStLin := gVwLin(oModel,oStLin)
     oStCur := gVwCur(oModel,oStCur)
     oStRac := gVwRac(oModel,oStRac)
@@ -193,7 +195,7 @@ Static Function ViewDef()
 	oView:SetModel(oModel)
 
 	oView:AddField("VIEW_CAB", oStCab, "TMPCAB")
-	oView:AddGrid("VIEW_CON" , oStLin, "TMPCON")
+	//oView:AddGrid("VIEW_CON" , oStLin, "TMPCON")
 	oView:AddGrid("VIEW_LIN" , oStLin, "TMPLIN")
 	oView:AddGrid("VIEW_CUR" , oStCur, "TMPCUR")
 	oView:AddGrid("VIEW_RAC" , oStRac, "TMPRAC")
@@ -201,8 +203,8 @@ Static Function ViewDef()
 	oView:CreateHorizontalBox('CABEC', 20)
 	oView:CreateHorizontalBox('GRID' , 80)
 	
-	oView:CreateHorizontalBox('C_HIDE', 0	,'CABEC')
-	oView:CreateHorizontalBox('C_SHOW', 100	,'CABEC')
+	//oView:CreateHorizontalBox('C_HIDE', 0	,'CABEC')
+	//oView:CreateHorizontalBox('C_SHOW', 100	,'CABEC')
 
 	oView:CreateFolder('FOLDER01','GRID')
     oView:AddSheet('FOLDER01','SHEET01',"Aba 01")
@@ -217,14 +219,17 @@ Static Function ViewDef()
     oView:CreateHorizontalBox('R_CIMA'  , 50, 'RIGHT',, 'FOLDER01','SHEET01')
     oView:CreateHorizontalBox('R_BAIXO' , 50, 'RIGHT',, 'FOLDER01','SHEET01')
 
-	oView:SetOwnerView("VIEW_CAB"	 , "C_HIDE"  )
-	oView:SetOwnerView("VIEW_CON"	 , "C_SHOW" )
+	oView:AddOtherObject("OTHER_PANEL_O", {|oPanel| CriaBtn(oPanel)})
+
+	oView:SetOwnerView("VIEW_CAB"	 , "CABEC"  )
+	//oView:SetOwnerView("VIEW_CON"	 , "C_SHOW" )
 	oView:SetOwnerView("VIEW_LIN"	 , "L_CIMA" )
 	oView:SetOwnerView("VIEW_RAC"	 , "L_BAIXO")
 	oView:SetOwnerView("VIEW_CUR"	 , "R_CIMA" )
+	oView:SetOwnerView("OTHER_PANEL_O"	 , "R_BAIXO" )
 	
 	oView:EnableTitleView('VIEW_CAB', "Roteirização")
-	oView:EnableTitleView('VIEW_CON', "Confinamento")
+	//oView:EnableTitleView('VIEW_CON', "Confinamento")
 	oView:EnableTitleView('VIEW_LIN', "Linhas")
 	oView:EnableTitleView('VIEW_CUR', "Currais")
 	oView:EnableTitleView('VIEW_RAC', "Rações")
@@ -319,16 +324,16 @@ Return aRet
 Static Function CriaTab()
 	Local aFields := {}
 
-	cAliaCon := GetNextAlias()
-	oTmpCon :=  FWTemporaryTable():New(cAliaCon)
-
-	aFields:= {}
-	aAdd(aFields, {'CONF'	,'C',TAMSX3('Z08_CONFNA')[1]	,TAMSX3('Z08_CONFNA')[2]	})
-	aAdd(aFields, {'DESCRI'	,'C',50	,0	})
-
-	oTmpCon:SetFields( aFields )
-    oTmpCon:AddIndex("1", {"CONF"} )
-    oTmpCon:Create()
+	//cAliaCon := GetNextAlias()
+	//oTmpCon :=  FWTemporaryTable():New(cAliaCon)
+//
+	//aFields:= {}
+	//aAdd(aFields, {'CONF'	,'C',TAMSX3('Z08_CONFNA')[1]	,TAMSX3('Z08_CONFNA')[2]	})
+	//aAdd(aFields, {'DESCRI'	,'C',50	,0	})
+//
+	//oTmpCon:SetFields( aFields )
+    //oTmpCon:AddIndex("1", {"CONF"} )
+    //oTmpCon:Create()
 
 	cAliasLin := GetNextAlias()
 	oTmpLin :=  FWTemporaryTable():New(cAliasLin)
@@ -418,15 +423,15 @@ Static Function PopulaTab()
 	While (cALias)->(!EOF())
 		//adicionando primeira grid com CONfinamentos.		
 		
-		cConf := (cALias)->CONF
-		if cConf != cConfBak
-			RecLock(cAliaCon, .T.)
-				(cAliaCon)->CONF	:= (cALias)->CONF
-				(cAliaCon)->DESCRI	:= "TESTE"
-			(cAliaCon)->(MsUnLock())
-
-			cConfBak := (cALias)->CONF
-		endif
+		//cConf := (cALias)->CONF
+		//if cConf != cConfBak
+		//	RecLock(cAliaCon, .T.)
+		//		(cAliaCon)->CONF	:= (cALias)->CONF
+		//		(cAliaCon)->DESCRI	:= "TESTE"
+		//	(cAliaCon)->(MsUnLock())
+//
+		//	cConfBak := (cALias)->CONF
+		//endif
 
 		cLinha := (cALias)->LINHA
 		if cLinha != cLinBak
@@ -488,7 +493,7 @@ User Function TRTVA01()
         If cIdPonto == "BUTTONBAR"
 			oModel 	:= FWModelActive()
             oView   := FWViewActive()
-			oMdCon 	:= oModel:GetModel("TMPCON")
+			//oMdCon 	:= oModel:GetModel("TMPCON")
 			oMdLin 	:= oModel:GetModel("TMPLIN")
 			oMdCur 	:= oModel:GetModel("TMPCUR")
 			oMdRac  := oModel:GetModel("TMPRAC")
@@ -524,11 +529,17 @@ User Function TRTVA01()
 			endif
 
 			cAlias := MpSysOpenQry(cQry)
-						
+			
+			oMdLin:SetNoInsertLine(.f.)
+			oMdLin:SetNoDeleteLine(.F.)
+			oMdCur:SetNoInsertLine(.f.)
+			oMdCur:SetNoDeleteLine(.F.)
+			oMdRac:SetNoInsertLine(.f.)
+			oMdRac:SetNoDeleteLine(.F.)
             //Limpando a grid
-            If oMdCon:CanClearData()
-                oMdCon:ClearData()
-            EndIf
+           //If oMdCon:CanClearData()
+           //    oMdCon:ClearData()
+           //EndIf
             If oMdLin:CanClearData()
                 oMdLin:ClearData()
             EndIf
@@ -541,19 +552,21 @@ User Function TRTVA01()
             
 			While (cALias)->(!EOF())
 
-				cConf := (cALias)->CONF
-				if cConf != cConfBak
-					oMdCon:AddLine()
-					oMdCon:LoadValue("CONF"		, (cALias)->CONF)
-					oMdCon:LoadValue("DESCRI"	, "Teste")
-
-					cConfBak := (cALias)->CONF
-				endif
+				//cConf := (cALias)->CONF
+				//if cConf != cConfBak
+				//	oMdCon:AddLine()
+				//	oMdCon:LoadValue("CONF"		, (cALias)->CONF)
+				//	oMdCon:LoadValue("DESCRI"	, "Teste")
+//
+				//	cConfBak := (cALias)->CONF
+				//endif
 
 				cLinha := (cALias)->LINHA
 
 				if cLinha != cLinBak
-					oMdLin:AddLine()
+					if !oMdLin:IsEmpty()
+						oMdLin:AddLine()
+					endif 
 					//oMdLin:LoadValue("XSEL"		, .F.)
 					oMdLin:LoadValue("LINHA"	, (cALias)->LINHA)
 					oMdLin:LoadValue("DIETA"	, (cALias)->DIETA)
@@ -562,7 +575,10 @@ User Function TRTVA01()
 					cLinBak := (cALias)->LINHA
 				endif
 
-				oMdCur:AddLine()
+				if !oMdCur:IsEmpty()
+					oMdCur:AddLine()
+				endif
+
 				oMdCur:LoadValue("XXSEL"		, .F.)
 				oMdCur:LoadValue("CODIGO",(cALias)->Z08_CODIGO)
 				oMdCur:LoadValue("SEQUEN",(cALias)->SEQ)
@@ -571,16 +587,34 @@ User Function TRTVA01()
 				oMdCur:LoadValue("DIETA" ,(cALias)->DIETA)
 				oMdCur:LoadValue("LINHA" ,(cALias)->LINHA)
 
+				(cALias)->(DbSkip())
 			enddo
  
+			oMdLin:SetNoInsertLine(.T.)
+			oMdLin:SetNoDeleteLine(.T.)
+			oMdCur:SetNoInsertLine(.T.)
+			oMdCur:SetNoDeleteLine(.T.)
+			oMdRac:SetNoInsertLine(.T.)
+			oMdRac:SetNoDeleteLine(.T.)
             //Posiciona na linha 1
-            oMdCon:GoLine(1)
+           // oMdCon:GoLine(1)
             oMdLin:GoLine(1)
             oView:Refresh()
  
         EndIf
+
          
     EndIf
      
     FWRestArea(aArea)
 Return xRet
+
+Static Function CriaBtn(oPanel)
+	Local oModel 	:= FWModelActive()
+	Local oView  	:= FWViewActive()
+	Local oFontMod  := TFont():New("Tahoma", , -38)
+	// Local lOk := .F.
+	// Ancoramos os objetos no oPanel passado
+	oPanel	:= tPanel():New(01,01,"Teste",oPanel,oFontMod,.T.,,CLR_YELLOW,CLR_BLUE,50,50)
+
+Return 

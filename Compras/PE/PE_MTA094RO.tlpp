@@ -1,0 +1,45 @@
+#INCLUDE 'TOTVS.CH'
+
+/*
+    MB : 18/02/2025
+        -> Chamar rotina de Analise de Cotação de dentro da rotina liberar documentos.
+
+    Atualizações  -> Liberação -> Liberar de Documentos
+    Rotina: MATA094
+
+    Rotina Analisar Cotacao:
+
+    MATA161 (visualizar) posicionando pelo campo do C8_FILIAL + C8_PEDIDO
+*/
+User Function MTA094RO()
+    Local aRotina := PARAMIXB[1]
+    AAdd(aRotina,{"Visualizar Cotação"   ,"u_AnalCotacao", 0, 1, 0, nil,,})
+    aAdd(aRotina,{"Consulta de Alteração","U_COM15FW()"  , 0, 4, 0,.f.})
+
+Return aRotina
+
+/* MB : 18/02/2025
+    -> Funcao: A161MapCot()
+        Faz a chamada a rotina de analisar cotacao
+*/
+User Function AnalCotacao()
+    Local aArea := GetArea()
+
+    Local cCRFILIAL := AllTrim(SCR->CR_FILIAL)
+    Local cCRPEDIDO := AllTrim(SCR->CR_NUM)
+
+    SC7->(DbSetOrder(1))
+    If SC7->(DBSeek( cCRFILIAL + cCRPEDIDO ))
+
+        SC8->(DbSetOrder(1))
+        If SC8->(DBSeek( SC7->C7_FILIAL + SC7->C7_NUMCOT ))
+            A161MapCot()
+        Else
+            MsgStop("Processo de compras sem Cotação registrada no sistema.", "Aviso")
+        EndIf
+
+    Else
+        MsgStop("Pedido de Compras não localizado.", "Aviso")
+    EndIf
+    RestArea(aArea)
+Return nil
