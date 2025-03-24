@@ -44,13 +44,13 @@ Static Function ModelDef()
 
     //oGrid:SetProperty('ZVD_ITZ09'    ,   MODEL_FIELD_VALID, {|| FAT08G()})
 
-	oModel := MPFormModel():New("FATI08M", /*Pre-Validacao*/,bPre/*Pos-Validacao*/,/* {|oModel| bSaveCom(oModel)} */,/*Cancel*/)
+	oModel := MPFormModel():New("FATI08M", /*Pre-Validacao*/,bPre/*Pos-Validacao*/,{|| bSaveCom()},/*Cancel*/)
 
 	oModel:AddFields("ZVDMASTER",/*cOwner*/  ,oMaster		, /*bPreValidacao*/, /*bPosValidacao*/, /*bCarga*/)///* ,/*cOwner*/ ,oStPai  */ )
 	oModel:AddGrid('ZVDDETAIL', 'ZVDMASTER'	, oGrid, /*bLinePre*/, /*bLinePos*/,/* bPre */,/* bPos */,/* {|| LoadGPrincipal()} */  )
 
-    aAdd(aZVDRel, {'ZVD_FILIAL', 'Iif(!INCLUI, ZVD->ZVD_FILIAL, FWxFilial("ZVD"))'} )
-	aAdd(aZVDRel, {'ZVD_COD'   , 'Iif(!INCLUI, ZVD->ZVD_COD   , ZVD->ZVD_COD)'} )
+    aAdd(aZVDRel, {'ZVD_FILIAL', 'FWxFilial("ZVD")'} )
+	aAdd(aZVDRel, {'ZVD_COD'   , 'ZVD->ZVD_COD'} )
 
 	oModel:SetRelation('ZVDDETAIL', aZVDRel, ZVD->(IndexKey(1)))
 
@@ -96,11 +96,11 @@ Static Function ViewDef()
 
 	//oView:EnableTitleView('VIEW_ZVD'  , cTitulo)
     
-    oMaster:RemoveField('ZVD_ITEM')
-    oMaster:RemoveField('ZVD_BOV')
-    oMaster:RemoveField('ZVD_DESCA')
-    oMaster:RemoveField('ZVD_SEXO')
-    oMaster:RemoveField('ZVD_IDADE')
+    oMaster:RemoveField('ZVD_ITEM'  )
+    oMaster:RemoveField('ZVD_BOV'   )
+    oMaster:RemoveField('ZVD_DESCA' )
+    oMaster:RemoveField('ZVD_SEXO'  )
+    oMaster:RemoveField('ZVD_IDADE' )
     oMaster:RemoveField('ZVD_Z09ANT')
     oMaster:RemoveField('ZVD_9ITANT')
     oMaster:RemoveField('ZVD_PRODES')
@@ -109,10 +109,10 @@ Static Function ViewDef()
     oMaster:RemoveField('ZVD_ITZ09')
     oMaster:RemoveField('ZVD_DESCP')
 
-	oGrid:RemoveField('ZVD_FILIAL')
-	oGrid:RemoveField('ZVD_COD')
-	oGrid:RemoveField('ZVD_LOTE')
-	//oGrid:RemoveField('ZVD_TIPOLA')
+	oGrid:RemoveField('ZVD_FILIAL'  )
+	oGrid:RemoveField('ZVD_COD'     )
+	oGrid:RemoveField('ZVD_LOTE'    )
+	oGrid:RemoveField('ZVD_TIPOLA'  )
 
     oView:AddIncrementField( 'GRID_ZVD', 'ZVD_ITEM' )
 	
@@ -124,9 +124,132 @@ Static Function MenuDef()
 
 	ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.VAFATI08' OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
 	ADD OPTION aRotina TITLE 'Incluir'    ACTION 'VIEWDEF.VAFATI08' OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
-	ADD OPTION aRotina TITLE 'Alterar'    ACTION 'VIEWDEF.VAFATI08' OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
 	ADD OPTION aRotina TITLE 'Excluir'    ACTION 'VIEWDEF.VAFATI08' OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5 
 Return aRotina
+
+Static Function bSaveCom()
+    Local aArea     := GetArea()
+    Local oModel    := FWModelActive()
+    Local oCab      := oModel:GetModel("ZVDMASTER")
+    Local oGrid     := oModel:GetModel("ZVDDETAIL")
+    Local oMdSB1    := nil
+    Local oSB1Mod   := nil
+	Local nOpc      := oModel:GetOperation()
+    Local lRet      := .T.
+    Local nI        := 0
+    Local cBov      := GETMV("MV_BOVPADR")
+
+    DBSELECTAREA( "SB1" )
+    SB1->(DBSETORDER( 1 ))
+
+    If nOpc == MODEL_OPERATION_INSERT .OR. nOpc == MODEL_OPERATION_UPDATE
+        For nI := 1 To oGrid:Length()
+            oGrid:GoLine(nI)
+            If !oGrid:isDeleted()
+                
+                RecLock('ZVD', lRecLock := !ZVD->(DbSeek( FWxFilial("ZVD") +;
+                                                          oCab:GetValue('ZVD_COD') +;
+                                                          oGrid:GetValue('ZVD_ITEM'))))
+
+                ZVD->ZVD_FILIAL    	:= FWxFilial("ZVD")
+                ZVD->ZVD_COD 	   	:= oCab:GetValue('ZVD_COD')
+                ZVD->ZVD_LOTE    	:= oCab:GetValue('ZVD_LOTE')
+                ZVD->ZVD_ITEM    	:= oGrid:GetValue('ZVD_ITEM')
+                ZVD->ZVD_BOV    	:= oGrid:GetValue('ZVD_BOV')
+                ZVD->ZVD_IDADE   	:= oGrid:GetValue('ZVD_IDADE')
+                ZVD->ZVD_Z09ANT     := oGrid:GetValue('ZVD_Z09ANT')
+                ZVD->ZVD_9ITANT     := oGrid:GetValue('ZVD_9ITANT')
+                ZVD->ZVD_IDADEP    	:= oGrid:GetValue('ZVD_IDADEP') 
+                ZVD->ZVD_CODZ09   	:= oGrid:GetValue('ZVD_CODZ09')
+                ZVD->ZVD_ITZ09      := oGrid:GetValue('ZVD_ITZ09')
+
+                if ZVD->ZVD_IDADEP != 0 .and. !(AllTrim(ZVD->ZVD_BOV) $ cBov)
+                    if SB1->(DbSeek(FwXFilial("SB1")+ALLTRIM( ZVD->ZVD_BOV )))
+                        If ZVD->ZVD_IDADEP < 36
+                            cDesc := "BOVINO " + IIF(ALLTRIM( SB1->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( SB1->B1_X_SEXO )) +;
+                                    " DE " + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAINI"))) +;
+                                    " A "  + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAFIM")))+;
+                                    " MESES"
+                        else
+                            cDesc := "BOVINO " + IIF(ALLTRIM( SB1->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( SB1->B1_X_SEXO )) +;
+                                    " ACIMA DE " + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAINI"))) +;
+                                    " MESES"
+                        endif
+
+                        oMdSB1 := FWLoadModel("MATA010")
+                        oMdSB1:SetOperation(4)
+                        oMdSB1:Activate()
+                        
+                        //Pegando o model e setando os campos
+                        oSB1Mod := oMdSB1:GetModel("SB1MASTER")
+                        oSB1Mod:SetValue("B1_XANIMAL", ZVD->ZVD_CODZ09              ) 
+                        oSB1Mod:SetValue("B1_XANIITE", ZVD->ZVD_ITZ09               ) 
+                        oSB1Mod:SetValue("B1_XIDADE" , ALLTRIM(Str(ZVD->ZVD_IDADEP))) 
+                        oSB1Mod:SetValue("B1_DESC"   , cDesc                        ) 
+                        oSB1Mod:SetValue("B1_X_ERA"  , ALLTRIM( POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_DESCRI"))   ) 
+
+                        If oMdSB1:VldData()
+                            //Tenta realizar o Commit
+                            If oMdSB1:CommitData()
+                                lOk := .T.
+                            //Se não deu certo, altera a variável para false
+                            Else
+                                lOk := .F.
+                            EndIf
+                        //Se não conseguir validar as informações, altera a variável para false
+                        Else
+                            lOk := .F.
+                        EndIf
+                        
+                        //Se não deu certo a inclusão, mostra a mensagem de erro
+                        If ! lOk
+                            //Busca o Erro do Modelo de Dados
+                            aErro := oMdSB1:GetErrorMessage()
+                            
+                            //Monta o Texto que será mostrado na tela
+                            cMessage := "Id do formulário de origem:"  + ' [' + cValToChar(aErro[01]) + '], '
+                            cMessage += "Id do campo de origem: "      + ' [' + cValToChar(aErro[02]) + '], '
+                            cMessage += "Id do formulário de erro: "   + ' [' + cValToChar(aErro[03]) + '], '
+                            cMessage += "Id do campo de erro: "        + ' [' + cValToChar(aErro[04]) + '], '
+                            cMessage += "Id do erro: "                 + ' [' + cValToChar(aErro[05]) + '], '
+                            cMessage += "Mensagem do erro: "           + ' [' + cValToChar(aErro[06]) + '], '
+                            cMessage += "Mensagem da solução: "        + ' [' + cValToChar(aErro[07]) + '], '
+                            cMessage += "Valor atribuído: "            + ' [' + cValToChar(aErro[08]) + '], '
+                            cMessage += "Valor anterior: "             + ' [' + cValToChar(aErro[09]) + ']'
+                            
+                            //Mostra mensagem de erro
+                            MsgStop(cMessage)
+                        EndIf
+
+                        oMdSB1:DeActivate()
+
+                        oMdSB1  := nil
+                        oSB1Mod := nil 
+                    ENDIF
+                EndIf
+            Else		
+                If ZVD->(DbSeek( FWxFilial("ZVD") +;
+                        oCab:GetValue('ZVD_COD') +;
+                        oGrid:GetValue('ZVD_ITEM')))
+
+                    RecLock('ZVD', .F.)
+                        ZVD->(DbDelete())
+                    ZVD->(MsUnlock())
+                EndIf
+            EndIf
+        Next nI 
+    endif 
+
+    ZVD->(DBCLOSEAREA(  ))
+    SB1->(DBCLOSEAREA(  ))
+
+    //Se não for inclusão, volta o INCLUI para .T. (bug ao utilizar a Exclusão, antes da Inclusão)
+	If nOpc != MODEL_OPERATION_INSERT
+		INCLUI := .T.
+	EndIf
+
+    RestArea(aArea)
+Return lRet
 
 Static Function FI08PR()
     Local aArea     := GetArea()
@@ -285,7 +408,7 @@ Static Function FI08LT()
             oGrid:SetValue("ZVD_9ITANT" ,(cAlias)->B1_XANIITE)
             oGrid:SetValue("ZVD_CODZ09" ,(cAlias)->B1_XANIMAL)
             oGrid:SetValue("ZVD_ITZ09"  ,(cAlias)->B1_XANIITE)
-        endif 
+        endif
         (cAlias)->(DBSKIP())
     enddo
     (cAlias)->(DBCLOSEAREA(  ))
@@ -452,40 +575,95 @@ depois da gravação de cada submodelo (field ou cada linha de uma grid)
 /*/
 
 Method After(oModel) Class cFati08
-    Local aArea := GetArea()
-    Local cDesc := ''
-    //Campos de controle, para registrar oq estava registrado na SB1 antes de altera-lá
-    DBSELECTAREA( "SB1" )
-    SB1->(DBSETORDER( 1 ))
-
-    if oModel:cId == 'ZVDDETAIL'
-        if ZVD->ZVD_IDADEP != 0
-            if SB1->(DbSeek(FwXFilial("SB1")+ALLTRIM( ZVD->ZVD_BOV )))
-                If ZVD->ZVD_IDADEP < 36
-                    cDesc := "BOVINO " + IIF(ALLTRIM( SB1->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( SB1->B1_X_SEXO )) +;
-                             " DE " + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAINI"))) +;
-                             " A "  + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAFIM")))+;
-                             " MESES"
-                else
-                    cDesc := "BOVINO " + IIF(ALLTRIM( SB1->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( SB1->B1_X_SEXO )) +;
-                             " ACIMA DE " + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAINI"))) +;
-                             " MESES"
-                endif
-
-                RECLOCK( "SB1", .F. )
-                    SB1->B1_XANIMAL := ZVD->ZVD_CODZ09
-                    SB1->B1_XANIITE := ZVD->ZVD_ITZ09
-                    SB1->B1_XIDADE  := ALLTRIM(Str(ZVD->ZVD_IDADEP))
-                    SB1->B1_DESC    := cDesc
-                    SB1->B1_X_ERA   := ALLTRIM( POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_DESCRI"))
-                SB1->(MSUNLOCK())
-            ENDIF
-        ENDIF
-    ENDIF
-    
-    SB1->(DBCLOSEAREA(  ))
-
-    RestArea(aArea)
+    //Local aArea := GetArea()
+    //Local cDesc := ''
+    //Local cBov  := GETMV("MV_BOVPADR")
+//
+    //Local oMdSB1  := nil
+    //Local oSB1Mod := nil 
+//
+    ////Campos de controle, para registrar oq estava registrado na SB1 antes de altera-lá
+    //DBSELECTAREA( "SB1" )
+    //SB1->(DBSETORDER( 1 ))
+//
+    //if oModel:cId == 'ZVDDETAIL'
+    //    if ZVD->ZVD_IDADEP != 0 .and. !(AllTrim(ZVD->ZVD_BOV) $ cBov)
+    //        if SB1->(DbSeek(FwXFilial("SB1")+ALLTRIM( ZVD->ZVD_BOV )))
+    //            If ZVD->ZVD_IDADEP < 36
+    //                cDesc := "BOVINO " + IIF(ALLTRIM( SB1->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( SB1->B1_X_SEXO )) +;
+    //                         " DE " + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAINI"))) +;
+    //                         " A "  + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAFIM")))+;
+    //                         " MESES"
+    //            else
+    //                cDesc := "BOVINO " + IIF(ALLTRIM( SB1->B1_X_SEXO ) == 'CAPAO','MACHO',ALLTRIM( SB1->B1_X_SEXO )) +;
+    //                         " ACIMA DE " + ALLTRIM( STR(POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_IDAINI"))) +;
+    //                         " MESES"
+    //            endif
+//
+    //            //RECLOCK( "SB1", .F. )
+    //            //    SB1->B1_XANIMAL := ZVD->ZVD_CODZ09
+    //            //    SB1->B1_XANIITE := ZVD->ZVD_ITZ09
+    //            //    SB1->B1_XIDADE  := ALLTRIM(Str(ZVD->ZVD_IDADEP))
+    //            //    SB1->B1_DESC    := cDesc
+    //            //    SB1->B1_X_ERA   := ALLTRIM( POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_DESCRI"))
+    //            //SB1->(MSUNLOCK())
+//
+    //            oMdSB1 := FWLoadModel("MATA010")
+    //            oMdSB1:SetOperation(4)
+    //            oMdSB1:Activate()
+    //            
+    //            //Pegando o model e setando os campos
+    //            oSB1Mod := oMdSB1:GetModel("SB1MASTER")
+    //            oSB1Mod:SetValue("B1_XANIMAL", ZVD->ZVD_CODZ09              ) 
+    //            oSB1Mod:SetValue("B1_XANIITE", ZVD->ZVD_ITZ09               ) 
+    //            oSB1Mod:SetValue("B1_XIDADE" , ALLTRIM(Str(ZVD->ZVD_IDADEP))) 
+    //            oSB1Mod:SetValue("B1_DESC"   , cDesc                        ) 
+    //            oSB1Mod:SetValue("B1_X_ERA"  , ALLTRIM( POSICIONE("Z09",1,FWxFilial("Z09")+ZVD->ZVD_CODZ09+ZVD->ZVD_ITZ09,"Z09_DESCRI"))   ) 
+//
+    //            If oMdSB1:VldData()
+    //                //Tenta realizar o Commit
+    //                If oMdSB1:CommitData()
+    //                    lOk := .T.
+    //                //Se não deu certo, altera a variável para false
+    //                Else
+    //                    lOk := .F.
+    //                EndIf
+    //            //Se não conseguir validar as informações, altera a variável para false
+    //            Else
+    //                lOk := .F.
+    //            EndIf
+    //            
+    //            //Se não deu certo a inclusão, mostra a mensagem de erro
+    //            If ! lOk
+    //                //Busca o Erro do Modelo de Dados
+    //                aErro := oMdSB1:GetErrorMessage()
+    //                
+    //                //Monta o Texto que será mostrado na tela
+    //                cMessage := "Id do formulário de origem:"  + ' [' + cValToChar(aErro[01]) + '], '
+    //                cMessage += "Id do campo de origem: "      + ' [' + cValToChar(aErro[02]) + '], '
+    //                cMessage += "Id do formulário de erro: "   + ' [' + cValToChar(aErro[03]) + '], '
+    //                cMessage += "Id do campo de erro: "        + ' [' + cValToChar(aErro[04]) + '], '
+    //                cMessage += "Id do erro: "                 + ' [' + cValToChar(aErro[05]) + '], '
+    //                cMessage += "Mensagem do erro: "           + ' [' + cValToChar(aErro[06]) + '], '
+    //                cMessage += "Mensagem da solução: "        + ' [' + cValToChar(aErro[07]) + '], '
+    //                cMessage += "Valor atribuído: "            + ' [' + cValToChar(aErro[08]) + '], '
+    //                cMessage += "Valor anterior: "             + ' [' + cValToChar(aErro[09]) + ']'
+    //                
+    //                //Mostra mensagem de erro
+    //                MsgStop(cMessage)
+    //            EndIf
+//
+    //            oMdSB1:DeActivate()
+//
+    //            oMdSB1  := nil
+    //            oSB1Mod := nil 
+    //        ENDIF
+    //    ENDIF
+    //ENDIF
+    //
+    //SB1->(DBCLOSEAREA(  ))
+//
+    //RestArea(aArea)
     //Aqui você pode fazer as operações antes de gravar
 Return
 
