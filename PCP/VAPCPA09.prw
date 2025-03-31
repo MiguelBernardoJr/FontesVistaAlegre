@@ -12,7 +12,6 @@
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "RWMAKE.CH"
 #INCLUDE "TOPCONN.CH"
-#include "COLORS.CH"
 
 User Function VAPCPA09()
 
@@ -37,9 +36,9 @@ Private __dDtPergunte := StoD("")
 //AAdd(aParBox,{1,"Data      ", dDataBase, "", "", ""   , "", 50, .F.}) // aParRet[1]
 
 //If (Len(aDadSel) == 0)
-//	If (ParamBox(aParBox, "Data da Roteirizacao", @aParRet))
+//If (ParamBox(aParBox, "Data da Roteirizacao", @aParRet))
 aDadSel := {"ROTA01", dDataBase, "0001", "03"}
-//	EndIf
+//EndIf
 //EndIf
 
 U_PosSX1({{cPrgRot, "01", DTOS(dDataBase)}})
@@ -79,7 +78,6 @@ While ((nOpcRotas > 0))
 	
 	If (Len(aParRet) > 0)
 		aDadSel[2] := aParRet[1]
-		//U_zPulo1()
 		VAPCPA09A(lShwZer, lShwGer)
 	Else
 		nOpcRotas := 0
@@ -104,7 +102,7 @@ Local cChvCnf, cChvLin
 //Local cSktBox, cSktCur
 Local cShwZer              := ""
 //Local cShwVis := ""
-Local aSize                :={}, aObjects := {}, aInfo := {}, aPObjs := {}
+Local aSize                := {}, aObjects := {}, aInfo := {}, aPObjs := {}
 Local aTFldr               := {}
 Local oTFldr
 Local oTFntGr              := TFont():New('Courier new', , 16, .T., .T.)
@@ -136,6 +134,7 @@ Local cPlCur               := ""
 Local cDiCur               := ""
 Local nCrFnt               := .F.
 Local aCrDBs               := {}
+Local aCrDBR               := {} //
 Local nCrAux               := 1
 Local nIndPRt              := 1
 //Local nTotRD1    := 0
@@ -156,6 +155,7 @@ Local lParRotD1            := GETMV("VA_ROTD1")
 //Local cShwGer    := "asd"
 
 Private aCrDie             := {}
+Private aCrDieR            := {}
 Private aDadTl             := {} //Dados dos currais em linhas
 Private aDdTlC             := {} //Dados dos currais em pastos
 Private aLinCnf            := {}
@@ -178,6 +178,12 @@ Private nTotCSR            := 0
 
 Private aDadRotZao         := {}
 
+//AAdd(aCorTl, "RGB(" + Alltrim(GETMV("VA_ROTBCKG")) + ")") // cor de fundo das abas
+//AAdd(aCorTl, "RGB(" + Alltrim(GETMV("VA_ROTBLIN")) + ")") // cor de fundo das linhas
+//AAdd(aCorTl, "RGB(" + Alltrim(GETMV("VA_ROTBCUR")) + ")") // cor de fundo dos currais
+//AAdd(aCorTl, "RGB(" + Alltrim(GETMV("VA_ROTFTLC")) + ")") // cor fonte letra linha e numero curral
+//AAdd(aCorTl, "RGB(" + Alltrim(GETMV("VA_ROTFCUR")) + ")") // cor fonte conteudo curral
+
 AAdd(aCorTl, &("U_CORROTA(" + GETMV("VA_ROTBCKG") + ")")) // cor de fundo das abas
 AAdd(aCorTl, &("U_CORROTA(" + GETMV("VA_ROTBLIN") + ")")) // cor de fundo das linhas
 AAdd(aCorTl, &("U_CORROTA(" + GETMV("VA_ROTBCUR") + ")")) // cor de fundo dos currais
@@ -189,6 +195,7 @@ DBSelectArea("SX6")
 SX6->(DBSetOrder(1))
 While (SX6->(DBSeek(xFilial("SX6") + "VA_CRDIE" + StrZero(nCrAux,2))))
 	AAdd(aCrDBs, &("U_CORROTA(" + GETMV("VA_CRDIE" + StrZero(nCrAux,2)) + ")")) //01 // 077, 074, 060
+	AAdd(aCrDBR, ALLTRIM(GETMV("VA_CRDIE" + StrZero(nCrAux,2))) ) //01 // 077, 074, 060
 	nCrAux++
 EndDo
 
@@ -422,7 +429,8 @@ While !(QRYESTR->(EOF()))
 	If (aScan(aCrDie , { |x| x[1] == QRYESTR->DIETA}) == 0)
 		If (nCrAux < Len(aCrDBs))
 			// https://shdo.wordpress.com/online/tabela-de-cores-rgb/
-			AAdd(aCrDie, { QRYESTR->DIETA, aCrDBs[nCrAux] })
+			AAdd(aCrDie , { QRYESTR->DIETA, aCrDBs[nCrAux] })
+			AAdd(aCrDieR, { QRYESTR->DIETA, aCrDBR[nCrAux] })
 			nCrAux++
 		Else
 			MsgInfo("Nao existem mais cores disponiveis para as dietas! (VA_CRDIEXX). Abortando...")
@@ -575,7 +583,7 @@ if Select("QRYDIE") > 0
 	QRYDIE->( dbCloseArea() )
 endif
 
-	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, cQryDie ),"QRYDIE",.F.,.F.)
+dbUseArea(.T.,'TOPCONN',TCGENQRY(,, cQryDie ),"QRYDIE",.F.,.F.)
 
 //TCQUERY cQryDie NEW ALIAS "QRYDIE"
 
@@ -594,10 +602,10 @@ If (!(Z0S->(DBSeek(xFilial("Z0S") + DTOS(aDadSel[2]) + aDadSel[3])))) //+aDadSel
 		While (Z0S->Z0S_DATA == dDtRD1 .AND. Z0S->Z0S_VERSAO == aDadSel[3])
 
 			While (!QRYDIE->(EOF())) // ADICIOANR REGISTROS 
-		/*
-			27/05/2020 - Arthur Toshio
-			Alteração Para verificar se no dia anterior o trato = 0 durante a geração da Z0S
-		*/
+				/*
+					27/05/2020 - Arthur Toshio
+					Alteração Para verificar se no dia anterior o trato = 0 durante a geração da Z0S
+				*/
 				AAdd(aRotD1, {QRYDIE->ROTA, QRYDIE->EQUIP, 0, QRYDIE->DIETA, QRYDIE->OPERAD})
 				QRYDIE->(DBSkip())
 			EndDo	
@@ -780,7 +788,7 @@ cOper1 := AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[1],"Z0U_NOME"))
 cOper2 := AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[2],"Z0U_NOME"))
 
 DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], aPObjs[1][2] To aPObjs[1][3], aPObjs[1][4] of oDlgRotas PIXEL 
- 
+
 /*Toshio - 20220921
 Operador
 */ 
@@ -869,7 +877,11 @@ Operador
 			
 			If (lPShwGer)
 				AAdd(aScrCnf, TScrollArea():New(oTFldr:aDialogs[Len(oTFldr:aDialogs) - 2], 005, ((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10, (aPObjs[1][3]/2) - 150, (((aPObjs[1][4]/2)/Len(aDadTl))), .T., .T.))
-				AAdd(aPnlRot, TPanel():New(010, ((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10, aTFldr[nChvCnf], aScrCnf[nChvCnf], oTFntTC, .F.,, aCorTl[4], aCorTl[1], (((aPObjs[1][4]/2)/Len(aDadTl))), (065 * (Len(aDadTl[nCntAll]))) - 015)) // , 
+				oPanel := nil 
+				oPanel := TPanel():New(010, ((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10, aTFldr[nChvCnf], aScrCnf[nChvCnf], oTFntTC, .F.,, aCorTl[4], aCorTl[1], (((aPObjs[1][4]/2)/Len(aDadTl))), (065 * (Len(aDadTl[nCntAll]))) - 015)
+				oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
+				
+				AAdd(aPnlRot, oPanel) // , 
 				AAdd(aLinCnf, {})
 				AAdd(aCurLin, {})
 				nIndPRt := Len(aPnlRot)
@@ -880,13 +892,17 @@ Operador
 			Else
 				//ScrollArea:New([aoWnd], [anTop], [anLeft], [anHeight], [anWidth], [alVertical], [alHorizontal], [alBorder])
 				AAdd(aScrCnf, TScrollArea():New(oTFldr:aDialogs[nChvCnf], 001, 001, (aPObjs[1][3]/2), (aPObjs[1][4]/2), .T., .T.)) 
-				//AAdd(aPnlCnf, TPanel():New(001, 001,, aScrCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[1], (aPObjs[1][4]/2), (160 * (Len(aDadTl[nCntAll]) + 1)))) //
-				AAdd(aPnlCnf, TPanel():New(001, 001,, aScrCnf[nChvCnf], oTFntGr, .T.,, rgb(0,0,139), rgb(0,255,127), (aPObjs[1][4]/2), (160 * (Len(aDadTl[nCntAll]) + 1)))) //
+				
+				oPanel := nil 
+				oPanel := TPanel():New(001, 001,, aScrCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[1], (aPObjs[1][4]/2), (160 * (Len(aDadTl[nCntAll]) + 1)))
+				oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
+
+				AAdd(aPnlCnf, oPanel) //
 				AAdd(aLinCnf, {})
 				AAdd(aCurLin, {})
 				
 				aScrCnf[nChvCnf]:SetFrame(aPnlCnf[nChvCnf])
-			EndIf
+			EndIf  
 			
 		EndIf
 		
@@ -897,20 +913,36 @@ Operador
 				cChvLin := aDadTl[nCntAll][nCntLin][01]
 				
 				If (lPShwGer)
-					AAdd(aLinCnf[nChvCnf], TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlRot[nIndPRt], oTFntLC, .T.,, aCorTl[4], aCorTl[1], 010, 040)) //painel inicio da linha
+					oPanel := nil 
+					oPanel := TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlRot[nIndPRt], oTFntLC, .T.,, aCorTl[4], aCorTl[1], 010, 040)
+					oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
+
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel inicio da linha
 					
 					aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])]:bLClicked := &("{|| (U_SelLin('" + cChvCnf + "', '" + STR(nCntLin - 1) + "'))}")
-					
+
+					oPanel := nil 
+					oPanel := TPanel():New(nLinLin, 015,, aPnlRot[nIndPRt], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (030 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 001, 040)
+					oPanel:SetCss("QWidget { background-color: rgb(054, 054, 054); }")
+
 					                         //linha inicial, coluna inicial                                       //tamanho coluna, tamanho linha
-					AAdd(aLinCnf[nChvCnf], TPanel():New(nLinLin, 015,, aPnlRot[nIndPRt], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (030 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 001, 040)) //painel da linha
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel da linha
 					AAdd(aCurLin[nChvCnf], {})
 				Else
-					AAdd(aLinCnf[nChvCnf], TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlCnf[nChvCnf], oTFntLC, .T.,, aCorTl[4], aCorTl[1], 010, 090)) //painel inicio da linha
+					oPanel := nil 
+					oPanel := TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlCnf[nChvCnf], oTFntLC, .T.,, aCorTl[4], aCorTl[1], 010, 090)
+					oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
+
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel inicio da linha
 					
 					aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])]:bLClicked := &("{|| (U_SelLin('" + cChvCnf + "', '" + STR(nCntLin - 1) + "'))}")
 					
+					oPanel := nil 
+					oPanel := TPanel():New(nLinLin, 020,, aPnlCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (065 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 005, 090)
+					oPanel:SetCss("QWidget { background-color: RGB(); }")
+
 					                         //linha inicial, coluna inicial                                       //tamanho coluna, tamanho linha
-					AAdd(aLinCnf[nChvCnf], TPanel():New(nLinLin, 020,, aPnlCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (065 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 005, 090)) //painel da linha
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel da linha
 					AAdd(aCurLin[nChvCnf], {})
 				EndIf
 				
@@ -923,7 +955,7 @@ Operador
 				cQtCab := ALLTRIM(STR(aDadTl[nCntAll][nCntLin][nCntCur][03], 4)) + "' + Chr(10) + '"
 				cPlCur := ALLTRIM(aDadTl[nCntAll][nCntLin][nCntCur][12]) + "' + Chr(10) + '" + ALLTRIM(STR(aDadTl[nCntAll][nCntLin][nCntCur][05])) + "' + Chr(10) + '" + TRANSFORM((aDadTl[nCntAll][nCntLin][nCntCur][07] * aDadTl[nCntAll][nCntLin][nCntCur][03]), "@E 999,999.99")
 				cDiCur := aDadTl[nCntAll][nCntLin][nCntCur][06] 
-				
+
 				If(aDadTl[nCntAll][nCntLin][nCntCur][09] = aDadSel[1])
 					if (aScan(aRot, {|x| x[1] = aDadSel[1]}) == 0)
 						nCrFnt := CLR_WHITE
@@ -942,18 +974,34 @@ Operador
 				//nCrFnt := CLR_WHITE
 				// aba resumo
 				If (lPShwGer)
-										
-					AAdd(aCurLin[nChvCnf][nCntLin - 1], TPanel():New(000, nCurCol-005, aDadTl[nCntAll][nCntLin][nCntCur][01], aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntLC, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE)/*nCrFnt*/, nCrFnt/*aCorTl[1]*/, 032, 010)) //cabecalho curral com o numero
-					AAdd(aCurLin[nChvCnf][nCntLin - 1], TPanel():New(012, nCurCol-003,, aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 026, 026)) //interior do curral onde sao apresentados os dados
+					
+					oPanel := nil 
+					oPanel := TPanel():New(000, nCurCol-005, aDadTl[nCntAll][nCntLin][nCntCur][01], aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntLC, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE)/*nCrFnt*/, nCrFnt/*aCorTl[1]*/, 032, 010)
+					oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
+
+					AAdd(aCurLin[nChvCnf][nCntLin - 1], oPanel) //cabecalho curral com o numero
+
+					oPanel := nil 
+					oPanel := TPanel():New(012, nCurCol-003,, aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 026, 026)
+					IF cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+						oPanel:SetCss("QWidget { background-color: RGB(169,169,169); }")
+					ELSE //aCrDie[nCrAux][2]
+						oPanel:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
+					ENDIF
+					AAdd(aCurLin[nChvCnf][nCntLin - 1], oPanel) //interior do curral onde sao apresentados os dados
 					
 					nChvCur := Len(aCurLin[nChvCnf][nCntLin - 1])
 					
 					If (cQtCab != '0')
 					
 						cLtCur += "' + Chr(10) + '" + cQtCab + ALLTRIM(STR(aDadTl[nCntAll][nCntLin][nCntCur][05]))
-						
-						TSay():New(002, 002, &("{|| '" + cLtCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntPs,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 050)
-					
+						oSay := nil 
+						oSay := TSay():New(002, 002, &("{|| '" + cLtCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntPs,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 050)
+						IF cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+							oSay:SetCss("QWidget { background-color: RGB(169,169,169); }")
+						ELSE //aCrDie[nCrAux][2]
+							oSay:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
+						ENDIF
 						aCurLin[nChvCnf][nCntLin - 1][nChvCur]:bLClicked := &("{|| (U_SelCur('" + cChvCnf + "', '" + STR(nCntLin - 1) + "', '" + STR(nChvCur) + "'))}")
 						aCurLin[nChvCnf][nCntLin - 1][nChvCur - 1]:TagGroup := 1
 
@@ -967,16 +1015,36 @@ Operador
 					nCurCol := nCurCol + 030
 				// aba RESUMO ou CONFINAMENTOS
 				ElseIf (IIf(oTFldr:nOption == (Len(oTFldr:aDialogs) - 1), aDadTl[nCntAll][nCntLin][nCntCur][10] == "99", aDadTl[nCntAll][nCntLin][nCntCur][10] == aDadSel[4]))
+
+					//verificar cor da fonte a partir do IF na linha 956
+					oPanel := nil
+					oPanel := TPanel():New(000, nCurCol-005, aDadTl[nCntAll][nCntLin][nCntCur][01], aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntLC, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE), nCrFnt/*aCorTl[1]*/, 072, 015)
+					oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
 				
-					AAdd(aCurLin[nChvCnf][nCntLin - 1], TPanel():New(000, nCurCol-005, aDadTl[nCntAll][nCntLin][nCntCur][01], aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntLC, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE), nCrFnt/*aCorTl[1]*/, 072, 015))
-					AAdd(aCurLin[nChvCnf][nCntLin - 1], TPanel():New(018, nCurCol,, aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 060, 068))
+					AAdd(aCurLin[nChvCnf][nCntLin - 1], oPanel)
+
+					oPanel := nil 
+					oPanel := TPanel():New(018, nCurCol,, aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 060, 068)
+					if cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+						oPanel:SetCss("QWidget { background-color: RGB(169,169,169); }")
+					else //aCrDie[nCrAux][2]
+						oPanel:SetCss("QWidget { background-color:RGB("+aCrDieR[nCrAux][2]+"); }")
+					endif
+
+					AAdd(aCurLin[nChvCnf][nCntLin - 1], oPanel)
 					
 					nChvCur := Len(aCurLin[nChvCnf][nCntLin - 1])
 					
 					If (cQtCab != '0')
-					
-						TSay():New(005, 005, &("{|| '" + cLtCur + "' + ' - ' + '" + cQtCab + "' + '" + cPlCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntPs,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 100)
-					
+
+						oSay := nil
+						oSay := TSay():New(005, 005, &("{|| '" + cLtCur + "' + ' - ' + '" + cQtCab + "' + '" + cPlCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntPs,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 100)
+						IF cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+							oSay:SetCss("QWidget { background-color: RGB(169,169,169); }")
+						ELSE //aCrDie[nCrAux][2]
+							oSay:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
+						ENDIF
+
 						aCurLin[nChvCnf][nCntLin - 1][nChvCur]:bLClicked := &("{|| (U_SelCur('" + cChvCnf + "', '" + STR(nCntLin - 1) + "', '" + STR(nChvCur) + "'))}")
 						aCurLin[nChvCnf][nCntLin - 1][nChvCur - 1]:TagGroup := 1
 						AAdd(aCurLin[nChvCnf][nCntLin - 1][nChvCur]:aControls, (aDadTl[nCntAll][nCntLin][nCntCur][07] * aDadTl[nCntAll][nCntLin][nCntCur][03]))
@@ -985,15 +1053,9 @@ Operador
 						AAdd(aCurLin[nChvCnf][nCntLin - 1][nChvCur]:aControls, cDiCur)
 						AAdd(aCurLin[nChvCnf][nCntLin - 1][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][02])
 					
-						//						TSay():New(005, 040, &("{|| '" + cQtCab + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntSb,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 20)
-						//						TSay():New(015, 005, &("{|| '" + cPlCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 40)
-						//						TSay():New(025, 005, &("{|| '" + cDsCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 20)
-						
 						tButton():New(050, 001, "TRT", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VP05Form(aDadSel[2], aDadSel[3], '" + ALLTRIM(cChvLin) + ALLTRIM(aDadTl[nCntAll][nCntLin][nCntCur][01]) + "', '" + cLote + "')}"), 15, 15,,oTFntGr,, .T.)
 						tButton():New(050, 022, "KDX", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VAESTR16({{'" + cLote + "', '" + AllTrim(cChvLin) + aDadTl[nCntAll][nCntLin][nCntCur][01] + "'}}) }"), 15, 15,,oTFntGr,, .T.) 
 						tButton():New(050, 044, "INF", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VAPCPM01('" + cLote + "') }"), 15, 15,,oTFntGr,, .T.) 
-						//						tButton():New([anRow], [anCol], [acCaption], [aoWnd], [abAction], [anWidth], [anHeight], [nPar8], [aoFont], [lPar10], [alPixel],[lPar12],[cPar13], [lPar14], [abWhen], [bPar16], [lPar17]) 
-	
 					EndIf
 				
 					nCurCol := nCurCol + 065
@@ -1019,9 +1081,11 @@ Operador
 	If (lPShwGer)	
 		AAdd(aScrCnf, TScrollArea():New(oTFldr:aDialogs[Len(oTFldr:aDialogs) - 2], (aPObjs[1][3]/2) - 100, 001      , 100        , (aPObjs[1][4]/2), .T., .T.))
 		oPnlPst := TPanel():New(010, 010,, aScrCnf[Len(aScrCnf)], oTFntPs, .T.,, CLR_BLACK, aCorTl[1], (aPObjs[1][4]/2), (160 * ((Len(aDdTlC)/(((085 * aPObjs[1][3])/100)/060)+1)))) //, (aPObjs[1][3]/2))
+		oPnlPst:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
 	Else
 		AAdd(aScrCnf, TScrollArea():New(oTFldr:aDialogs[Len(oTFldr:aDialogs) - 1], 001, 001, aPObjs[1][3], (aPObjs[1][4]/2), .T., .T.))		
 		oPnlPst := TPanel():New(001, 001,, aScrCnf[Len(aScrCnf)], oTFntPs, .T.,, CLR_BLACK, aCorTl[1], (aPObjs[1][4]/2), (350 * ((Len(aDdTlC)/(((085 * aPObjs[1][3])/100)/060)+1))))
+		oPnlPst:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
 	EndIf
 	
 	oPnlPst:bLClicked := {|| U_SelLin("99", "", .T.)}
@@ -1052,17 +1116,36 @@ Operador
 		// aba resumo
 		If (lPShwGer)
 
-			AAdd(aCurPst, TPanel():New(nCurLin, nCurCol + 005, ALLTRIM(aDdTlC[nCntAll][12]), oPnlPst, oTFntPs, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE)/*nCrFnt*/, nCrFnt/*aCorTl[1]*/, 030, 010))
-			AAdd(aCurPst, TPanel():New(nCurLin + 010, nCurCol + 005,, oPnlPst, oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 030, 030))
+			oPanel := nil 
+			oPanel := TPanel():New(nCurLin, nCurCol + 005, ALLTRIM(aDdTlC[nCntAll][12]), oPnlPst, oTFntPs, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE)/*nCrFnt*/, nCrFnt/*aCorTl[1]*/, 030, 010)
+			oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
+
+			AAdd(aCurPst, oPanel)
+			
+			oPanel := nil
+			oPanel := TPanel():New(nCurLin + 010, nCurCol + 005,, oPnlPst, oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 030, 030)
+			if cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+				oPanel:SetCss("QWidget { background-color: RGB(169,169,169); }")
+			else //aCrDie[nCrAux][2]
+				oPanel:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
+			endif 
+			
+			AAdd(aCurPst, oPanel)
 		
 			nChvCur := Len(aCurPst)
 			
 			If (cQtCab != '0')
 	
 				cLtCur += "' + Chr(10) + '" + cQtCab + ALLTRIM(STR(aDdTlC[nCntAll][06])) 
-	
-				TSay():New(002, 005, &("{|| '" + cLtCur + "'}"), aCurPst[nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 050)
-				
+
+				oSay := nil
+				oSay := TSay():New(002, 005, &("{|| '" + cLtCur + "'}"), aCurPst[nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 050)
+				if cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+					oSay:SetCss("QWidget { background-color: RGB(169,169,169); }")
+				else //aCrDie[nCrAux][2]
+					oSay:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
+				endif 
+
 				aCurPst[nChvCur]:bLClicked := &("{|| (U_SelCur('" + aDdTlC[nCntAll][11] + "', '" + aDdTlC[nCntAll][01] + "', '" + STR(nChvCur) + "', .T.))}")
 				aCurPst[nChvCur - 1]:TagGroup := 1
 
@@ -1083,16 +1166,35 @@ Operador
 			EndIf
 		
 		ElseIf (IIf(oTFldr:nOption == (Len(oTFldr:aDialogs) - 1), aDdTlC[nCntAll][11] == "99", aDdTlC[nCntAll][11] == aDadSel[4]))
-				
-			AAdd(aCurPst, TPanel():New(nCurLin, nCurCol, ALLTRIM(aDdTlC[nCntAll][12]), oPnlPst, oTFntPs, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE)/*nCrFnt*/, nCrFnt/*aCorTl[1]*/, 060, 015))
-			AAdd(aCurPst, TPanel():New(nCurLin + 015, nCurCol,, oPnlPst, oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 060, 068))
+			
+			oPanel := nil 
+			oPanel := TPanel():New(nCurLin, nCurCol, ALLTRIM(aDdTlC[nCntAll][12]), oPnlPst, oTFntPs, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE)/*nCrFnt*/, nCrFnt/*aCorTl[1]*/, 060, 015)
+			oPanel:SetCss("QWidget { background-color: RGB(255, 255, 255); }")
+
+			AAdd(aCurPst, oPanel)
+
+			oPanel := nil 
+			oPanel := TPanel():New(nCurLin + 015, nCurCol,, oPnlPst, oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 060, 068)
+			if cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+				oPanel:SetCss("QWidget { background-color: RGB(169,169,169); }")
+			else //aCrDie[nCrAux][2]
+				oPanel:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
+			endif 
+			
+			AAdd(aCurPst, oPanel)
 		
 			nChvCur := Len(aCurPst)
 			
 			If (cQtCab != '0')
-			
-				TSay():New(005, 005, &("{|| '" + cLtCur + "' + ' - ' + '" + cQtCab + "' + '" + cPlCur + "'}"), aCurPst[nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 100)
-				
+
+				oSay := nil
+				oSay := TSay():New(005, 005, &("{|| '" + cLtCur + "' + ' - ' + '" + cQtCab + "' + '" + cPlCur + "'}"), aCurPst[nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 100)
+				if cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
+					oSay:SetCss("QWidget { background-color: RGB(169,169,169); }")
+				else //aCrDie[nCrAux][2]
+					oSay:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
+				endif
+
 				aCurPst[nChvCur]:bLClicked := &("{|| (U_SelCur('" + aDdTlC[nCntAll][11] + "', '" + aDdTlC[nCntAll][01] + "', '" + STR(nChvCur) + "', .T.))}")
 				aCurPst[nChvCur - 1]:TagGroup := 1
 
@@ -1136,7 +1238,7 @@ Operador
 		 	
 		 	AAdd(aHdrRes, {"Rota"         , "ROTA"       , ""                 , 10, 0, ""                      , "", "C", "ZRT"   , "R", "", "", "", "V"})
 			AAdd(aHdrRes, {"Dieta"        , "DIETA"      , ""                 , 20, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
-			//			AAdd(aHdrRes, {"Descricao"    , "DSCDIE"     , ""                 , 40, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
+//			AAdd(aHdrRes, {"Descricao"    , "DSCDIE"     , ""                 , 40, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
 			AAdd(aHdrRes, {"Total Trato"  , "TOTTRT"     , "@E 999,999,999.99", 14, 2, ""                      , "", "N", ""      , "R", "", "", "", "V"})
 			AAdd(aHdrRes, {"Veiculo"      , "VEIC"       , ""                 , 06, 0, "U_GRVVEI(&(ReadVar()))", "", "C", "ZV0VEI", "R", "", "", "", "A"})
 			AAdd(aHdrRes, {"Descricao"    , "DSCVEI"     , ""                 , 20, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
@@ -1244,7 +1346,7 @@ Operador
 				QRYRES->(DBSkip()) 
 			EndDo
 			QRYRES->(DBCloseArea())
-			//				   MsNewGetDados():New( Top, Left                   , Bottom         ,  Right  , [ nStyle], [ cLinhaOk]  , [ cTudoOk]   , [ cIniCpos]  , [ aAlter]         , F, Max, [ cFieldOk]  ,   ,              , [ oWnd]                              , [ aPartHeader], [ aParCols], [ uChange], [ cTela], [ aColsSize] )
+	//				   MsNewGetDados():New( Top, Left                   , Bottom         ,  Right  , [ nStyle], [ cLinhaOk]  , [ cTudoOk]   , [ cIniCpos]  , [ aAlter]         , F, Max, [ cFieldOk]  ,   ,              , [ oWnd]                              , [ aPartHeader], [ aParCols], [ uChange], [ cTela], [ aColsSize] )
 			oGrdRTr := MsNewGetDados():New( 005, (aPObjs[1][4]/2) - 100, 085             , (aPObjs[1][4]/2),          , "AllwaysTrue", "AllwaysTrue",              ,                   , 0, 999, "AllwaysTrue", "", "AllwaysTrue", oTFldr:aDialogs[Len(oTFldr:aDialogs)], aHdrRTr       , aClsRTr)
 			oGrdRes := MsNewGetDados():New( 090, 005                   , (aPObjs[1][3]/2), (aPObjs[1][4]/2), GD_UPDATE, "AllwaysTrue", "AllwaysTrue",              , {"VEIC", "OPVEIC"}, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oTFldr:aDialogs[Len(oTFldr:aDialogs)], aHdrRes       , aClsRes, {|| U_ChgTrR(n)})
 			oGrdRes:oBrowse:SetBlkBackColor({|| SetClrResumo(oGrdRes) })
@@ -2374,47 +2476,3 @@ Local nRet := 0
 	cTMP->(DBCloseArea())
 
 Return nRet
-
-User Function zPulo1()
-    Local aArea := GetArea()
- 
-    fMontaTela()
- 
-    RestArea(aArea)
-Return
- 
-Static Function fMontaTela()
-    Local nLargBtn      := 50
-    //Objetos e componentes
-    Private oDlgPulo
-    Private oFwLayer
-    Private oPanTitulo
-    Private oPanGrid
-    //Cabeçalho
-    Private oSayModulo, cSayModulo := 'TST'
-    Private oSayTitulo, cSayTitulo := 'Pulo do Gato na Montagem de Dialogs'
-    Private oSaySubTit, cSaySubTit := 'Exemplo usando FWLayer'
-    //Tamanho da janela
-    Private aSize := MsAdvSize(.F.)
-    Private nJanLarg := aSize[5]
-    Private nJanAltu := aSize[6]
-    //Fontes
-    Private cFontUti    := "Tahoma"
-    Private oFontMod    := TFont():New(cFontUti, , -38)
-    Private oFontSub    := TFont():New(cFontUti, , -20)
-    Private oFontSubN   := TFont():New(cFontUti, , -20, , .T.)
-    Private oFontBtn    := TFont():New(cFontUti, , -14)
-    Private oFontSay    := TFont():New(cFontUti, , -12)
-    //Grid
-    Private aCampos := {}
-    Private cAliasTmp := "TST_" + RetCodUsr()
-    Private aColunas := {}
- 
-
-    //Cria a janela
-    DEFINE MSDIALOG oDlgPulo TITLE "Exemplo de Pulo do Gato"  FROM 0, 0 TO nJanAltu, nJanLarg COLORS CLR_YELLOW,CLR_BLUE PIXEL
- 		oPanel	:= tPanel():New(01,01,"Teste",oDlgPulo,oFontMod,.T.,,CLR_YELLOW,CLR_BLUE,50,50)
-		oPanel1 := tPanel():Create(oDlgPulo,52,52,"Teste",oFontMod,.F.,,CLR_YELLOW,CLR_BLUE,100,100)
-    Activate MsDialog oDlgPulo Centered
-Return
- 

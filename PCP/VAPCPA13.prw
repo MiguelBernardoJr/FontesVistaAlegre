@@ -479,6 +479,8 @@ Return (Nil)
 */
 User Function BTIMPALL()
 
+	//Local cOrigPath := "E:\TRATO\RESULTADO\"
+	//Local cDestPath := "E:\TRATO\IMPORTADO\"
 	Local cOrigPath := GetMV( "MB_PCPA13O",, "Z:\Vista Alegre\TRATO\RESULTADO\")
 	Local cDestPath := GetMV( "MB_PCPA13D",, "Z:\Vista Alegre\TRATO\IMPORTADO\")
 	Local aFiles    := {}
@@ -491,7 +493,7 @@ User Function BTIMPALL()
 	Else
 		for nI:=1 to Len(aFiles)
 
-			Pergunte( "VAPCPA13I", .F.)
+			Pergunte( "VAPCPA13I", .f.)
 			MV_PAR01 := cOrigPath + aFiles[nI, 1]
 			AAdd(aParRet, MV_PAR01)
 
@@ -514,6 +516,94 @@ User Function BTIMPALL()
 	EndIf
 Return nil
 
+Static Function MontaTela()
+	Local cDtAltP 	:= ""
+	Local _oSl01C 	:= nil
+	Local _oSl02C 	:= nil
+	Local _oSl03C 	:= nil
+	Local _oSl04C 	:= nil
+	Local _oSl05C 	:= nil
+	Local _oSl06C 	:= nil
+	Local _oAguaC 	:= nil
+	Local _oSl01D 	:= nil
+	Local _oSl02D 	:= nil
+	Local _oSl03D 	:= nil
+	Local _oSl04D 	:= nil
+	Local _oSl05D 	:= nil
+	Local _oSl06D 	:= nil
+	Local _oAguaD 	:= nil
+	Local cDesc01 	:= ""
+	Local cDesc02 	:= ""
+	Local cDesc03 	:= ""
+	Local cDesc04 	:= ""
+	Local cDesc05 	:= ""
+	Local cDesc06 	:= ""
+	Local cDAgua 		:= ""
+	Local cSilo01 	:= ""
+	Local cSilo02 	:= ""
+	Local cSilo03 	:= ""
+	Local cSilo04 	:= ""
+	Local cSilo05 	:= ""
+	Local cSilo06 	:= ""
+	Local cAgua	 	:= ""
+
+	cDtAltP := IIF(EMPTY(GETMV("MV_ALTSILO")),Space(TamSX3("B1_COD")[1]),GETMV("MV_ALTSILO"))
+	cSilo01 := IIF(EMPTY(GETMV("MV_SILO01") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_SILO01") )
+	cSilo02 := IIF(EMPTY(GETMV("MV_SILO02") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_SILO02") )
+	cSilo03 := IIF(EMPTY(GETMV("MV_SILO03") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_SILO03") )
+	cSilo04 := IIF(EMPTY(GETMV("MV_SILO04") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_SILO04") )
+	cSilo05 := IIF(EMPTY(GETMV("MV_SILO05") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_SILO05") )
+	cSilo06 := IIF(EMPTY(GETMV("MV_SILO06") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_SILO06") )
+	cAgua 	:= IIF(EMPTY(GETMV("MV_AGUAPH") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_AGUAPH") )
+
+	IF sToD(cDtAltP) <> Date()
+		
+		DEFINE MSDIALOG oDlgParam TITLE "Conferencia de Produtos x Silo" From 003,000 to 300,450 PIXEL 
+		
+			cDesc01 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo01,"B1_DESC")
+			@ 001, 001 MSGET _oSl01C VAR cSilo01 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("01",cSilo01) }
+			@ 001, 008 MSGET _oSl01D VAR cDesc01 SIZE 150,010 WHEN .F.
+
+			cDesc02 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo02,"B1_DESC")
+			@ 002, 001 MSGET _oSl02C VAR cSilo02 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("02",cSilo02) }
+			@ 002, 008 MSGET _oSl02D VAR cDesc02 SIZE 150,010 WHEN .F.
+			
+			cDesc03 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo03,"B1_DESC")
+			@ 003, 001 MSGET _oSl03C VAR cSilo03 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("03",cSilo03) }
+			@ 003, 008 MSGET _oSl03D VAR cDesc03 SIZE 150,010 WHEN .F.
+
+			cDesc04 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo04,"B1_DESC")
+			@ 004, 001 MSGET _oSl04C VAR cSilo04 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("04",cSilo04) }
+			@ 004, 008 MSGET _oSl04D VAR cDesc04 SIZE 150,010 WHEN .F.
+
+			cDesc05 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo05,"B1_DESC")
+			@ 005, 001 MSGET _oSl05C VAR cSilo05 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("05",cSilo05) }
+			@ 005, 008 MSGET _oSl05D VAR cDesc05 SIZE 150,010 WHEN .F.
+
+			cDesc06 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo06,"B1_DESC")
+			@ 006, 001 MSGET _oSl06C VAR cSilo06 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("06",cSilo06) }
+			@ 006, 008 MSGET _oSl06D VAR cDesc06 SIZE 150,010 WHEN .F.
+
+			cDAgua := Posicione("SB1",1,FWXFILIAL("SB1")+cAgua,"B1_DESC")
+			@ 007, 001 MSGET _oAguaC VAR cAgua   SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("AGUA",cAgua  ) }
+			@ 007, 008 MSGET _oAguaD VAR cDAgua  SIZE 150,010 WHEN .F.
+
+		DEFINE SBUTTON FROM 120,190 TYPE 1 ACTION Close(oDlgParam) ENABLE OF oDlgParam PIXEL
+
+		ACTIVATE MSDIALOG oDlgParam CENTER
+
+		IF MsgYesNo("Confirma alteração?")
+			PUTMV("MV_SILO01",cSilo01)
+			PUTMV("MV_SILO02",cSilo02)
+			PUTMV("MV_SILO03",cSilo03)
+			PUTMV("MV_SILO04",cSilo04)
+			PUTMV("MV_SILO05",cSilo05)
+			PUTMV("MV_SILO06",cSilo06)
+			PUTMV("MV_AGUAPH",cAgua)
+			PUTMV("MV_ALTSILO",dToS(Date()))
+		endif
+	endif
+Return
 
 User Function btnImp()
 
@@ -581,11 +671,11 @@ Local cTimeIni := Time()
 
 nAviso := Aviso("Processamento","Deseja fazer o apontamento de produção de  ?",{"Todos","Atual","Cancela"})
 
-If LockByName("BTNPRC", .T., .T.) .and. nAviso == 1
+If LockByName("BTNPRCI", .T., .T.) .and. nAviso == 1
 
 	U_fPrcLote()
 
-ElseIf LockByName("BTNPRC", .T., .T.) .and. nAviso == 2
+ElseIf LockByName("BTNPRCI", .T., .T.) .and. nAviso == 2
 
 	aParRet := {}
 
@@ -4751,41 +4841,7 @@ Local aParambox		:= {}
 Local _cCond		:= ""
 Local nDifOpe 		:= 0 
 Local cReceita		:= ""
-
-Local cDtAltP 		:= ""
 Local aDSilo 		:= {}
-
-Private _oSl01C 	:= nil
-Private _oSl02C 	:= nil
-Private _oSl03C 	:= nil
-Private _oSl04C 	:= nil
-Private _oSl05C 	:= nil
-Private _oSl06C 	:= nil
-Private _oAguaC 	:= nil
-
-Private _oSl01D 	:= nil
-Private _oSl02D 	:= nil
-Private _oSl03D 	:= nil
-Private _oSl04D 	:= nil
-Private _oSl05D 	:= nil
-Private _oSl06D 	:= nil
-Private _oAguaD 	:= nil
-
-Private cDesc01 	:= ""
-Private cDesc02 	:= ""
-Private cDesc03 	:= ""
-Private cDesc04 	:= ""
-Private cDesc05 	:= ""
-Private cDesc06 	:= ""
-Private cDAgua 		:= ""
-
-Private cSilo01 	:= ""
-Private cSilo02 	:= ""
-Private cSilo03 	:= ""
-Private cSilo04 	:= ""
-Private cSilo05 	:= ""
-Private cSilo06 	:= ""
-Private cAgua	 	:= ""
 
 	If nHandle <= 0 // > -1
 		MsgInfo("Nao foi possivel abrir o arquivo '" + MV_PAR01 + "', verifique e tente novamente.")
@@ -4798,12 +4854,26 @@ Private cAgua	 	:= ""
 	FT_FGoTop() // Posiciona na primeria linha
 	If !FT_FEOF()
 		If !Empty(cLine:=FT_FReadLn())
-
 			// .and. At('NUM_TRATO',UPPER(cLine))==0 .and. At('ORDEM_PRODUCAO',UPPER(cLine))==0
 			cTxt := Replace(cLine,'"','')
-			cTxt := Replace(cTxt, ' ','_')
+			cTxt := Replace(cTxt ,' ','_')
+			cTxt := Replace(cTxt ,',',';')
 
-			aHeaderCSV  := StrToKArr(cTxt,IIF(MV_PAR02 != 3,';',','))
+			aHeaderCSV  := StrToKArr(cTxt,";")
+			
+			//mudar MV_PAR02 de acordo com arquivo.
+			//Mudança por causa da função importar todos.
+			nPOperacao  := aScan(aHeaderCSV, { |x| Upper(x) == 'OPERACAO'})		
+			nPNumCarreg	:= aScan(aHeaderCSV, { |x| Upper(x) == '16-BIT_SIGNED'})
+			nPSilo1		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_1'})
+
+			if nPOperacao > 0 
+				MV_PAR02 := 1
+			elseif nPNumCarreg > 0
+				MV_PAR02 := 2
+			elseif nPSilo1 > 0
+				MV_PAR02 := 3
+			endif
 
 			FT_FSKIP()
 		EndIf
@@ -4811,7 +4881,14 @@ Private cAgua	 	:= ""
 
 	While !FT_FEOF()
 		If !Empty(cLine:=FT_FReadLn())
-			aAux := StrToKArr(cLine,IIF(MV_PAR02 != 3,';',','))
+			if MV_PAR02 != 1
+				cLine := Replace(cLine ,',',';')
+			else 
+				cLine := Replace(cLine ,',','.')
+			endif
+
+			aAux := StrToKArr(cLine,";")
+
 			aAdd( aDados	   , {} )
 			For nI:=1 to Len(aAux)
 				cTxt := Replace(aAux[nI],'"','')
@@ -5035,7 +5112,8 @@ Private cAgua	 	:= ""
 					// validar se todos os campos estao preenchidos
 					If Len(aDados[1]) > Len(aDados[nI])
 
-						MsgInfo('Erro na linha: ' + cValToChar(nI) +CRLF +;
+						MsgInfo('Arquivo: ' + cFile + CRLF +;
+							'Erro na linha: ' + cValToChar(nI) +CRLF +;
 							'Total Colunas: ' + cValToChar(Len(aDados[1])) +CRLF +;
 							'Total Colunas na linha: ' + cValToChar(Len(aDados[nI])) +CRLF +;
 							'</br>' +CRLF+;
@@ -5224,52 +5302,8 @@ Private cAgua	 	:= ""
 			cSilo06 := IIF(EMPTY(GETMV("MV_SILO06") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_SILO06") )
 			cAgua 	:= IIF(EMPTY(GETMV("MV_AGUAPH") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_AGUAPH") )
 
-			IF sToD(cDtAltP) <> dDataBase
-				
-				DEFINE MSDIALOG oDlgParam TITLE "Conferencia de Produtos x Silo" From 003,000 to 300,450 PIXEL 
-				
-					cDesc01 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo01,"B1_DESC")
-					@ 001, 001 MSGET _oSl01C VAR cSilo01 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("01",cSilo01) }
-					@ 001, 008 MSGET _oSl01D VAR cDesc01 SIZE 150,010 WHEN .F.
-
-					cDesc02 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo02,"B1_DESC")
-					@ 002, 001 MSGET _oSl02C VAR cSilo02 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("02",cSilo02) }
-					@ 002, 008 MSGET _oSl02D VAR cDesc02 SIZE 150,010 WHEN .F.
-					
-					cDesc03 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo03,"B1_DESC")
-					@ 003, 001 MSGET _oSl03C VAR cSilo03 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("03",cSilo03) }
-					@ 003, 008 MSGET _oSl03D VAR cDesc03 SIZE 150,010 WHEN .F.
-
-					cDesc04 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo04,"B1_DESC")
-					@ 004, 001 MSGET _oSl04C VAR cSilo04 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("04",cSilo04) }
-					@ 004, 008 MSGET _oSl04D VAR cDesc04 SIZE 150,010 WHEN .F.
-
-					cDesc05 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo05,"B1_DESC")
-					@ 005, 001 MSGET _oSl05C VAR cSilo05 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("05",cSilo05) }
-					@ 005, 008 MSGET _oSl05D VAR cDesc05 SIZE 150,010 WHEN .F.
-
-					cDesc06 := Posicione("SB1",1,FWXFILIAL("SB1")+cSilo06,"B1_DESC")
-					@ 006, 001 MSGET _oSl06C VAR cSilo06 SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("06",cSilo06) }
-					@ 006, 008 MSGET _oSl06D VAR cDesc06 SIZE 150,010 WHEN .F.
-
-					cDAgua := Posicione("SB1",1,FWXFILIAL("SB1")+cAgua,"B1_DESC")
-					@ 007, 001 MSGET _oAguaC VAR cAgua   SIZE 050,010 F3 "SB1" VALID { || fsVldCpo("AGUA",cAgua  ) }
-					@ 007, 008 MSGET _oAguaD VAR cDAgua  SIZE 150,010 WHEN .F.
-
-				DEFINE SBUTTON FROM 120,190 TYPE 1 ACTION Close(oDlgParam) ENABLE OF oDlgParam PIXEL
-
-				ACTIVATE MSDIALOG oDlgParam CENTER
-
-				IF MsgYesNo("Confirma alteração?")
-					PUTMV("MV_SILO01",cSilo01)
-					PUTMV("MV_SILO02",cSilo02)
-					PUTMV("MV_SILO03",cSilo03)
-					PUTMV("MV_SILO04",cSilo04)
-					PUTMV("MV_SILO05",cSilo05)
-					PUTMV("MV_SILO06",cSilo06)
-					PUTMV("MV_AGUAPH",cAgua)
-					PUTMV("MV_ALTSILO",dToS(dDataBase))
-				endif
+			IF sToD(cDtAltP) <> Date()
+				MontaTela()
 			endif
 
 			nPData  	:= aScan(aHeaderCSV, { |x| Upper(x) == 'DATA'})
@@ -5301,7 +5335,7 @@ Private cAgua	 	:= ""
 				Break
 			endif
 
-			aSort( aDados ,,, {|x,y| x[nPData]+x[nPOrdemProd]+x[nPNumCarreg] < y[nPData]+y[nPOrdemProd]+y[nPNumCarreg] } )
+			aSort( aDados ,,, {|x,y| x[nPData]+x[nPOrdemProd]+x[nPNumCarreg] > y[nPData]+y[nPOrdemProd]+y[nPNumCarreg] } )
 			
 			//VALIDAR SE EXISTE PARAMETRO VAZIO COM SALDO NA ORDEM DE PRODUCAO
 			For nI := 1 to nQtdSilo // 6 silos
@@ -5328,9 +5362,24 @@ Private cAgua	 	:= ""
 			Next nI
 
 			aSort( aDSilo ,,, {|x,y| x[2] < y[2] } )
-
+			nPosArray := 0
 			For nI := 1 to Len(aDados)
 				if cToD(aDados[nI, nPData]) == dDatabase
+					nPosArray := nI
+					Exit
+				endif
+			Next nI
+			
+			if nPosArray  == 0
+				MsgStop("Arquivo PHIBRO: "+cFile+" Não será importado pois não há linhas no arquivo com a data atual igual a data base do sistema. ")
+				DisarmTransaction()
+				Break
+			endif
+
+			For nI := nPosArray to Len(aDados)
+				if cToD(aDados[nI, nPData]) != dDatabase
+					exit
+				else
 					If (cOrdem == aDados[nI, nPOrdemProd] .and. nCarreg <> aDados[nI, nPNumCarreg] )
 						nCarreg := aDados[nI, nPNumCarreg]
 						cHoraI  := aDados[nI, nPTime]
@@ -5487,6 +5536,12 @@ Private cAgua	 	:= ""
 			Else
 				cSttImp := "A"
 			EndIf
+
+			//Pedido do Toshio: Arquivo da Phibro e Kemin são os ultimos a serem importados, então o status tem que ser "C-Conferido"
+			IF MV_PAR02 != 1
+				cSttImp := "C"
+			ENDIF
+			
 			QRYIMP->(DBCloseArea())
 
 			cQry := " SELECT	R_E_C_N_O_ " + _ENTER_ +;
