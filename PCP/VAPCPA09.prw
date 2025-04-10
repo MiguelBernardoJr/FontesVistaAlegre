@@ -783,11 +783,10 @@ AAdd(aTFldr, "VISAO GERAL")
 AAdd(aTFldr, "PASTO")
 AAdd(aTFldr, "RESUMO")
 
-
-nColLeg := (aPObjs[1][4]/2) - 080 - 20 //nColLeg := aSize[6] - 460
-aOperador 		:= StrTokArr(GetMV("MV_OPERADO") + ";",";") 
-cOper1 := AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[1],"Z0U_NOME"))
-cOper2 := AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[2],"Z0U_NOME"))
+nColLeg 	:= (aPObjs[1][4]/2) - 080 - 20 //nColLeg := aSize[6] - 460
+aOperador 	:= StrTokArr(GetMV("MV_OPERADO") + ";",";")
+cOper1 		:= AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[1],"Z0U_NOME"))
+cOper2 		:= AllTrim(Posicione("Z0U",1,xFilial("Z0U")+aOperador[2],"Z0U_NOME"))
 
 DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], aPObjs[1][2] To aPObjs[1][3], aPObjs[1][4] of oDlgRotas PIXEL 
 
@@ -989,7 +988,7 @@ DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], a
 					oPanel := nil 
 					oPanel := TPanel():New(000, nCurCol-005, aDadTl[nCntAll][nCntLin][nCntCur][01], aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntLC, .T.,, IIf(nCrFnt = CLR_WHITE, CLR_BLACK, CLR_WHITE)/*nCrFnt*/, nCrFnt/*aCorTl[1]*/, 032, 010)
 					oPanel:SetCss("QWidget { background-color: RGB("+IIF(nCrFnt == CLR_WHITE, "255,255,255" ,cCrFnt)+"); }")
-					
+					//oPanel:lvisible := .F.
 					AAdd(aCurLin[nChvCnf][nCntLin - 1], oPanel) //cabecalho curral com o numero
 
 					oPanel := nil
@@ -1014,8 +1013,12 @@ DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], a
 							oSay:SetCss("QWidget { background-color: RGB("+aCrDieR[nCrAux][2]+"); }")
 						ENDIF
 						
+						//oPanel1:bLClicked 	:= &("{|| (U_SelLin('" + cChvCnf + "', '" + STR(nCntLin - 1) + "'))}")
+						//oPanel2:bLClicked 	:= nil
+						//oPanel3:bLClicked 	:= &("{|| (U_SelCur('" + cChvCnf + "', '" + STR(nCntLin - 1) + "', '" + STR(nChvCur) + "'))}")
+						
 						aCurLin[nChvCnf][nCntLin - 1][nChvCur]:bLClicked 	:= &("{|| (U_SelCur('" + cChvCnf + "', '" + STR(nCntLin - 1) + "', '" + STR(nChvCur) + "'))}")
-						//aCurLin[nChvCnf][nCntLin - 1][nChvCur - 1]:TagGroup := 1
+						aCurLin[nChvCnf][nCntLin - 1][nChvCur - 1]:TagGroup := 1
 
 						AAdd(aCurLin[nChvCnf][nCntLin - 1][nChvCur]:aControls, (aDadTl[nCntAll][nCntLin][nCntCur][07] * aDadTl[nCntAll][nCntLin][nCntCur][03]))
 						AAdd(aCurLin[nChvCnf][nCntLin - 1][nChvCur]:aControls, cChvLin)
@@ -1035,7 +1038,7 @@ DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], a
 				
 					AAdd(aCurLin[nChvCnf][nCntLin - 1], oPanel)
 
-					oPanel := nil 
+					oPanel := nil
 					oPanel := TPanel():New(018, nCurCol,, aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])], oTFntGr, .T.,, aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 060, 068)
 					if cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
 						oPanel:SetCss("QWidget { background-color: RGB(169,169,169); }")
@@ -1050,7 +1053,7 @@ DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], a
 					If (cQtCab != '0')
 
 						oSay := nil
-						oSay := TSay():New(005, 005, &("{|| '" + cLtCur + "' + ' - ' + '" + cQtCab + "' + '" + cPlCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntPs,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 100)
+						oSay := TSay():New(005, 005, &("{|| '" + cLtCur + "' + ' - ' + '" + cQtCab + "' + '" + cPlCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntPs,,,,.T., aCorTl[5], IIf(cLtCur == 'SEM LOTE' .OR. nCrAux < 1, CLR_GRAY, aCrDie[nCrAux][2]), 200, 100)
 						IF cLtCur == 'SEM LOTE' .OR. nCrAux < 1 // CLR_GRAY
 							oSay:SetCss("QWidget { background-color: RGB(169,169,169); }")
 						ELSE //aCrDie[nCrAux][2]
@@ -1067,7 +1070,7 @@ DEFINE MSDIALOG oDlgRotas TITLE OemToAnsi("Rotas do Trato") From aPObjs[1][1], a
 					
 						tButton():New(050, 001, "TRT", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VP05Form(aDadSel[2], aDadSel[3], '" + ALLTRIM(cChvLin) + ALLTRIM(aDadTl[nCntAll][nCntLin][nCntCur][01]) + "', '" + cLote + "')}"), 15, 15,,oTFntGr,, .T.)
 						tButton():New(050, 022, "KDX", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VAESTR16({{'" + cLote + "', '" + AllTrim(cChvLin) + aDadTl[nCntAll][nCntLin][nCntCur][01] + "'}}) }"), 15, 15,,oTFntGr,, .T.) 
-						tButton():New(050, 044, "INF", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VAPCPM01('" + cLote + "') }"), 15, 15,,oTFntGr,, .T.) 
+						tButton():New(050, 044, "INF", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VAPCPM01('" + cLote + "') }"), 15, 15,,oTFntGr,, .T.)
 					EndIf
 				
 					nCurCol := nCurCol + 065
@@ -1712,15 +1715,13 @@ If lCnt
 	If (!lPasto)
 		cLote := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[5]
 	
-		If ((aCurLin[nIndCnf][nIndLin][nIndCur - 1]:nClrPane != nCrRot) .AND. (aCurLin[nIndCnf][nIndLin][nIndCur - 1]:TagGroup == 1)) //aCorTl[4]
-			aCurLin[nIndCnf][nIndLin][nIndCur - 1]:nClrPane := nCrRot
+		If (!(cCrRot $ aCurLin[nIndCnf][nIndLin][nIndCur - 1]:GetCss()) .AND. (aCurLin[nIndCnf][nIndLin][nIndCur - 1]:TagGroup == 1)) //aCorTl[4]
 			aCurLin[nIndCnf][nIndLin][nIndCur - 1]:SetCss("QWidget { background-color: RGB("+cCrRot+"); }")
 			nTotTrt += aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[1]
 			nVlrSub := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[1]
 			cRot 	:= aDadSel[1]
 			nTotCRt := nTotCRt + 1
-		ElseIf ((aCurLin[nIndCnf][nIndLin][nIndCur - 1]:nClrPane == nCrRot) .AND. (aCurLin[nIndCnf][nIndLin][nIndCur - 1]:TagGroup == 1))
-			aCurLin[nIndCnf][nIndLin][nIndCur - 1]:nClrPane := aCorTl[1] //aCorTl[4]
+		ElseIf ((cCrRot $ aCurLin[nIndCnf][nIndLin][nIndCur - 1]:GetCss()) .AND. (aCurLin[nIndCnf][nIndLin][nIndCur - 1]:TagGroup == 1))
 			aCurLin[nIndCnf][nIndLin][nIndCur - 1]:SetCss("QWidget { background-color: RGB(255,255,255); }")
 			nTotTrt -= aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[1]
 			cRot 	:= Space(6)
@@ -1730,18 +1731,16 @@ If lCnt
 	Else
 		cLote := aCurPst[nIndCur]:aControls[5]
 		
-		If ((aCurPst[nIndCur - 1]:nClrPane != nCrRot) .AND. (aCurPst[nIndCur - 1]:TagGroup == 1)) //aCorTl[4]
-			aCurPst[nIndCur - 1]:nClrPane := nCrRot
+		If (!(cCrRot $ aCurPst[nIndCur - 1]:GetCss()) .AND. (aCurPst[nIndCur - 1]:TagGroup == 1)) //aCorTl[4]
 			aCurPst[nIndCur - 1]:SetCss("QWidget { background-color: RGB("+cCrRot+"); }")
 			nTotTrt += aCurPst[nIndCur]:aControls[1]
-			cRot := aDadSel[1]
+			cRot 	:= aDadSel[1]
 			nVlrSub := aCurPst[nIndCur]:aControls[1]
 			nTotCRt := nTotCRt + 1
-		elseIf ((aCurPst[nIndCur - 1]:nClrPane == nCrRot) .AND. (aCurPst[nIndCur - 1]:TagGroup == 1))
-			aCurPst[nIndCur - 1]:nClrPane := aCorTl[1] //aCorTl[4]
+		elseIf ((cCrRot $ aCurPst[nIndCur - 1]:GetCss()) .AND. (aCurPst[nIndCur - 1]:TagGroup == 1))
 			aCurPst[nIndCur - 1]:SetCss("QWidget { background-color: RGB(255,255,255); }")
 			nTotTrt -= aCurPst[nIndCur]:aControls[1]
-			cRot := Space(6)
+			cRot 	:= Space(6)
 			nTotCRt := nTotCRt - 1
 		EndIf
 	
@@ -1777,24 +1776,25 @@ If lCnt
 	EndIf
 EndIf
 
-nTotCSR := nTotCur - nTotCRt
+	//Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRot))
+	nTotCSR := nTotCur - nTotCRt
 
-If (nTotTrt == 0)
-	RecLock("Z0S", .F.)
-		Z0S->Z0S_DIETA := ""
-		Z0S->Z0S_EQUIP := ""
-		Z0S->Z0S_OPERAD:= ""
-	Z0S->(MSUnlock())
-EndIf
+	If (nTotTrt == 0)
+		RecLock("Z0S", .F.)
+			Z0S->Z0S_DIETA := ""
+			Z0S->Z0S_EQUIP := ""
+			Z0S->Z0S_OPERAD:= ""
+		Z0S->(MSUnlock())
+	EndIf
 
-// MB : 27.11.2020
-_cCurral := fLoadCurrais(aParRet[1], aDadSel[1])
+	// MB : 27.11.2020
+	_cCurral := fLoadCurrais(aParRet[1], aDadSel[1])
 
 Return (Nil)
 
 /* ==================================================================================================================== */
 User Function CORROTA(nRed, nGreen, nBlue)
-Local nCrRt := 0
+	Local nCrRt := 0
 	nCrRt   := (nRed + (nGreen * 256) + (nBlue * 65536))
 Return (nCrRt)
 

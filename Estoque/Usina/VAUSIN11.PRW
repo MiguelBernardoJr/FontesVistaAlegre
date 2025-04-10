@@ -196,12 +196,6 @@ Static Function USIN11PG()
         return nil
     endif
 
-    if oGrid:Length() > 0 
-        if oGrid:CanClearData()
-            oGrid:ClearData()
-        endif
-    endif
-
     cQry := " select  ZAL_FILIAL  " + CRLF
     cQry += "        ,ZAL_DATA   " + CRLF
     cQry += "        ,ZAL_NF     " + CRLF
@@ -261,8 +255,8 @@ Static Function USIN11PG()
     cQry += " AND ZML_FILIAL = ?" + CRLF
     cQry += " AND ZML_FORNEC = ?" + CRLF
     cQry += " AND ZML_LOJA = ?" + CRLF
-    cQry += " AND ZML_DATAD < ?" + CRLF
-    cQry += " AND ZML_DATAF > ?" + CRLF
+    cQry += " AND ZML_DATAD <= ?" + CRLF
+    cQry += " AND ZML_DATAF >= ?" + CRLF
     cQry += " AND ZML_FERM = ?" + CRLF
 
     oQryCache := FwExecStatement():New(cQry)

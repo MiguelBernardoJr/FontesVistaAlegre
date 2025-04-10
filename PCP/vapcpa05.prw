@@ -82,6 +82,7 @@ static aCpoMdZ0IG := {"Z0I_DATA" , "Z0I_NOTMAN", "Z0I_NOTTAR", "Z0I_NOTNOI"}
 static aCpoMdZ05G := { "Z05_DATA", "Z05_DIETA", "Z05_CABECA", "Z05_KGMSDI", "Z05_KGMNDI", "Z04_KGMSRE" ;
                      , "Z04_KGMNRE", "Z05_MEGCAL" }
 static aCpoMdZ06G :={"Z06_TRATO", "Z06_DIETA" , "Z06_KGMSTR", "Z06_KGMNTR", "Z06_MEGCAL", "Z06_KGMNT", "Z06_RECNO"}
+static aCpoMdRot := { "Z0T_ROTA","Z06_LOTE","Z06_CURRAL","Z06_KGMSTR","Z06_KGMNTR","Z06_KGMNT"}
 
 static nMaxDiasDi := (10^TamSX3("Z05_DIASDI")[1])-1
 
@@ -117,7 +118,7 @@ EnableKey(.T.)
 nNroTratos := u_GetNroTrato()
 
 AtuSX1(@cPerg)
-U_PosSX1({{cPerg, "01", Date() }})
+U_PosSX1({{cPerg, "01", cToD("01/11/2024") }})
 
     DbSelectArea("SX3")
     DbSetOrder(2) // X3_CAMPO
@@ -3482,7 +3483,6 @@ Local nBKPnTrtTotal := 0
 
 return nil
 
-
 /*/{Protheus.doc} FillEmpty
 Preenche com quantidade 0 os tratos menores que o ultimo trato que não foram criados.
 @author jr.andre
@@ -3928,24 +3928,111 @@ Detalhamento dos menus da rotina
 static function MenuDef()
 local aRotina := {} 
 
-    ADD OPTION aRotina TITLE OemToAnsi("Visualizar")          ACTION "u_vap05man" OPERATION 2 ACCESS 0 // "Visualizar"
-    ADD OPTION aRotina TITLE OemToAnsi("Trato <F12>")         ACTION "u_vap05cri" OPERATION 3 ACCESS 0 // "Copiar" 
-    ADD OPTION aRotina TITLE OemToAnsi("Recarrega <F11>")     ACTION "u_vap05rec" OPERATION 3 ACCESS 0 // "Copiar" 
-    ADD OPTION aRotina TITLE OemToAnsi("Recria <F5>")         ACTION "u_vap05rcr" OPERATION 4 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Manutenção <F6>")     ACTION "u_vap05man" OPERATION 4 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Gerar Arquivos <F7>") ACTION "u_vap05arq" OPERATION 2 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Nro Tratos <F8>")     ACTION "u_vap05tra" OPERATION 4 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Matéria Seca <F9>")   ACTION "u_vap05msc" OPERATION 4 ACCESS 0 // "Alterar" 
-    ADD OPTION aRotina TITLE OemToAnsi("Dietas <F10>")        ACTION "u_vap05trt" OPERATION 4 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Incluir")             ACTION "u_vap05nov" OPERATION 4 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Excluir")             ACTION "u_vap05rem" OPERATION 5 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Transf. Curral")      ACTION "u_vap05tcu" OPERATION 4 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Alt Cabeca Lote")     ACTION "u_AltQtdCab" OPERATION 4 ACCESS 0 // "Alterar"
-    ADD OPTION aRotina TITLE OemToAnsi("Ocorrencia Geral")    ACTION "u_vap05OcG" OPERATION 4 ACCESS 0
-    ADD OPTION aRotina TITLE OemToAnsi("Ocorrencia Lote")     ACTION "u_vap05OcL" OPERATION 4 ACCESS 0
-    ADD OPTION aRotina TITLE OemToAnsi("Cadastro Ocor. Lote") ACTION "u_vap05OcC" OPERATION 4 ACCESS 0
+    ADD OPTION aRotina TITLE OemToAnsi("Visualizar")                    ACTION "u_vap05man" OPERATION 2 ACCESS 0 // "Visualizar"
+    ADD OPTION aRotina TITLE OemToAnsi("Trato <F12>")                   ACTION "u_vap05cri" OPERATION 3 ACCESS 0 // "Copiar" 
+    ADD OPTION aRotina TITLE OemToAnsi("Recarrega <F11>")               ACTION "u_vap05rec" OPERATION 3 ACCESS 0 // "Copiar" 
+    ADD OPTION aRotina TITLE OemToAnsi("Recria <F5>")                   ACTION "u_vap05rcr" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Manutenção <F6>")               ACTION "u_vap05man" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Gerar Arquivos <F7>")           ACTION "u_vap05arq" OPERATION 2 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Nro Tratos <F8>")               ACTION "u_vap05tra" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Matéria Seca <F9>")             ACTION "u_vap05msc" OPERATION 4 ACCESS 0 // "Alterar" 
+    ADD OPTION aRotina TITLE OemToAnsi("Dietas <F10>")                  ACTION "u_vap05trt" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Manutenção quantidade <F4>")    ACTION "u_vap05mnt" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Incluir")                       ACTION "u_vap05nov" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Excluir")                       ACTION "u_vap05rem" OPERATION 5 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Transf. Curral")                ACTION "u_vap05tcu" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Alt Cabeca Lote")               ACTION "u_AltQtdCab" OPERATION 4 ACCESS 0 // "Alterar"
+    ADD OPTION aRotina TITLE OemToAnsi("Ocorrencia Geral")              ACTION "u_vap05OcG" OPERATION 4 ACCESS 0
+    ADD OPTION aRotina TITLE OemToAnsi("Ocorrencia Lote")               ACTION "u_vap05OcL" OPERATION 4 ACCESS 0
+    ADD OPTION aRotina TITLE OemToAnsi("Cadastro Ocor. Lote")           ACTION "u_vap05OcC" OPERATION 4 ACCESS 0
 
 return aRotina
+
+
+/*/{Protheus.doc} vap05mnt
+Faz a chamada do viewdef trazendo apenas os botões Confirmar e Fechar
+@author jr.andre
+@since 25/04/2019
+@version 1.0
+@return Nil
+@param cAlias, characters, descricao
+@param nReg, numeric, descricao
+@param nOpc, numeric, descricao
+@type function
+/*/
+user function vap05mnt(cAlias, nReg, nOpc)
+local aArea   := GetArea()
+local aEnButt := {{.F., nil},;      // 1 - Copiar
+                  {.F., nil},;      // 2 - Recortar
+                  {.F., nil},;      // 3 - Colar
+                  {.F., nil},;      // 4 - Calculadora
+                  {.F., nil},;      // 5 - Spool
+                  {.F., nil},;      // 6 - Imprimir
+                  {.T., "Confirmar"},; // 7 - Confirmar
+                  {.T., "Fechar"},;    // 8 - Cancelar
+                  {.F., nil},;      // 9 - WalkTrhough
+                  {.F., nil},;      // 10 - Ambiente
+                  {.F., nil},;      // 11 - Mashup
+                  {.T., nil},;      // 12 - Help
+                  {.F., nil},;      // 13 - Formulário HTML
+                  {.F., nil},;      // 14 - ECM
+                  {.F., nil}}       // 15 - Salvar e Criar novo
+Private lManut := .T.
+
+    if Type("Inclui") == 'U'
+        private Inclui := .F.
+    endif
+    
+    if Type("Altera") == 'U'
+        private Altera := .T.
+    endif
+
+    EnableKey(.F.)
+
+    DbSelectAre("Z0R")
+    DbSetOrder(1) // Z0R_FILIAL+DToS(Z0R_DATA)+Z0R_VERSAO
+
+    if nOpc == 1
+        DbSelectArea("Z05")
+        DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
+
+        if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
+            FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_VIEW,, { || .T. },,,aEnButt )
+        else
+            Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para este curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível visualizar o registro."})
+        endif
+        
+    elseif Z0R->Z0R_LOCK <= '1'
+        DbSelectArea("Z05")
+        DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
+    
+        if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
+            if CanUseZ05()
+                FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+                ReleaseZ05()
+            endif
+        elseif !Empty((cTrbBrowse)->B8_LOTECTL)
+            if FillTrato()
+                FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt)
+                ReleaseZ05()
+            endif
+        endif
+    elseif Z0R->Z0R_LOCK = '2' 
+        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
+    elseif Z0R->Z0R_LOCK = '3' 
+        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
+    endif
+
+    EnableKey(.T.)
+
+    if !Empty(aArea)
+        RestArea(aArea)
+    endif
+    
+    //teste aqui
+    UpdTrbTmp()
+    //u_vap05rec()
+return nil
 
 
 /*/{Protheus.doc} vap05man
@@ -4183,6 +4270,11 @@ local oStrZ0IG   := Z0IGrdMStr()
 local oStrZ05G   := Z05GrdMStr()
 local oStrZ06G   := Z06GrdMStr()
 
+local oStrRot    := nil
+local oStrHide    := nil
+
+local bLoadHide    
+local bLoadRot   
 local bLoadZ05   := {|oModel, lCopia| LoadZ05(oModel, lCopia) }
 local bLoadZ0I   := {|oFormGrid, lCopia| LoadZ0I(oFormGrid, lCopia) }
 local bLoadZ05An := {|oFormGrid, lCopia| LoadZ05Ant(oFormGrid, lCopia) }
@@ -4191,49 +4283,80 @@ local bZ06LinePr := {|oGridModel, nLin, cOperacao, cCampo, xValAtr, xValAnt| Z06
 local bZ06Pre    := {|oGridModel, nLin, cAction| Z06Pre(oGridModel, nLin, cAction)}
 local bZ06LinePo := {|oGridModel, nLin| Z06LinPost(oGridModel, nLin)}
 local bLoadZ06   := {|oFormGrid, lCopia| LoadZ06(oFormGrid, lCopia) }
+local bLineROT   := NIL
 
 //local bPreValid  := {|oModel| FrmPreVld(oModel)}
 //local bPostValid := {|oModel| FrmPostVld(oModel)}
-local bCommit    := {|oModel| FormCommit(oModel)}
-local bCancel    := {|oModel| FormCancel(oModel)}
+local bCommit     := {|oModel| FormCommit(oModel)}
+local bCancel     := {|oModel| FormCancel(oModel)}
 
 local oEvent := vapcp05Evt():New()
+
+if Type("lManut") <> "U" .and. lManut == .T.
+    oStrRot     := RotGrdMStr()
+    oStrHide    := HidGrdMStr()
+    bLoadRot    := {|oFormGrid, lCopia| LoadRot(oFormGrid, lCopia) }
+    bLoadHide   := {|oModel, lCopia| LoadHide(oModel, lCopia) }
+    bLineROT    := {|oGridModel, lCopia,cAction| LineROT(oGridModel, nLin,cAction) }
+endif
 
 EnableKey(.F.)
 
 oModel := MPFormModel():New('MDVAPCPA05', /*bPreValid*/, /*bPostValid*/, bCommit, bCancel)
 oModel:SetDescription("Plano de Trato")
 
-// Criação dos sub-modelos
-oModel:AddFields("MdFieldZ05",/*cOwner*/, oStrZ05C,/*bPreValid*/, /*bPosValid*/, bLoadZ05)
-oModel:AddGrid("MdGridZ0I", "MdFieldZ05", oStrZ0IG, /*bLinePre*/,/*bLinePost*/,/*bPre */,/*bPost*/, bLoadZ0I)
-oModel:AddGrid("MdGridZ05", "MdFieldZ05", oStrZ05G, /*bLinePre*/,/*bLinePost*/,/*bPre */,/*bPost*/, bLoadZ05An)
-oModel:AddGrid("MdGridZ06", "MdFieldZ05", oStrZ06G, bZ06LinePr, bZ06LinePo, bZ06Pre,/*bPost*/, bLoadZ06)
 
-// Definição de Descrição 
-oModel:GetModel("MdFieldZ05"):SetDescription("Plano de Trato")
-oModel:GetModel("MdGridZ0I"):SetDescription("Manejo de Cocho")
-oModel:GetModel("MdGridZ05"):SetDescription("Programacao Anterior")
-oModel:GetModel("MdGridZ06"):SetDescription("Programacao")
+if Type("lManut") <> "U" .and. lManut == .T.
+    // Criação dos sub-modelos
+    oModel:AddFields("MdFieldHide",""           , oStrHide,/*bPreValid*/, /*bPosValid*/, bLoadHide)
+    oModel:AddGrid("MdFieldRot"   ,"MdFieldHide", oStrRot , /*bLinePre*/,bLineROT/*bLinePost*/,/*bPre */,/*bPost*/, bLoadRot)
+    oModel:AddFields("MdFieldZ05" ,"MdFieldRot" , oStrZ05C,/*bPreValid*/, /*bPosValid*/, bLoadZ05)
+    oModel:AddGrid("MdGridZ06"    ,"MdFieldZ05" , oStrZ06G, bZ06LinePr, bZ06LinePo, bZ06Pre,/*bPost*/, bLoadZ06)
+    
+    oModel:GetModel("MdFieldZ05"):SetDescription("Plano de Trato")
+    oModel:GetModel("MdGridZ06"):SetDescription("Programacao")
+    oModel:GetModel("MdFieldRot"):SetDescription("Currais")
+    oModel:GetModel("MdFieldHide"):SetDescription("Hide")
 
-// Definição de atributos
-oModel:SetOnlyQuery('MdFieldZ05', .T.)
-oModel:SetOnlyQuery('MdGridZ0I', .T.)
-oModel:SetOnlyQuery('MdGridZ05', .T.)
-oModel:SetOnlyQuery('MdGridZ06', .T.)
+    oModel:SetOnlyQuery('MdFieldZ05', .T.)
+    oModel:SetOnlyQuery('MdFieldRot', .T.)
+    
+    oModel:getModel("MdFieldRot"):SetNoInsertLine(.T.)
+    oModel:getModel("MdFieldRot"):SetNoDeleteLine(.T.)
+    
+    oModel:AddCalc('TOTAIS', 'MdFieldZ05', 'MdGridZ06', 'Z06_KGMNT', 'XX_TOTTRT', 'SUM', , , "KG MN TOTAL" )
 
-// Permite exclusão de todas as linhas 
-oModel:getModel("MdGridZ0I"):SetDelAllLine(.T.)
-oModel:getModel("MdGridZ05"):SetDelAllLine(.T.)
-oModel:getModel("MdGridZ06"):SetDelAllLine(.T.)
+else
+    oModel:AddFields("MdFieldZ05" ,""  , oStrZ05C,/*bPreValid*/, /*bPosValid*/, bLoadZ05)
+    oModel:AddGrid("MdGridZ06"    , "MdFieldZ05" , oStrZ06G, bZ06LinePr, bZ06LinePo, bZ06Pre,/*bPost*/, bLoadZ06)
+    oModel:AddGrid("MdGridZ0I"    , "MdFieldZ05" , oStrZ0IG, /*bLinePre*/,/*bLinePost*/,/*bPre */,/*bPost*/, bLoadZ0I)
+    oModel:AddGrid("MdGridZ05"    , "MdFieldZ05" , oStrZ05G, /*bLinePre*/,/*bLinePost*/,/*bPre */,/*bPost*/, bLoadZ05An)
 
-// remove a permissão de inclusão e exclusão de linhas 
-oModel:getModel("MdGridZ0I"):SetNoInsertLine(.T.)
-oModel:getModel("MdGridZ05"):SetNoInsertLine(.T.)
-oModel:getModel("MdGridZ06"):SetNoInsertLine(.T.)
-oModel:getModel("MdGridZ0I"):SetNoDeleteLine(.T.)
-oModel:getModel("MdGridZ05"):SetNoDeleteLine(.T.)
-oModel:getModel("MdGridZ06"):SetNoDeleteLine(.T.)
+    // Definição de Descrição 
+    oModel:GetModel("MdFieldZ05"):SetDescription("Plano de Trato")
+    oModel:GetModel("MdGridZ0I"):SetDescription("Manejo de Cocho")
+    oModel:GetModel("MdGridZ05"):SetDescription("Programacao Anterior")
+    oModel:GetModel("MdGridZ06"):SetDescription("Programacao")
+
+    // Definição de atributos
+    oModel:SetOnlyQuery('MdFieldZ05', .T.)
+    oModel:SetOnlyQuery('MdGridZ0I' , .T.)
+    oModel:SetOnlyQuery('MdGridZ05' , .T.)
+    oModel:SetOnlyQuery('MdGridZ06' , .T.)
+
+    // Permite exclusão de todas as linhas 
+    oModel:getModel("MdGridZ0I"):SetDelAllLine(.T.)
+    oModel:getModel("MdGridZ05"):SetDelAllLine(.T.)
+    oModel:getModel("MdGridZ06"):SetDelAllLine(.T.)
+
+    // remove a permissão de inclusão e exclusão de linhas 
+    oModel:getModel("MdGridZ0I"):SetNoInsertLine(.T.)
+    oModel:getModel("MdGridZ05"):SetNoInsertLine(.T.)
+    oModel:getModel("MdGridZ06"):SetNoInsertLine(.T.)
+    oModel:getModel("MdGridZ0I"):SetNoDeleteLine(.T.)
+    oModel:getModel("MdGridZ05"):SetNoDeleteLine(.T.)
+    oModel:getModel("MdGridZ06"):SetNoDeleteLine(.T.)
+endif
 
 // Cria a chave primária 
 oModel:SetPrimaryKey({"Z05_DATA", "Z05_VERSAO", "Z05_CURRAL", "Z05_LOTE"})
@@ -4514,6 +4637,19 @@ local lRet := .T.
 return lRet
 /*/
 
+Static Function LineROT(oGridModel, nLin,cAction)
+    local aArea     := GetArea()
+    Local lRet := .T. 
+    Local cQry := ""
+    Local cAlias := ""
+    Local oModel := FWModelActive()
+
+    default nLin := oGridModel:GetLine()
+
+    cAlias := "" 
+
+    RestArea(aArea)
+Return lRet 
 
 /*/{Protheus.doc} FormCommit
 Bloco de código de persistência dos dados, invocado pelo método CommitData. 
@@ -4564,6 +4700,67 @@ static function FormCancel(oModel)
 local lRet := .T.
 return lRet
 
+static function LoadHide(oModel, lCopia)
+    local aArea := GetArea()
+    Local aRet  := {}
+
+    aAdd(aRet, {""})
+    aAdd(aRet, {1})
+    RestArea(aArea)
+Return aRet 
+/*/{Protheus.doc} LoadZ05
+Carrega os dados da tabela Hide de acordo com o registro posicinado
+@author Igor Oliveira
+@since 07/04/2025
+/*/
+static function LoadRot(oModel, lCopia)
+    local aArea     := GetArea()
+    local aRet      := {}
+    Local cQry      := ""
+    Local cALias    := ""
+    Local nSeq      := 0
+    cQry += " select Z06_FILIAL " + CRLF
+    cQry += " 	, Z06_DATA " + CRLF
+    cQry += " 	, Z06_LOTE " + CRLF
+    cQry += " 	, Z06_CURRAL " + CRLF
+    cQry += " 	, Z0T_ROTA " + CRLF
+    cQry += " 	, SUM(Z06_KGMSTR) AS Z06_KGMSTR " + CRLF
+    cQry += " 	, SUM(Z06_KGMNTR) AS Z06_KGMNTR " + CRLF
+    cQry += " 	, SUM(Z06_KGMNT) AS  Z06_KGMNT " + CRLF
+    cQry += "   from "+RetSqlName("Z06")+" Z06 " + CRLF
+    cQry += "   JOIN "+RetSqlName("Z05")+" Z05 ON " + CRLF
+    cQry += "        Z05_FILIAL = Z06_FILIAL " + CRLF
+    cQry += "    AND Z05_DATA = Z06_DATA " + CRLF
+    cQry += "    AND Z05_VERSAO = Z06_VERSAO " + CRLF
+    cQry += "    AND Z05_LOTE = Z06_LOTE " + CRLF
+    cQry += "    AND Z05_CURRAL = Z06_CURRAL " + CRLF
+    cQry += "    AND Z05.D_E_L_E_T_ = ' '  " + CRLF
+    cQry += "   JOIN "+RetSqlName("Z0T")+" Z0T ON  " + CRLF
+    cQry += "        Z0T_FILIAL = Z06_FILIAL " + CRLF
+    cQry += "    AND Z0T_LOTE = Z06_LOTE " + CRLF
+    cQry += "    AND Z0T_DATA = Z06_DATA " + CRLF
+    cQry += "    AND Z0T_CURRAL = Z06_CURRAL " + CRLF
+    cQry += "    AND Z0T.D_E_L_E_T_ = ' '  " + CRLF
+    cQry += "  WHERE Z06_FILIAL = '0101001' " + CRLF
+    cQry += "    AND Z06_DATA = '20241101' " + CRLF
+    cQry += "    AND Z06.D_E_L_E_T_ ='' " + CRLF
+    cQry += "    AND Z0T.Z0T_ROTA = 'ROTA11' " + CRLF
+    cQry += "    GROUP BY Z06_FILIAL, Z06_DATA, Z06_LOTE, Z06_CURRAL,Z0T_ROTA " + CRLF
+
+    cAlias := MpSysOpenQuery(cQry)
+
+    While !(cAlias)->(Eof())
+        aAdd(aRet, {++nSeq,{(cALias)->Z0T_ROTA,(cALias)->Z06_LOTE,(cALias)->Z06_CURRAL,(cALias)->Z06_KGMSTR,(cALias)->Z06_KGMNTR,(cALias)->Z06_KGMNT}})
+        (cAlias)->(DbSkip())
+    EndDo
+    (cAlias)->(DBCLOSEAREA())
+    
+    if Len(aRet) == 0
+        aAdd(aRet, {1,{"","","",0,0,0}})
+    endif
+    
+    RestArea(aArea)
+Return aRet 
 
 /*/{Protheus.doc} LoadZ05
 Carrega os dados da tabela Z05 de acordo com o registro posicinado
@@ -4947,6 +5144,9 @@ local oStrZ05C := nil
 local oStrZ0IG := nil
 local oStrZ05G := nil
 local oStrZ06G := nil
+local oStrROT  := nil
+Local oStrHide := nil
+Local oStrTOT  := nil
 
 if FunName() != "VAPCPA05" .or. !Empty((cTrbBrowse)->B8_LOTECTL) 
 
@@ -4955,59 +5155,99 @@ if FunName() != "VAPCPA05" .or. !Empty((cTrbBrowse)->B8_LOTECTL)
     oModel := ModelDef()
 
     oStrZ05C   := Z05FldVStr()
-    oStrZ0IG   := Z0IGrdVStr()
-    oStrZ05G   := Z05GrdVStr()
     oStrZ06G   := Z06GrdVStr()
+    
+    if Type("lManut") <> "U" .and. lManut == .T.
+        oStrROT := ROTGrdVStr()
+        oStrTOT := FWCalcStruct(oModel:GetModel('TOTAIS'))
+        oStrHide := HidGrdVStr()
+    else
+        oStrZ0IG   := Z0IGrdVStr()
+        oStrZ05G   := Z05GrdVStr()
+    endif
 
     oView := FwFormView():New()
     oView:SetModel(oModel)
     
-    oView:AddField("VwFieldZ05", oStrZ05C, "MdFieldZ05")
-    oView:AddGrid("VwGridZ0I", oStrZ0IG, "MdGridZ0I")
-    oView:AddGrid("VwGridZ05", oStrZ05G, "MdGridZ05")
-    oView:AddGrid("VwGridZ06", oStrZ06G, "MdGridZ06")
-    
-    //static aCpoMdZ05F := { "Z05_DATA",   "Z05_VERSAO", "Z05_CURRAL", "Z05_LOTE",   "Z05_CABECA", "Z05_ORIGEM", "Z05_DIAPRO", "Z05_DIASDI", "Z05_MANUAL", "Z05_TOTMSC", "Z05_TOTMNC", "Z05_TOTMSI", "Z05_TOTMNI" }
-    oStrZ05C:SetProperty("*",   MVC_VIEW_CANCHANGE, .F.)
-    // oStrZ05C:SetProperty("Z05_TOTMSI", MVC_VIEW_CANCHANGE, .T.)
-    
-    oStrZ0IG:SetProperty('*', MVC_VIEW_CANCHANGE, .F.)
-    oStrZ05G:SetProperty('*', MVC_VIEW_CANCHANGE, .F.)
+    if Type("lManut") <> "U" .and. lManut == .T.
+        oView:AddField("VwFieldZ05", oStrZ05C, "MdFieldZ05")
+        oView:AddGrid("VwGridZ06" , oStrZ06G , "MdGridZ06")
+        oView:AddGrid("VwGridROT" , oStrROT  , "MdFieldRot")
+        oView:AddField("VIEW_TOT" , oStrTOT  ,  "TOTAIS")
+        oView:AddField("VIEW_HIDE", oStrHide ,  "MdFieldHide")
 
-    oView:CreateHorizontalBox("CABECALHO", 35)
-    oView:CreateHorizontalBox("ITENS",     50)
-    oView:CreateHorizontalBox("DETALHE",   15)
+        oView:SetViewProperty("VwGridROT", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; selection-color: #FFFFFF; }"} )
+        
+        oView:CreateHorizontalBox("HIDE"        , 0)
+        oView:CreateHorizontalBox("CABECALHO"   , 35)
+        oView:CreateHorizontalBox("ITENS"       , 55)
+        oView:CreateHorizontalBox("TOT"         , 10)
 
-    oView:CreateVerticalBox("PROG", 50, "ITENS")
-    oView:CreateVerticalBox("ANT",    50, "ITENS")
+        oView:CreateVerticalBox("ITENS1", 100,"ITENS")
 
-    oView:CreateHorizontalBox("COCHO",   50, "ANT")
-    oView:CreateHorizontalBox("PRGANT",  50, "ANT")
+        oView:CreateHorizontalBox("CURRAL",  35, "ITENS1")
+        oView:CreateHorizontalBox("COCHO1",  65, "ITENS1")
 
-    oView:SetOwnerView("VwFieldZ05", "CABECALHO")
-    oView:SetOwnerView("VwGridZ0I",  "COCHO")
-    oView:SetOwnerView("VwGridZ05", "PRGANT")
-    oView:SetOwnerView("VwGridZ06",  "PROG")
+        oView:SetOwnerView("VIEW_HIDE"  , "HIDE"        )
+        oView:SetOwnerView("VwFieldZ05" , "CABECALHO"   )
+        oView:SetOwnerView("VIEW_TOT"   , "TOT"         )
+        oView:SetOwnerView("VwGridROT"  , "CURRAL"      )
+        oView:SetOwnerView("VwGridZ06"  , "COCHO1"      )
+
+        oView:SetNoInsertLine("VwGridROT")
+        oView:SetNoDeleteLine("VwGridROT")
+        oView:EnableTitleView('VwGridROT', "Currais")
+        oView:EnableTitleView('VIEW_TOT' , "Totais")
+
+    else
+        oView:AddField("VwFieldZ05", oStrZ05C, "MdFieldZ05")
+        oView:AddGrid("VwGridZ06", oStrZ06G, "MdGridZ06")
+        oView:AddGrid("VwGridZ0I", oStrZ0IG, "MdGridZ0I")
+        oView:AddGrid("VwGridZ05", oStrZ05G, "MdGridZ05")
+        
+        //static aCpoMdZ05F := { "Z05_DATA",   "Z05_VERSAO", "Z05_CURRAL", "Z05_LOTE",   "Z05_CABECA", "Z05_ORIGEM", "Z05_DIAPRO", "Z05_DIASDI", "Z05_MANUAL", "Z05_TOTMSC", "Z05_TOTMNC", "Z05_TOTMSI", "Z05_TOTMNI" }
+        oStrZ05C:SetProperty("*",   MVC_VIEW_CANCHANGE, .F.)
+        // oStrZ05C:SetProperty("Z05_TOTMSI", MVC_VIEW_CANCHANGE, .T.)
+        
+        oStrZ0IG:SetProperty('*', MVC_VIEW_CANCHANGE, .F.)
+        oStrZ05G:SetProperty('*', MVC_VIEW_CANCHANGE, .F.)
+
+        oView:CreateHorizontalBox("CABECALHO"   , 35)
+        oView:CreateHorizontalBox("ITENS"       , 65)
+
+        oView:CreateVerticalBox("PROG", 50, "ITENS")
+        oView:CreateVerticalBox("ANT" , 50, "ITENS")
+        
+        oView:CreateHorizontalBox("COCHO" ,  50, "ANT")
+        oView:CreateHorizontalBox("PRGANT",  50, "ANT")
+
+        oView:SetOwnerView("VwFieldZ05" , "CABECALHO"  )
+        oView:SetOwnerView("VwGridZ0I"  , "COCHO"      )
+        oView:SetOwnerView("VwGridZ05"  , "PRGANT"     )
+        oView:SetOwnerView("VwGridZ06"  , "PROG"       )
+
+        // Não permite remover linhas
+        oView:SetNoInsertLine("VwGridZ0I")
+        oView:SetNoInsertLine("VwGridZ05")
+
+        // Não permite excluir linhas
+        oView:SetNoDeleteLine("VwGridZ0I")
+        oView:SetNoDeleteLine("VwGridZ05")
+
+        oView:EnableTitleView('VwGridZ0I'   , "Manejo de Cocho")
+        oView:EnableTitleView('VwGridZ05'   , "Programacao Anterior")
+    endif 
 
     oView:SetCloseOnOk({||.T.})
 
     // Não permite remover linhas
-    oView:SetNoInsertLine("VwGridZ0I")
-    oView:SetNoInsertLine("VwGridZ05")
     oView:SetNoInsertLine("VwGridZ06")
 
     // Não permite excluir linhas
-    oView:SetNoDeleteLine("VwGridZ0I")
-    oView:SetNoDeleteLine("VwGridZ05")
     oView:SetNoDeleteLine("VwGridZ06")
 
-    // Seta auto incremento
-    // oView:AddIncrementField("VwGridZ06", "Z06_TRATO" ) 
-
-    oView:EnableTitleView('VwFieldZ05', "Dados do Lote")
-    oView:EnableTitleView('VwGridZ0I', "Manejo de Cocho")
-    oView:EnableTitleView('VwGridZ05', "Programacao Anterior")
-    oView:EnableTitleView('VwGridZ06', "Programacao")
+    oView:EnableTitleView('VwFieldZ05'  , "Dados do Lote")
+    oView:EnableTitleView('VwGridZ06'   , "Programacao")
 
     oView:AddUserButton( 'Mat Natural', 'CLIPS', {|oView| u_MatNat()}, "Mostra o detalhamento do calculo de matéria natural <F4>.", VK_F4,,.T.)
     SetKey(VK_F4, {|| u_MatNat()})
@@ -5021,7 +5261,6 @@ if FunName() != "VAPCPA05" .or. !Empty((cTrbBrowse)->B8_LOTECTL)
             SetKey(VK_F7, {|| Proximo()})
         endif
     endif
-
 
 else
     Help(/*Descontinuado*/,/*Descontinuado*/,"SEM LOTE",/**/,"Não existe lote vinculado ao curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível atribuir um trato ao curral selecionado."})
@@ -5474,6 +5713,72 @@ return oStruct
 
 
 /*/{Protheus.doc} Z06GrdMStr
+Cria a estrutura para o modelo da grid Currais na tela
+@author Igor Oliveira
+@since 07/04/2025
+@version 1.0
+@return Object, modelo da grid Currais para a tela
+@type function
+/*/
+static function HidGrdMStr()
+    local aArea   := GetArea()
+    local oStruct := FWFormModelStruct():New()
+
+    oStruct:AddField(;
+                     "Hide",;               // [01]  C   Titulo do campo
+                     "",;              // [02]  C   ToolTip do campo
+                     "XX_HIDE",;   // [03]  C   Id do Field
+                     "C",; // [04]  C   Tipo do campo
+                     1,; // [05]  N   Tamanho do campo
+                     0,; // [06]  N   Decimal do campo
+                     nil,;                      // [07]  B   Code-block de validação do campo
+                     nil,;                      // [08]  B   Code-block de validação When do campo
+                     {},;                       // [09]  A   Lista de valores permitido do campo
+                     .F.,;                      // [10]  L   Indica se o campo tem preenchimento obrigatório
+                     nil,;                      // [11]  B   Code-block de inicializacao do campo
+                     .F.,;                      // [12]  L   Indica se trata-se de um campo chave
+                     .T.,;                      // [13]  L   Indica se o campo pode receber valor em uma operação de update.
+                     .F.)                       // [14]  L   Indica se o campo é virtual
+Return oStruct
+/*/{Protheus.doc} Z06GrdMStr
+Cria a estrutura para o modelo da grid Currais na tela
+@author Igor Oliveira
+@since 07/04/2025
+@version 1.0
+@return Object, modelo da grid Currais para a tela
+@type function
+/*/
+static function RotGrdMStr()
+    local aArea   := GetArea()
+    local oStruct := FWFormModelStruct():New()
+    local i
+
+    SX3->(DbSetOrder(2))
+    For i := 1 To Len(aCpoMdRot)
+        if SX3->(DbSeek(aCpoMdRot[i])) 
+            oStruct:AddField(;
+                     X3Titulo(),;               // [01]  C   Titulo do campo
+                     X3Descric(),;              // [02]  C   ToolTip do campo
+                     AllTrim(aCpoMdRot[i]),;   // [03]  C   Id do Field
+                     TamSX3(SX3->X3_CAMPO)[3],; // [04]  C   Tipo do campo
+                     TamSX3(SX3->X3_CAMPO)[1],; // [05]  N   Tamanho do campo
+                     TamSX3(SX3->X3_CAMPO)[2],; // [06]  N   Decimal do campo
+                     nil,;                      // [07]  B   Code-block de validação do campo
+                     nil,;                      // [08]  B   Code-block de validação When do campo
+                     {},;                       // [09]  A   Lista de valores permitido do campo
+                     .F.,;                      // [10]  L   Indica se o campo tem preenchimento obrigatório
+                     nil,;                      // [11]  B   Code-block de inicializacao do campo
+                     .F.,;                      // [12]  L   Indica se trata-se de um campo chave
+                     .T.,;                      // [13]  L   Indica se o campo pode receber valor em uma operação de update.
+                     .F.)                       // [14]  L   Indica se o campo é virtual
+        endif
+    Next i 
+    
+    RestArea(aArea)
+
+Return oStruct
+
+/*/{Protheus.doc} Z06GrdMStr
 Cria a estrutura para o modelo da grid Z06 na tela
 @author jr.andre
 @since 13/09/2019
@@ -5738,7 +6043,78 @@ if !Empty(aArea)
 endif
 return oStruct
 
+static function HidGrdVStr()
+local aArea   := GetArea()
+local oStruct := FWFormViewStruct():New()
 
+    oStruct:AddField(;
+        "XX_HIDE",;        // [01]  C   Nome do Campo
+        "1",; // [02]  C   Ordem
+        "Hide",;           // [03]  C   Titulo do campo
+        "",;                   // [04]  C   Descricao do campo
+        {"Help"},;                      // [05]  A   Array com Help
+        "C",;      // [06]  C   Tipo do campo
+        "",;      // [07]  C   Picture
+        nil,;                           // [08]  B   Bloco de PictTre Var
+        ,;                              // [09]  C   Consulta F3
+        .F.,;  // [10]  L   Indica se o campo é alteravel
+        nil,;                           // [11]  C   Pasta do campo
+        nil,;                           // [12]  C   Agrupamento do campo
+        nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
+        nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
+        nil,;                           // [15]  C   Inicializador de Browse
+        .t.,;                           // [16]  L   Indica se o campo é virtual
+        nil,;                           // [17]  C   Picture Variável
+        nil;                            // [18]  L   Indica pulo de linha após o campo
+    )
+
+if !Empty(aArea)
+    RestArea(aArea)
+endif
+return oStruct
+/*/{Protheus.doc} RotGrdVStr
+@author Igor Oliveira
+@since 07/04/2025
+/*/
+static function ROTGrdVStr()
+local aArea   := GetArea()
+local oStruct := FWFormViewStruct():New()
+local i, nLen
+
+DbSelectArea("SX3")
+DbSetOrder(2)  // X3_CAMPO
+
+    nLen := Len(aCpoMdRot)
+    for i := 1 to nLen
+        SX3->(DbSetOrder(2))
+        IF SX3->(DbSeek(Padr(aCpoMdRot[i], Len(SX3->X3_CAMPO))))
+            oStruct:AddField(;
+                AllTrim(aCpoMdRot[i]),;        // [01]  C   Nome do Campo
+                StrZero(i,Len(SX3->X3_ORDEM)),; // [02]  C   Ordem
+                AllTrim(X3Titulo()),;           // [03]  C   Titulo do campo
+                X3Descric(),;                   // [04]  C   Descricao do campo
+                {"Help"},;                      // [05]  A   Array com Help
+                TamSX3(SX3->X3_CAMPO)[3],;      // [06]  C   Tipo do campo
+                Iif(!Empty(SX3->X3_CAMPO), AllTrim(X3Picture(SX3->X3_CAMPO)), nil),;      // [07]  C   Picture
+                nil,;                           // [08]  B   Bloco de PictTre Var
+                ,;                              // [09]  C   Consulta F3
+                !AllTrim(SX3->X3_CAMPO)$"Z06_KGMNTR",;//!AllTrim(SX3->X3_CAMPO)$"Z06_KGMNTR|Z06_TRATO",;  // [10]  L   Indica se o campo é alteravel
+                nil,;                           // [11]  C   Pasta do campo
+                nil,;                           // [12]  C   Agrupamento do campo
+                nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
+                nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
+                nil,;                           // [15]  C   Inicializador de Browse
+                .t.,;                           // [16]  L   Indica se o campo é virtual
+                nil,;                           // [17]  C   Picture Variável
+                nil;                            // [18]  L   Indica pulo de linha após o campo
+            )
+        endif
+    next
+
+if !Empty(aArea)
+    RestArea(aArea)
+endif
+return oStruct
 /*/{Protheus.doc} Z06GrdVStr
 Cria a estrutura para o view da grid Z06 na tela
 @author jr.andre
@@ -8224,7 +8600,7 @@ Habilita e desabilita as teclas de atalho da rotina
 /*/
 static function EnableKey(lEnable)
     if lEnable
-        //SetKey(VK_F4,  {|| u_vap05tcu()}) // Transf. Currais
+        SetKey(VK_F4,  {|| u_vap05mnt()}) // Transf. Currais
         SetKey(VK_F5,  {|| u_vap05rcr()}) // Recria Trato
         SetKey(VK_F6,  {|| u_vap05man()}) // Manutenção
         SetKey(VK_F7,  {|| u_vap05arq()}) // Gerar Arquivos
@@ -8234,7 +8610,7 @@ static function EnableKey(lEnable)
         SetKey(VK_F11, {|| u_vap05rec()}) // Recarrega Browse
         SetKey(VK_F12, {|| u_vap05cri()}) // Criar trato
     else
-        //SetKey(VK_F4,  nil) // Transf. Currais
+        SetKey(VK_F4,  nil) // Transf. Currais
         SetKey(VK_F5,  nil) // Recria Trato
         SetKey(VK_F6,  nil) // Manutenção
         SetKey(VK_F7,  nil) // Gerar Arquivos

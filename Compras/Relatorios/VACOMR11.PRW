@@ -1,6 +1,5 @@
 #INCLUDE "TOTVS.CH"
 #INCLUDE "RPTDEF.CH"
-#Include "TryException.ch"
 #Include "FWPrintSetup.ch"
 
 //Alinhamentos

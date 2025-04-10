@@ -485,29 +485,48 @@ User Function BTIMPALL()
 	Local cDestPath := GetMV( "MB_PCPA13D",, "Z:\Vista Alegre\TRATO\IMPORTADO\")
 	Local aFiles    := {}
 	Local nI        := 0
+	Local aCopy 	:= {}
+	Local nPosK		:= 0
+	Local nPosP		:= 0
 
-// Carregar arquivos do diretorio
+	// Carregar arquivos do diretorio
 	aFiles := Directory(cOrigPath + "*.*")
 	If Len(aFiles) == 0
 		MsgInfo( "Não foi localizado arquivos no diretorio: " + cOrigPath )
 	Else
-		for nI:=1 to Len(aFiles)
+		nPosK := aScan(aFiles, {|x| x[1] == "DETALHADOADITIVO.CSV"})
+		
+		if nPosK > 0
+			aCopy := aClone(aFiles[nPosK])
+			aDel(aFiles,nPosK)
+			aSize(aFiles, Len(aFiles) - 1)
+			aAdd(aFiles,aCopy)
+		endif
+		
+		nPosP := aScan(aFiles, {|x| "TABELA_VISTA_ALEGRE" $ x[1]})
+		if nPosP > 0
+			aCopy := aClone(aFiles[nPosP])
+			aDel(aFiles,nPosP)
+			aSize(aFiles, Len(aFiles) - 1)
+			aAdd(aFiles,aCopy)
+		endif
 
+		for nI:=1 to Len(aFiles)
+		
 			Pergunte( "VAPCPA13I", .f.)
 			MV_PAR01 := cOrigPath + aFiles[nI, 1]
 			AAdd(aParRet, MV_PAR01)
-
+		
 			If !U_ImpCSV( MV_PAR01 )
 				// Transferir para pasta dos processados
-
-				// If (CpyT2S( cFile, cDestPath )) // operacao de copia entre servidor x local
+		
 				If  __CopyFile( MV_PAR01, cDestPath + aFiles[nI, 1] ,,,.F.)
 					fErase( MV_PAR01 )
 				Else
 					MsgInfo( "Erro ao mover arquivo: " + MV_PAR01 + " para o diretório: " + cDestPath )
 					Exit
 				EndIf
-
+		
 			EndIf
 		next nI
 
@@ -5538,7 +5557,7 @@ Local aDSilo 		:= {}
 			EndIf
 
 			//Pedido do Toshio: Arquivo da Phibro e Kemin são os ultimos a serem importados, então o status tem que ser "C-Conferido"
-			IF MV_PAR02 != 1
+			IF MV_PAR02 == 3 
 				cSttImp := "C"
 			ENDIF
 			
