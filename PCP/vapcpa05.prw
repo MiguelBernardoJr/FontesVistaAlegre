@@ -3992,17 +3992,7 @@ Private lManut := .T.
     DbSelectAre("Z0R")
     DbSetOrder(1) // Z0R_FILIAL+DToS(Z0R_DATA)+Z0R_VERSAO
 
-    if nOpc == 1
-        DbSelectArea("Z05")
-        DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
-
-        if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-            FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_VIEW,, { || .T. },,,aEnButt )
-        else
-            Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para este curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível visualizar o registro."})
-        endif
-        
-    elseif Z0R->Z0R_LOCK <= '1'
+    if Z0R->Z0R_LOCK <= '1'
         DbSelectArea("Z05")
         DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     
@@ -4332,7 +4322,7 @@ else
     oModel:AddGrid("MdGridZ0I"    , "MdFieldZ05" , oStrZ0IG, /*bLinePre*/,/*bLinePost*/,/*bPre */,/*bPost*/, bLoadZ0I)
     oModel:AddGrid("MdGridZ05"    , "MdFieldZ05" , oStrZ05G, /*bLinePre*/,/*bLinePost*/,/*bPre */,/*bPost*/, bLoadZ05An)
 
-    // Definição de Descrição 
+    // Definição de Descrição
     oModel:GetModel("MdFieldZ05"):SetDescription("Plano de Trato")
     oModel:GetModel("MdGridZ0I"):SetDescription("Manejo de Cocho")
     oModel:GetModel("MdGridZ05"):SetDescription("Programacao Anterior")
