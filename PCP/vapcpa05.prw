@@ -3987,6 +3987,11 @@ Private lManut := .T.
         private Altera := .T.
     endif
 
+	Private oExecZ05  as object
+	Private oExecRota as object
+	Private oExecZ06D as object
+	Private oExecZ06G as object
+
     EnableKey(.F.)
 
     DbSelectAre("Z0R")
@@ -3998,13 +4003,52 @@ Private lManut := .T.
     
         if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
             if CanUseZ05()
+				
+				Custom.VAPCPA17.u_PreparaQuerys()
+
                 FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
                 ReleaseZ05()
+
+				if oExecZ06G != nil
+					oExecZ06G:Destroy()
+					oExecZ06G := Nil
+				endif
+				if oExecZ06D != nil
+					oExecZ06D:Destroy()
+					oExecZ06D := Nil
+				endif
+				if oExecRota != nil
+					oExecRota:Destroy()
+					oExecRota := Nil
+				endif
+				if oExecZ05 != nil
+					oExecZ05:Destroy()
+					oExecZ05 := Nil
+				endif
             endif
         elseif !Empty((cTrbBrowse)->B8_LOTECTL)
             if FillTrato()
+				Custom.VAPCPA17.u_PreparaQuerys()
+
                 FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt)
                 ReleaseZ05()
+
+				if oExecZ06G != nil
+					oExecZ06G:Destroy()
+					oExecZ06G := Nil
+				endif
+				if oExecZ06D != nil
+					oExecZ06D:Destroy()
+					oExecZ06D := Nil
+				endif
+				if oExecRota != nil
+					oExecRota:Destroy()
+					oExecRota := Nil
+				endif
+				if oExecZ05 != nil
+					oExecZ05:Destroy()
+					oExecZ05 := Nil
+				endif
             endif
         endif
     elseif Z0R->Z0R_LOCK = '2' 
@@ -4294,7 +4338,6 @@ EnableKey(.F.)
 
 oModel := MPFormModel():New('MDVAPCPA05', /*bPreValid*/, /*bPostValid*/, bCommit, bCancel)
 oModel:SetDescription("Plano de Trato")
-
 
 if Type("lManut") <> "U" .and. lManut == .T.
     // Criação dos sub-modelos

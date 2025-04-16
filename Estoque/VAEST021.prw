@@ -116,14 +116,10 @@ if SB1->(DbSeek(xFilial("SB1")+cIndividuo))
             if SB2->(DbSeek(xFilial("SB2")+SB1->B1_COD+cArmzRac)) ;
 				.and. ( nQuant <= SB2->B2_QATU .or. (nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1) )
 				
-				// [nQuant > SB2->B2_QATU] Alt. MJ: 08.02.2018 : Tratar diferenca dos 0,0001 que acontecia e deixava o Ricardo Zampieri doido;
-				// [ABS(nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1)] Alt. MJ : 31.07.18 => Toshio Pediu para acertar estoque qdo diferenca pequena, tratada por parametro: VA_DIFTRAT				
 				If nQuant > SB2->B2_QATU .or. ABS(nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1)
 					nQuant := SB2->B2_QATU				
 				EndIf
-				/*TODO
-				No aEmpenho, quero adicionar as 2 rações (030046 e 030047) conforme arquivo de exemplo
-				*/
+
                 aEmpenho := { { cIndividuo, cArmz, nQtdIndiv, cLoteCTL },;
                               { SB1->B1_COD, cArmzRac, nQuant, "" } }
                 
@@ -187,6 +183,8 @@ if SB1->(DbSeek(xFilial("SB1")+cIndividuo))
 else
     MsgStop("O Animal [" + AllTrim(cIndividuo) + "] não cadastrado. Por favor verifique." )
 endif
+
+RestArea(aArea)
 
 return cNumOp
 

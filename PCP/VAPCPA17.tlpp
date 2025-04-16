@@ -33,7 +33,7 @@ USER FUNCTION VAPCPA17()
 	Private oBrowse as object
 	Private oCurral, oQtdCabeca, oDiasDeCocho, oCMSPV,;
 			oPesoMInicial, oTotMsCalc, oTotMnCal as object
-	
+
 	oBrowse := FWLoadBrw("custom.VAPCPA17.VAPCPA17")
 	oBrowse:Activate()
 	oBrowse:DeActivate()
@@ -60,20 +60,18 @@ user function BrowseDef() as object
 return oBrowse
 
 user function ModelDef() as object
-	local oModel 	as object
-
+	local oModel   := nil as object
 	local oStrZ06G := Z06GrdMStr(1) as object
 	local oStrZ06D := Z06GrdMStr(2) as object
 	local oStrZ05C := Z05FldMStr() as object
 	local oStrRot  := RotGrdMStr() as object
     local oStrHide := HidGrdMStr() as object
 
-	//local bLineROT    := {|oModel, lCopia,cAction| LineROT(oModel, nLin,cAction) } as codeblock
 	local bLoadRot    := {|oModel, lCopia| LoadRot(oModel, lCopia) } as codeblock
 	local bLoadHide   := {|oModel, lCopia| LoadHide(oModel, lCopia) } as codeblock
 	local bLoadZ05    := {|oModel, lCopia| LoadZ05(oModel, lCopia) } as codeblock
-	local bLoadZ06G    := {|oModel, lCopia| LoadZ06G(oModel, lCopia) } as codeblock
-	local bLoadZ06D    := {|oModel, lCopia| LoadZ06D(oModel, lCopia) } as codeblock
+	local bLoadZ06G   := {|oModel, lCopia| LoadZ06G(oModel, lCopia) } as codeblock
+	local bLoadZ06D   := {|oModel, lCopia| LoadZ06D(oModel, lCopia) } as codeblock
 	
 	//local bZ06LinePr := {|oModel, nLin, cOperacao, cCampo, xValAtr, xValAnt| Z06LinPreG(oModel, nLin, cOperacao, cCampo, xValAtr, xValAnt)}
 	local bZ06PreD    := {|oModel, nLin, cAction| Z06PreD(oModel, nLin, cAction)}
@@ -95,13 +93,14 @@ user function ModelDef() as object
 						    aGatilhos[nI][04])  //Bloco de código de execução do gatilho
     Next 
 
+
 	oModel := MPFormModel():New( "A17VAPCP", /*bPre*/ , /*bPos*/, /*bCommit*/, /*bCancel*/ )
 	oModel:SetDescription("Plano de Trato")
 	
     oModel:AddFields("MdFieldHide" ,""           , oStrHide,/*bPreValid*/, /*bPosValid*/, bLoadHide)
     oModel:AddGrid("MdGridRot"     ,"MdFieldHide", oStrRot , /*bLinePre*/,/* bLineROT *//*bLinePost*/,/*bPre */,/*bPost*/, bLoadRot)
     oModel:AddGrid("MdGridZ06G"    ,"MdGridRot"  , oStrZ06G, /* bZ06LinePr */, /* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06G)
-    oModel:AddGrid("MdGridZ06D"    ,"MdGridZ06G" , oStrZ06D, /* bZ06LinePr */, /* bZ06LinePo */,bZ06PreD,/*bPost*/, bLoadZ06D)
+    oModel:AddGrid("MdGridZ06D"    ,"MdGridZ06G" , oStrZ06D, /* bZ06LinePr */, /* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06D)
     oModel:AddFields("MdFieldZ05"  ,"MdGridZ06G" , oStrZ05C,/*bPreValid*/, /*bPosValid*/, bLoadZ05)
 
 	aAdd(aRelacaoRotas, {'XX_ROTAS', 'Z0T_ROTA'} )
@@ -150,8 +149,8 @@ user function ViewDef() as object
     local oStrHide 	:= nil as object
 	local oStrMnR  	:= nil as object
 
-
 	if IsInCallStack("U_VAPCPA05") .or. !Empty((cTrbBrowse)->B8_LOTECTL) 
+		
 		oModel 	:= FwLoadModel("custom.VAPCPA17.VAPCPA17")
 
 		oStrZ05C   	:= Z05FldVStr()
@@ -161,11 +160,9 @@ user function ViewDef() as object
     	oStrZ06D    := Z06GrdVStr(2)
 		oStrMnR 	:= FWCalcStruct(oModel:GetModel('TOTAIS' ))
 
-		//oStrZ06G:SetProperty('*', MVC_VIEW_CANCHANGE, .T.)
-
 		oView 	:= FwFormView():New()
 		oView:SetModel(oModel)
-
+		
         oView:AddField("VwFieldRotas"	, oStrHide 	, "MdFieldHide"	)
 		oView:AddField("VwFieldZ05"	, oStrZ05C	, "MdFieldZ05"	)
         oView:AddGrid("VwGridZ06G" 	, oStrZ06G 	, "MdGridZ06G"	)
@@ -182,26 +179,24 @@ user function ViewDef() as object
         oView:CreateVerticalBox("ROTAS",  10, "ITENS")
         oView:CreateVerticalBox("PROGR",  45, "ITENS")
         oView:CreateVerticalBox("LOTES",  45, "ITENS")
-        
-        oView:CreateHorizontalBox("ROTAS_CIMA" , 50, "ROTAS")
-        oView:CreateHorizontalBox("ROTAS_BAIXO", 50, "ROTAS")
 
-        oView:CreateHorizontalBox("LOTES_CIMA" , 50, "LOTES")
-        oView:CreateHorizontalBox("LOTES_BAIXO", 50, "LOTES")
-	
 		//oView:AddOtherObject("PAINEL_Z05", {|oPanel| PainelZ05(oPanel)})
+		oView:CreateHorizontalBox("ROTAS_CIMA" , 50, "ROTAS")
+		oView:CreateHorizontalBox("ROTAS_BAIXO", 50, "ROTAS")
+
+		oView:CreateHorizontalBox("LOTES_CIMA" , 50, "LOTES")
+		oView:CreateHorizontalBox("LOTES_BAIXO", 50, "LOTES")
 
 		oView:CreateVerticalBox("FOT_LEFT"  ,  10, "FOOTER")
 		oView:CreateVerticalBox("FOT_CENTER",  45, "FOOTER")
 		oView:CreateVerticalBox("FOT_RIGHT" ,  45, "FOOTER")
 
-        oView:SetOwnerView("VwFieldRotas"  	, "CAB_ROTAS"	)
-        oView:SetOwnerView("VwGridROT"  	, "ROTAS_CIMA"  )
-        oView:SetOwnerView("VwGridZ06G"  	, "PROGR"   	)
-        oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CIMA"  )
-        oView:SetOwnerView("VwFieldZ05" 	, "LOTES_BAIXO"	)
-        //oView:SetOwnerView("PAINEL_Z05"  	, "LOTES_BAIXO" )
-        oView:SetOwnerView("VwKgTot"    	, "FOT_CENTER"	)
+		oView:SetOwnerView("VwFieldRotas"  	, "CAB_ROTAS"	)
+		oView:SetOwnerView("VwGridROT"  	, "ROTAS_CIMA"  )
+		oView:SetOwnerView("VwGridZ06G"  	, "PROGR"   	)
+		oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CIMA"  )
+		oView:SetOwnerView("VwFieldZ05" 	, "LOTES_BAIXO"	)
+		oView:SetOwnerView("VwKgTot"    	, "FOT_CENTER"	)
 
         oView:SetNoInsertLine("VwGridROT")
         oView:SetNoDeleteLine("VwGridROT")
@@ -233,17 +228,14 @@ User Function A17VAPCP()
 
         // VALIDAÇÃO ANTES DA ATIVAÇÃO DO MODELO
         If (cIdPonto == "MODELVLDACTIVE")
-            // MODELO -> SUBMODELO -> ESTRUTURA -> PROPRIEDADE -> BLOCO DE CÓDIGO -> X3_WHEN := .F.
-            //oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_KGMSTR", MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".T."))
-            //oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_MEGCAL", MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".T."))
-            //oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_KGMNTR", MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".T."))
-            //oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_KGMNT" , MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".T."))
             oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_TRATO" , MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".F."))
             oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_LOTE"  , MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".F."))
             oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_DIETA" , MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".F."))
             oObj:GetModel("MdGridZ06G"):GetStruct():SetProperty("Z06_RECNO" , MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".F."))
         elseIf cIdPonto == 'FORMLINEPRE' .and. cIdModel == 'MdGridZ06G'
 			xRet := .T.
+        elseIf cIdPonto == 'MODELCOMMITNTTS'
+
         EndIf
     EndIf
 Return (xRet) // RETORNO LÓGICO PARA PROSSEGUIMENTO
@@ -270,12 +262,43 @@ static function HidGrdMStr() AS Object
                      nil,;                      	// [08]  B   Code-block de validação When do campo
                      {"ROTA11","ROTA01","ROTA02","ROTA17"},;      // [09]  A   Lista de valores permitido do campo
                      .F.,;                      	// [10]  L   Indica se o campo tem preenchimento obrigatório
-                     FwBuildFeature(STRUCT_FEATURE_VALID,   'IIF(Type("cRota")!="U" .and. !Empty(cRota),cRota,(cTrbBrowse)->Z0T_ROTA)') ,;                      // [11]  B   Code-block de inicializacao do campo
+                     FwBuildFeature(STRUCT_FEATURE_VALID,   'IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,(cTrbBrowse)->Z0T_ROTA)') ,;                      // [11]  B   Code-block de inicializacao do campo
                      .F.,;                      	// [12]  L   Indica se trata-se de um campo chave
                      .F.,;                      	// [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                      .F.)                       	// [14]  L   Indica se o campo é virtual
+
 	RestArea(aArea)
 Return oStruct
+
+static function HidGrdVStr() as Object
+	local aArea   := GetArea() as Array
+	local oStruct := FWFormViewStruct():New() as Object
+
+		oStruct:AddField(;
+			"XX_ROTAS",;        // [01]  C   Nome do Campo
+			"1",; 				// [02]  C   Ordem
+			"Rotas",;           // [03]  C   Titulo do campo
+			"",;                // [04]  C   Descricao do campo
+			{"Help"},;          // [05]  A   Array com Help
+			"C",;      			// [06]  C   Tipo do campo
+			"",;      			// [07]  C   Picture
+			nil,;               // [08]  B   Bloco de PictTre Var
+			,;                  // [09]  C   Consulta F3
+			.T.,;  				// [10]  L   Indica se o campo é alteravel
+			nil,;               // [11]  C   Pasta do campo
+			nil,;               // [12]  C   Agrupamento do campo
+			{"ROTA11","ROTA01","ROTA02","ROTA17"},;               // [13]  A   Lista de valores permitido do campo (Combo)
+			nil,;               // [14]  N   Tamanho máximo da maior opção do combo
+			nil,;               // [15]  C   Inicializador de Browse
+			.t.,;               // [16]  L   Indica se o campo é virtual
+			nil,;               // [17]  C   Picture Variável
+			nil;                // [18]  L   Indica pulo de linha após o campo
+		)
+
+	if !Empty(aArea)
+		RestArea(aArea)
+	endif
+return oStruct
 
 static function Z05FldMStr() as object
 	local aArea   := GetArea() as array
@@ -324,37 +347,6 @@ static function Z05FldMStr() as object
 		RestArea(aArea)
 	endif
 return oStruct
-
-static function RotGrdMStr() as Object
-    local aArea   := GetArea() as Array
-    local oStruct := FWFormModelStruct():New() as Object
-    local i as Numeric
-
-    SX3->(DbSetOrder(2))
-    For i := 1 To Len(aCpoMdRot)
-        if SX3->(DbSeek(aCpoMdRot[i])) 
-            oStruct:AddField(;
-                     X3Titulo(),;               // [01]  C   Titulo do campo
-                     X3Descric(),;              // [02]  C   ToolTip do campo
-                     AllTrim(aCpoMdRot[i]),;   // [03]  C   Id do Field
-                     TamSX3(SX3->X3_CAMPO)[3],; // [04]  C   Tipo do campo
-                     TamSX3(SX3->X3_CAMPO)[1],; // [05]  N   Tamanho do campo
-                     TamSX3(SX3->X3_CAMPO)[2],; // [06]  N   Decimal do campo
-                     nil,;                      // [07]  B   Code-block de validação do campo
-                     nil,;                      // [08]  B   Code-block de validação When do campo
-                     {},;                       // [09]  A   Lista de valores permitido do campo
-                     .F.,;                      // [10]  L   Indica se o campo tem preenchimento obrigatório
-                     nil,;                      // [11]  B   Code-block de inicializacao do campo
-                     .F.,;                      // [12]  L   Indica se trata-se de um campo chave
-                     .T.,;                      // [13]  L   Indica se o campo pode receber valor em uma operação de update.
-                     .F.)                       // [14]  L   Indica se o campo é virtual
-        endif
-    Next i 
-    
-    RestArea(aArea)
-
-Return oStruct
-
 static function Z05FldVStr() as Object
 	local aArea   := GetArea() as Array
 	local oStruct := FWFormViewStruct():New() as Object
@@ -399,6 +391,36 @@ static function Z05FldVStr() as Object
 	endif
 return oStruct
 
+static function RotGrdMStr() as Object
+    local aArea   := GetArea() as Array
+    local oStruct := FWFormModelStruct():New() as Object
+    local i as Numeric
+
+    SX3->(DbSetOrder(2))
+    For i := 1 To Len(aCpoMdRot)
+        if SX3->(DbSeek(aCpoMdRot[i])) 
+            oStruct:AddField(;
+                     X3Titulo(),;               // [01]  C   Titulo do campo
+                     X3Descric(),;              // [02]  C   ToolTip do campo
+                     AllTrim(aCpoMdRot[i]),;   // [03]  C   Id do Field
+                     TamSX3(SX3->X3_CAMPO)[3],; // [04]  C   Tipo do campo
+                     TamSX3(SX3->X3_CAMPO)[1],; // [05]  N   Tamanho do campo
+                     TamSX3(SX3->X3_CAMPO)[2],; // [06]  N   Decimal do campo
+                     nil,;                      // [07]  B   Code-block de validação do campo
+                     nil,;                      // [08]  B   Code-block de validação When do campo
+                     {},;                       // [09]  A   Lista de valores permitido do campo
+                     .F.,;                      // [10]  L   Indica se o campo tem preenchimento obrigatório
+                     nil,;                      // [11]  B   Code-block de inicializacao do campo
+                     .F.,;                      // [12]  L   Indica se trata-se de um campo chave
+                     .T.,;                      // [13]  L   Indica se o campo pode receber valor em uma operação de update.
+                     .F.)                       // [14]  L   Indica se o campo é virtual
+        endif
+    Next i 
+    
+    RestArea(aArea)
+
+Return oStruct
+
 static function ROTGrdVStr() as Object
 	local aArea   := GetArea() as Array
 	local oStruct := FWFormViewStruct():New() as Object
@@ -433,36 +455,6 @@ static function ROTGrdVStr() as Object
 			)
 		endif
 	next
-
-	if !Empty(aArea)
-		RestArea(aArea)
-	endif
-return oStruct
-
-static function HidGrdVStr() as Object
-	local aArea   := GetArea() as Array
-	local oStruct := FWFormViewStruct():New() as Object
-
-		oStruct:AddField(;
-			"XX_ROTAS",;        // [01]  C   Nome do Campo
-			"1",; 				// [02]  C   Ordem
-			"Rotas",;           // [03]  C   Titulo do campo
-			"",;                // [04]  C   Descricao do campo
-			{"Help"},;          // [05]  A   Array com Help
-			"C",;      			// [06]  C   Tipo do campo
-			"",;      			// [07]  C   Picture
-			nil,;               // [08]  B   Bloco de PictTre Var
-			,;                  // [09]  C   Consulta F3
-			.T.,;  				// [10]  L   Indica se o campo é alteravel
-			nil,;               // [11]  C   Pasta do campo
-			nil,;               // [12]  C   Agrupamento do campo
-			{"ROTA11","ROTA01","ROTA02","ROTA17"},;               // [13]  A   Lista de valores permitido do campo (Combo)
-			nil,;               // [14]  N   Tamanho máximo da maior opção do combo
-			nil,;               // [15]  C   Inicializador de Browse
-			.t.,;               // [16]  L   Indica se o campo é virtual
-			nil,;               // [17]  C   Picture Variável
-			nil;                // [18]  L   Indica pulo de linha após o campo
-		)
 
 	if !Empty(aArea)
 		RestArea(aArea)
@@ -611,52 +603,29 @@ static function LoadZ06D(oFormGrid, lCopia) as Array
 	local aArea     := GetArea() 	AS Array
 	local aTemplate := {0, {}} 		AS Array
 	local aRet      := {} 			AS Array
-	//Local cRot  	:= oFormGrid:oFormModel:GetModel("MdGridRot"):GetValue("Z06_TRATO") AS Character
 	Local cLote  	:= oFormGrid:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE") AS Character
 	Local nReg 		:= 0 as Numeric
-	//Local cRot 		:= oFormGrid:oFormModel:aAllSubModels[2]:ADATAMODEL[1][1][1][2]
-	local cZ0TROTA  := IIF(Type("cRota")!="U" .and. !Empty(cRota),cRota,(cTrbBrowse)->Z0T_ROTA)
+	local cZ0TROTA  := IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,(cTrbBrowse)->Z0T_ROTA)
 
-		DbUseArea(.T., "TOPCONN", TCGenQry(,,;
-							" select Z06.Z06_LOTE		" 		+;
-									", Z06.Z06_DIETA	" +;
-									", Z06.Z06_TRATO	" +;
-									", Z06.Z06_KGMSTR	" +;
-									", Z06.Z06_KGMNTR	" +;
-									", Z06.Z06_MEGCAL	" +;
-									", Z06.Z06_KGMNT	" +;
-									", Z06.R_E_C_N_O_ Z06_RECNO" +;
-								" from " + RetSqlName("Z06") + " Z06" +;
-								"   JOIN "+RetSqlName("Z0T")+" Z0T ON " +;
-								"        Z0T_FILIAL = Z06_FILIAL  " +;
-								"    AND Z0T_LOTE = Z06_LOTE  " +;
-								"    AND Z0T_DATA = Z06_DATA  " +;
-								"    AND Z0T_CURRAL = Z06_CURRAL  " +;
-								"    AND Z0T_ROTA = '"+cZ0TROTA+"'  " +; // PEGAR ROTA DO COMBO
-								"    AND Z0T.D_E_L_E_T_ = ' '   " +;
-							" where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" +;
-								" and Z06.Z06_DATA   = '" + DToS(Z05->Z05_DATA) + "'" +;
-								;//" and Z06.Z06_VERSAO = '" + Z05->Z05_VERSAO + "'" +;
-								" and Z06.Z06_LOTE   = '" + cLote + "'" +;
-								;//" and Z06_TRATO = '"+cRot+"'" +;
-								" and Z06.D_E_L_E_T_ = ' '" +;
-							" order by Z06.Z06_TRATO" ;
-										),"TMPZ06", .F., .F.)
+	oExecZ06D:SetString(1,cZ0TROTA)
+	oExecZ06D:SetString(2,cLote)
 
-		while !TMPZ06->(Eof())
-			AAdd(aRet, aClone(aTemplate))
-			aRet[Len(aRet)][1] := ++nReg
-			aRet[Len(aRet)][2] := {TMPZ06->Z06_TRATO;   // Z06_TRATO
-								, TMPZ06->Z06_LOTE;   // Z06_LOTE
-								, TMPZ06->Z06_DIETA;   // Z06_DIETA
-								, TMPZ06->Z06_KGMSTR;  // Z06_KGMSTR
-								, TMPZ06->Z06_KGMNTR;  // Z06_KGMNTR
-								, TMPZ06->Z06_MEGCAL;  // Z06_MEGCAL
-								, TMPZ06->Z06_KGMNT}   // Z06_KGMNT
-			TMPZ06->(DbSkip())
-		end
+	cAlias := oExecZ06D:OpenAlias()
 
-	TMPZ06->(DbCloseArea())
+	while !(cAlias)->(Eof())
+		AAdd(aRet, aClone(aTemplate))
+		aRet[Len(aRet)][1] := ++nReg
+		aRet[Len(aRet)][2] := {(cAlias)->Z06_TRATO;   // Z06_TRATO
+							, (cAlias)->Z06_LOTE;   // Z06_LOTE
+							, (cAlias)->Z06_DIETA;   // Z06_DIETA
+							, (cAlias)->Z06_KGMSTR;  // Z06_KGMSTR
+							, (cAlias)->Z06_KGMNTR;  // Z06_KGMNTR
+							, (cAlias)->Z06_MEGCAL;  // Z06_MEGCAL
+							, (cAlias)->Z06_KGMNT}   // Z06_KGMNT
+		(cAlias)->(DbSkip())
+	end
+
+	(cAlias)->(DbCloseArea())
 
 	if !Empty(aArea)
 		RestArea(aArea)
@@ -669,50 +638,29 @@ static function LoadZ06G(oFormGrid, lCopia) as Array
 	local aRet      := {} 			AS Array
 	Local cRot  	:= oFormGrid:oFormModel:GetModel("MdGridRot"):GetValue("Z06_TRATO") AS Character
 	Local nReg 		:= 0 as Numeric
-	local cZ0TROTA  := IIF(Type("cRota")!="U" .and. !Empty(cRota),cRota,(cTrbBrowse)->Z0T_ROTA)
+	local cZ0TROTA  := IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,(cTrbBrowse)->Z0T_ROTA)
 	//Local cRot 		:= oFormGrid:oFormModel:aAllSubModels[2]:ADATAMODEL[1][1][1][2]
 	
-		DbUseArea(.T., "TOPCONN", TCGenQry(,,;
-							" select Z06.Z06_LOTE		" 		+;
-									", Z06.Z06_DIETA	" +;
-									", Z06.Z06_TRATO	" +;
-									", Z06.Z06_KGMSTR	" +;
-									", Z06.Z06_KGMNTR	" +;
-									", Z06.Z06_MEGCAL	" +;
-									", Z06.Z06_KGMNT	" +;
-									", Z06.R_E_C_N_O_ Z06_RECNO" +;
-								" from " + RetSqlName("Z06") + " Z06" +;
-								"   JOIN "+RetSqlName("Z0T")+" Z0T ON " +;
-								"        Z0T_FILIAL = Z06_FILIAL  " +;
-								"    AND Z0T_LOTE = Z06_LOTE  " +;
-								"    AND Z0T_DATA = Z06_DATA  " +;
-								"    AND Z0T_CURRAL = Z06_CURRAL  " +;
-								"    AND Z0T_ROTA = '"+cZ0TROTA+"'  " +;
-								"    AND Z0T.D_E_L_E_T_ = ' '   " +;
-							" where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" +;
-								" and Z06.Z06_DATA   = '" + DToS(Z05->Z05_DATA) + "'" +;
-								;//" and Z06.Z06_VERSAO = '" + Z05->Z05_VERSAO + "'" +;
-								;//" and Z06.Z06_LOTE   = '" + Z05->Z05_LOTE + "'" +;
-								" and Z06_TRATO = '"+cRot+"'" +;
-								" and Z06.D_E_L_E_T_ = ' '" +;
-							" order by Z06.Z06_TRATO" ;
-										),"TMPZ06", .F., .F.)
+	oExecZ06G:SetString(1,cZ0TROTA)
+	oExecZ06G:SetString(2,cRot)
 
-		while !TMPZ06->(Eof())
-			AAdd(aRet, aClone(aTemplate))
-			aRet[Len(aRet)][1] := ++nReg
-			aRet[Len(aRet)][2] := {TMPZ06->Z06_TRATO;   // Z06_TRATO
-								, TMPZ06->Z06_LOTE;   // Z06_LOTE
-								, TMPZ06->Z06_DIETA;   // Z06_DIETA
-								, TMPZ06->Z06_KGMSTR;  // Z06_KGMSTR
-								, TMPZ06->Z06_KGMNTR;  // Z06_KGMNTR
-								, TMPZ06->Z06_MEGCAL;  // Z06_MEGCAL
-								, TMPZ06->Z06_KGMNT;   // Z06_KGMNT
-								, TMPZ06->Z06_RECNO}   // Z06_RECNO
-			TMPZ06->(DbSkip())
-		end
+	cAlias := oExecZ06G:OpenAlias()
 
-	TMPZ06->(DbCloseArea())
+	while !(cAlias)->(Eof())
+		AAdd(aRet, aClone(aTemplate))
+		aRet[Len(aRet)][1] := ++nReg
+		aRet[Len(aRet)][2] := {(cAlias)->Z06_TRATO;   // Z06_TRATO
+							, (cAlias)->Z06_LOTE;   // Z06_LOTE
+							, (cAlias)->Z06_DIETA;   // Z06_DIETA
+							, (cAlias)->Z06_KGMSTR;  // Z06_KGMSTR
+							, (cAlias)->Z06_KGMNTR;  // Z06_KGMNTR
+							, (cAlias)->Z06_MEGCAL;  // Z06_MEGCAL
+							, (cAlias)->Z06_KGMNT;   // Z06_KGMNT
+							, (cAlias)->Z06_RECNO}   // Z06_RECNO
+		(cAlias)->(DbSkip())
+	end
+
+	(cAlias)->(DbCloseArea())
 
 	if !Empty(aArea)
 		RestArea(aArea)
@@ -722,28 +670,13 @@ return aRet
 static function LoadRot(oModel, lCopia) as Array
     local aArea     := GetArea() as Array
     local aRet      := {} as Array
-    Local cQry      := "" as Character
     Local cALias    := "" as Character
     Local nSeq      := 0  as Numeric
-	local cZ0TROTA  := IIF(Type("cRota")!="U" .and. !Empty(cRota),cRota,(cTrbBrowse)->Z0T_ROTA)
+	local cZ0TROTA  := IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,(cTrbBrowse)->Z0T_ROTA)
 
-    cQry += " select Z0T_ROTA " + CRLF
-	cQry += "	, Z06_TRATO " + CRLF
-	cQry += "	, SUM(Z06_KGMNT) AS Z06_KGMNT " + CRLF
-	cQry += "   from "+RetSqlName("Z06")+" Z06  " + CRLF
-	cQry += "   JOIN "+RetSqlName("Z0T")+" Z0T ON   " + CRLF
-	cQry += "        Z0T_FILIAL = Z06_FILIAL  " + CRLF
-	cQry += "    AND Z0T_LOTE = Z06_LOTE  " + CRLF
-	cQry += "    AND Z0T_DATA = Z06_DATA  " + CRLF
-	cQry += "    AND Z0T_CURRAL = Z06_CURRAL  " + CRLF
-	cQry += "    AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
-	cQry += "  WHERE Z06_FILIAL = '"+FwXFilial("Z06")+"'  " + CRLF
-	cQry += "    AND Z06_DATA = '"+DToS(Z05->Z05_DATA)+"'  " + CRLF
-	cQry += "    AND Z06.D_E_L_E_T_ =''  " + CRLF
-	cQry += "    AND Z0T.Z0T_ROTA = '"+cZ0TROTA+"'  " + CRLF
-	cQry += "    GROUP BY Z0T_ROTA, Z06_TRATO " + CRLF
+	oExecRota:SetString(1,cZ0TROTA)
 
-	cAlias := MpSysOpenQuery(cQry)
+	cAlias := oExecRota:OpenAlias()
 
 	While !(cAlias)->(Eof())
 	    aAdd(aRet, {++nSeq,{(cALias)->Z0T_ROTA,(cALias)->Z06_TRATO,(cALias)->Z06_KGMNT}})
@@ -756,7 +689,7 @@ static function LoadRot(oModel, lCopia) as Array
     endif
     
     RestArea(aArea)
-Return aRet 
+Return aRet
 
 static function LoadHide(oModel, lCopia) as Array
     local aArea := GetArea() as Array	
@@ -783,15 +716,11 @@ static function LoadZ05(oModel, lCopia) as Array
 	local aArea    	:= GetArea() as Array
 	local aRet     	:= {} as Array
 	local nRecnoZ06 := oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_RECNO") as Numeric
-	local cQry 		:= "" as Character
 	local cAlias	:= "" as Character
 
-	cQry := "SELECT * FROM "+RetSqlName("Z05")+"  " + CRLF
-	cQry += "WHERE Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_LOTE = " + CRLF
-	cQry += "	(SELECT Z06_FILIAL+Z06_DATA+Z06_VERSAO+Z06_LOTE FROM "+RetSqlName("Z06")+" WHERE R_E_C_N_O_ = "+cValToChar(nRecnoZ06)+")" + CRLF
-	cQry += "AND D_E_L_E_T_ = ''" + CRLF
-	
-	cALias := MpSysOpenQuery(cQry)
+	oExecZ05:SetNumeric(1, nRecnoZ06)
+
+	cAlias := oExecZ05:OpenAlias()
 	
 	if !(cALias)->(EOF())
 		aAdd(aRet ,{(cAlias)->Z05_CURRAL,;		// Z05_LOTE
@@ -803,7 +732,7 @@ static function LoadZ05(oModel, lCopia) as Array
 					(cAlias)->Z05_TOTMSC,;		// Z05_KGMNTR
 					(cAlias)->Z05_TOTMNC } ) 	// Z05_MEGCAL
 	endif 
-	
+
 	aAdd(aRet , {1})
 
 	(cALias)->(DbCloseArea())
@@ -813,17 +742,16 @@ static function LoadZ05(oModel, lCopia) as Array
 	endif
 return aRet
 
+/* Gatilho para desativar e ativar a tela a partir do campo XX_ROTAS */
 User Function RefreshRotaVAPCPA17() as character
-	Local aArea 	 	:= GetArea() 		as Array
-	Local oModel	 	:= FWModelActive() 	as Object
-	Local oCabRotas  	:= oModel:GetModel("MdFieldHide")  as Object
-	Local oView 		:= FWViewActive() 	as Object
-	//Local oGridZ06G  := oModel:GetModel("MdGridZ06G") as Object
-	//Local oGridZ06D  := oModel:GetModel("MdGridZ06D") as Object
+	Local aArea 	  	:= GetArea() 		as Array
+	Local oModel	  	:= FWModelActive() 	as Object
+	Local oCabRotas   	:= oModel:GetModel("MdFieldHide")  as Object
+	Local oView 	 	:= FWViewActive() 	as Object
 	
-	Private cRota	  := Alltrim(oCabRotas:GetValue("XX_ROTAS")) as Character
+	Private cFiltroRota	  := Alltrim(oCabRotas:GetValue("XX_ROTAS")) as Character
 
-	if !Empty(cRota)
+	if !Empty(cFiltroRota) .OR. !Empty(cFiltroRota)
 		oModel:DeActivate()
 		
 		//oModel:FwLoadModel("custom.VAPCPA17.VAPCPA17")
@@ -833,36 +761,7 @@ User Function RefreshRotaVAPCPA17() as character
 	endif
 
 	RestArea(aArea)
-Return cRota
-
-Static Function PainelZ05(oPanel)
-	local oFntSay14A := TFont():New('Courier New',,-20,,.t.) as object
-	//local oFntSay14N := TFont():New('Courier New',,-18,,.t.) as object
-    local aPos  	:= {010, 55, 110, 140, 200, 250, 310, 370, 420, 470, 500, 535, 350, 395, 435, 480, 520} as Array
-    Local aPos2 	:= {010, 55, 110, 140, 208, 258, 320, 364, 412, 456, 495, 535, 345, 390, 430, 475, 525} as Array
-
-    TSay():New(007, aPos[1], {|| "Curral"}, oPanel,,,,,, .t.)
-    oCurral := TSay():New(013, aPos2[1], {|| ""}, oPanel,, oFntSay14A,,,, .t.)
-    
-	TSay():New(007, aPos[2], {|| "Qtd. Cabeças"}, oPanel,,,,,, .t.)
-    oQtdCabeca := TSay():New(013, aPos2[2], {|| ""}, oPanel,, oFntSay14A,,,, .t.)
-	
-	//TSay():New(007, aPos[3], {|| "Dias de Cocho"}, oPanel,,,,,, .t.)
-    //oDiasDeCocho := TSay():New(013, aPos2[3], {|| ""}, oPanel,, oFntSay14A,,,, .t.)
-	//
-	//TSay():New(007, aPos[4], {|| "Cms PV"}, oPanel,,,,,, .t.)
-    //oCMSPV := TSay():New(013, aPos2[4], {|| ""}, oPanel,, oFntSay14A,,,, .t.)
-	//
-	//TSay():New(007, aPos[5], {|| "Peso Médio Inicial"}, oPanel,,,,,, .t.)
-    //oPesoMInicial := TSay():New(013, aPos2[5], {|| ""}, oPanel,, oFntSay14A,,,, .t.)
-//
-	//TSay():New(007, aPos[6], {|| "Tot Ms Calc"}, oPanel,,,,,, .t.)
-    //oTotMsCalc := TSay():New(013, aPos2[6], {|| ""}, oPanel,, oFntSay14A,,,, .t.)
-//
-	//TSay():New(007, aPos[7], {|| "Tot Mn Calc"}, oPanel,,,,,, .t.)
-    //oTotMnCal := TSay():New(013, aPos2[7], {|| ""}, oPanel,, oFntSay14A,,,, .t.)
-
-Return nil
+Return cFiltroRota
 
 Static Function Z06PreD(oModel, nLin, cAction) as Logical
 	local aArea     := GetArea() as Array
@@ -876,3 +775,89 @@ Static Function Z06PreD(oModel, nLin, cAction) as Logical
 
 	RestArea(aArea)
 Return .T.
+
+User Function PreparaQuerys()
+	local aArea := GetArea() as Array
+	local cQry  := "" as Character
+
+	// Query LoadRot()
+	cQry := " select Z0T_ROTA " + CRLF
+	cQry += "	, Z06_TRATO " + CRLF
+	cQry += "	, SUM(Z06_KGMNT) AS Z06_KGMNT " + CRLF
+	cQry += "   from "+RetSqlName("Z06")+" Z06  " + CRLF
+	cQry += "   JOIN "+RetSqlName("Z0T")+" Z0T ON   " + CRLF
+	cQry += "        Z0T_FILIAL = Z06_FILIAL  " + CRLF
+	cQry += "    AND Z0T_LOTE = Z06_LOTE  " + CRLF
+	cQry += "    AND Z0T_DATA = Z06_DATA  " + CRLF
+	cQry += "    AND Z0T_CURRAL = Z06_CURRAL  " + CRLF
+	cQry += "    AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
+	cQry += "  WHERE Z06_FILIAL = '"+FwXFilial("Z06")+"'  " + CRLF
+	cQry += "    AND Z06_DATA = '"+DToS(Z05->Z05_DATA)+"'  " + CRLF
+	cQry += "    AND Z06.D_E_L_E_T_ = ''  " + CRLF
+	cQry += "    AND Z0T.Z0T_ROTA = ?  " + CRLF
+	cQry += "    GROUP BY Z0T_ROTA, Z06_TRATO " + CRLF
+
+	oExecRota := FwExecStatement():New(cQry)
+
+	cQry := " SELECT * " + CRLF
+	cQry += " FROM "+RetSqlName("Z05")+" Z05" + CRLF
+	cQry += " JOIN "+RetSqlName("Z06")+" Z06 ON " + CRLF
+	cQry += " 	Z05_FILIAL = Z06_FILIAL" + CRLF
+	cQry += " AND Z05_DATA = Z06_DATA" + CRLF
+	cQry += " AND Z05_VERSAO = Z06_VERSAO" + CRLF
+	cQry += " AND Z05_LOTE = Z06_LOTE" + CRLF
+	cQry += " AND Z06.R_E_C_N_O_ = ? " + CRLF
+	cQry += " WHERE Z05.D_E_L_E_T_ = ''" + CRLF
+
+	oExecZ05 := FwExecStatement():New(cQry)
+	
+	cQry := 	" select Z06.Z06_LOTE		" 		+ CRLF
+	cQry += 		", Z06.Z06_DIETA	" + CRLF
+	cQry += 		", Z06.Z06_TRATO	" + CRLF
+	cQry += 		", Z06.Z06_KGMSTR	" + CRLF
+	cQry += 		", Z06.Z06_KGMNTR	" + CRLF
+	cQry += 		", Z06.Z06_MEGCAL	" + CRLF
+	cQry += 		", Z06.Z06_KGMNT	" + CRLF
+	cQry += 		", Z06.R_E_C_N_O_ Z06_RECNO" + CRLF
+	cQry += 	" from " + RetSqlName("Z06") + " Z06" + CRLF
+	cQry += 	"   JOIN "+RetSqlName("Z0T")+" Z0T ON " + CRLF
+	cQry += 	"        Z0T_FILIAL = Z06_FILIAL  " + CRLF
+	cQry += 	"    AND Z0T_LOTE = Z06_LOTE  " + CRLF
+	cQry += 	"    AND Z0T_DATA = Z06_DATA  " + CRLF
+	cQry += 	"    AND Z0T_CURRAL = Z06_CURRAL  " + CRLF
+	cQry += 	"    AND Z0T_ROTA = ?  " + CRLF
+	cQry += 	"    AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
+	cQry += " where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" + CRLF
+	cQry += 	" and Z06.Z06_DATA   = '" + DToS(Z05->Z05_DATA) + "'" + CRLF
+	cQry += 	" and Z06_TRATO = ? " + CRLF
+	cQry += 	" and Z06.D_E_L_E_T_ = ' '"  + CRLF
+	cQry += " order by Z06.Z06_TRATO"  + CRLF
+
+	oExecZ06G := FwExecStatement():New(cQry)
+
+	cQry := " select Z06.Z06_LOTE		" 		+ CRLF
+	cQry += 		", Z06.Z06_DIETA	" + CRLF
+	cQry += 		", Z06.Z06_TRATO	" + CRLF
+	cQry += 		", Z06.Z06_KGMSTR	" + CRLF
+	cQry += 		", Z06.Z06_KGMNTR	" + CRLF
+	cQry += 		", Z06.Z06_MEGCAL	" + CRLF
+	cQry += 		", Z06.Z06_KGMNT	" + CRLF
+	cQry += 		", Z06.R_E_C_N_O_ Z06_RECNO" + CRLF
+	cQry += 	" from " + RetSqlName("Z06") + " Z06" + CRLF
+	cQry += 	"   JOIN "+RetSqlName("Z0T")+" Z0T ON " + CRLF
+	cQry += 	"        Z0T_FILIAL = Z06_FILIAL  " + CRLF
+	cQry += 	"    AND Z0T_LOTE = Z06_LOTE  " + CRLF
+	cQry += 	"    AND Z0T_DATA = Z06_DATA  " + CRLF
+	cQry += 	"    AND Z0T_CURRAL = Z06_CURRAL  " + CRLF
+	cQry += 	"    AND Z0T_ROTA = ?  " + CRLF// PEGAR ROTA DO COMB CRLF
+	cQry += 	"    AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
+	cQry += " where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" + CRLF
+	cQry += 	" and Z06.Z06_DATA   = '" + DToS(Z05->Z05_DATA) + "'" + CRLF
+	cQry += 	" and Z06.Z06_LOTE   = ?" + CRLF
+	cQry += 	" and Z06.D_E_L_E_T_ = ' '" + CRLF
+	cQry += " order by Z06.Z06_TRATO" + CRLF
+
+	oExecZ06D := FwExecStatement():New(cQry)
+
+	RestArea(aArea)
+Return nil 

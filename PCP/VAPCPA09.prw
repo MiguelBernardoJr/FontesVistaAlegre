@@ -12,13 +12,13 @@
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "RWMAKE.CH"
 #INCLUDE "TOPCONN.CH"
+#INCLUDE "FWMVCDEF.CH"
 
 User Function VAPCPA09()
 
 //Local aParBox     := {}
 Local cQryDtV     := ""
 Local cPrgRot     := "VAPCPA09"
-
 
 Private lShwZer   := .F.
 Private lShwGer   := .T.
@@ -79,7 +79,10 @@ While ((nOpcRotas > 0))
 	
 	If (Len(aParRet) > 0)
 		aDadSel[2] := aParRet[1]
-		VAPCPA09A(lShwZer, lShwGer)
+
+		FWExecView('Manutenção', 'custom.VAPCPA18.VAPCPA18', MODEL_OPERATION_UPDATE,, { || .T. },,, )
+
+		//VAPCPA09A(lShwZer, lShwGer)
 	Else
 		nOpcRotas := 0
 	EndIf
@@ -243,7 +246,7 @@ If (!Z05->(DBSeek(xFilial("Z05") + DTOS(aDadSel[2]) + aDadSel[3])))
 EndIf
 
 aSize := MsAdvSize(.T.)
-aObjects := {}	
+aObjects := {}
 
 AAdd( aObjects, { aSize[5], aSize[6], .F., .F. })
 //AAdd( aObjects, { 100, 085, .F., .F. })

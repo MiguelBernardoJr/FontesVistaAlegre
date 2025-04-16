@@ -94,4 +94,8 @@ else
     MsgStop("O Animal [" + AllTrim(cIndividuo) + "] não cadastrado. Por favor verifique." )
 endif
 
+SB2->(DBCloseArea())
+SB1->(DBCloseArea())
+SC2->(DBCloseArea())
+
 return cNumOp

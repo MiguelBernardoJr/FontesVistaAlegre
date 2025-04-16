@@ -41,13 +41,17 @@ static nPEmpCtl := 4
 
 @obs Caso seja criada a variável cNumOP como privada essa função irá preencher o numero da ordem de produção no momento de sua criação
 @obs A função lançará uma excessão em caso de erro.
-/*/\
+/*/
 user function vaest003(cCodPro, nQuant, cArmz, aEmpenho)
 local aArea 	:= GetArea()
 local cMovBat 	:= GetMV("VA_MOVBATI")
 local cCC 		:= GetMV("VA_CCPRDBA")
 Local cIC		:= GetMV("VA_ICPRDBA")
 Local cClvl		:= GetMV("VA_CLPRDBA")
+
+if SELECT("SB1") == 0
+    dbSelectArea("SB1")
+endif
 
 SB1->(DbSetOrder(1))
 SB1->(DbSeek(xFilial("SB1")+cCodPro))
@@ -121,11 +125,15 @@ If Type("cFile") == "U"
 	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
 EndIf
 
-DbSelectArea("SC2")
-DbSetOrder(1) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
+IF SELECT("SC2") == 0
+    DbSelectArea("SC2")
+ENDIF
+SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
 
-DbSelectArea("SB1")
-DbSetOrder(1) // B1_FILIAL + B1_COD
+IF SELECT("SB1") == 0
+    DbSelectArea("SB1")
+ENDIF
+SB1->(DbSetOrder(1)) // B1_FILIAL + B1_COD
 
 if SB1->(DbSeek(xFilial("SB1")+cCodPro))
 
@@ -226,31 +234,18 @@ If Type("cFile") == "U"
 	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
 EndIf
 
-DbSelectArea("SD3")
-DbSetOrder(1) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
+IF SELECT("SD3") == 0
+    DbSelectArea("SD3")
+endif 
+SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 
-DbSelectArea("SC2")
-DbSetOrder(1) // C2_FILIAL + C2_NUM + C2_SEQUEN + C2_ITEMGRD
+IF SELECT("SC2") == 0
+    DbSelectArea("SC2")
+ENDIF 
+SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_SEQUEN + C2_ITEMGRD
 
-if DbSeek(xFilial("SC2")+cOP)
+if SC2->(DbSeek(xFilial("SC2")+cOP))
 	
-    /* aApon := { {"D3_TM",      cTpMov,          nil},;
-    		   {"D3_OP",      SC2->C2_NUM+SC2->C2_ITEM+C2_SEQUEN, nil },;
-               {"D3_LOTECTL", cLoteCTL, nil		},;
-			   {"D3_DTVALID", iIF(Empty(cLoteCTL),sToD(""),SB8->B8_DTVALID), nil } }
-     */
-	/*
-               {"D3_COD",     SC2->C2_PRODUTO, nil},;
-               {"D3_UM",      SC2->C2_UM,      nil},;
-               {"D3_LOCAL",   SC2->C2_LOCAL,   nil},;
-               {"D3_QUANT",   SC2->C2_QUANT,   nil},;
-               
-               {"D3_EMISSAO", dDataBase,       nil},;
-               {"D3_CC",      cCC,             nil},;
-               {"D3_ITEMCTA", cIC, nil			},;
-               {"D3_CLVL",    cClvl, nil		},;
-    */
-
 	aAdd( aApon, {"D3_TM"		, cTpMov									, nil } )
 	aAdd( aApon, {"D3_OP"		, SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN  	, nil } )
 	
@@ -326,80 +321,80 @@ Encerra uma ordem de produção e estorna seus apontamentos, de acordo com os para
 
 @obs A função lançará uma excessão em caso de erro.
 /*/
-user function EncerrOP(cOP)
-local aArea := GetArea()
-local nSaldo := 0
-Local i := 0
-local aErroAuto := {}
-local cErroAuto := ""
-
-private lMsErroAuto := .f.
-private lMsHelpAuto := .t.
-private lAutoErrNoFile := .t.
-
-If Type("__DATA") == "U"
-	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
-EndIf
-If Type("cFile") == "U"
-	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
-EndIf
-
-DbSelectArea("SC2")
-DbSetOrder(1) // C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD
-
-DbSelectArea("SB2")
-DbSetOrder(1) // B2_FILIAL+B2_COD+B2_LOCAL
-
-DbSelectArea("SD3")
-DbSetOrder(1) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
-
-if !SC2->(DbSeek(xFilial("SC2")+cOP))
-    MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível encerrar a OP.")
-endif
-
-if !Empty(SC2->C2_DATPRF)
-    MsgStop("Ordem de produção [" + cOP + "] já se encontra ecerrada. Não é possível encerrar a OP.")
-endif
-
-if SD3->(DbSeek(xFilial("SD3")+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD+SC2->C2_PRODUTO+SC2->C2_LOCAL))
-
-    aApon := { {"D3_FILIAL",  SD3->D3_FILIAL,  nil},;
-               {"D3_TM",      SD3->D3_TM,      nil},;
-               {"D3_COD",     SD3->D3_COD,     nil},;
-               {"D3_UM",      SD3->D3_UM,      nil},;
-               {"D3_LOCAL",   SD3->D3_LOCAL,   nil},;
-               {"D3_QUANT",   SD3->D3_QUANT,   nil},;
-               {"D3_OP",      SD3->D3_OP,      nil},;
-               {"D3_EMISSAO", SD3->D3_EMISSAO, nil},;
-               {"D3_CC",      SD3->D3_CC,      nil},;
-               {"D3_LOTECTL", SD3->D3_LOTECTL, nil} }
-
-    MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 7 ) //"Encerrar"
-    
-    if lMsErroAuto
-        lRet := .f.
-        cLogFile := CriaTrab(,.f.) + ".log"
-        aErroAuto := GetAutoGRLog()
-        for i := 1 to Len(aErroAuto)
-            cErroAuto += aErroAuto[i] + CRLF
-        next
-		
-		U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-						  "ERRO6: "+cErroAuto,;
-						  .T./* lConOut */,;
-						  /* lAlert */ )
-		
-        MemoWrite(cLogFile, cErroAuto)
-        RestArea(aArea)
-        MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Estorno do Apontamento de produção.")
-    endif
-
-endif
-
-if !Empty(aArea)
-    RestArea(aArea)
-endif
-return nil
+//user function EncerrOP(cOP)
+//local aArea     := GetArea()
+//local nSaldo    := 0
+//Local i         := 0
+//local aErroAuto := {}
+//local cErroAuto := ""
+//
+//private lMsErroAuto := .f.
+//private lMsHelpAuto := .t.
+//private lAutoErrNoFile := .t.
+//
+//If Type("__DATA") == "U"
+//	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
+//EndIf
+//If Type("cFile") == "U"
+//	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
+//EndIf
+//
+//DbSelectArea("SC2")
+//DbSetOrder(1) // C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD
+//
+//DbSelectArea("SB2")
+//DbSetOrder(1) // B2_FILIAL+B2_COD+B2_LOCAL
+//
+//DbSelectArea("SD3")
+//DbSetOrder(1) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
+//
+//if !SC2->(DbSeek(xFilial("SC2")+cOP))
+//    MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível encerrar a OP.")
+//endif
+//
+//if !Empty(SC2->C2_DATPRF)
+//    MsgStop("Ordem de produção [" + cOP + "] já se encontra ecerrada. Não é possível encerrar a OP.")
+//endif
+//
+//if SD3->(DbSeek(xFilial("SD3")+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD+SC2->C2_PRODUTO+SC2->C2_LOCAL))
+//
+//    aApon := { {"D3_FILIAL",  SD3->D3_FILIAL,  nil},;
+//               {"D3_TM",      SD3->D3_TM,      nil},;
+//               {"D3_COD",     SD3->D3_COD,     nil},;
+//               {"D3_UM",      SD3->D3_UM,      nil},;
+//               {"D3_LOCAL",   SD3->D3_LOCAL,   nil},;
+//               {"D3_QUANT",   SD3->D3_QUANT,   nil},;
+//               {"D3_OP",      SD3->D3_OP,      nil},;
+//               {"D3_EMISSAO", SD3->D3_EMISSAO, nil},;
+//               {"D3_CC",      SD3->D3_CC,      nil},;
+//               {"D3_LOTECTL", SD3->D3_LOTECTL, nil} }
+//
+//    MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 7 ) //"Encerrar"
+//    
+//    if lMsErroAuto
+//        lRet := .f.
+//        cLogFile := CriaTrab(,.f.) + ".log"
+//        aErroAuto := GetAutoGRLog()
+//        for i := 1 to Len(aErroAuto)
+//            cErroAuto += aErroAuto[i] + CRLF
+//        next
+//		
+//		U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+//						  "ERRO6: "+cErroAuto,;
+//						  .T./* lConOut */,;
+//						  /* lAlert */ )
+//		
+//        MemoWrite(cLogFile, cErroAuto)
+//        RestArea(aArea)
+//        MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Estorno do Apontamento de produção.")
+//    endif
+//
+//endif
+//
+//if !Empty(aArea)
+//    RestArea(aArea)
+//endif
+//return nil
 
 user function EstornOP(cOP)
 local aArea := GetArea()
@@ -408,9 +403,9 @@ Local i := 0
 local aErroAuto := {}
 local cErroAuto := ""
 
-private lMsErroAuto := .f.
-private lMsHelpAuto := .t.
-private lAutoErrNoFile := .t.
+private lMsErroAuto     := .f.
+private lMsHelpAuto     := .t.
+private lAutoErrNoFile  := .t.
 
 If Type("__DATA") == "U"
 	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
@@ -419,14 +414,20 @@ If Type("cFile") == "U"
 	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
 EndIf
 
-DbSelectArea("SC2")
-DbSetOrder(1) // C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD
+IF SELECT("SC2") == 0
+    DbSelectArea("SC2")
+ENDIF
+SC2->(DbSetOrder(1)) // C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD
 
-DbSelectArea("SB2")
-DbSetOrder(1) // B2_FILIAL+B2_COD+B2_LOCAL
+IF SELECT("SB2") == 0
+    DbSelectArea("SB2")
+ENDIF
+SB2->(DbSetOrder(1)) // B2_FILIAL+B2_COD+B2_LOCAL
 
-DbSelectArea("SD3")
-DbSetOrder(1) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
+IF SELECT("SD3") == 0
+    DbSelectArea("SD3")
+ENDIF
+SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 
 if !SC2->(DbSeek(xFilial("SC2")+cOP))
     MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível encerrar a OP.")

@@ -1006,13 +1006,23 @@ Static Function fQuadro( nQuadro ,aPeso,lMilho)
 	oPrinter:Say ( nRow+=nTamLin, nColLabel, cAux/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	oPrinter:Say ( nRow         , nColInfo , aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_NOMFOR"})][2]/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 
+	if ( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CLIFOR"})][2] == "C" )
+		cAux := Posicione("SA1",1,fWxFilial("SA1"+"1",aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CODFOR"})][2]),"A1_CGC")
+	else 
+		cAux := Posicione("SA2",1,fWxFilial("SA2")+aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CODFOR"})][2],"A2_CGC")
+	endif  
 	oPrinter:Say ( nRow+=nTamLin, nColLabel, "CPF / CNPJ.....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-	If !Empty(aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CPFMOT"})][2])
-		oPrinter:Say ( nRow     , nColInfo , Transform(aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CPFMOT"})][2], X3Picture("ZPB_CPFMOT"))/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+	If !Empty(cAux)
+		oPrinter:Say ( nRow     , nColInfo , Transform(cAux, X3Picture("A2_CGC"))/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	EndIf
 
 	oPrinter:Say ( nRow+=nTamLin, nColLabel, "Motorista......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	oPrinter:Say ( nRow         , nColInfo , aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_NOMMOT"})][2]/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+
+	oPrinter:Say ( nRow+=nTamLin, nColLabel, "CPF / CNPJ.....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+	If !Empty(aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CPFMOT"})][2])
+		oPrinter:Say ( nRow     , nColInfo , Transform(aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CPFMOT"})][2], X3Picture("ZPB_CPFMOT"))/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+	EndIf
 
 	oPrinter:Say ( nRow+=nTamLin, nColLabel, "Notas Fiscais..:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	oPrinter:Say ( nRow         , nColInfo , aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_NOTFIS"})][2]/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )

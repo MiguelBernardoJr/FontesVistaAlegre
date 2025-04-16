@@ -518,8 +518,9 @@ Função responsável pela valorização do custeio do Lote, vinculando o Insumo ao L
 @return nil
 /*/
 static function ProcLote(cLote, cRacao, nQuant, cArmz, cArmzRac)
+Local aArea      := GetArea()
 local nRegistros := 0
-local cAlias 	 := CriaTrab(,.f.)
+local cAlias 	 := ""
 local i 		 := 0
 local nQtdApro 	 := 0
 local aNumOp 	 := {}, aAuxNumOp := {}
@@ -584,7 +585,7 @@ cSql := " with estoque as ( " +_ENTER_+;
 
     MemoWrite( "C:\TOTVS_RELATORIOS\VAEST020-ProcLote.SQL", cSql)
     
-    DbUseArea(.T.,'TOPCONN',TcGenQry(,,cSql),(cAlias),.T.,.T.)
+    cAlias := MpSysOpenQuery(cSql)
 
     //(cAlias)->(DbEval({|| nRegistros++ }))
     if (cAlias)->QTDREG == 0 //nRegistros == 0
@@ -598,7 +599,6 @@ cSql := " with estoque as ( " +_ENTER_+;
     (cAlias)->(DbEval({|| nRegistros++ }))
 	(cAlias)->(DbGoTop())
     while !(cAlias)->(Eof())
-        // u_vaest021( cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac )
         i++
         if i < (cAlias)->QTDREG
             
@@ -625,8 +625,29 @@ cSql := " with estoque as ( " +_ENTER_+;
         endif
         (cAlias)->(DbSkip())
     end
+
+    IF SELECT("SB8") > 0
+        SB8->(DBCLOSEAREA())
+    ENDIF
+    IF SELECT("SC2") > 0
+        SC2->(DBCLOSEAREA())
+    ENDIF
+    IF SELECT("SB1") > 0
+        SB1->(DBCLOSEAREA())
+    ENDIF
+    IF SELECT("SD4") > 0
+        SD4->(DBCLOSEAREA())
+    ENDIF
+    IF SELECT("SB1") > 0
+        SB1->(DBCLOSEAREA())
+    ENDIF
+    IF SELECT("SD3") > 0
+        SD3->(DBCLOSEAREA())
+    ENDIF
+
     (cAlias)->(DbCloseArea())
 
+    RestArea(aArea)
 return  aNumOp
 
 
