@@ -607,7 +607,7 @@ cSql := " with estoque as ( " +_ENTER_+;
 						  .T./* lConOut */,;
 						  /* lAlert */ )
             // u_vaest021( cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac, Lote  ) TODO: Enviar em Array cRacao, nQuant, cArmzRec
-			aAuxNumOp := FWMsgRun(, {|| u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, round(nQuant*(cAlias)->(B8_SALDO/TOTAL),4), cArmzRac, (cAlias)->B8_LOTECTL ) },;
+			aAuxNumOp := FWMsgRun(, {|| u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, round(nQuant*(cAlias)->(B8_SALDO/TOTAL),TAMSX3("D3_QUANT")[2]), cArmzRac, (cAlias)->B8_LOTECTL ) },;
 							"Processando [VAEST020: ProcLote]",;
 							"Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(nRegistros,5) + ": " + AllTrim((cAlias)->B1_COD) +"]")
 			AAdd( aNumOp , aAuxNumOp )

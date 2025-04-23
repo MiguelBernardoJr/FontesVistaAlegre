@@ -50,7 +50,7 @@ Local cIC		:= GetMV("VA_ICPRDBA")
 Local cClvl		:= GetMV("VA_CLPRDBA")
 
 if SELECT("SB1") == 0
-    dbSelectArea("SB1")
+    DbSelectArea("SB1")
 endif
 
 SB1->(DbSetOrder(1))
@@ -106,92 +106,89 @@ return cNumOp
 @obs A função lançará uma excessão em caso de erro.
 /*/
 user function CriaOP(cCodPro, nQuant, cArmz)
-local aArea := GetArea()
-local cOP := ""
-local aOP := {}
-local cCodFil := xFilial("SC2")
-Local i    := 0
-local aErroAuto := {}
-local cErroAuto := ""
+    local aArea     := GetArea()
+    local cOP       := ""
+    local aOP       := {}
+    local cCodFil   := xFilial("SC2")
+    Local i         := 0
+    local aErroAuto := {}
+    local cErroAuto := ""
 
-private lMsErroAuto := .f.
-private lMsHelpAuto := .t.
-private lAutoErrNoFile := .t.
+    private lMsErroAuto := .f.
+    private lMsHelpAuto := .t.
+    private lAutoErrNoFile := .t.
 
-If Type("__DATA") == "U"
-	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
-EndIf
-If Type("cFile") == "U"
-	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
-EndIf
+    If Type("__DATA") == "U"
+        Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
+    EndIf
+    If Type("cFile") == "U"
+        Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
+    EndIf
 
-IF SELECT("SC2") == 0
     DbSelectArea("SC2")
-ENDIF
-SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
+    SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
 
-IF SELECT("SB1") == 0
     DbSelectArea("SB1")
-ENDIF
-SB1->(DbSetOrder(1)) // B1_FILIAL + B1_COD
+    SB1->(DbSetOrder(1)) // B1_FILIAL + B1_COD
 
-if SB1->(DbSeek(xFilial("SB1")+cCodPro))
+    if SB1->(DbSeek(xFilial("SB1")+cCodPro))
 
-    if Empty(cArmz)
-        if Empty(cArmz := Iif(!Empty(SB1->B1_LOCPAD), SB1->B1_LOCPAD, StrZero(1, TamSX3("B1_LOCPAD")[1])))
-            MsgStop("Não foi preenchido o armazem padrão, nem indicado em qual armazem deve-se apontar a produção de [" + AllTrim(cCodPro) + "]. Por favor, verifique o cadastro de produtos indicando o local padrão desse produto.")
+        if Empty(cArmz)
+            if Empty(cArmz := Iif(!Empty(SB1->B1_LOCPAD), SB1->B1_LOCPAD, StrZero(1, TamSX3("B1_LOCPAD")[1])))
+                MsgStop("Não foi preenchido o armazem padrão, nem indicado em qual armazem deve-se apontar a produção de [" + AllTrim(cCodPro) + "]. Por favor, verifique o cadastro de produtos indicando o local padrão desse produto.")
+            endif
         endif
+
+        cOP := GetSXENum("SC2", "C2_NUM")
+        ConfirmSX8()
+
+        aOP := { {"C2_FILIAL",  cCodFil,    Nil},; 
+                {"C2_NUM",     cOP,     	Nil},; 
+                {"C2_ITEM",    "01",       Nil},; 
+                {"C2_SEQUEN",  "001",      Nil},; 
+                {"C2_PRODUTO", cCodPro,    Nil},; 
+                {"C2_LOCAL",   cArmz,      Nil},; 
+                {"C2_QUANT",   nQuant,     Nil},; 
+                {"C2_UM",      SB1->B1_UM, Nil},; 
+                {"C2_DATPRI",  dDataBase,  Nil},; 
+                {"C2_DATPRF",  dDataBase,  Nil},; 
+                {"C2_EMISSAO", dDataBase,  Nil},; 
+                {"C2_PRIOR",   "500",      Nil},; 
+                {"C2_DESTINA", "P",        Nil},; 
+                {"C2_SEQPAI",  "000",      Nil},; 
+                {"C2_IDENT",   "P",        Nil},; 
+                {"C2_TPOP",    "F",        Nil},; 
+                {"C2_GRADE",   "N",        Nil},; 
+                {"AUTEXPLODE", "S",        Nil} } 
+        
+        lMsErroAuto :=.F.
+        MSExecAuto({|x,y| MATA650(x,y)}, aOP, 3)  //Inclusao
+        
+        if lMsErroAuto
+            cLogFile := CriaTrab(,.f.) + ".log"
+            aErroAuto := GetAutoGRLog()
+            for i := 1 to Len(aErroAuto)
+                cErroAuto += aErroAuto[i] + CRLF
+            next
+            
+            U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+                            "ERRO4: "+cErroAuto,;
+                            .T./* lConOut */,;
+                            /* lAlert */ )
+            
+            MemoWrite(cLogFile, cErroAuto)
+            RestArea(aArea)
+            MsgStop("Ocorreu um erro durante a execução da rotina automática MATA650 - Ordem de produção.")
+        endif
+        
+    else
+        MsgStop("Produto [" + cCodPro + "] não cadastrado." )
     endif
 
-    cOP := GetSXENum("SC2", "C2_NUM")
-    ConfirmSX8()
+    SC2->(DbCloseArea())
+    SB1->(DbCloseArea())
 
-    aOP := { {"C2_FILIAL",  cCodFil,    Nil},; 
-             {"C2_NUM",     cOP,     	Nil},; 
-             {"C2_ITEM",    "01",       Nil},; 
-             {"C2_SEQUEN",  "001",      Nil},; 
-             {"C2_PRODUTO", cCodPro,    Nil},; 
-             {"C2_LOCAL",   cArmz,      Nil},; 
-             {"C2_QUANT",   nQuant,     Nil},; 
-             {"C2_UM",      SB1->B1_UM, Nil},; 
-             {"C2_DATPRI",  dDataBase,  Nil},; 
-             {"C2_DATPRF",  dDataBase,  Nil},; 
-             {"C2_EMISSAO", dDataBase,  Nil},; 
-             {"C2_PRIOR",   "500",      Nil},; 
-             {"C2_DESTINA", "P",        Nil},; 
-             {"C2_SEQPAI",  "000",      Nil},; 
-             {"C2_IDENT",   "P",        Nil},; 
-             {"C2_TPOP",    "F",        Nil},; 
-             {"C2_GRADE",   "N",        Nil},; 
-             {"AUTEXPLODE", "S",        Nil} } 
-	
-    lMsErroAuto :=.F.
-    MSExecAuto({|x,y| MATA650(x,y)}, aOP, 3)  //Inclusao
-    
-    if lMsErroAuto
-        cLogFile := CriaTrab(,.f.) + ".log"
-        aErroAuto := GetAutoGRLog()
-        for i := 1 to Len(aErroAuto)
-            cErroAuto += aErroAuto[i] + CRLF
-        next
-		
-		U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-						  "ERRO4: "+cErroAuto,;
-						  .T./* lConOut */,;
-						  /* lAlert */ )
-		
-        MemoWrite(cLogFile, cErroAuto)
-        RestArea(aArea)
-        MsgStop("Ocorreu um erro durante a execução da rotina automática MATA650 - Ordem de produção.")
-    endif
-    
-else
-    MsgStop("Produto [" + cCodPro + "] não cadastrado." )
-endif
-
-if !Empty(aArea)
     RestArea(aArea)
-endif
 return cOP
 
 /*/{Protheus.doc} ApontaOP
@@ -214,7 +211,7 @@ Efetua o apontamento da ordem de produção
 user function ApontaOP(cOP, cTpMov, cCC, cIC, cClvl, cLoteCTL, cCurral )
 local aArea 			:= GetArea()
 local aApon 			:= {}
-local i, nLen 
+local i, nLen
 local lRet 				:= .T.
 
 local aErroAuto 		:= {}
@@ -234,14 +231,10 @@ If Type("cFile") == "U"
 	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
 EndIf
 
-IF SELECT("SD3") == 0
-    DbSelectArea("SD3")
-endif 
+DbSelectArea("SD3")
 SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 
-IF SELECT("SC2") == 0
-    DbSelectArea("SC2")
-ENDIF 
+DbSelectArea("SC2")
 SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_SEQUEN + C2_ITEMGRD
 
 if SC2->(DbSeek(xFilial("SC2")+cOP))
@@ -302,10 +295,10 @@ else
     MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível efetuar os apontamentos de produção. Por favor verifique!!!")
 endif
 
-if !Empty(aArea)
-    RestArea(aArea)
-endif
+SD3->(DBCloseArea())
+SC2->(DBCloseArea())
 
+RestArea(aArea)
 return lRet
 
 /*/{Protheus.doc} EncerOP
@@ -585,15 +578,15 @@ private lMsHelpAuto := .t.
 private lAutoErrNoFile := .t.
 
 DbSelectArea("SC2")
-DbSetOrder(1) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
+SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
 
 if SC2->(DbSeek(xFilial("SC2")+cOP+"01001"))
 
     DbSelectArea("SB1")
-    DbSetOrder(1) // B1_FILIAL + B1_COD
+    SB1->(DbSetOrder(1)) // B1_FILIAL + B1_COD
 
     DbSelectArea("SD4")
-    DbSetOrder(1) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
+    SD4->(DbSetOrder(1)) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
     
     nLen := Len(aEmpenho)
     for i := 1 to nLen
@@ -601,40 +594,32 @@ if SC2->(DbSeek(xFilial("SC2")+cOP+"01001"))
         if !SB1->(DbSeek(xFilial("SB1")+aEmpenho[i][nPEmpCod]))
             MsgStop("Produto [" + aEmpenho[i][nPEmpCod] + "] não encontrado. Não é possivel efetuar o empenho.")
         endif
-/* 
-        aEmp := { {"D4_FILIAL" , xFilial("SD4")		  , nil},;
-                  {"D4_COD"    , aEmpenho[i][nPEmpCod], nil},;
-                  {"D4_LOCAL"  , aEmpenho[i][nPEmpLoc], nil},;
-                  {"D4_OP"     , cOP+"01001"		  , nil},;
-                  {"D4_DATA"   , dDataBase		      , nil},;
-                  {"D4_QTDEORI", aEmpenho[i][nPEmpQtd], nil},;
-                  {"D4_QUANT"  , aEmpenho[i][nPEmpQtd], nil},;
-                  
-                  {"D4_LOTECTL", aEmpenho[i][nPEmpCtl], nil},;
-				  {"D4_DTVALID", Iif(Empty(aEmpenho[i][nPEmpCtl]),stoD(""),SB8->B8_DTVALID), nil} }
- */
-				aEmp := {}
+        aEmp := {}
 
-				aAdd( aEmp, {"D4_FILIAL" , xFilial("SD4")		  , nil} )
-                aAdd( aEmp, {"D4_COD"    , aEmpenho[i][nPEmpCod], nil} )
-                aAdd( aEmp, {"D4_LOCAL"  , aEmpenho[i][nPEmpLoc], nil} )
-                aAdd( aEmp, {"D4_OP"     , cOP+"01001"		  , nil} )
-                aAdd( aEmp, {"D4_DATA"   , dDataBase		      , nil} )
-                aAdd( aEmp, {"D4_QTDEORI", aEmpenho[i][nPEmpQtd], nil} )
-                aAdd( aEmp, {"D4_QUANT"  , aEmpenho[i][nPEmpQtd], nil} )
-                  
-				if Len(aEmpenho[i]) > 3
-					aAdd( aEmp, {"D4_LOTECTL", aEmpenho[i][nPEmpCtl], nil} )
-					aAdd( aEmp, {"D4_DTVALID", Iif(Empty(aEmpenho[i][nPEmpCtl]),stoD(""),SB8->B8_DTVALID), nil} )
-				EndIf
+        aAdd( aEmp, {"D4_FILIAL" , xFilial("SD4")		  , nil} )
+        aAdd( aEmp, {"D4_COD"    , aEmpenho[i][nPEmpCod], nil} )
+        aAdd( aEmp, {"D4_LOCAL"  , aEmpenho[i][nPEmpLoc], nil} )
+        aAdd( aEmp, {"D4_OP"     , cOP+"01001"		  , nil} )
+        aAdd( aEmp, {"D4_DATA"   , dDataBase		      , nil} )
+        aAdd( aEmp, {"D4_QTDEORI", aEmpenho[i][nPEmpQtd], nil} )
+        aAdd( aEmp, {"D4_QUANT"  , aEmpenho[i][nPEmpQtd], nil} )
+            
+        if Len(aEmpenho[i]) > 3
+            aAdd( aEmp, {"D4_LOTECTL", aEmpenho[i][nPEmpCtl], nil} )
+            aAdd( aEmp, {"D4_DTVALID", Iif(Empty(aEmpenho[i][nPEmpCtl]),stoD(""),SB8->B8_DTVALID), nil} )
+        EndIf
 				  
         AjuEMp(aEmp)
 
     next
+
+    SB1->(DbCloseArea())
+    SD4->(DbCloseArea())
 endif
-if !Empty(aArea)
-    RestArea( aArea )
-endif
+
+SC2->(DbCloseArea())
+
+RestArea( aArea )
 return lRet
 
 /*/{Protheus.doc} LimpaEmp
@@ -649,19 +634,18 @@ return lRet
 @obs A função lançará uma excessão em caso de erro.
 /*/
 user function LimpaEmp(cOP)
-local aArea := GetArea( )
-local lRet := .t.
+    local aArea := GetArea( )
+    local lRet := .t.
 
-DbSelectArea("SD4")
-DbSetOrder(2) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
+    DbSelectArea("SD4")
+    DbSetOrder(2) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
 
-while SD4->(DbSeek(xFilial("SD4")+PadR(cOP+"01001", TamSX3("D4_OP")[1])))
-    LimpaEmp()
-end
+    while SD4->(DbSeek(xFilial("SD4")+PadR(cOP+"01001", TamSX3("D4_OP")[1])))
+        LimpaEmp()
+    end
 
-if !Empty(aArea)
+    SD4->(dbCloseArea())
     RestArea( aArea )
-endif
 return lRet
 
 /*/{Protheus.doc} AjuEmp 

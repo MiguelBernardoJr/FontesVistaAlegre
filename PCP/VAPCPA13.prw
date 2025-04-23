@@ -146,6 +146,7 @@ Local aRotina := {}
 	ADD OPTION aRotina TITLE OemToAnsi("Importar TODOS") 		ACTION "U_BTIMPALL" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Parâmetro Água") 		ACTION "U_BTParH20" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Alterar Operadores") 	ACTION "U_AltOpePC" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
+	ADD OPTION aRotina TITLE OemToAnsi("Alterar Produtos Silo")	ACTION "U_AltPrdS"  OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 //ADD OPTION aRotina TITLE OemToAnsi("Copiar")     ACTION "VIEWDEF.VAPCPA13"    OPERATION 9 ACCESS 0 // "Copiar"
 
 Return aRotina
@@ -535,7 +536,7 @@ User Function BTIMPALL()
 	EndIf
 Return nil
 
-Static Function MontaTela()
+Static Function AltPrdS()
 	Local cDtAltP 	:= ""
 	Local _oSl01C 	:= nil
 	Local _oSl02C 	:= nil
@@ -672,29 +673,12 @@ Return (Nil)
  | Obs.     :                                                                      |
  '---------------------------------------------------------------------------------*/
 User Function btnPrc()
-	Local cTimeIni := Time()
-/* Local aEnButt  := {{.F., NIL},;         // 01 - Copiar
-                   {.F., NIL},;          // 02 - Recortar
-                   {.F., NIL},;          // 03 - Colar
-                   {.F., NIL},;          // 04 - Calculadora
-                   {.F., NIL},;          // 05 - Spool
-                   {.F., NIL},;          // 06 - Imprimir
-                   {.F., NIL},;          // 07 - Confirmar
-                   {.T., "Fechar"},;     // 08 - Cancelar
-                   {.F., NIL},;          // 09 - WalkTrhough
-                   {.F., NIL},;          // 10 - Ambiente
-                   {.F., NIL},;          // 11 - Mashup
-                   {.T., NIL},;          // 12 - Help
-                   {.F., NIL},;          // 13 - Formulario HTML
-                   {.F., NIL}}          // 14 - ECM */
+	Local aArea 		:= FwGetArea()
+	Local cTimeIni 		:= Time()
 	Private oZ02SEQ 	:= Nil
 	Private oZ0YQry 	:= Nil
-	Private oZ03UPD 	:= Nil
-	Private oZ04UPD 	:= Nil
-	Private oZ0YUPD 	:= Nil
 	Private oZ0YQry1 	:= Nil
 	Private oZ0WQry 	:= Nil
-	Private oZ0WUPD 	:= Nil
 	Private oZ0WSel 	:= Nil
 
 	MontaQuery()
@@ -720,6 +704,9 @@ User Function btnPrc()
 	EndIf
 	
 	if oZ0WSel != nil 
+		oZ0WQry:Destroy()
+		oZ0WQry := nil
+
 		oZ0WSel:Destroy()
 		oZ0WSel := nil
 
@@ -735,16 +722,21 @@ User Function btnPrc()
 
 	//memowrite("C:\TOTVS_RELATORIOS\LogTabela_depois.txt", U_zLogAlias(1))
 
-UnlockByName("BTNPRC")
+	UnlockByName("BTNPRC")
 
-If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin, administrador' .And. !nAviso == 3 
-	cMsg := 'Inicio: ' + cTimeINI + _ENTER_
-	cMsg += 'Final : ' + Time()   + _ENTER_
-	cMsg += 'Tempo de processamento: ' + ElapTime( cTimeINI, Time() )
-	Alert( cMsg )
-	ConOut( cMsg )
-EndIf
+	If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin, administrador' .And. !nAviso == 3 
+		cMsg := 'Inicio: ' + cTimeINI + _ENTER_
+		cMsg += 'Final : ' + Time()   + _ENTER_
+		cMsg += 'Tempo de processamento: ' + ElapTime( cTimeINI, Time() )
+		Alert( cMsg )
+		ConOut( cMsg )
+	EndIf
+	
+	if !Empty(aArea)
+		FwRestArea(aArea)
+	endif
 
+	FINAL("Rotina será encerrada, favor abrir novamente para continuar o processamento.")
 Return (Nil)
 
 
@@ -4059,12 +4051,8 @@ Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
 Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
 Private oZ02SEQ 	:= Nil
 Private oZ0YQry 	:= Nil
-Private oZ03UPD 	:= Nil
-Private oZ04UPD 	:= Nil
-Private oZ0YUPD 	:= Nil
 Private oZ0YQry1 	:= Nil
 Private oZ0WQry 	:= Nil
-Private oZ0WUPD 	:= Nil
 Private oZ0WSel 	:= Nil
 
 MontaQuery()
@@ -4095,23 +4083,15 @@ MontaQuery()
 				  .T./* lAlert */ )
 
 	if oZ0WSel != nil 
+		
+		oZ0WQry:Destroy()
+		oZ0WQry := nil
+
 		oZ0WSel:Destroy()
 		oZ0WSel := nil
 
-		oZ0WUPD:Destroy()
-		oZ0WUPD := nil
-
-		oZ04UPD:Destroy()
-		oZ04UPD := nil
-
 		oZ0YQry1:Destroy()
 		oZ0YQry1 := nil
-
-		oZ0YUPD:Destroy()
-		oZ0YUPD := nil
-
-		oZ03UPD:Destroy()
-		oZ03UPD := nil
 
 		oZ0YQry:Destroy()
 		oZ0YQry := nil
@@ -4215,8 +4195,8 @@ User Function fPrcLote()
    	_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
 	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC = '1' " + CRLF 
 	_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF 
-	_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF 
-	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF 
+	_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF
+	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF
 	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(__DATA)+ "' " + CRLF 
 	_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF 
 	_cQry += " 	UNION  " + CRLF 
@@ -4255,7 +4235,7 @@ User Function fPrcLote()
 					"Processando os dados [" + Z0X->Z0X_CODIGO + "]",;
 					.T./* lConOut */,;
 					/* lAlert */ )
-				  
+		
 		FWMsgRun(, {|| U_PrcBatTrt() }, "Processando", "Processando os dados [" + Z0X->Z0X_CODIGO + "]" )
 		
 		(cAlias)->(DBSkip())
@@ -4274,9 +4254,7 @@ Return nil
 User Function PrcBatTrt()
 
 Local aArea    		:= GetArea()
-Local cQryPrc  		:= ""
 Local cQryUpd  		:= ""
-Local cQryCfr  		:= ""
 Local cCodRec  		:= ""
 Local cCodOrd  		:= ""
 Local cSequen  		:= "" //GetSXENum("Z02", "Z02_SEQUEN")
@@ -4289,8 +4267,6 @@ Local nPrcDf   		:= 0
 Local nQtdTrt  		:= 0
 Local cIndividuo 	:= ''
 Local cDieta 		:= ''
-Local cArmazem 		:= ''
-Local cArmzRac 		:= ''
 Local cAlias 		:= ""
 
 If Type("__DATA") == "U"
@@ -4302,19 +4278,16 @@ EndIf
 
 Private cNumOp := ""
 
+//__DATA := cToD("23/10/2024")
 If (__DATA != Z0X->Z0X_DATA)
 	MsgInfo("A data do sistema nao pode ser diferente da data do arquivo.")
 	RestArea(aArea)
 	Return (Nil)
 EndIf
 
-//cAlias := oZ02SEQ:OpenAlias()
-
 oZ02SEQ:SetString(1, FwxFilial("Z02"))
 
 cSequen := oZ02SEQ:ExecScalar('SEQ')
-
-//(cAlias)->(DbCloseArea())
 
 DBSelectArea("Z02")
 Z02->(DBSetOrder(1))
@@ -4401,30 +4374,19 @@ Begin Transaction
 				Break
 			EndIf
 
-			oZ03UPD:SetString(1, cNumOp)
-			oZ03UPD:SetString(2, fwxFilial("Z03"))
-			oZ03UPD:SetString(3, cCodOrd)
-			oZ03UPD:SetString(4, cCodRec)
-
-			If oZ03UPD:executeQuery() < 0
-				MsgInfo("Erro ao atualizar Z03: " + TCSqlError())
+			cQryUpd := " UPDATE " + RetSqlName("Z03") + _ENTER_
+			cQryUpd += " SET Z03_NUMOP = '" + cNumOp + "'" + _ENTER_
+			cQryUpd += " WHERE Z03_FILIAL = '" + fwxFilial("Z03") + "'" + _ENTER_
+			cQryUpd += "   AND D_E_L_E_T_ = ' ' " + _ENTER_
+			cQryUpd += "   AND Z03_BATIDA = '" + cCodOrd + "'" + _ENTER_
+			cQryUpd += "   AND Z03_RECEIT = '" + cCodRec + "'" + _ENTER_
+	
+			If (TCSqlExec(cQryUpd) < 0)
+				MsgInfo(TCSqlError())
 				DisarmTransaction()
+				(cAlias)->(DBCloseArea())
 				Break
 			EndIf
-
-			//cQryUpd := " UPDATE " + RetSqlName("Z03") + _ENTER_
-			//cQryUpd += " SET Z03_NUMOP = '" + cNumOp + "'" + _ENTER_
-			//cQryUpd += " WHERE Z03_FILIAL = '" + fwxFilial("Z03") + "'" + _ENTER_
-			//cQryUpd += "   AND D_E_L_E_T_ = ' ' " + _ENTER_
-			//cQryUpd += "   AND Z03_BATIDA = '" + cCodOrd + "'" + _ENTER_
-			//cQryUpd += "   AND Z03_RECEIT = '" + cCodRec + "'" + _ENTER_
-			
-			//If (TCSqlExec(cQryUpd) < 0)
-			//	MsgInfo(TCSqlError())
-			//	DisarmTransaction()
-			//	(cAlias)->(DBCloseArea())
-			//	Break
-			//EndIf
 
 			cCodRec := (cAlias)->RECEITA
 			cCodOrd := (cAlias)->ORDEM
@@ -4712,7 +4674,7 @@ Z04->(DBCLOSEAREA())
 
 RestArea(aArea)
 
-Return (Nil)
+Return .t. 
 
 
 /* ====================================================================== */
@@ -5434,7 +5396,7 @@ Local aDSilo 		:= {}
 			cAgua 	:= IIF(EMPTY(GETMV("MV_AGUAPH") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_AGUAPH") )
 
 			IF sToD(cDtAltP) <> Date()
-				MontaTela()
+				AltPrdS()
 			endif
 
 			nPData  	:= aScan(aHeaderCSV, { |x| Upper(x) == 'DATA'})
@@ -6416,3 +6378,7 @@ Static Function fsVldCpo(cOpc,cProd)
 
 	FwRestArea(aArea)
 Return .T.
+
+User FUnction AltPrdS()
+	AltPrdS()
+Return

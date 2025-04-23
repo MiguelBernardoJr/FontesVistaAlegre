@@ -607,13 +607,13 @@ default cVersao  := Z0R->Z0R_VERSAO
             end
 
             if !Empty(cIMSProb)
-                LogTrato("Ocorreu um erro ao carregar o índice de matéria seca.", "IMS Não Identificado." + CRLF + "O(s) produto(s) " + cIMSProb + " não possuem índice de matéria seca cadastrado. Não será possível gerar o trato até que esses índices estejam devidamente cadastrados." + CRLF)
+                U_LogTrato("Ocorreu um erro ao carregar o índice de matéria seca.", "IMS Não Identificado." + CRLF + "O(s) produto(s) " + cIMSProb + " não possuem índice de matéria seca cadastrado. Não será possível gerar o trato até que esses índices estejam devidamente cadastrados." + CRLF)
                 Help(/*Descontinuado*/,/*Descontinuado*/,"IMS Não Identificado",/**/,"O(s) produto(s) " + cIMSProb + " não possuem índice de matéria seca cadastrado. Não será possível gerar o trato até que esses índices estejam devidamente cadastrados.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, verifique." })
                 Final("O protheus será finalizado para garantir sua integridade.")
                 Disarmtransaction()
             endif
 
-            LogTrato("Carregamento do índice da matéria seca para a tabela Z0V realizado com sucesso.", U_AToS(aIMS))  
+            U_LogTrato("Carregamento do índice da matéria seca para a tabela Z0V realizado com sucesso.", U_AToS(aIMS))  
             
     endif
 
@@ -834,7 +834,7 @@ local cLoteSBov  := ""
     elseIf !Empty(cLotesBov)
         Help(/*Descontinuado*/,/*Descontinuado*/,"RECRIAÇÃO DO TRATO",/**/,"Existem Produtos / Lote sem data de início preenchido, Utilizar rotina de Manutenção de Lotes para correção." , 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor verifique: " + AllTrim (cLotesBov) +  "."})
     Else 
-        LogTrato("Versionamento do trato.", "Paramtros: " + CRLF + "cRotaDe = '" + cRotaDe + "'" + CRLF +;
+        U_LogTrato("Versionamento do trato.", "Paramtros: " + CRLF + "cRotaDe = '" + cRotaDe + "'" + CRLF +;
                              "cRotaAte = '" + cRotaAte + "'" + CRLF +;
                              "cCurralDe = " + cCurralDe + "'" + CRLF +; 
                              "cCurralAte = '" + cCurralAte + "'" + CRLF +;
@@ -865,7 +865,7 @@ local cLoteSBov  := ""
                 // Cria cópia versionada do último trato do dia
 
                 begin transaction 
-                LogTrato("Versionamento do trato.", "Criação da versão " + Z0R->Z0R_VERSAO + " do trato " + DToC(Z0R->Z0R_DATA) + ".")
+                U_LogTrato("Versionamento do trato.", "Criação da versão " + Z0R->Z0R_VERSAO + " do trato " + DToC(Z0R->Z0R_DATA) + ".")
 
                 cVerAnt := Z0R->Z0R_VERSAO
                 cVersao := Soma1(Z0R->Z0R_VERSAO)
@@ -875,11 +875,11 @@ local cLoteSBov  := ""
                 MsUnlock()
 
                 lVersiona := .T.
-                LogTrato("Versionamento do trato.", "Versionando Indice de Materia Seca. Data " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
+                U_LogTrato("Versionamento do trato.", "Versionando Indice de Materia Seca. Data " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
 
                 CarregaIMS(.T.)
 
-                LogTrato("Versionamento do trato.", "Versionando cabeçalho e item do trato. Trato " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
+                U_LogTrato("Versionamento do trato.", "Versionando cabeçalho e item do trato. Trato " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
 
                 DbUseArea(.T., "TOPCONN", TCGenQry(,, "select max(R_E_C_N_O_) RECNO from " + RetSqlName("Z06")), "CNTREC", .F., .F.)
                     nRecno := CNTREC->RECNO
@@ -964,7 +964,7 @@ local cLoteSBov  := ""
                     break
                 endif
 
-                LogTrato("Versionamento do trato.", "Versionando Currais da Rota do Trato. Data " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
+                U_LogTrato("Versionamento do trato.", "Versionando Currais da Rota do Trato. Data " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
                 DbUseArea(.T., "TOPCONN", TCGenQry(,, "select max(R_E_C_N_O_) RECNO from " + RetSqlName("Z0T")), "CNTREC", .F., .F.)
                     nRecno := CNTREC->RECNO
                 CNTREC->(DbCloseArea())
@@ -1006,7 +1006,7 @@ local cLoteSBov  := ""
                     break
                 endif
 
-                LogTrato("Versionamento do trato.", "Versionando Currais da Rota do Trato. Data " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
+                U_LogTrato("Versionamento do trato.", "Versionando Currais da Rota do Trato. Data " + DToC(Z0R->Z0R_DATA) + ", versão " + Z0R->Z0R_VERSAO + ".")
                 DbUseArea(.T., "TOPCONN", TCGenQry(,, "select max(R_E_C_N_O_) RECNO from " + RetSqlName("Z0S")), "CNTREC", .F., .F.)
                     nRecno := CNTREC->RECNO
                 CNTREC->(DbCloseArea())
@@ -1039,7 +1039,7 @@ local cLoteSBov  := ""
                     break
                 endif
 
-                LogTrato("Versionamento do trato.", "Ajustando as quantidades de materia natural de acordo com o trato.")
+                U_LogTrato("Versionamento do trato.", "Ajustando as quantidades de materia natural de acordo com o trato.")
 
                 // Atualiza quantidade de materia natural
                 DbSelectArea("Z06")
@@ -1093,7 +1093,7 @@ local cLoteSBov  := ""
                 // Se estiver liberado recriar com a mesma versão
                 if Z0R->Z0R_LOCK <= '1'
                     if InUseZ05(cRotaDe, cRotaAte, cCurralDe, cCurralAte, cLoteDe, cLoteAte, cVeicDe, cVeicAte)
-                        LogTrato("RECRIAÇÃO DO TRATO", "Existem tratos em edição ou foi gerado algum arquivo de trato nessa data ou o trato já está ecerrado. Não é possível continuar a recriação do trato.")
+                        U_LogTrato("RECRIAÇÃO DO TRATO", "Existem tratos em edição ou foi gerado algum arquivo de trato nessa data ou o trato já está ecerrado. Não é possível continuar a recriação do trato.")
                         Help(/*Descontinuado*/,/*Descontinuado*/,"RECRIAÇÃO DO TRATO",/**/,"Existem tratos em edição ou foi gerado algum arquivo de trato nessa data ou o trato já está ecerrado." , 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível continuar a recriação do trato."})
                         DisarmTransaction()
                         break
@@ -1114,7 +1114,7 @@ local cLoteSBov  := ""
                                     ) < 0 
                             Help(/*Descontinuado*/,/*Descontinuado*/,"RECRIAÇÃO DO TRATO",/**/,"Ocorreu um problema durante a recriação do trato:" + CRLF + TCSQLError(), 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, entrem em contato com o TI e mostre o erro apresentado. O sistema retornará ao status anterior para garantir a integridade dos dados." })
                             DisarmTransaction()
-                            LogTrato("Recriação do trato.", "Ocorreu um problema durante a recriação da tabela Z06:" + CRLF + TCSQLError())
+                            U_LogTrato("Recriação do trato.", "Ocorreu um problema durante a recriação da tabela Z06:" + CRLF + TCSQLError())
                             break
                         endif
                         if TCSqlExec(;
@@ -1133,10 +1133,10 @@ local cLoteSBov  := ""
                                     ) < 0 
                             Help(/*Descontinuado*/,/*Descontinuado*/,"RECRIAÇÃO DO TRATO",/**/,"Ocorreu um problema durante a recriação do trato:" + CRLF + TCSQLError(), 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, entrem em contato com o TI e mostre o erro apresentado. O sistema retornará ao status anterior para garantir a integridade dos dados." })
                             DisarmTransaction()
-                            LogTrato("Recriação do trato.", "Ocorreu um problema durante a recriação da tabela Z05:" + CRLF + TCSQLError())
+                            U_LogTrato("Recriação do trato.", "Ocorreu um problema durante a recriação da tabela Z05:" + CRLF + TCSQLError())
                             break
                         endif
-                        LogTrato("Recriação do trato.", "Foram excluidos os registros do trato " + DToS(Z0R->Z0R_DATA) + " - " + Z0R->Z0R_VERSAO + ".")
+                        U_LogTrato("Recriação do trato.", "Foram excluidos os registros do trato " + DToS(Z0R->Z0R_DATA) + " - " + Z0R->Z0R_VERSAO + ".")
                     endif
                 // caso contrario é necessário versionar os itens
                 elseif Z0R->Z0R_LOCK == '3' 
@@ -1158,9 +1158,9 @@ local cLoteSBov  := ""
                     CarregaIMS(.T.)
                 endif
                 
-                LogTrato("Recriação de trato", "Recriando trato " + DToS(Z0R->Z0R_DATA) + " versao " + cVersao + ".")
+                U_LogTrato("Recriação de trato", "Recriando trato " + DToS(Z0R->Z0R_DATA) + " versao " + cVersao + ".")
                 if !Empty(aIMS)
-                    LogTrato("Utilizando tabela de Indice de Matéria Seca", u_AToS(aIMS))
+                    U_LogTrato("Utilizando tabela de Indice de Matéria Seca", u_AToS(aIMS))
 
                     cSql := " with Lotes as (" + CRLF +;
                             "       select Z08_FILIAL" + CRLF +;
@@ -1519,9 +1519,9 @@ else
         
         CarregaIMS()
 
-        LogTrato("Criação de trato", "Criando trato " + DToS(Z0R->Z0R_DATA) + " versao " + Z0R->Z0R_VERSAO + ".")
+        U_LogTrato("Criação de trato", "Criando trato " + DToS(Z0R->Z0R_DATA) + " versao " + Z0R->Z0R_VERSAO + ".")
         if !Empty(aIMS)
-            LogTrato("Utilizando tabela de Indice de Matéria Seca", u_AToS(aIMS))
+            U_LogTrato("Utilizando tabela de Indice de Matéria Seca", u_AToS(aIMS))
 
             cSql := " with Lotes as (" + CRLF +;
                               " select Z08_FILIAL" + CRLF +;
@@ -2462,7 +2462,7 @@ Local nBKPnTrtTotal := 0
                             // FIM MB : 23.02.2023  
 
                             cSeq := GetSeq(TMPZ06->Z06_DIETA)
-                            nMegaCal := GetMegaCal(TMPZ06->Z06_DIETA)
+                            nMegaCal := U_GetMegaCal(TMPZ06->Z06_DIETA)
                             nMCalTrat := Round(nMegaCal * nQtdTrato,2)
                             nQuantMN := u_CalcQtMN(TMPZ06->Z06_DIETA, nQtdTrato)
                             
@@ -2851,7 +2851,7 @@ Local nBKPnTrtTotal := 0
                         
                         nQuantMN := u_CalcQtMN(TMPZ0M->Z0M_DIETA, nQtdTrato)
                         cSeq := GetSeq(TMPZ0M->Z0M_DIETA)
-                        nMegaCal := GetMegaCal(TMPZ0M->Z0M_DIETA)
+                        nMegaCal := U_GetMegaCal(TMPZ0M->Z0M_DIETA)
                         nMCalTrat := Round(nMegaCal * nQtdTrato,2)
 
                         RecLock("Z06", .T.)
@@ -2990,7 +2990,7 @@ Local nBKPnTrtTotal := 0
                     while !TMPZ0M->(Eof())
                         nQuantMN := u_CalcQtMN(TMPZ0M->Z0M_DIETA, nQtdTrato)
                         cSeq := GetSeq(TMPZ0M->Z0M_DIETA)
-                        nMegaCal := GetMegaCal(TMPZ0M->Z0M_DIETA)
+                        nMegaCal := U_GetMegaCal(TMPZ0M->Z0M_DIETA)
                         nMCalTrat := Round(nMegaCal * nQtdTrato,2)
 
                         RecLock("Z06", .T.)
@@ -3384,7 +3384,7 @@ Local nBKPnTrtTotal := 0
                             // FIM MB : 23.02.2023  
 
                             cSeq      := GetSeq(TMPZ06->Z06_DIETA)
-                            nMegaCal  := GetMegaCal(TMPZ06->Z06_DIETA)
+                            nMegaCal  := U_GetMegaCal(TMPZ06->Z06_DIETA)
                             nMCalTrat := Round(nMegaCal * nQtdTrato,2)
                             
                             nQuantMN  := u_CalcQtMN(TMPZ06->Z06_DIETA, nQtdTrato)
@@ -3900,7 +3900,7 @@ if Z0R->(DbSeek(FWxFilial("Z0R")+DToS(dDtTrato)))
 
     if TCSqlExec(cSql) < 0
         Help(/*Descontinuado*/,/*Descontinuado*/,"SELEÇÃO DE TRATO",/**/,"Ocorreu um problema ao carregar o trato de " + DToC(mv_par01) + "." + CRLF + TCSQLError(), 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, entre em contato com o TI para averiguar o problema." })
-        LogTrato("Erro durante carregamento do trato", "Ocorreu um problema ao carregar o trato de " + DToC(mv_par01) + "." + CRLF + TCSQLError())
+        U_LogTrato("Erro durante carregamento do trato", "Ocorreu um problema ao carregar o trato de " + DToC(mv_par01) + "." + CRLF + TCSQLError())
         if lDebug .and. lower(cUserName) $ 'mbernardo,atoshio,admin,administrador,rsantana'
             MemoWrite(cPath + "TRATO_" + DToS(Z0R->Z0R_DATA) + ".log", DToS(Date()) + "-" + Time() + CRLF + "Ocorreu um problema ao carregar o trato de " + DToC(Z0R->Z0R_DATA) + "." + CRLF + TCSQLError())
         endif
@@ -3987,7 +3987,8 @@ Private lManut := .T.
         private Altera := .T.
     endif
 
-	Private oExecZ05  as object
+	Private oExecZ05C  as object
+	Private oExecZ05G  as object
 	Private oExecRota as object
 	Private oExecZ06D as object
 	Private oExecZ06G as object
@@ -4005,9 +4006,14 @@ Private lManut := .T.
             if CanUseZ05()
 				
 				Custom.VAPCPA17.u_PreparaQuerys()
-
+                
+                cBakFun := FunName()
+                SetFunName("VAPCPA17")
+                
                 FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
                 ReleaseZ05()
+
+                SetFunName(cBakFun)
 
 				if oExecZ06G != nil
 					oExecZ06G:Destroy()
@@ -4021,9 +4027,13 @@ Private lManut := .T.
 					oExecRota:Destroy()
 					oExecRota := Nil
 				endif
-				if oExecZ05 != nil
-					oExecZ05:Destroy()
-					oExecZ05 := Nil
+				if oExecZ05C != nil
+					oExecZ05C:Destroy()
+					oExecZ05C := Nil
+				endif
+				if oExecZ05G != nil
+					oExecZ05G:Destroy()
+					oExecZ05G := Nil
 				endif
             endif
         elseif !Empty((cTrbBrowse)->B8_LOTECTL)
@@ -4064,7 +4074,7 @@ Private lManut := .T.
     endif
     
     //teste aqui
-    UpdTrbTmp()
+    U_UpdTrbTmp()
     //u_vap05rec()
 return nil
 
@@ -4150,7 +4160,7 @@ local aEnButt := {{.F., nil},;      // 1 - Copiar
     endif
     
     //teste aqui
-    UpdTrbTmp()
+    U_UpdTrbTmp()
     //u_vap05rec()
 return nil
 
@@ -4602,7 +4612,7 @@ if nOperation == MODEL_OPERATION_UPDATE
             if oGridModel:GetValue("Z06_RECNO", nLin) <> 0
                 Z06->(DbGoTo(oGridModel:GetValue("Z06_RECNO", nLin)))
                 cSeq := GetSeq(oGridModel:GetValue("Z06_DIETA"))
-                nMegaCal := GetMegaCal(oGridModel:GetValue("Z06_DIETA"))
+                nMegaCal := U_GetMegaCal(oGridModel:GetValue("Z06_DIETA"))
                 nMCalTrat := nMegaCal * Z06->Z06_KGMSTR
 
                 RecLock("Z06", .F.)
@@ -4621,7 +4631,7 @@ if nOperation == MODEL_OPERATION_UPDATE
                     Z06->Z06_SEQ    := cSeq
                     Z06->Z06_MEGCAL := nMegaCal
                 MsUnlock()
-                LogTrato("Inclusão de registro", "incluido o registro " + AllTrim(Str(oGridModel:GetValue("Z06_RECNO"))) + " - {" + Z06->Z06_FILIAL + "|" + DToS(Z06->Z06_DATA) + "|" + Z06->Z06_VERSAO + "|" + Z06->Z06_CURRAL + "|" + Z06->Z06_LOTE + "|" + Z06->Z06_DIAPRO + "|" + Z06->Z06_TRATO + "|" + Z06->Z06_DIETA + "|" + AllTrim(Str(Z06->Z06_KGMSTR)) + "|" + AllTrim(Str(Z06->Z06_KGMNTR )) + "}")
+                U_LogTrato("Inclusão de registro", "incluido o registro " + AllTrim(Str(oGridModel:GetValue("Z06_RECNO"))) + " - {" + Z06->Z06_FILIAL + "|" + DToS(Z06->Z06_DATA) + "|" + Z06->Z06_VERSAO + "|" + Z06->Z06_CURRAL + "|" + Z06->Z06_LOTE + "|" + Z06->Z06_DIAPRO + "|" + Z06->Z06_TRATO + "|" + Z06->Z06_DIETA + "|" + AllTrim(Str(Z06->Z06_KGMSTR)) + "|" + AllTrim(Str(Z06->Z06_KGMNTR )) + "}")
                 oGridModel:LoadValue("Z06_RECNO", Z06->(RecNo()))
             endif
         endif
@@ -4629,7 +4639,7 @@ if nOperation == MODEL_OPERATION_UPDATE
         if !Empty(oGridModel:GetValue("Z06_RECNO"))
             Z06->(DbGoTo(oGridModel:GetValue("Z06_RECNO")))
             if Z06->(RecNo()) == oGridModel:GetValue("Z06_RECNO")
-                LogTrato("Exclusão de registro", "Excluido o registro " + AllTrim(Str(oGridModel:GetValue("Z06_RECNO"))) + " - {" + Z06->Z06_FILIAL + "|" + DToC(Z06->Z06_DATA) + "|" + AllTrim(Z06->Z06_VERSAO) + "|" + AllTrim(Z06->Z06_CURRAL) + "|" + AllTrim(Z06->Z06_LOTE) + "|" + AllTrim(Z06->Z06_DIAPRO) + "|" + AllTrim(Z06->Z06_TRATO) + "|" + AllTrim(Z06->Z06_DIETA) + "|" + AllTrim(Str(Z06->Z06_KGMSTR)) + "|" + AllTrim(Str(Z06->Z06_KGMNTR )) + "}")
+                U_LogTrato("Exclusão de registro", "Excluido o registro " + AllTrim(Str(oGridModel:GetValue("Z06_RECNO"))) + " - {" + Z06->Z06_FILIAL + "|" + DToC(Z06->Z06_DATA) + "|" + AllTrim(Z06->Z06_VERSAO) + "|" + AllTrim(Z06->Z06_CURRAL) + "|" + AllTrim(Z06->Z06_LOTE) + "|" + AllTrim(Z06->Z06_DIAPRO) + "|" + AllTrim(Z06->Z06_TRATO) + "|" + AllTrim(Z06->Z06_DIETA) + "|" + AllTrim(Str(Z06->Z06_KGMSTR)) + "|" + AllTrim(Str(Z06->Z06_KGMNTR )) + "}")
                 RecLock("Z06", .F.)
                 Z06->(DbDelete())
                 MsUnlock()
@@ -4713,7 +4723,7 @@ local lAtuZ06    := .F.
     endif
 
     if FunName() == "VAPCPA05"
-        UpdTrbTmp()
+        U_UpdTrbTmp()
     endif
 return lRet
 
@@ -6546,7 +6556,7 @@ endif
 return nil
 
 
-/*/{Protheus.doc} LogTrato
+/*/{Protheus.doc} U_LogTrato
 Grava log das operações realizadas no trato no campo Z0R_LOG.
 @author jr.andre
 @since 13/09/2019
@@ -6556,7 +6566,7 @@ Grava log das operações realizadas no trato no campo Z0R_LOG.
 @param cMsg, characters, descrição do log
 @type function
 /*/
-static function LogTrato(cTitulo, cMsg)
+User function LogTrato(cTitulo, cMsg)
 local aArea := GetArea()
     RecLock("Z0R", .F.)
     Z0R->Z0R_LOG += MsgLog(cTitulo, cMsg)
@@ -6802,13 +6812,13 @@ if !oGridModel:IsDeleted()
 
             if oGridModel:GetValue("Z06_KGMSTR") > 0
                 oGridModel:SetValue("Z06_KGMNTR", u_CalcQtMN(M->Z06_DIETA, oGridModel:GetValue("Z06_KGMSTR")))
-                oGridModel:SetValue("Z06_MEGCAL", (GetMegaCal(M->Z06_DIETA) * oGridModel:GetValue("Z06_KGMSTR")))
+                oGridModel:SetValue("Z06_MEGCAL", (U_GetMegaCal(M->Z06_DIETA) * oGridModel:GetValue("Z06_KGMSTR")))
                 oGridModel:SetValue("Z06_KGMNT" , u_CalcQtMN(M->Z06_DIETA, oGridModel:GetValue("Z06_KGMSTR"))*Z05->Z05_CABECA)
             endif
             
             cLog += "Alteração do conteúdo do campo Z06_DIETA. " + CRLF
             cSeq := GetSeq(M->Z06_DIETA)
-            nMegaCal := GetMegaCal(M->Z06_DIETA)
+            nMegaCal := U_GetMegaCal(M->Z06_DIETA)
             nMCalTrat := nMegaCal * oGridModel:GetValue("Z06_KGMSTR") //M->Z06_KGMSTR
             if oGridModel:GetValue("Z06_RECNO") == 0
                 cLog += "Novo registro " + AllTrim(Str(Z06->(RecNo()))) + " Criado." + CRLF + "{" + DToS(Z05->Z05_DATA) + "|" + Z05->Z05_VERSAO + "|" + Z05->Z05_CURRAL + "|" + Z05->Z05_LOTE + "|" + Z05->Z05_DIAPRO + "|" + oGridModel:GetValue("Z06_TRATO") + "}" + CRLF
@@ -6838,7 +6848,7 @@ if !oGridModel:IsDeleted()
 
             AjuMateria(oModel)
             if FunName() == "VAPCPA05"
-                UpdTrbTmp()
+                U_UpdTrbTmp()
             endif
         endif
 
@@ -6859,7 +6869,7 @@ if !oGridModel:IsDeleted()
             cLog += "Alteração do conteúdo do campo Z06_KGMSTR. " + CRLF
             if !Empty(oGridModel:GetValue("Z06_DIETA"))
                 oGridModel:SetValue("Z06_KGMNTR", u_CalcQtMN(oGridModel:GetValue("Z06_DIETA"), M->Z06_KGMSTR))
-                oGridModel:SetValue("Z06_MEGCAL",  GetMegaCal(oGridModel:GetValue("Z06_DIETA")) * M->Z06_KGMSTR , M->Z06_MEGCAL)
+                oGridModel:SetValue("Z06_MEGCAL",  U_GetMegaCal(oGridModel:GetValue("Z06_DIETA")) * M->Z06_KGMSTR , M->Z06_MEGCAL)
                 oGridModel:SetValue("Z06_KGMNT" , (u_CalcQtMN(oGridModel:GetValue("Z06_DIETA"), M->Z06_KGMSTR) * Z05->Z05_CABECA))
             endif
 
@@ -6891,12 +6901,12 @@ if !oGridModel:IsDeleted()
 
             AjuMateria(oModel)
             if FunName() == "VAPCPA05"
-                UpdTrbTmp()
+                U_UpdTrbTmp()
             endif
         endif
             
         if !Empty(cLog)
-            LogTrato("Alteração de campo.", cLog)
+            U_LogTrato("Alteração de campo.", cLog)
         endif
 
     endif
@@ -7118,7 +7128,7 @@ default cLote :=  Iif(FunName() == 'VAPCPA09', Z05->Z05_LOTE, (cTrbBrowse)->B8_L
                 Z05->Z05_CMSPN  := (mv_par02 / Z05->Z05_PESMAT)*100//(Z05->Z05_PESOCO + Z05->Z05_DIASDI * nGMD)
                 Z05->Z05_TOTMNI := Z05->Z05_KGMNDI
                 Z05->Z05_NROTRA := mv_par03
-                Z05->Z05_MEGCAL := GetMegaCal(mv_par01) * mv_par02
+                Z05->Z05_MEGCAL := U_GetMegaCal(mv_par01) * mv_par02
 
                 MsUnlock()
 
@@ -7126,7 +7136,7 @@ default cLote :=  Iif(FunName() == 'VAPCPA09', Z05->Z05_LOTE, (cTrbBrowse)->B8_L
 
             aKgMS := DivTrato(mv_par02, mv_par03)
             cSeq := GetSeq(mv_par01)
-            nMCalTrt := GetMegaCal(mv_par01)    
+            nMCalTrt := U_GetMegaCal(mv_par01)    
 
             // "Z06_TRATO",  "Z06_DIETA",  "Z06_KGMSTR", "Z06_KGMNTR", "Z06_RECNO"
             for i := 1 to mv_par03
@@ -7151,7 +7161,7 @@ default cLote :=  Iif(FunName() == 'VAPCPA09', Z05->Z05_LOTE, (cTrbBrowse)->B8_L
         endif
 
         if FunName() == "VAPCPA05"
-            UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
+            U_UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
         endif
 
     endif
@@ -7471,7 +7481,7 @@ TMPZ05->(DbCloseArea())
 return lRet
 
 
-/*/{Protheus.doc} UpdTrbTmp
+/*/{Protheus.doc} U_UpdTrbTmp
 Atualiza o registro corrente da tabela temporária .
 @author jr.andre
 @since 13/09/2019
@@ -7480,7 +7490,7 @@ Atualiza o registro corrente da tabela temporária .
 @param lExclui, logical, Informa se o registro da tabela temporária deve ser excluído ou atualizado
 @type function
 /*/
-static function UpdTrbTmp(lExclui)
+User function UpdTrbTmp(lExclui)
 local aArea      := GetArea()
 local aAreaTrb   := (cTrbBrowse)->(GetArea())
 local aAreaZ06   := Z06->(GetArea())
@@ -8413,7 +8423,7 @@ Local nBKPnTrtTotal := 0
 
 
                     nQuantMN := u_CalcQtMN(cCodDieta,  nQuantTrato/*aKgMS[i]*/)
-                    nMegCal := GetMegaCal(cCodDieta) * nQuantTrato/*aKgMS[i]*/
+                    nMegCal := U_GetMegaCal(cCodDieta) * nQuantTrato/*aKgMS[i]*/
                     cSeq := GetSeq(cCodDieta)
                     
                     RecLock("Z06", .T.)
@@ -8440,7 +8450,7 @@ Local nBKPnTrtTotal := 0
 
             endif
             if FunName() == "VAPCPA05"
-                UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
+                U_UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
             endif
         endif
 
@@ -8479,7 +8489,7 @@ EnableKey(.F.)
                     FWMsgRun(, { || AtuMatSec()}, "Materia Seca", "Ajustando a quantidade de materia seca para " + AllTrim(Str(mv_par01))+ "...")
                 endif
                 if FunName() == "VAPCPA05"
-                    UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
+                    U_UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
                 endif
             endif
             mv_par01 := aParam[1]
@@ -8542,7 +8552,7 @@ local nQtdMCal  := 0
                     RecLock("Z06", .F.)
                         Z06->Z06_KGMSTR := aKgMS[i]
                         Z06->Z06_KGMNTR := u_CalcQtMN(Z06->Z06_DIETA, aKgMS[i])
-                        Z06->Z06_MEGCAL := GetMegaCal(Z06->Z06_DIETA) * aKgMS[i]
+                        Z06->Z06_MEGCAL := U_GetMegaCal(Z06->Z06_DIETA) * aKgMS[i]
                         Z06->Z06_KGMNT  := u_CalcQtMN(Z06->Z06_DIETA, aKgMS[i]) * (cTrbBrowse)->B8_SALDO
                     MsUnlock()
                     nQtdeMS += Z06->Z06_KGMSTR
@@ -8717,11 +8727,11 @@ if MsgYesNo("O curral " + AllTrim((cTrbBrowse)->Z08_CODIGO) + ", lote " + AllTri
         endif
 
         if FunName() == "VAPCPA05"
-            UpdTrbTmp(.T.)
+            U_UpdTrbTmp(.T.)
         endif
     end transaction
 
-    LogTrato("Exclusão do trato para o lote" + (cTrbBrowse)->B8_LOTECTL + ".", Iif(Empty(cErro), "Trato excluido com sucesso.", "Ocorreu um problema durante a exclusão do cabeçalho do trato do lote " + (cTrbBrowse)->B8_LOTECTL + "." + CRLF + cErro))
+    U_LogTrato("Exclusão do trato para o lote" + (cTrbBrowse)->B8_LOTECTL + ".", Iif(Empty(cErro), "Trato excluido com sucesso.", "Ocorreu um problema durante a exclusão do cabeçalho do trato do lote " + (cTrbBrowse)->B8_LOTECTL + "." + CRLF + cErro))
 endif
 
 return nil 
@@ -9217,7 +9227,7 @@ local nMCalTrt  := 0
 
             for i := 1 to nQtdTrato
                 nQuantMN := u_CalcQtMN(aTrato[i][2], aKgMS[i])
-                nMCalTrt := GetMegaCal(aTrato[i][2]) * aKgMS[i]
+                nMCalTrt := U_GetMegaCal(aTrato[i][2]) * aKgMS[i]
                 cSeq := GetSeq(aTrato[i][2])
                 
                 RecLock("Z06", .T.)
@@ -9259,7 +9269,7 @@ local nMCalTrt  := 0
         FillEmpty()
         ReleaseZ05()
         if FunName() == "VAPCPA05"
-            UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
+            U_UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
         endif
     endif
 
@@ -9290,7 +9300,7 @@ if !Empty(aArea)
 endif
 return cSeq
 
-static function GetMegaCal(cDieta)
+User function GetMegaCal(cDieta)
 local aArea    := GetArea()
 local nMegaCal := ""
 

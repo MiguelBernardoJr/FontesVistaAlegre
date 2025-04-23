@@ -37,14 +37,14 @@
 /*/
 
 user function vaest004(cIndividuo, cRacao, nQuant, cArmz, cArmzRac)
-local aArea := GetArea()
-local cMovTrat := GetMV("VA_MOVTRAT")
-local cCC := GetMV("VA_CCPRDTR")
-Local cIC:= GetMV("VA_ICPRDBA")
-Local cClvl:= GetMV("VA_CLPRDBA")
+local aArea     := GetArea()
+local cMovTrat  := GetMV("VA_MOVTRAT")
+local cCC       := GetMV("VA_CCPRDTR")
+Local cIC       := GetMV("VA_ICPRDBA")
+Local cClvl     := GetMV("VA_CLPRDBA")
 
-default cArmz := ""
-default cArmzRac := ""
+default cArmz       := ""
+default cArmzRac    := ""
 
 cIndividuo := PadR(cIndividuo, TamSX3("B1_COD")[1])
 cRacao := PadR(cRacao, TamSX3("B1_COD")[1])
@@ -98,4 +98,5 @@ SB2->(DBCloseArea())
 SB1->(DBCloseArea())
 SC2->(DBCloseArea())
 
+RestArea(aArea)
 return cNumOp
