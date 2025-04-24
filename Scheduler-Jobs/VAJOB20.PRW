@@ -49,7 +49,7 @@ User Function JOB20VA()
     //dDataBase := __DATA
 
 	_cQry := " WITH DADOS AS ( " + CRLF
-   	_cQry += " select TOP 1 Z0Y_CODEI, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
+   	_cQry += " select Z0Y_CODEI, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
    	//_cQry += " select Z0Y_CODEI, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
    	_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
 	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC <> '1' " + CRLF 
@@ -240,4 +240,7 @@ Function u_ConnOne(nRecno)
 	Z0X->( DBCloseArea() )
     
     FwRestArea(aArea)
+
+	Final("Thread finalizando 123: " + cValToChar(ThreadId())  + cValToChar(time()) + " " + ProcName() + " -> " + cRunOnce)
+	
 Return .T.

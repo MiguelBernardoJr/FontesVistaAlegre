@@ -114,10 +114,10 @@ if SB1->(DbSeek(xFilial("SB1")+cIndividuo))
                 cArmzRac := SB1->B1_LOCPAD
             endif
             if SB2->(DbSeek(xFilial("SB2")+SB1->B1_COD+cArmzRac)) ;
-				.and. ( nQuant <= SB2->B2_QATU .or. (nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1) )
+				.and. ( nQuant <= SB2->B2_QATU .or. ABS(nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1) )
 				
 				If nQuant > SB2->B2_QATU .or. ABS(nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1)
-					nQuant := SB2->B2_QATU				
+					nQuant := SB2->B2_QATU
 				EndIf
 
                 aEmpenho := { { cIndividuo, cArmz, nQtdIndiv, cLoteCTL },;
@@ -188,20 +188,3 @@ RestArea(aArea)
 
 return cNumOp
 
-/*
-User function A250ETRAN()
-	ConOut('Testando PE na rotina A250ETRAN')
-Return nil
-
-User function M250BUT()
-	ConOut('.')
-	ConOut('Testando PE na rotina M250BUT')
-	ConOut('.')
-Return nil
-
-User Function MT250TOK()
-	ConOut('.')
-	ConOut('Testando PE na rotina MT250TOK')
-	ConOut('.')
-Return .T.
-*/

@@ -6894,7 +6894,7 @@ if !oGridModel:IsDeleted()
                 cLog += "Novo valor de Matéria Natural: " + AllTrim(Str(oGridModel:GetValue("Z06_KGMNTR"))) + CRLF
                 Z06->Z06_KGMSTR := M->Z06_KGMSTR
                 Z06->Z06_KGMNTR := oGridModel:GetValue("Z06_KGMNTR")
-                Z06->Z06_KGMNT  := oGridModel:GetValue("Z06_KGMNTR") * Z05->Z05_CABECA
+                Z06->Z06_KGMNT  := oGridModel:GetValue("Z06_KGMNT") * Z05->Z05_CABECA
                 Z06->Z06_MEGCAL := oGridModel:GetValue("Z06_MEGCAL")
 
             MsUnlock()
