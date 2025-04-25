@@ -117,6 +117,12 @@ if SB1->(DbSeek(xFilial("SB1")+cIndividuo))
 				.and. ( nQuant <= SB2->B2_QATU .or. ABS(nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1) )
 				
 				If nQuant > SB2->B2_QATU .or. ABS(nQuant-SB2->B2_QATU)<=GetMV("VA_DIFTRAT",,1)
+					Conout("PRODUTO 		[" + AllTrim(cRacao) + "]")
+					Conout("nQuant 			[" + cValToChar(nQuant) + "]")
+					Conout("SB2->B2_QATU 	[" + cValToChar(SB2->B2_QATU) + "]")
+					Conout("DIFERENCA 		[" + cValToChar(ABS(nQuant-SB2->B2_QATU)) + "]")
+					Conout("VA_DIFTRAT 		[" + cValToChar(GetMV("VA_DIFTRAT",,1)) + "]")
+
 					nQuant := SB2->B2_QATU
 				EndIf
 
