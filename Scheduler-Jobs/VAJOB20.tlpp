@@ -1,4 +1,5 @@
 #Include "Totvs.ch"
+#INCLUDE "TLPP-CORE.TH"
 
 #IFNDEF _ENTER_
 	#DEFINE _ENTER_ (Chr(13)+Chr(10))
@@ -8,7 +9,7 @@
 Static cSEMAFORO := Upper("VAJOB20"+cValToChar(ThreadId()))
 Static cRunOnce := "RUNONCEJOB" 
 
-User Function VAJOB20()
+User Function VAJOB20() AS Logical
 
     ConOut('VAJOB20(): ' + Time())
 	
@@ -20,23 +21,18 @@ User Function VAJOB20()
 		U_JOB20VA()
 	EndIf
 
-Return
+Return .T.
 
-User Function JOB20VA()
-   	Local aArea	   		:= GetArea()
-	Local _cQry    		:= ""
-	Local cAlias 		:= ""
-	Local cSSKey     	:= cEmpAnt+CHR(255)+cFilAnt+CHR(255)
-	local nThreads		:= 1
-	Local nI			:= 0
-	Local cIDThread		:= cValToChar(ThreadId())
-
-	If Type("__DATA") == "U"
-		Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsdDataBase, dDataBase)
-	EndIf
-	If Type("cFile") == "U"
-		Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
-	EndIf
+User Function JOB20VA() // U_JOB20VA()
+   	Local aArea	   		:= GetArea() as Array
+	Local _cQry    		:= "" as Character
+	Local cAlias 		:= "" as Character
+	Local cSSKey     	:= cEmpAnt+CHR(255)+cFilAnt+CHR(255) as Character
+	Local cIDThread		:= cValToChar(ThreadId()) as Character
+	local nThreads		:= 1 as Numeric
+	Local nI,nJ			:= 0 as Numeric
+	Local nRecno 		:= 0 as Numeric 
+	Local aSemaforos 	:= {} as Array
 
 	_cQry := " WITH DADOS AS ( " + CRLF
    	_cQry += " select Z0Y_CODEI, Z0Y_ROTA  AS ROTAS , Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
@@ -45,7 +41,7 @@ User Function JOB20VA()
 	_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF 
 	_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF 
 	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF 
-	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(__DATA)+ "' " + CRLF 
+	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF 
 	_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF
 	_cQry += " 	UNION  " + CRLF
 	_cQry += " select TOP(1) Z0Y_CODEI, Z0Y_ROTA  AS ROTAS, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF
@@ -54,7 +50,7 @@ User Function JOB20VA()
 	_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF
 	_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF
 	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF
-	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(__DATA)+ "' " + CRLF
+	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF
 	_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF 
 	_cQry += " 	UNION  " + CRLF 
    	_cQry += " select TOP(1) Z0W_CODEI, Z0W_ROTA  AS ROTAS ,Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
@@ -63,7 +59,7 @@ User Function JOB20VA()
 	_cQry += " 	 WHERE ( Z0W_QTDREA > 0 OR Z0W_PESDIG > 0)  " + CRLF 
 	_cQry += " 	   AND Z0W_DATPRC = ' '  " + CRLF 
 	_cQry += " 	   AND Z0W_CONFER = 'T' " + CRLF 
-	_cQry += " 	   AND Z0W_DATA = '" +DTOS(__DATA)+ "'" + CRLF 
+	_cQry += " 	   AND Z0W_DATA = '" +DTOS(dDataBase)+ "'" + CRLF 
 	_cQry += " 	   AND Z0W.D_E_L_E_T_ =' '  " + CRLF
 	_cQry += " 	   ) " + CRLF 
 	_cQry += " 	   SELECT DISTINCT RECNO, ROTAS, OPERACAO FROM DADOS ORDER BY OPERACAO DESC " + CRLF
@@ -74,67 +70,85 @@ User Function JOB20VA()
 	Z0X->(DBSetOrder(1))
 
 	cIDThread := cValToChar(ThreadID())
-	cSemaforo := Upper("VAJOB20"+cIDThread+"_"+cEmpAnt)
+	cSemaforo := Upper("VAJOB20"+cIDThread) 
 	
 	i := 1
 
+	cONoUT(_cQry)
 	While !((cAlias)->(EOF()))
-		Z0X->(DbGoTo((cAlias)->RECNO))
+
+		aSemaforos := {}
+		nRecNo := (cAlias)->RECNO
+		Z0X->(DbGoTo(nRecno))
+		While nRecNo == (cAlias)->RECNO
+			aAdd(aSemaforos, {(cAlias)->RECNO,(cAlias)->ROTAS,cSemaforo+"_"+(cAlias)->ROTAS})
+				
+			(cAlias)->(DBSkip())
+		enddo
 		
-		U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-					"[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
-					"Função: JOB20VA" + _ENTER_ +;
-					"Processando os dados [" + Z0X->Z0X_CODIGO + "]",;
-					.T./* lConOut */,;
-					/* lAlert */ )
+		if Len(aSemaforos) == 0
+			ConOut("Nenhum semaforo encontrado")
+			Exit
+		endif
 		
-		A330JobManual('1', cSemaforo, 'u_ConnOne', nThreads, cSSKey)
-		
+		ConOut("Recnos e Rotas Para abrir threads:")
+		ConOut("Recno;Rota;Semaforo")
+		ConOut(ArrTokStr(aSemaforos, ";"))
+
 		ConOut("Contador: " + cValToChar(i))
 		
-		ConOut("Thread Iniciada: " + cValToChar(ThreadId())  + cValToChar(time()) + " " + ProcName())
+		For nI := 1 to Len(aSemaforos)
+
+			A330JobManual('1', aSemaforos[nI,3], 'u_ConnOne', nThreads, cSSKey)
+			ConOut("Thread Iniciada: " + aSemaforos[nI,3])
+			
+			While !IpcGo(aSemaforos[nI,3], .F., aSemaforos[nI,1],aSemaforos[nI,2])
+				Sleep(500)
+			enddo
+
+		Next nI
 		
-		While !IpcGo(cSemaforo, .F., (cAlias)->RECNO,(cAlias)->Z0Y_ROTA)
-			Sleep(500)
-		EndDo
+		//While !IpcGo(cSemaforo, .F., (cAlias)->RECNO,(cAlias)->Z0Y_ROTA)
+		//	Sleep(500)
+		//EndDo
 		
-		lLoop      := .T.
-		nCntThread := 0
-
-		While lLoop 
-			aUsers := GetUserInfoArray()
-			For nI := 1 to len(aUsers)
-				If aUsers[nI][1] == cSemaforo // semaforo
-					cIDSubThr := cValToChar(aUsers[nI][3])  // ID da working thread
-					cGlbName := "cThrWrk"+cIDSubThr // define o nome da variavel global
-					cGlbValue := GetGlbValue(cGlbName) // Verifica valor da variável
-
-					If cGlbValue == "1"
-						nCntThread++ // conta qtas working threads abertas e executando
-					EndIf
-				EndIf
-			Next nI
-
-			If nCntThread == 0
-				lLoop := .F. //Todas processadas, encerra o loop
-			EndIf
+		For nI := 1 to Len(aSemaforos)
+			lLoop      := .T.
 			nCntThread := 0
-			sleep(2000)
 
-			//Limpa array
-			For nI := 1 To Len(aUsers)
-				aSize(aUsers[nI], 0)
-			Next nI
-			aUsers := aSize(aUsers,0)
-		EndDo
+			While lLoop 
+				aUsers := GetUserInfoArray()
+				For nJ := 1 to len(aUsers)
+					If aUsers[nJ][1] == cSemaforo // semaforo
+						cIDSubThr := cValToChar(aUsers[nJ][3])  // ID da working thread
+						cGlbName := "cThrWrk"+cIDSubThr // define o nome da variavel global
+						cGlbValue := GetGlbValue(cGlbName) // Verifica valor da variável
 
-		ConOut("Thread processada: " + cValToChar(ThreadId())  + cValToChar(time()) + " " + ProcName())
+						If cGlbValue == "1"
+							nCntThread++ // conta qtas working threads abertas e executando
+						EndIf
+					EndIf
+				Next nJ
 
-		A330JobManual('2', cSemaforo, 'u_ConnOne', nThreads, cSSKey )
-		
-		ConOut("Thread finalizada: " + cValToChar(ThreadId())  + cValToChar(time()) + " " + ProcName())
-		
-		(cAlias)->(DBSkip())
+				If nCntThread == 0
+					lLoop := .F. //Todas processadas, encerra o loop
+				EndIf
+				nCntThread := 0
+				sleep(2000)
+
+				//Limpa array
+				For nJ := 1 To Len(aUsers)
+					aSize(aUsers[nJ], 0)
+				Next nJ
+				aUsers := aSize(aUsers,0)
+			EndDo
+		Next nI
+
+		For nI := 1 to Len(aSemaforos)
+			A330JobManual('2', aSemaforos[nI,3], 'u_ConnOne', nThreads, cSSKey )
+			ConOut("Thread finalizada: " + aSemaforos[nI,3])
+		Next nI
+
 		i++
 	EndDo
 	(cAlias)->(DBCloseArea())
@@ -213,24 +227,24 @@ Static Function MontaQuery()
 	oZ0WSel := FwExecStatement():New(_cQry)
 Return nil
 
-Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, cSessionKey )
+Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, cSessionKey ) AS Logical
 	LOCAL nMinThread
 	LOCAL nMaxThread
 	LOCAL nFreeThread
 	LOCAL nIncThread
 
-	Default nTotThread  := SuperGetMV("MV_M330THR",.F.,1)
+	//Default nTotThread  := SuperGetMV("MV_M330THR",.F.,1)
 	Default cSessionKey := cEmpAnt+CHR(255)+cFilAnt+CHR(255)
 
 	// inicia o manualJob
 	If cStatus == "1"
-		If nTotThread > 10
-			nTotThread := 10
-		ElseIf nTotThread == 9
-			nTotThread := 10
-		Else
-			nTotThread := nTotThread+2
-		EndIf
+		//If nTotThread > 10
+		//	nTotThread := 10
+		//ElseIf nTotThread == 9
+		//	nTotThread := 10
+		//Else
+		//	nTotThread := nTotThread+2
+		//EndIf
 		
 		nMinThread := 1 //Val(GetSrvProfString( "ThreadMinOrdem", cValToChar(nTotThread) ))
 		nMaxThread := 1 //Val(GetSrvProfString( "ThreadMaxOrdem", "30" ))
@@ -240,10 +254,10 @@ Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, 
 
 	// encerra o manualJob
 	If cStatus == "2"
-		nMinThread := 0
-		nMaxThread := 0
+		nMinThread 	:= 0
+		nMaxThread 	:= 0
 		nFreeThread := 0
-		nIncThread := 0
+		nIncThread 	:= 0
 	EndIf
 
    ManualJob(	cIdentificador/*Nome do indentificador do job*/,;
@@ -262,6 +276,7 @@ Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, 
 
 	If cStatus == "2"
 		DownThread(cIdentificador)
+		PUTMV("MV_Z02SEQ","")
 	EndIf
 
 Return .T.
@@ -311,7 +326,9 @@ Static Function DownThread(cIdentificador)
 				EndIf
 			EndIf
 		Next nI
+
 		aUsers := aSize(aUsers,0)
+		
 		If nCntThread ==0
 			lLoop := .F.
 		EndIf
@@ -321,7 +338,7 @@ Static Function DownThread(cIdentificador)
 
 RETURN NIL
 
-USER FUNCTION M330JOBSTART(cParam)
+USER FUNCTION M330JOBSTART(cParam) AS Logical
 	LOCAL cGlbName
 	//LOCAL cLFil
 	//LOCAL cLEmp
@@ -342,7 +359,7 @@ USER FUNCTION M330JOBSTART(cParam)
 	A330ULckGlb(cGlbName)
 RETURN .T.
 
-USER FUNCTION M330JOBEXIT()
+USER FUNCTION M330JOBEXIT() AS Logical
 RETURN .T.
 
 /*/{Protheus.doc} A330LckGlb
@@ -379,10 +396,11 @@ Return
 /*
  * Funcao que sera chamada uma vez
 */
-Function u_ConnOne(lBreak,nRecno,cRota)
+Function u_ConnOne(lBreak,nRecno,cRota) AS Logical
     LOCAL cGlbName as Character
 	LOCAL lThread as Logical
-
+	Local cSequen as Character
+	
 	If lBreak
 		killapp(.T.)
 	EndIf
@@ -395,24 +413,46 @@ Function u_ConnOne(lBreak,nRecno,cRota)
 	Private aParRet 	:= {}
 
     MontaQuery()
+	//MV_Z02SEQ
+	oZ02SEQ:SetString(1, FwxFilial("Z02"))
+
+	cSequen := oZ02SEQ:ExecScalar('SEQ')
+	nSeqZ02 := Val(cSequen) + 1 
+	cSequen := StrZero(nSeqZ02,TamSx3("Z02_SEQUEN")[1])
+
+	if Empty(GETMV("MV_Z02SEQ")) 
+		PutMv("MV_Z02SEQ",cSequen)
+	ELSE
+		IF cSequen <= GETMV("MV_Z02SEQ")
+			cSequen := StrZero(Val(GETMV("MV_Z02SEQ")) + 1, TamSx3("Z02_SEQUEN")[1])
+			PutMv("MV_Z02SEQ",cSequen)
+		endif
+	endif
+
+	ConOut("Filial Z02: " + FwxFilial("Z02"))
+	ConOut("cSequen: " + cSequen)
+
+	cSeqZ02 := "cSeqZ02"
+
+	if !Empty(cSequen)
+		A330LckGlb(cSeqZ02)
+		PutGlbValue(cSeqZ02,cSequen)
+		A330ULckGlb(cSeqZ02)
+	ENDIF
 
 	cGlbName  := "cThrWrk"+cValToChar(ThreadId())
 	A330LckGlb(cGlbName)
 	PutGlbValue(cGlbName,"1")
 	A330ULckGlb(cGlbName)
 	
-	ConOut("Executando U_PrcBatTrt")
+	ConOut("Recno: " + cValToChar(nRecno))
+
+	ConOut("Executando U_PrcBatTrt" + " _ " +  cRota)
 
 	lThread := .T.
-	ConOut("Thread executando: " + cValToChar(ThreadId()) + " Data atual " + cValToChar(date()) + " " + cValToChar(time()) + " " + ProcName() + " -> " + cRunOnce)
-	
-	conout("Recno: " + cValToChar(nRecno))
 
 	If Type("__DATA") == "U"
-		Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsdDataBase, dDataBase)
-	EndIf
-	If Type("cFile") == "U"
-		Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
+		Private __DATA		:= dDataBase as Date
 	EndIf
 
 	aParRet := {}
@@ -453,7 +493,7 @@ Function u_ConnOne(lBreak,nRecno,cRota)
 		oZ02SEQ := nil
 	endif
 
-	ConOut("Finalizou U_PrcBatTrt")
+	ConOut("Finalizou U_PrcBatTrt"+ " _ " +  cRota)
 
 	A330LckGlb(cGlbName)
     PutGlbValue(cGlbName,"0")
@@ -461,3 +501,4 @@ Function u_ConnOne(lBreak,nRecno,cRota)
 
 
 Return .T.
+

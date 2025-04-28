@@ -434,6 +434,7 @@ local i := 0
 // local cUpd := ""
 local aNumOp := {}, aAuxNumOp := {}
 Default cArmazem  := "01"
+Local cNameLock := ""
 
 If Type("__DATA") == "U"
 	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
@@ -486,20 +487,37 @@ for i := 1 to Len(aDados)
         Antes de enviar os parametros para o PrcLote
         Fazer laço e criar Array com as posições para passar na função PrcLote no lugar dessas posições
          - Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,10] 
-        
-
         */
 
         aAuxNumOp := FWMsgRun(, {|| ProcLote( aDados[i,04], Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,09], aDados[i,10] ) },;
 							"Processando [VAEST020: ProcZ02]",;
 							"Processando dados ["+ StrZero(i,5) + " de " + StrZero(Len(aDados),5) + ": " + AllTrim(aDados[i,04]) +"]")
 		AAdd( aNumOp , aAuxNumOp )
+
         if !Empty(aNumOp)
             Z04->(DbSetOrder(1))
             if Z04->(DbSeek(xFilial('Z04')+cSequencia+aDados[i,04]))
-                RecLock('Z04', .f.)
-                    Z04->Z04_NUMOP := u_AToS(aNumOp)
-                Z04->(MsUnLock())
+
+                IF IsInCallStack("u_ConnOne")  // Se não estiver na conexão do One
+                    cNameLock := "PROCZ02"+Alltrim(cSequencia)+Alltrim(aDados[i,04])
+                    
+                    While !LockByName(cNameLock)
+                        Sleep(500)
+                    enddo
+                    
+                    ConOut("Bloqueio de " + cNameLock + " - VAEST020 - PROCZ02")
+
+                    RecLock('Z04', .f.)
+                        Z04->Z04_NUMOP := u_AToS(aNumOp)
+                    Z04->(MsUnLock())
+
+                    UnLockByName(cNameLock)
+                    ConOut("Desbloqueio de " + cNameLock + " - VAEST020 - PROCZ02")
+                else
+                    RecLock('Z04', .f.)
+                        Z04->Z04_NUMOP := u_AToS(aNumOp)
+                    Z04->(MsUnLock())
+                ENDIF 
             endif
         endif
     endif.

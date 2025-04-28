@@ -675,7 +675,6 @@ User Function btnPrc()
 	Private oZ0WQry 	:= Nil
 	Private oZ0WSel 	:= Nil
 
-
 	nAviso := Aviso("Processamento","Deseja fazer o apontamento de produção de  ?",{"Todos","Atual","Cancela"})
 	
 	NAviso := 1
@@ -4278,16 +4277,34 @@ EndIf
 
 Private cNumOp := ""
 
-//__DATA := cToD("23/10/2024")
+//ConOut("Database: " + dToS(__DATA))
+//ConOut("Data Z0X: " + dToS(Z0X->Z0X_DATA))
+//ConOut("Data anterior: " + dToS(__DATA))
+__DATA := cToD("20/03/2025")
+
 If (__DATA != Z0X->Z0X_DATA)
 	MsgInfo("A data do sistema nao pode ser diferente da data do arquivo.")
 	RestArea(aArea)
 	Return (Nil)
 EndIf
 
-oZ02SEQ:SetString(1, FwxFilial("Z02"))
+IF !IsInCallStack("u_ConnOne")
+	oZ02SEQ:SetString(1, FwxFilial("Z02"))
 
-cSequen := oZ02SEQ:ExecScalar('SEQ')
+	cSequen := oZ02SEQ:ExecScalar('SEQ')
+	nSeqZ02 := Val(cSequen) + 1 
+	cSequen := StrZero(nSeqZ02,TamSx3("Z02_SEQUEN")[1])
+
+	ConOut("Sequencia oZ02SEQ: " + cSequen)
+else
+	cSequen := GETMV("MV_Z02SEQ")
+
+	ConOut("Sequencia cSeqZ02: " + cSequen)
+ENDIF
+
+/* ---------------------------- */
+//			Return nil	
+/* ---------------------------- */
 
 DBSelectArea("Z02")
 Z02->(DBSetOrder(1))
@@ -4318,10 +4335,13 @@ Begin Transaction
 		oZ0YQry:SetString(4, aParRet[3])
 	endif
 
-	MEMOWRITE("C:\TOTVS_RELATORIOS\EXPIMPPRCC.sql", oZ0YQry:getFixQuery())
+	ConOut(oZ0YQry:getFixQuery())
+	
+	MEMOWRITE("C:\TOTVS_RELATORIOS\EXPIMPPRCC1.sql", oZ0YQry:getFixQuery())
 
 	cAlias := oZ0YQry:OpenAlias()
 	
+	ConOut("Linha 4342")
 	If !((cAlias)->(EOF()))
 		cCodRec := (cAlias)->RECEITA
 		cCodOrd := (cAlias)->ORDEM
@@ -4334,6 +4354,7 @@ Begin Transaction
 	
 	While (!((cAlias)->(EOF())) .and. !lBrk)
 	
+		ConOut("Linha 4354")
 		RecLock("Z03", .T.)
 			Z03->Z03_FILIAL := fwxFilial("Z03")
 			Z03->Z03_SEQUEN := cSequen
@@ -4349,6 +4370,7 @@ Begin Transaction
 		Z03->(MSUnlock())
 		
 		If (((cAlias)->RECEITA != cCodRec) .OR. ((cAlias)->ORDEM != cCodOrd))
+			ConOut("Linha 4369")
 
 			TryException
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
@@ -4357,10 +4379,10 @@ Begin Transaction
 						  "Processando os dados [" + cSequen + "-" + AllTrim((cAlias)->ORDEM) + "]",;
 						  .T./* lConOut */,;
 						  /* lAlert */ )
-				FWMsgRun(, {|| U_VAEST003(cCodRec, nQtdTot, "01", aEmp) },;
+				FWMsgRun(, {|| /* cNumOP :=   */U_VAEST003(cCodRec, nQtdTot, "01", aEmp) },;
 								"Processando [VAEST003]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
 								"Processando os dados [" + cSequen + "-" + AllTrim((cAlias)->ORDEM) + "]" )
-
+				ConOut("Linha 4380: cNumOp: " + cNumOp)
 			CatchException Using oException
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
 						   "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
@@ -4376,6 +4398,8 @@ Begin Transaction
 				(cAlias)->(DBCloseArea())
 				Break
 			EndIf
+		
+			ConOut("VAPCPA13 cNumOp: " + cNumOp)
 
 			cQryUpd := " UPDATE " + RetSqlName("Z03") + _ENTER_
 			cQryUpd += " SET Z03_NUMOP = '" + cNumOp + "'" + _ENTER_
@@ -4417,7 +4441,7 @@ Begin Transaction
 				  .T./* lConOut */,;
 				  /* lAlert */ )
 		
-		FWMsgRun(, {|| U_VAEST003(cCodRec, nQtdTot, "01", aEmp) },;
+		FWMsgRun(, {|| /* cNumOp :=  */ U_VAEST003(cCodRec, nQtdTot, "01", aEmp) },;
 								"Processando [VAEST003]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
 								"Processando os dados [" + AllTrim(cCodRec) + "-" + AllTrim(cCodRec) + AllTrim(cCodOrd) + "]" )
 
@@ -4489,7 +4513,12 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 
 	Begin Transaction
 
-		cSequen := Soma1(cSequen)
+		IF IsInCallStack("U_conOne")
+			cSequen := Soma1(GETMV("MV_Z02SEQ"))
+			PUTMV("MV_Z02SEQ", cSequen)
+		else
+			cSequen := Soma1(cSequen)
+		endif 
 	
 		RecLock("Z02", .T.)
 			Z02->Z02_FILIAL := fwxFilial("Z02")
