@@ -15,7 +15,7 @@ User Function VAJOB20() AS Logical
 	
 	If Type("oMainWnd") == "U"
 		ConOut('oMainWnd: ' + Time())
-		U_RunFunc("U_JOB20VA()",'01','01',3) 
+		U_RunFunc("U_JOB20VA()",'01','01',3)
 	Else
 		ConOut('Else oMainWnd: ' + Time())
 		U_JOB20VA()
@@ -35,7 +35,7 @@ User Function JOB20VA() // U_JOB20VA()
 	Local aSemaforos 	:= {} as Array
 
 	_cQry := " WITH DADOS AS ( " + CRLF
-   	_cQry += " select Z0Y_CODEI, Z0Y_ROTA  AS ROTAS , Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
+   	_cQry += " select Z0Y_CODEI, Z0Y_ROTA  AS ROTAS , Z0Y_RECEIT AS RECEITA , Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
    	_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
 	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC <> '1' " + CRLF 
 	_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF 
@@ -43,8 +43,9 @@ User Function JOB20VA() // U_JOB20VA()
 	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF 
 	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF 
 	_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF
+	//_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
 	_cQry += " 	UNION  " + CRLF
-	_cQry += " select TOP(1) Z0Y_CODEI, Z0Y_ROTA  AS ROTAS, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF
+	_cQry += " select TOP(1) Z0Y_CODEI, Z0Y_ROTA  AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF
    	_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
 	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC = '1' " + CRLF 
 	_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF
@@ -52,8 +53,9 @@ User Function JOB20VA() // U_JOB20VA()
 	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF
 	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF
 	_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF 
+	//_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
 	_cQry += " 	UNION  " + CRLF 
-   	_cQry += " select TOP(1) Z0W_CODEI, Z0W_ROTA  AS ROTAS ,Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
+   	_cQry += " select TOP(1) Z0W_CODEI, Z0W_ROTA  AS ROTAS , Z0W_RECEIT AS RECEITA ,Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
    	_cQry += "   FROM "+RetSqlName("Z0W")+" Z0W " + CRLF 
 	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0W_FILIAL AND Z0X_CODIGO = Z0W_CODEI AND Z0X_DATA = Z0W_DATA AND Z0X.D_E_L_E_T_ =' '  --AND Z0X_OPERAC = '1'" + CRLF 
 	_cQry += " 	 WHERE ( Z0W_QTDREA > 0 OR Z0W_PESDIG > 0)  " + CRLF 
@@ -61,8 +63,9 @@ User Function JOB20VA() // U_JOB20VA()
 	_cQry += " 	   AND Z0W_CONFER = 'T' " + CRLF 
 	_cQry += " 	   AND Z0W_DATA = '" +DTOS(dDataBase)+ "'" + CRLF 
 	_cQry += " 	   AND Z0W.D_E_L_E_T_ =' '  " + CRLF
-	_cQry += " 	   ) " + CRLF 
-	_cQry += " 	   SELECT DISTINCT RECNO, ROTAS, OPERACAO FROM DADOS ORDER BY OPERACAO DESC " + CRLF
+	//_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
+	_cQry += " 	   ) " + CRLF
+	_cQry += " 	   SELECT DISTINCT RECNO, ROTAS, RECEITA, OPERACAO FROM DADOS ORDER BY OPERACAO DESC " + CRLF
 	
 	cAlias := MpSysOpenQuery(_cQry)
 
@@ -70,19 +73,21 @@ User Function JOB20VA() // U_JOB20VA()
 	Z0X->(DBSetOrder(1))
 
 	cIDThread := cValToChar(ThreadID())
-	cSemaforo := Upper("VAJOB20"+cIDThread) 
+	cSemaforo := Upper("VAJOB20"+cIDThread)
 	
 	i := 1
 
-	cONoUT(_cQry)
+	//cONoUT(_cQry)
 	While !((cAlias)->(EOF()))
 
 		aSemaforos := {}
 		nRecNo := (cAlias)->RECNO
+		cDieta := ""
 		Z0X->(DbGoTo(nRecno))
-		While nRecNo == (cAlias)->RECNO
+		
+		While nRecNo == (cAlias)->RECNO .and. cDieta != (cAlias)->RECEITA
 			aAdd(aSemaforos, {(cAlias)->RECNO,(cAlias)->ROTAS,cSemaforo+"_"+(cAlias)->ROTAS})
-				
+			cDieta := (cAlias)->RECEITA
 			(cAlias)->(DBSkip())
 		enddo
 		
@@ -429,8 +434,8 @@ Function u_ConnOne(lBreak,nRecno,cRota) AS Logical
 		endif
 	endif
 
-	ConOut("Filial Z02: " + FwxFilial("Z02"))
-	ConOut("cSequen: " + cSequen)
+	//ConOut("Filial Z02: " + FwxFilial("Z02"))
+	//ConOut("cSequen: " + cSequen)
 
 	cSeqZ02 := "cSeqZ02"
 
@@ -445,7 +450,7 @@ Function u_ConnOne(lBreak,nRecno,cRota) AS Logical
 	PutGlbValue(cGlbName,"1")
 	A330ULckGlb(cGlbName)
 	
-	ConOut("Recno: " + cValToChar(nRecno))
+	//ConOut("Recno: " + cValToChar(nRecno))
 
 	ConOut("Executando U_PrcBatTrt" + " _ " +  cRota)
 

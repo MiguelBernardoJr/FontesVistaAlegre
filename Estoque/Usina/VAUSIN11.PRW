@@ -195,48 +195,74 @@ Static Function USIN11PG()
         MsgStop("Essa ação só pode ser executada em uma operação de inclusão!")
         return nil
     endif
-
-    cQry := " select  ZAL_FILIAL  " + CRLF
-    cQry += "        ,ZAL_DATA   " + CRLF
-    cQry += "        ,ZAL_NF     " + CRLF
-    cQry += "        ,F1_FILIAL " + CRLF
-    cQry += "        ,F1_VALBRUT " + CRLF
-    cQry += "        ,D1_QUANT " + CRLF
-    cQry += "        ,ZPB_PESOL  " + CRLF
-    cQry += "        ,ZAL_ZPBCOD " + CRLF
-    cQry += "        ,ZAL_DTPES  " + CRLF
-    cQry += "        ,ZPB_PESOL " + CRLF
-    cQry += "        ,ZAL_KGM3   " + CRLF
-    cQry += "        ,ZAL_TFERM  " + CRLF
-    cQry += "        ,ZAL_TALCOL " + CRLF
-    cQry += "        ,ZAL_DENAPA " + CRLF
-    cQry += "        ,ZAL_FOLU   " + CRLF
-    cQry += "        ,ZAL_MATSEX " + CRLF
-    cQry += "        ,ZAL_FMATSE " + CRLF
-    cQry += "        ,ZAL_FTALCO " + CRLF
-    cQry += "        ,ZAL_MKGM3  " + CRLF
-    cQry += "        ,ZAL.R_E_C_N_O_  AS RECNO" + CRLF
-    cQry += "    from "+RetSqlName("ZAL")+" ZAL " + CRLF
-    cQry += "    JOIN "+RetSqlName("SF1")+" SF1 ON  " + CRLF
-    cQry += "        ZAL_NF = F1_DOC " + CRLF
-    cQry += "    AND ZAL_FORNEC = F1_FORNECE " + CRLF
-    cQry += "    AND ZAL_LOJA = F1_LOJA " + CRLF
-    cQry += "    AND SF1.D_E_L_E_T_ = '' " + CRLF
-    cQry += "    JOIN "+RetSqlName("SD1")+" SD1 ON " + CRLF 
-	cQry += "    	 ZAL_NF = D1_DOC " + CRLF 
-	cQry += "    AND ZAL_FORNEC = D1_FORNECE " + CRLF 
-    cQry += "    AND ZAL_LOJA = D1_LOJA  " + CRLF 
-    cQry += "    AND SD1.D_E_L_E_T_ = ''  " + CRLF 
-    cQry += "    JOIN "+RetSqlName("ZPB")+" ZPB ON  " + CRLF
-    cQry += "        ZAL_DTPES = ZPB_DATA " + CRLF
-    cQry += "    AND ZAL_ZPBCOD = ZPB_CODIGO " + CRLF
-    cQry += "    AND ZPB.D_E_L_E_T_ = '' " + CRLF
-    cQry += "    WHERE ZAL.D_E_L_E_T_ = '' " + CRLF
-    cQry += "    AND ZAL_FORNEC = '"+oCab:GetValue("ZAC_FORNEC")+"' " + CRLF
-    cQry += "    AND ZAL_LOJA = '"+oCab:GetValue("ZAC_LOJA")+"' " + CRLF
-    cQry += "    AND ZAL_DTPES BETWEEN '"+dToS(oCab:GetValue("ZAC_DTINI"))+"' AND '"+dToS(oCab:GetValue("ZAC_DTFIM"))+"'  " + CRLF
-    cQry += "    AND ZAL_TIPO = '1' " + CRLF
-    cQry += "    AND ZAL_PROC <> 'S' " + CRLF
+    
+    cQry := " WITH NotasSeparadas AS ( " + CRLF
+    cQry += "     SELECT  " + CRLF
+    cQry += "         ZAL.R_E_C_N_O_, " + CRLF
+    cQry += "         ZAL.ZAL_FILIAL, " + CRLF
+    cQry += "         ZAL.ZAL_DATA, " + CRLF
+    cQry += "         value AS NOTA, -- cada nota da lista " + CRLF
+    cQry += "         ZAL.ZAL_FORNEC, " + CRLF
+    cQry += "         ZAL.ZAL_LOJA, " + CRLF
+    cQry += "         ZAL.ZAL_DTPES, " + CRLF
+    cQry += "         ZAL.ZAL_ZPBCOD, " + CRLF
+    cQry += "         ZAL.ZAL_KGM3, " + CRLF
+    cQry += "         ZAL.ZAL_TFERM, " + CRLF
+    cQry += "         ZAL.ZAL_TALCOL, " + CRLF
+    cQry += "         ZAL.ZAL_DENAPA, " + CRLF
+    cQry += "         ZAL.ZAL_FOLU, " + CRLF
+    cQry += "         ZAL.ZAL_MATSEX, " + CRLF
+    cQry += "         ZAL.ZAL_FMATSE, " + CRLF
+    cQry += "         ZAL.ZAL_FTALCO, " + CRLF
+    cQry += "         ZAL.ZAL_MKGM3 " + CRLF
+    cQry += "     FROM "+RetSqlName("ZAL")+" ZAL " + CRLF
+    cQry += "     CROSS APPLY STRING_SPLIT(ZAL.ZAL_NF, ';') " + CRLF
+    cQry += "     WHERE ZAL.D_E_L_E_T_ = '' " + CRLF
+    cQry += "     AND ZAL.ZAL_FORNEC = '"+oCab:GetValue("ZAC_FORNEC")+"' " + CRLF
+    cQry += "     AND ZAL.ZAL_LOJA = '"+oCab:GetValue("ZAC_LOJA")+"' " + CRLF
+    cQry += "     AND ZAL.ZAL_DTPES BETWEEN '"+dToS(oCab:GetValue("ZAC_DTINI"))+"' AND '"+dToS(oCab:GetValue("ZAC_DTFIM"))+"' " + CRLF
+    cQry += "     AND ZAL.ZAL_TIPO = '1' " + CRLF
+    cQry += "     AND ZAL.ZAL_PROC <> 'S' " + CRLF
+    cQry += " ), " + CRLF
+    cQry += " DadosComValores AS ( " + CRLF
+    cQry += "     SELECT  " + CRLF
+    cQry += "         N.*, " + CRLF
+    cQry += "         F1.F1_FILIAL, " + CRLF
+    cQry += "         F1.F1_VALBRUT, " + CRLF
+    cQry += "         D1.D1_QUANT, " + CRLF
+    cQry += "         ZPB.ZPB_PESOL " + CRLF
+    cQry += "     FROM NotasSeparadas N " + CRLF
+    cQry += "     LEFT JOIN "+RetSqlName("SF1")+" F1 ON F1.F1_DOC = N.NOTA AND F1.F1_FORNECE = N.ZAL_FORNEC AND F1.F1_LOJA = N.ZAL_LOJA AND F1.D_E_L_E_T_ = '' " + CRLF
+    cQry += "     LEFT JOIN "+RetSqlName("SD1")+" D1 ON D1.D1_DOC = N.NOTA AND D1.D1_FORNECE = N.ZAL_FORNEC AND D1.D1_LOJA = N.ZAL_LOJA AND D1.D_E_L_E_T_ = '' " + CRLF
+    cQry += "     LEFT JOIN "+RetSqlName("ZPB")+" ZPB ON ZPB.ZPB_DATA = N.ZAL_DTPES AND ZPB.ZPB_CODIGO = N.ZAL_ZPBCOD AND ZPB.D_E_L_E_T_ = '' " + CRLF
+    cQry += " ) " + CRLF
+    cQry += " SELECT  " + CRLF
+    cQry += "     ZAL_FILIAL, " + CRLF
+    cQry += "     ZAL_DATA, " + CRLF
+    cQry += "     STRING_AGG(NOTA, ';') AS ZAL_NF, " + CRLF
+    cQry += "     ZAL_FORNEC, " + CRLF
+    cQry += "     ZAL_LOJA, " + CRLF
+    cQry += "     ZAL_DTPES, " + CRLF
+    cQry += "     ZAL_ZPBCOD, " + CRLF
+    cQry += "     F1_FILIAL, " + CRLF
+    cQry += "     SUM(F1_VALBRUT) AS F1_VALBRUT, " + CRLF
+    cQry += "     SUM(D1_QUANT) AS D1_QUANT, " + CRLF
+    cQry += "     MAX(ZPB_PESOL) AS ZPB_PESOL, " + CRLF
+    cQry += "     ZAL_KGM3, " + CRLF
+    cQry += "     ZAL_TFERM, " + CRLF
+    cQry += "     ZAL_TALCOL, " + CRLF
+    cQry += "     ZAL_DENAPA, " + CRLF
+    cQry += "     ZAL_FOLU, " + CRLF
+    cQry += "     ZAL_MATSEX, " + CRLF
+    cQry += "     ZAL_FMATSE, " + CRLF
+    cQry += "     ZAL_FTALCO, " + CRLF
+    cQry += "     ZAL_MKGM3, " + CRLF
+    cQry += "     R_E_C_N_O_ AS RECNO " + CRLF
+    cQry += " FROM DadosComValores " + CRLF
+    cQry += " GROUP BY  " + CRLF
+    cQry += "     ZAL_FILIAL, ZAL_DATA, ZAL_FORNEC, ZAL_LOJA, ZAL_DTPES, ZAL_ZPBCOD, " + CRLF
+    cQry += "     F1_FILIAL,ZAL_KGM3, ZAL_TFERM, ZAL_TALCOL, ZAL_DENAPA, ZAL_FOLU, ZAL_MATSEX, " + CRLF
+    cQry += "     ZAL_FMATSE, ZAL_FTALCO, ZAL_MKGM3, R_E_C_N_O_ " + CRLF
     
     If lower(cUserName) $ 'Administrador,bernardo,ioliveira,atoshio'
 		MemoWrite(StrTran(cArquivo,".xml","")+cPerg+".sql" , cQry)
@@ -303,11 +329,11 @@ Static Function USIN11PG()
         while !(cAlias)->(EOF())
 
             oGrid:AddLine()
-            oGrid:SetValue("ZAC_FILNF"  ,(cAlias)->F1_FILIAL )
-            oGrid:SetValue("ZAC_NOTFIS" ,(cAlias)->ZAL_NF    )
-            oGrid:SetValue("ZAC_VALNFN" ,(cAlias)->F1_VALBRUT) //ok
-            oGrid:SetValue("ZAC_QTDNF"  ,(cAlias)->D1_QUANT  ) // ok
-            oGrid:SetValue("ZAC_PESOL"  ,(cAlias)->ZPB_PESOL ) //
+            oGrid:SetValue("ZAC_FILNF"  ,Alltrim((cAlias)->F1_FILIAL) )//ok
+            oGrid:SetValue("ZAC_NOTFIS" ,AllTrim((cAlias)->ZAL_NF)    )//ok
+            oGrid:SetValue("ZAC_VALNFN" ,(cAlias)->F1_VALBRUT)//ok
+            oGrid:SetValue("ZAC_QTDNF"  ,(cAlias)->D1_QUANT  )//ok
+            oGrid:SetValue("ZAC_PESOL"  ,(cAlias)->ZPB_PESOL )//ok
             
             nPesoMedio := ((cAlias)->(D1_QUANT+ZPB_PESOL)) / 2 
             oGrid:SetValue("ZAC_PESOM"  , nPesoMedio )

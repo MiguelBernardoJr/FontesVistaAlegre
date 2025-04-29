@@ -18,8 +18,7 @@
 
 #IFNDEF _ENTER_
 	#DEFINE _ENTER_ (Chr(13)+Chr(10))
-	// Alert("miguel")
-#ENDIF 
+#ENDIF
 
 static cTitulo := "Importação do Trato"
 
@@ -31,7 +30,6 @@ Tipo:         C
 Descrição:    Parametro customizado usado pela rotina vaest020. Grupos de produtos que apropriarao os custos de alimentacao separados por '|'.
 Conteudo:     BOV
 /*/
-
 
 /*/{Protheus.doc} VAEST020
 Browse para rotina de importação de trato.
@@ -132,9 +130,8 @@ local oStTot1 := FWCalcStruct(oModel:GetModel('TOT_SALDO1'))
     oStPai:RemoveField("Z02_TPARQ")
 
 return oView
-
-
-/*/{Protheus.doc} u_Est020
+/*/
+{Protheus.doc} u_Est020
 Pontos de entrada para tratamento de dados.
 @return lRet -> Sempre .T.
 /*/
@@ -144,7 +141,7 @@ local lRet := .T.
 local aParam := ParamIXB
 local oObj := aParam[1]
 local cIdPonto := aParam[2]
-// local cIdModel := oObj:GetId()
+//local cIdModel := oObj:GetId()
 local cClasse := oObj:ClassName()
 
 local nLinha := 0
@@ -297,14 +294,14 @@ Identifica o arquivo e efetua a importação do trato
 @return nil
 /*/
 user function Est20Trato()
-local aSay       := {}
-local aButton    := {}
-local nOpc       := 0
-local Titulo     := 'Importação do Trato/Alimentação'
-local cDesc      := 'Esta rotina fará a ' + lower(Titulo)
-local cDesc      += ', confome estrutura definida '
-local cDesc2     := 'na tabela Z04.'
-local lOk        := .T.
+    local aSay       := {}
+    local aButton    := {}
+    local nOpc       := 0
+    local Titulo     := 'Importação do Trato/Alimentação'
+    local cDesc      := 'Esta rotina fará a ' + lower(Titulo)
+    local cDesc      += ', confome estrutura definida '
+    local cDesc2     := 'na tabela Z04.'
+    local lOk        := .T.
 
     aAdd(aSay, cDesc)
     aAdd(aSay, cDesc2)
@@ -321,7 +318,8 @@ local lOk        := .T.
 
 return nil
 
-/*/{Protheus.doc} procAux
+/*/
+{Protheus.doc} procAux
 Função Auxilar para tratamento da importação dos dados
 @return lOk,
 /*/
@@ -443,7 +441,12 @@ If Type("cFile") == "U"
 	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
 EndIf
 
+//ConOut("PROCZ02")
 ProcRegua(Len(aDados))
+
+//If Len(aDados) == 0
+//    ConOUt("Não há dados PROCZ02")
+//endif
 
 If Len(aDados) > 0
 	If !Empty( _cMSG := Z04xSB2Sld020( cSequencia ) )
@@ -471,14 +474,12 @@ for i := 1 to Len(aDados)
     
     aNumOp    := {}
     if Val(aDados[i,08]) > 0
-	 
+	
 		U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
 						 "Processando [VAEST020: ProcZ02]" + _ENTER_ + "Processando dados ["+ StrZero(i,5) + " de " + StrZero(Len(aDados),5) + ": " + AllTrim(aDados[i,04]) +"]",;
 						  .T./* lConOut */,;
 						  /* lAlert */ )
-		
-        
-        
+	
         //TODO
         /*
         // ProcLote(cLote, cRacao, nQuant, cArmz, cArmzRac)
@@ -505,14 +506,14 @@ for i := 1 to Len(aDados)
                         Sleep(500)
                     enddo
                     
-                    ConOut("Bloqueio de " + cNameLock + " - VAEST020 - PROCZ02")
+                    //ConOut("Bloqueio de " + cNameLock + " - VAEST020 - PROCZ02")
 
                     RecLock('Z04', .f.)
                         Z04->Z04_NUMOP := u_AToS(aNumOp)
                     Z04->(MsUnLock())
 
                     UnLockByName(cNameLock)
-                    ConOut("Desbloqueio de " + cNameLock + " - VAEST020 - PROCZ02")
+                    //ConOut("Desbloqueio de " + cNameLock + " - VAEST020 - PROCZ02")
                 else
                     RecLock('Z04', .f.)
                         Z04->Z04_NUMOP := u_AToS(aNumOp)

@@ -1,5 +1,10 @@
 #include "Protheus.ch"
 
+#IFNDEF _ENTER_
+	#DEFINE _ENTER_ (Chr(13)+Chr(10))
+	// Alert("miguel")
+#ENDIF 
+
 /* 
  * CRIAR PARAMETROS
  * ----------------
@@ -43,57 +48,70 @@ static nPEmpCtl := 4
 @obs A função lançará uma excessão em caso de erro.
 /*/
 user function vaest003(cCodPro, nQuant, cArmz, aEmpenho)
-local aArea 	:= GetArea()
-local cMovBat 	:= GetMV("VA_MOVBATI")
-local cCC 		:= GetMV("VA_CCPRDBA")
-Local cIC		:= GetMV("VA_ICPRDBA")
-Local cClvl		:= GetMV("VA_CLPRDBA")
+    local aArea 	:= GetArea()
+    local cMovBat 	:= GetMV("VA_MOVBATI")
+    local cCC 		:= GetMV("VA_CCPRDBA")
+    Local cIC		:= GetMV("VA_ICPRDBA")
+    Local cClvl		:= GetMV("VA_CLPRDBA")
+    Local cNameLock := " "
 
-if SELECT("SB1") == 0
-    DbSelectArea("SB1")
-endif
+    if SELECT("SB1") == 0
+        DbSelectArea("SB1")
+    endif
 
-SB1->(DbSetOrder(1))
-SB1->(DbSeek(xFilial("SB1")+cCodPro))
-If aScan(aEmpenho,{|x| Alltrim(x[1]) == Alltrim(SB1->B1_XCODAPR)}) == 0
-	aAdd( aEmpenho, { SB1->B1_XCODAPR , SB1->B1_LOCPAD , nQuant } )
-Endif
+    SB1->(DbSetOrder(1))
+    SB1->(DbSeek(xFilial("SB1")+cCodPro))
+    If aScan(aEmpenho,{|x| Alltrim(x[1]) == Alltrim(SB1->B1_XCODAPR)}) == 0
+        aAdd( aEmpenho, { SB1->B1_XCODAPR , SB1->B1_LOCPAD , nQuant } )
+    Endif
 
-If Type("__DATA") == "U"
-	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
-EndIf
-If Type("cFile") == "U"
-	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
-EndIf
+    If Type("__DATA") == "U"
+        Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
+    EndIf
+    If Type("cFile") == "U"
+        Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
+    EndIf
 
-U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-					  cMsg := "[VAEST021] Cria OP: " + AllTrim(cCodPro),;
-					  .T./* lConOut */,;
-					  /* lAlert */ )
-cNumOP := ""
+    U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+                        cMsg := "[VAEST021] Cria OP: " + AllTrim(cCodPro),;
+                        .T./* lConOut */,;
+                        /* lAlert */ )
+    cNumOP := ""
 
-conout("Cria OP: " + AllTrim(cCodPro) + " - " + AllTrim(nQuant) + " - " + AllTrim(cArmz))
-FWMsgRun(, {|| cNumOp := u_CriaOp(cCodPro, nQuant, cArmz) },;
-				"Processando [VAEST003]",;
-				cMsg )
+    if IsInCallStack("u_ConnOne")
+        cNameLock := "_vaest003_"+Alltrim(SC2->C2_PRODUTO)+Alltrim(SC2->C2_LOCAL)
+        
+        While !LockByName(cNameLock)
+            ConOut("Bloqueio de " + cNameLock + " - APONTAR PRODUÇÃO" +;
+                    "      ###Aguardando desbloqueio###" )
+            Sleep(1000)
+        enddo
 
-ConOut("Limpa OP: " + AllTrim(cNumOp))
-u_LimpaEmp(cNumOp)
-ConOUt("Ajusta OP: " + AllTrim(cNumOp))
-u_AjustEmp(cNumOp, aEmpenho)
+    endif
 
-U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-					  cMsg := "Apontamento OP: " + AllTrim(cNumOp),;
-					  .T./* lConOut */,;
-					  /* lAlert */ )
-ConOut("Apontamento OP: " + AllTrim(cNumOp))
-FWMsgRun(, {|| u_ApontaOP(cNumOp, cMovBat, cCC, cIC, cClvl)},;
-								"Processando [VAEST003]",;
-								cMsg )
+    FWMsgRun(, {|| cNumOp := u_CriaOp(cCodPro, nQuant, cArmz) },;
+                    "Processando [VAEST003]",;
+                    cMsg )
 
-if !Empty(aArea)
-    RestArea(aArea)
-endif
+    u_LimpaEmp(cNumOp)
+    u_AjustEmp(cNumOp, aEmpenho)
+
+    U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+                        cMsg := "Apontamento OP: " + AllTrim(cNumOp),;
+                        .T./* lConOut */,;
+                        /* lAlert */ )
+    FWMsgRun(, {|| u_ApontaOP(cNumOp, cMovBat, cCC, cIC, cClvl)},;
+                                    "Processando [VAEST003]",;
+                                    cMsg )
+    
+    if IsInCallStack("u_ConnOne") .and. cNameLock != ""
+        UnLockByName(cNameLock)
+        ConOut("Desbloqueio de " + cNameLock)
+    endif
+
+    if !Empty(aArea)
+        RestArea(aArea)
+    endif
 return cNumOp
 
 /*/{Protheus.doc} CriaOP
@@ -141,6 +159,7 @@ user function CriaOP(cCodPro, nQuant, cArmz)
 
         if Empty(cArmz)
             if Empty(cArmz := Iif(!Empty(SB1->B1_LOCPAD), SB1->B1_LOCPAD, StrZero(1, TamSX3("B1_LOCPAD")[1])))
+                ConOut("Não foi preenchido o armazem padrão, nem indicado em qual armazem deve-se apontar a produção de [" + AllTrim(cCodPro) + "]. Por favor, verifique o cadastro de produtos indicando o local padrão desse produto.")
                 MsgStop("Não foi preenchido o armazem padrão, nem indicado em qual armazem deve-se apontar a produção de [" + AllTrim(cCodPro) + "]. Por favor, verifique o cadastro de produtos indicando o local padrão desse produto.")
             endif
         endif
@@ -168,8 +187,10 @@ user function CriaOP(cCodPro, nQuant, cArmz)
                 {"AUTEXPLODE", "S",        Nil} } 
         
         lMsErroAuto :=.F.
+        //ConOut("MATA650 ENTRADA")
         MSExecAuto({|x,y| MATA650(x,y)}, aOP, 3)  //Inclusao
-        
+        //ConOut("MATA650 SAIDA")
+
         if lMsErroAuto
             cLogFile := CriaTrab(,.f.) + ".log"
             aErroAuto := GetAutoGRLog()
@@ -214,7 +235,7 @@ Efetua o apontamento da ordem de produção
 
 @obs A função lançará uma excessão em caso de erro.
 /*/
-user function ApontaOP(cOP, cTpMov, cCC, cIC, cClvl, cLoteCTL, cCurral )
+user function ApontaOP(cOP, cTpMov, cCC, cIC, cClvl, cLoteCTL, cCurral ) as Logical
 local aArea 			:= GetArea()
 local aApon 			:= {}
 local i, nLen
@@ -243,18 +264,8 @@ SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 DbSelectArea("SC2")
 SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_SEQUEN + C2_ITEMGRD
 
+//ConOUt("MATA250 ENTRADA")
 if SC2->(DbSeek(xFilial("SC2")+cOP))
-	
-    if IsInCallStack("u_ConnOne")
-        cNameLock := "APONTAOP"+Alltrim(SC2->C2_PRODUTO)+Alltrim(SC2->C2_LOCAL)
-        
-        While !LockByName(cNameLock)
-            Sleep(500)
-        enddo
-        
-        ConOut("Bloqueio de " + cNameLock + " - VAEST003 - APONTAOP")
-
-    endif
 
 	aAdd( aApon, {"D3_TM"		, cTpMov									, nil } )
 	aAdd( aApon, {"D3_OP"		, SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN  	, nil } )
@@ -284,7 +295,8 @@ if SC2->(DbSeek(xFilial("SC2")+cOP))
     // TODO - Adicionar campo D3_X_CURRA preenchendo com conteúdo da SB8.
 
 	FG_X3ORD("C", , aApon )
-	// ConOut(u_atOs(aApon))
+	
+    //ConOut(u_atOs(aApon))
 	
     MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 3 ) //3-Inclusao
     if lMsErroAuto
@@ -304,17 +316,12 @@ if SC2->(DbSeek(xFilial("SC2")+cOP))
         RestArea(aArea)
         MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Apontamento de produção.")
     endIf
-	
-    if IsInCallStack("u_ConnOne")
-        UnLockByName(cNameLock)
-        ConOut("Desbloqueio de " + cNameLock)    
-    endif
-	// U_ExecProd(aApon)
 
 else
     lRet := .f.
     MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível efetuar os apontamentos de produção. Por favor verifique!!!")
 endif
+//ConOUt("MATA250 SAIDA")
 
 SD3->(DBCloseArea())
 SC2->(DBCloseArea())
@@ -655,15 +662,31 @@ return lRet
 @obs A função lançará uma excessão em caso de erro.
 /*/
 user function LimpaEmp(cOP)
-    local aArea := GetArea( )
-    local lRet := .t.
+    local aArea     := GetArea( )
+    local lRet      := .t.
+    Local cNameLock := ""
 
     DbSelectArea("SD4")
     DbSetOrder(2) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
 
+    if IsInCallStack("u_ConnOne")
+        cNameLock := "LIMPAEMP"
+        While !LockByName(cNameLock)
+            ConOut("Bloqueio de " + cNameLock + " - VAEST003 - LimpaEmp [STATIC]" +;
+                    "###Aguardando desbloqueio###" )
+            Sleep(500)
+        enddo
+    endif
+
     while SD4->(DbSeek(xFilial("SD4")+PadR(cOP+"01001", TamSX3("D4_OP")[1])))
         LimpaEmp()
     end
+
+    if IsInCallStack("u_ConnOne") .AND. cNameLock != ""
+        UnLockByName(cNameLock)
+        ConOut("Desbloqueio de " + cNameLock)    
+    endif
+
 
     SD4->(dbCloseArea())
     RestArea( aArea )
@@ -814,15 +837,6 @@ static function LimpaEmp()
         end
     endif
 
-    if IsInCallStack("u_ConnOne")
-        cNameLock := "LIMPAEMP"+Alltrim(SD4->D4_COD)+Alltrim(SD4->D4_LOCAL)
-        While !LockByName(cNameLock)
-            Sleep(500)
-        enddo 
-        
-        ConOut("Bloqueio de " + cNameLock + " - VAEST003 - LimpaEmp [STATIC]")
-
-    endif
 
     GravaEmp(SD4->D4_COD,; //cProduto
             SD4->D4_LOCAL,; // cLocal
@@ -850,11 +864,6 @@ static function LimpaEmp()
     RecLock("SD4", .f.)
         DbDelete()
     MsUnlock()
-
-    if IsInCallStack("u_ConnOne")
-        UnLockByName(cNameLock)
-        ConOut("Desbloqueio de " + cNameLock)    
-    endif
 
     RestArea(aArea)
 return nil

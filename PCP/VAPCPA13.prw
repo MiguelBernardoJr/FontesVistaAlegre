@@ -4249,6 +4249,15 @@ User Function fPrcLote()
 RestArea(aArea)	
 Return nil
 
+/* ====================================================================== */
+User Function fPrcBatTrt()
+	Local aArea		:= GetArea()
+	Local cQry 		:= ""
+	Local cAlias 	:= ""
+
+	
+	RestArea(aArea)
+Return
 
 /* ====================================================================== */
 User Function PrcBatTrt()
@@ -4277,11 +4286,6 @@ EndIf
 
 Private cNumOp := ""
 
-//ConOut("Database: " + dToS(__DATA))
-//ConOut("Data Z0X: " + dToS(Z0X->Z0X_DATA))
-//ConOut("Data anterior: " + dToS(__DATA))
-__DATA := cToD("20/03/2025")
-
 If (__DATA != Z0X->Z0X_DATA)
 	MsgInfo("A data do sistema nao pode ser diferente da data do arquivo.")
 	RestArea(aArea)
@@ -4292,7 +4296,7 @@ IF !IsInCallStack("u_ConnOne")
 	oZ02SEQ:SetString(1, FwxFilial("Z02"))
 
 	cSequen := oZ02SEQ:ExecScalar('SEQ')
-	nSeqZ02 := Val(cSequen) + 1 
+	nSeqZ02 := Val(cSequen) + 1
 	cSequen := StrZero(nSeqZ02,TamSx3("Z02_SEQUEN")[1])
 
 	ConOut("Sequencia oZ02SEQ: " + cSequen)
@@ -4303,7 +4307,7 @@ else
 ENDIF
 
 /* ---------------------------- */
-//			Return nil	
+//			Return nil			//
 /* ---------------------------- */
 
 DBSelectArea("Z02")
@@ -4336,7 +4340,7 @@ Begin Transaction
 	endif
 
 	ConOut(oZ0YQry:getFixQuery())
-	
+
 	MEMOWRITE("C:\TOTVS_RELATORIOS\EXPIMPPRCC1.sql", oZ0YQry:getFixQuery())
 
 	cAlias := oZ0YQry:OpenAlias()
@@ -4480,9 +4484,18 @@ Begin Transaction
 	_cQry += " WHERE Z0Y_FILIAL = '"+fwxFilial("Z0Y")+"' " + _ENTER_
 	_cQry += "   AND D_E_L_E_T_ = ' ' " + _ENTER_
 	_cQry += "   AND Z0Y_CODEI = '"+aParRet[2]+"' " + _ENTER_
-	_cQry += "   AND Z0Y_CONFER = 'T' "
-	_cQry += "   AND Z0Y_DATPRC = '' "
+	IF Len(aParRet) == 3 
+		_cQry += "   AND Z0Y_ROTA = '"+aParRet[3]+"' " + _ENTER_
+	endif
+	_cQry += "   AND Z0Y_CONFER = 'T'" + _ENTER_
+	_cQry += "   AND Z0Y_DATPRC = ''" + _ENTER_
 	
+	ConOUt(_ENTER_)
+	ConOuT("Atualizando Z0Y: " + _cQry)
+	ConOUt(_ENTER_)
+	ConOut(_cQry)
+	ConOUt(_ENTER_)
+
 	If (TCSqlExec(_cQry) < 0)
 		MsgInfo("Erro ao atualizar Z0Y: " + TCSqlError())
 		DisarmTransaction()
@@ -4518,7 +4531,7 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 			PUTMV("MV_Z02SEQ", cSequen)
 		else
 			cSequen := Soma1(cSequen)
-		endif 
+		endif
 	
 		RecLock("Z02", .T.)
 			Z02->Z02_FILIAL := fwxFilial("Z02")
@@ -4547,6 +4560,12 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 			oZ0WQry:SetString(10, fwxFilial("SB8"))
 		endif
 		
+		ConOUt(_ENTER_)
+		ConOut("Buscando Z0Y:")
+		ConOUt(_ENTER_)
+		ConOut(oZ0WQry:getFixQuery())
+		ConOUt(_ENTER_)
+
 		MEMOWRITE("C:\TOTVS_RELATORIOS\EXPIMPPRCT.sql", oZ0WQry:getFixQuery())
 		
 		cAlias := oZ0WQry:OpenAlias()
@@ -4573,7 +4592,7 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 
 			cIndividuo 	:= (cAlias)->LOTE
 			cDieta 		:= (cAlias)->DIETA
-		
+
 			RecLock("Z04", .T.)
 				Z04->Z04_FILIAL := fwxFilial("Z04")
 				Z04->Z04_SEQUEN := cSequen
@@ -4588,113 +4607,78 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 			Z04->(MSUnlock())
 			
 			AAdd(aDadTrt, {Z0X->Z0X_DATA, Substr(Time(), 1, 5), (cAlias)->CURRAL, (cAlias)->LOTE, (cAlias)->CBC, (cAlias)->DIETA, STR((cAlias)->QTDPRE), STR(nQTdTrt), "01", "01"})
-			
-			TryException
-				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-						  "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" + _ENTER_+;
-						  "Função: PrcBatTrt" + _ENTER_ +;
-						  "Processando os dados [" + cSequen +"]",;
-						  .T./* lConOut */,;
-						  /* lAlert */ )
-				//FWMsgRun(, {|| U_VAEST021(cIndividuo, cDieta, nQTdTrt, "","") },;
-				//				"Processando [VAEST004]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
-				//				"Processando os dados [" + cSequen + "]" )
-
-			CatchException Using oException
-				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-						   "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
-						   "ERRO1: " +oException:ErrorStack,;
-						  .T./* lConOut */,;
-						  /* lAlert */ )
-				u_ShowException(oException)
-				DisarmTransaction()
-				lBrk := .T.
-			EndException
-			
-			If (lBrk)
-				(cAlias)->(DBCloseArea())
-				Break
-			EndIf
-
-			_cQry := " UPDATE " + RetSqlName("Z04") + _ENTER_
-			_cQry += " SET Z04_NUMOP = CONVERT(VARBINARY(MAX),'"+cNumOp+"')"  + _ENTER_
-			_cQry += " WHERE Z04_FILIAL = '"+fwxFilial("Z04")+"' " + _ENTER_
-			_cQry += "   AND D_E_L_E_T_ = ' ' " + _ENTER_
-			_cQry += "   AND Z04_SEQUEN = '"+cSequen+"' " + _ENTER_
-			_cQry += "   AND Z04_CURRAL = '"+(cAlias)->CURRAL+"' " + _ENTER_
-			_cQry += "   AND Z04_LOTE   = '"+(cAlias)->LOTE+"' " + _ENTER_
-			_cQry += "   AND Z04_DTIMP  = '"+dToS(Z0X->Z0X_DATA)+"' " + _ENTER_
-
-			If (TCSqlExec(_cQry) < 0)
-				MsgInfo("Erro ao atualizar Z04: " + TCSqlError())
-				(cAlias)->(DBCloseArea())
-				DisarmTransaction()
-				Break
-			EndIf
 
 			(cAlias)->(DBSkip())
 		EndDo
 		(cAlias)->(DBCloseArea())
-	
-		TryException
 
-			U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-						"[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
-						"Funcao: PrcBatTrt" + _ENTER_ +;
-						"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]",;
-						.T./* lConOut */,;
-						/* lAlert */ )
-				  
-			FWMsgRun(, {|| &('StaticCall(VAEST020, PROCZ02, aDadTrt, cSequen)') },;
-							"Processando [VAEST020]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
-							"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]" )
-			//	U_ProcZ02(aDadTrt, Z02->Z02_SEQUEN)
+		if Len(aDadTrt) > 0
 		
-		CatchException Using oException
-			U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-						  "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
-						  "ERRO3: " +oException:ErrorStack,;
-						  .T./* lConOut */,;
-						  /* lAlert */ )
-			u_ShowException(oException)
-			DisarmTransaction()
-			lBrk := .T.
-		EndException
-	
-		If (lBrk)
-			Break
-		EndIf
+			TryException
 
-		//Atualiza Processamento Trato
-		_cQry := " UPDATE " + RetSqlName("Z0W") + _ENTER_
-		_cQry += " SET Z0W_DATPRC = '"+dToS(Date())+"'" + _ENTER_
-		_cQry += "   , Z0W_HORPRC = '"+SUBSTR(TIME(), 1, 5)+"'" + _ENTER_
-		_cQry += " WHERE Z0W_FILIAL ='"+fwxFilial("Z0W")+"' " + _ENTER_
-		_cQry += "   AND D_E_L_E_T_ = ' ' " + _ENTER_
-		_cQry += "   AND Z0W_CODEI = '"+aParRet[2]+"' " + _ENTER_
-		_cQry += "   AND Z0W_CONFER = 'T' "
-		_cQry += "   AND Z0W_DATPRC = '' "
-
-		If (TCSqlExec(_cQry) < 0)
-			DisarmTransaction()
-			Break
-		EndIf
-
-		oZ0WSel:SetString(1, fwxFilial("Z0W"))
-		oZ0WSel:SetString(2, Z0X->Z0X_CODIGO)
-
-		cAlias := oZ0WSel:OpenAlias()
+				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+							"[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
+							"Funcao: PrcBatTrt" + _ENTER_ +;
+							"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]",;
+							.T./* lConOut */,;
+							/* lAlert */ )
+				ConOut("4645")
+				FWMsgRun(, {|| &('StaticCall(VAEST020, PROCZ02, aDadTrt, cSequen)') },;
+								"Processando [VAEST020]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
+								"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]" )
+				//	U_ProcZ02(aDadTrt, Z02->Z02_SEQUEN)
+			
+			CatchException Using oException
+				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+							"[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
+							"ERRO3: " +oException:ErrorStack,;
+							.T./* lConOut */,;
+							/* lAlert */ )
+				u_ShowException(oException)
+				DisarmTransaction()
+				lBrk := .T.
+			EndException
 		
-		If ((cAlias)->(EOF()))
-			RecLock("Z0X", .F.)
-				Z0X->Z0X_STATUS := "P"
-			Z0X->(MSUnlock())
-		Else
-			RecLock("Z0X", .F.)
-				Z0X->Z0X_STATUS := "B"
-			Z0X->(MSUnlock())
+			If (lBrk)
+				Break
+			EndIf
+
+			//Atualiza Processamento Trato
+			_cQry := " UPDATE " + RetSqlName("Z0W") + _ENTER_
+			_cQry += " SET Z0W_DATPRC = '"+dToS(Date())+"'" + _ENTER_
+			_cQry += "   , Z0W_HORPRC = '"+SUBSTR(TIME(), 1, 5)+"'" + _ENTER_
+			_cQry += " WHERE Z0W_FILIAL ='"+fwxFilial("Z0W")+"' " + _ENTER_
+			_cQry += "   AND D_E_L_E_T_ = ' ' " + _ENTER_
+			_cQry += "   AND Z0W_CODEI = '"+aParRet[2]+"' " + _ENTER_
+			IF Len(aParRet) == 3 
+				_cQry += "   AND Z0W_ROTA = '"+aParRet[3]+"' " + _ENTER_
+			endif 
+			_cQry += "   AND Z0W_CONFER = 'T' "
+			_cQry += "   AND Z0W_DATPRC = '' "
+
+			If (TCSqlExec(_cQry) < 0)
+				DisarmTransaction()
+				Break
+			EndIf
+
+			oZ0WSel:SetString(1, fwxFilial("Z0W"))
+			oZ0WSel:SetString(2, Z0X->Z0X_CODIGO)
+
+			cAlias := oZ0WSel:OpenAlias()
+			
+			If ((cAlias)->(EOF()))
+				RecLock("Z0X", .F.)
+					Z0X->Z0X_STATUS := "P"
+				Z0X->(MSUnlock())
+			Else
+				RecLock("Z0X", .F.)
+					Z0X->Z0X_STATUS := "B"
+				Z0X->(MSUnlock())
+			EndIf
+			(cAlias)->(DBCloseArea())
+		else
+			ConOUt("Não há dados para atualizar Z0W")
 		EndIf
-		(cAlias)->(DBCloseArea())
 	
 	End Transaction
 
