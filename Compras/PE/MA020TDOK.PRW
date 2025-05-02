@@ -36,10 +36,11 @@ User Function MA020TDOK()
 			"             A2_CGC = '" + M->A2_CGC + "' AND " + CRLF +;
 			"             D_E_L_E_T_ = ' ' "
 		MpSysOpenQry(cQry, cAlias)
-		If !(cAlias)->(EOF())
-			MsgInfo("Fornecedor localizado com o codigo: " + AllTrim((cAlias)->A2_COD) + " - " + AllTrim((cAlias)->A2_NOME) + ". Cadastro repetido não é permitido. Esta operação será cancelada.")
-			lRet   := .F.
-		EndIf
+
+		//If !(cAlias)->(EOF())
+		//	MsgInfo("Fornecedor localizado com o codigo: " + AllTrim((cAlias)->A2_COD) + " - " + AllTrim((cAlias)->A2_NOME) + ". Cadastro repetido não é permitido. Esta operação será cancelada.")
+		//	lRet   := .F.
+		//EndIf
 		(cAlias)->(DbCloseArea())
 	EndIf
 

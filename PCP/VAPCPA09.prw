@@ -47,7 +47,6 @@ U_PosSX1({{cPrgRot, "01", DTOS(dDataBase)}})
 While ((nOpcRotas > 0))
 
 	If (Len(aParRet) < 1)
-//		If (!ParamBox(aParBox, "Data da Roteirizacao", @aParRet))
 		If (!Pergunte(cPrgRot, .T.))
 			Return (Nil)
 		EndIf
@@ -72,17 +71,10 @@ While ((nOpcRotas > 0))
 	
 	QRYDTV->(DBCloseArea())
 	
-	//If (nOpcRotas = 0)
-	//	aChgDie := {}
-	//	aChgCur := {}
-	//EndIf
-	
 	If (Len(aParRet) > 0)
 		aDadSel[2] := aParRet[1]
-
-		FWExecView('Manutenção', 'custom.VAPCPA18.VAPCPA18', MODEL_OPERATION_UPDATE,, { || .T. },,, )
-
-		//VAPCPA09A(lShwZer, lShwGer)
+		
+		VAPCPA09A(lShwZer, lShwGer)
 	Else
 		nOpcRotas := 0
 	EndIf
@@ -1641,7 +1633,7 @@ Local cDiCur  := ""
 Local nCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][2]
 Local cCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][3]
 Local cCur    := ""
-Local cLote    := ""
+Local cLote   := ""
 
 Default lPasto := .F.
 

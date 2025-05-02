@@ -208,14 +208,14 @@ if lPTO
             cUpd += "   and Z04_SEQUEN='"+Z02->Z02_SEQUEN+ "'"+_ENTER_
             cUpd += "   and D_E_L_E_T_=' ' "+_ENTER_
 			
-			BeginTran() // Begin Transaction  
-				if (TCSqlExec(cUpd) < 0)        
+			BeginTran()
+				if (TCSqlExec(cUpd) < 0)
 					lRet := .F.
 					MsgStop("TCSQLError() " + TCSQLError())
 					u_ShowException(oException)
 					DisarmTransaction()
 				endif
-			EndTran() // End Transaction
+			EndTran()
         endif
 
     elseif cIdPonto ==  'MODELPOS'
