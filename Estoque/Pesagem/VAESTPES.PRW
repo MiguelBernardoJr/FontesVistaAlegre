@@ -755,7 +755,7 @@ User Function PPeso1()
 			MBSaveLog():FULLWrite(, .F., "PPeso1 - Imprimindo ticket/ Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) )
 			cPlacaTGet   := CriaVar( 'DA3_PLACA' , .F.)
 			nQualPesagem := 0
-		endif 
+		endif
 	endif
 return
 

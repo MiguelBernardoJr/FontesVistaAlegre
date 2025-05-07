@@ -141,7 +141,7 @@ Local aRotina := {}
 	ADD OPTION aRotina TITLE OemToAnsi("Parâmetro Água") 		ACTION "U_BTParH20" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Alterar Operadores") 	ACTION "U_AltOpePC" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Alterar Produtos Silo")	ACTION "U_AltPrdS"  OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
-//ADD OPTION aRotina TITLE OemToAnsi("Copiar")     ACTION "VIEWDEF.VAPCPA13"    OPERATION 9 ACCESS 0 // "Copiar"
+	//ADD OPTION aRotina TITLE OemToAnsi("Copiar")     ACTION "VIEWDEF.VAPCPA13"    OPERATION 9 ACCESS 0 // "Copiar"
 
 Return aRotina
 
@@ -4250,16 +4250,6 @@ RestArea(aArea)
 Return nil
 
 /* ====================================================================== */
-User Function fPrcBatTrt()
-	Local aArea		:= GetArea()
-	Local cQry 		:= ""
-	Local cAlias 	:= ""
-
-	
-	RestArea(aArea)
-Return
-
-/* ====================================================================== */
 User Function PrcBatTrt()
 Local aArea    		:= GetArea()
 Local cQryUpd  		:= ""
@@ -4335,7 +4325,7 @@ Begin Transaction
 	oZ0YQry:SetString(1, fwxFilial("Z0X"))
 	oZ0YQry:SetString(2, aParRet[2])
 	oZ0YQry:SetDate(3  , aParRet[1])
-	if Len(aParRet) == 3 
+	if Len(aParRet) == 3
 		oZ0YQry:SetString(4, aParRet[3])
 	endif
 
@@ -4358,7 +4348,6 @@ Begin Transaction
 	
 	While (!((cAlias)->(EOF())) .and. !lBrk)
 	
-		ConOut("Linha 4354")
 		RecLock("Z03", .T.)
 			Z03->Z03_FILIAL := fwxFilial("Z03")
 			Z03->Z03_SEQUEN := cSequen
@@ -4374,7 +4363,6 @@ Begin Transaction
 		Z03->(MSUnlock())
 		
 		If (((cAlias)->RECEITA != cCodRec) .OR. ((cAlias)->ORDEM != cCodOrd))
-			ConOut("Linha 4369")
 
 			TryException
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
@@ -4521,7 +4509,9 @@ Begin Transaction
 	(cAlias)->(DBCloseArea())
 	
 End Transaction
-	
+
+ConOut("Entrando na Z0W:")
+
 If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 
 	Begin Transaction
@@ -4569,7 +4559,7 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 		MEMOWRITE("C:\TOTVS_RELATORIOS\EXPIMPPRCT.sql", oZ0WQry:getFixQuery())
 		
 		cAlias := oZ0WQry:OpenAlias()
-
+		
 		While (!((cAlias)->(EOF())))
 		
 			nDifBT := (cAlias)->TOTBAT - (cAlias)->TOTTRT
@@ -4611,6 +4601,8 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 			(cAlias)->(DBSkip())
 		EndDo
 		(cAlias)->(DBCloseArea())
+		
+		ConOut("aDadTrt: " + U_AToS(aDadTrt))
 
 		if Len(aDadTrt) > 0
 		
@@ -4623,10 +4615,9 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 							.T./* lConOut */,;
 							/* lAlert */ )
 				ConOut("4645")
-				FWMsgRun(, {|| &('StaticCall(VAEST020, PROCZ02, aDadTrt, cSequen)') },;
+				FWMsgRun(, {|| U_PROCZ02(aDadTrt, Z02->Z02_SEQUEN) },;
 								"Processando [VAEST020]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
-								"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]" )
-				//	U_ProcZ02(aDadTrt, Z02->Z02_SEQUEN)
+								"Processando os dados [" + Z02->Z02_SEQUEN + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]" )
 			
 			CatchException Using oException
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
@@ -4643,6 +4634,10 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 				Break
 			EndIf
 
+			ConOut(_ENTER_)
+			ConOut("Update Z0W:")
+			ConOut(_ENTER_)
+
 			//Atualiza Processamento Trato
 			_cQry := " UPDATE " + RetSqlName("Z0W") + _ENTER_
 			_cQry += " SET Z0W_DATPRC = '"+dToS(Date())+"'" + _ENTER_
@@ -4655,6 +4650,10 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 			endif 
 			_cQry += "   AND Z0W_CONFER = 'T' "
 			_cQry += "   AND Z0W_DATPRC = '' "
+
+			ConOUt(_ENTER_)
+			ConOut(_cQry)
+			ConOUt(_ENTER_)
 
 			If (TCSqlExec(_cQry) < 0)
 				DisarmTransaction()

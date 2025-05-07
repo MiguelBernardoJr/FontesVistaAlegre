@@ -2461,7 +2461,7 @@ Local nBKPnTrtTotal := 0
                             EndIf 
                             // FIM MB : 23.02.2023  
 
-                            cSeq := GetSeq(TMPZ06->Z06_DIETA)
+                            cSeq := U_GetSeq(TMPZ06->Z06_DIETA)
                             nMegaCal := U_GetMegaCal(TMPZ06->Z06_DIETA)
                             nMCalTrat := Round(nMegaCal * nQtdTrato,2)
                             nQuantMN := u_CalcQtMN(TMPZ06->Z06_DIETA, nQtdTrato)
@@ -2850,7 +2850,7 @@ Local nBKPnTrtTotal := 0
                             // FIM MB : 23.02.2023  
                         
                         nQuantMN := u_CalcQtMN(TMPZ0M->Z0M_DIETA, nQtdTrato)
-                        cSeq := GetSeq(TMPZ0M->Z0M_DIETA)
+                        cSeq := U_GetSeq(TMPZ0M->Z0M_DIETA)
                         nMegaCal := U_GetMegaCal(TMPZ0M->Z0M_DIETA)
                         nMCalTrat := Round(nMegaCal * nQtdTrato,2)
 
@@ -2989,7 +2989,7 @@ Local nBKPnTrtTotal := 0
 
                     while !TMPZ0M->(Eof())
                         nQuantMN := u_CalcQtMN(TMPZ0M->Z0M_DIETA, nQtdTrato)
-                        cSeq := GetSeq(TMPZ0M->Z0M_DIETA)
+                        cSeq := U_GetSeq(TMPZ0M->Z0M_DIETA)
                         nMegaCal := U_GetMegaCal(TMPZ0M->Z0M_DIETA)
                         nMCalTrat := Round(nMegaCal * nQtdTrato,2)
 
@@ -3383,7 +3383,7 @@ Local nBKPnTrtTotal := 0
                             EndIf 
                             // FIM MB : 23.02.2023  
 
-                            cSeq      := GetSeq(TMPZ06->Z06_DIETA)
+                            cSeq      := U_GetSeq(TMPZ06->Z06_DIETA)
                             nMegaCal  := U_GetMegaCal(TMPZ06->Z06_DIETA)
                             nMCalTrat := Round(nMegaCal * nQtdTrato,2)
                             
@@ -4003,7 +4003,7 @@ Private lManut := .T.
         DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     
         if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-            if CanUseZ05()
+            if U_CanUseZ05()
 				
 				Custom.VAPCPA17.u_PreparaQuerys()
                 
@@ -4137,7 +4137,7 @@ local aEnButt := {{.F., nil},;      // 1 - Copiar
         DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     
         if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-            if CanUseZ05()
+            if U_CanUseZ05()
                 FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
                 ReleaseZ05()
             endif
@@ -4261,7 +4261,7 @@ cLote := PadR(cLote, TamSX3("Z05_LOTE")[1])
             DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
 
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(dDtTrato)+cVersao+cCurral+cLote)) 
-                if CanUseZ05()
+                if U_CanUseZ05()
                     FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
                     ReleaseZ05()
                 endif
@@ -4279,7 +4279,7 @@ cLote := PadR(cLote, TamSX3("Z05_LOTE")[1])
             DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
 
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(dDtTrato)+cVersao+cCurral+cLote)) 
-                if CanUseZ05()
+                if U_CanUseZ05()
                     FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_VIEW,, { || .T. },,,aEnButt )
                     ReleaseZ05()
                 endif
@@ -4611,7 +4611,7 @@ if nOperation == MODEL_OPERATION_UPDATE
             // {"Z05_DATA", "Z05_VERSAO", "Z05_CURRAL", "Z05_LOTE", "Z05_CABECA", "Z05_DIAPRO", "Z05_DIASDI", "Z05_MANUAL"}
             if oGridModel:GetValue("Z06_RECNO", nLin) <> 0
                 Z06->(DbGoTo(oGridModel:GetValue("Z06_RECNO", nLin)))
-                cSeq := GetSeq(oGridModel:GetValue("Z06_DIETA"))
+                cSeq := U_GetSeq(oGridModel:GetValue("Z06_DIETA"))
                 nMegaCal := U_GetMegaCal(oGridModel:GetValue("Z06_DIETA"))
                 nMCalTrat := nMegaCal * Z06->Z06_KGMSTR
 
@@ -5341,7 +5341,7 @@ default oView  := FWViewActive()
             Z05->(RestArea(aAreaZ05))
 
             // Confirma a trava para edição
-            CanUseZ05()
+            U_CanUseZ05()
 
             // Reposiciona no browse
             (cTrbBrowse)->(RestArea(aAreaTMP))
@@ -5363,7 +5363,7 @@ default oView  := FWViewActive()
 
             // Posiciona na Z05
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-                if CanUseZ05()
+                if U_CanUseZ05()
                     RecarTrato()
                     oBrowse:nAt--
                 else
@@ -5372,7 +5372,7 @@ default oView  := FWViewActive()
                     Z05->(RestArea(aAreaZ05))
                     
                     // Confirma a trava para edição
-                    CanUseZ05()
+                    U_CanUseZ05()
 
                     // Emite aviso de erro 
                     Help(/*Descontinuado*/,/*Descontinuado*/,"EM USO",/**/,"O registro selecionado na tabela Z05 está em uso.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível alterar o próximo registro até que ele seja liberado."})
@@ -5398,7 +5398,7 @@ default oView  := FWViewActive()
                     // Reposiociona no último Z05 Válido
                     Z05->(RestArea(aAreaZ05))
                     // Confirma a trava para edição
-                    CanUseZ05()
+                    U_CanUseZ05()
                 endif
             endif
             exit
@@ -5435,7 +5435,7 @@ default oView  := FWViewActive()
             Z05->(RestArea(aAreaZ05))
             
             // Confirma a trava para edição
-            CanUseZ05()
+            U_CanUseZ05()
             
             // Reposiciona no browse
             (cTrbBrowse)->(RestArea(aAreaTMP))
@@ -5457,7 +5457,7 @@ default oView  := FWViewActive()
 
             // Posiciona na Z05
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-                if CanUseZ05()
+                if U_CanUseZ05()
                     RecarTrato()
                     oBrowse:nAt++ 
                 else
@@ -5465,7 +5465,7 @@ default oView  := FWViewActive()
                     // Reposiociona no último Z05 Válido
                     Z05->(RestArea(aAreaZ05))
                     // Confirma a trava para edição
-                    CanUseZ05()
+                    U_CanUseZ05()
 
                     // Emite aviso de erro 
                     Help(/*Descontinuado*/,/*Descontinuado*/,"EM USO",/**/,"O registro selecionado na tabela Z05 está em uso.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível alterar o próximo registro até que ele seja liberado."})
@@ -5481,7 +5481,7 @@ default oView  := FWViewActive()
                     // Reposiociona no último Z05 Válido
                     Z05->(RestArea(aAreaZ05))
                     // Confirma a trava para edição
-                    CanUseZ05()
+                    U_CanUseZ05()
                 endif
             endif
             exit
@@ -6817,7 +6817,7 @@ if !oGridModel:IsDeleted()
             endif
             
             cLog += "Alteração do conteúdo do campo Z06_DIETA. " + CRLF
-            cSeq := GetSeq(M->Z06_DIETA)
+            cSeq := U_GetSeq(M->Z06_DIETA)
             nMegaCal := U_GetMegaCal(M->Z06_DIETA)
             nMCalTrat := nMegaCal * oGridModel:GetValue("Z06_KGMSTR") //M->Z06_KGMSTR
             if oGridModel:GetValue("Z06_RECNO") == 0
@@ -7132,10 +7132,10 @@ default cLote :=  Iif(FunName() == 'VAPCPA09', Z05->Z05_LOTE, (cTrbBrowse)->B8_L
 
                 MsUnlock()
 
-            CanUseZ05()
+            U_CanUseZ05()
 
-            aKgMS := DivTrato(mv_par02, mv_par03)
-            cSeq := GetSeq(mv_par01)
+            aKgMS := U_DivTrato(mv_par02, mv_par03)
+            cSeq := U_GetSeq(mv_par01)
             nMCalTrt := U_GetMegaCal(mv_par01)    
 
             // "Z06_TRATO",  "Z06_DIETA",  "Z06_KGMSTR", "Z06_KGMNTR", "Z06_RECNO"
@@ -7256,7 +7256,7 @@ Distribui a quantidade de materia seca prevista para o trato entre os tratos do 
 @param nQtdTrato, numeric, Quantidade de tratos
 @type function
 /*/
-static function DivTrato(nKgTrato, nQtdTrato)
+User function DivTrato(nKgTrato, nQtdTrato)
 local aTrato    := Array(nQtdTrato)
 local nTrato    := NoRound(nKgTrato/nQtdTrato, TamSX3("Z06_KGMSTR")[2])
 local nTotTrato := 0
@@ -7347,7 +7347,7 @@ endif
 return Iif(nDiasDieta > nMaxDiasDi, nMaxDiasDi, nDiasDieta)
 
 
-/*/{Protheus.doc} CanUseZ05
+/*/{Protheus.doc} U_CanUseZ05
 Verifica se um registro está sendo usado por outra instancia e caso não esteja bloqueia
 @author guima
 @since 13/09/2019
@@ -7355,7 +7355,7 @@ Verifica se um registro está sendo usado por outra instancia e caso não esteja b
 @return Logical, .T. se registro puder ser alterado
 @type function
 /*/
-static function CanUseZ05()
+User function CanUseZ05()
 local lRet := .T.
 
     // valida se o registro já foi utilizado para gerar arquivo
@@ -7469,7 +7469,7 @@ DbUseArea(.T., "TOPCONN", TCGenQry(,,;
 
     while !TMPZ05->(Eof())
         Z05->(DbGoTo(TMPZ05->(RECNO)))
-        if !CanUseZ05()
+        if !U_CanUseZ05()
             lRet := .T.
             exit
         endif
@@ -8121,7 +8121,7 @@ Local nBKPnTrtTotal := 0
     DbsetOrder(1) // Z05_FILIAL+DToS(Z05_DATA)+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL))
 
-    if (lRet := CanUseZ05())
+    if (lRet := U_CanUseZ05())
 
         DbUseArea(.T., "TOPCONN", TCGenQry(,,;
                                   " select count(*) QTDREG" +;
@@ -8424,7 +8424,7 @@ Local nBKPnTrtTotal := 0
 
                     nQuantMN := u_CalcQtMN(cCodDieta,  nQuantTrato/*aKgMS[i]*/)
                     nMegCal := U_GetMegaCal(cCodDieta) * nQuantTrato/*aKgMS[i]*/
-                    cSeq := GetSeq(cCodDieta)
+                    cSeq := U_GetSeq(cCodDieta)
                     
                     RecLock("Z06", .T.)
                         Z06->Z06_FILIAL := FWxFilial("Z06")
@@ -8529,7 +8529,7 @@ local nQtdMCal  := 0
     DbsetOrder(1) // Z05_FILIAL+DToS(Z05_DATA)+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL))
 
-        if CanUseZ05()
+        if U_CanUseZ05()
 
             DbUseArea(.T., "TOPCONN", TCGenQry(,,;
                                       " select count(*) NRTRAT" +;
@@ -8542,7 +8542,7 @@ local nQtdMCal  := 0
                                          " and Z06.D_E_L_E_T_  = ' '";
                                                  ),"TMPZ06",.F.,.F.)
                 nQtdTrato := TMPZ06->NRTRAT
-                aKgMS := DivTrato(mv_par01, TMPZ06->NRTRAT)
+                aKgMS := U_DivTrato(mv_par01, TMPZ06->NRTRAT)
             TMPZ06->(DbCloseArea())
     
             DbSelectArea("Z06")
@@ -8858,8 +8858,8 @@ local nKgMnTot  := 0
 
             begin transaction
 
-                aKgMS := DivTrato(mv_par04, mv_par05)
-                cSeq := GetSeq(mv_par03)
+                aKgMS := U_DivTrato(mv_par04, mv_par05)
+                cSeq := U_GetSeq(mv_par03)
                 for i := 1 to mv_par05
                     RecLock("Z06", .T.)
                         Z06->Z06_FILIAL := FwxFilial("Z06")
@@ -8919,7 +8919,7 @@ local nKgMnTot  := 0
                     Z05->Z05_MCALPR := _nMCALPR
                 MsUnlock()
 
-                CanUseZ05()
+                U_CanUseZ05()
 
             end transaction
 
@@ -9209,7 +9209,7 @@ local cSeq      := ""
 local nMegCal   := 0
 local nMCalTrt  := 0
 
-    if (lRet := CanUseZ05())
+    if (lRet := U_CanUseZ05())
         if TCSqlExec(" update " + RetSqlName("Z06") +;
                         " set D_E_L_E_T_ = '*'" +;
                       " where Z06_FILIAL = '" + FWxFilial("Z06") + "'" +;
@@ -9223,12 +9223,12 @@ local nMCalTrt  := 0
         else
             
             nQtdTrato := Len(aTrato)
-            aKgMS := DivTrato(Z05->Z05_KGMSDI, nQtdTrato)
+            aKgMS := U_DivTrato(Z05->Z05_KGMSDI, nQtdTrato)
 
             for i := 1 to nQtdTrato
                 nQuantMN := u_CalcQtMN(aTrato[i][2], aKgMS[i])
                 nMCalTrt := U_GetMegaCal(aTrato[i][2]) * aKgMS[i]
-                cSeq := GetSeq(aTrato[i][2])
+                cSeq := U_GetSeq(aTrato[i][2])
                 
                 RecLock("Z06", .T.)
                     Z06->Z06_FILIAL := FWxFilial("Z06")
@@ -9286,7 +9286,7 @@ Retorna o numero da sequencia da Estrutura de produtos
 @param cDieta, characters, descricao
 @type function
 /*/
-static function GetSeq(cDieta)
+User function GetSeq(cDieta)
 local aArea := GetArea()
 local cSeq  := ""
 

@@ -423,7 +423,7 @@ para custeio dos lotes.
 @param aDados, Array, Matriz contendo os detalhes de alimentação dos lotes
 @return nil
 /*/
-static function ProcZ02(aDados, cSequencia, cArmazem)
+User function ProcZ02(aDados, cSequencia, cArmazem)
 // local aAux := {}
 // local cArmz := "01"
 // local cCodPro := ""

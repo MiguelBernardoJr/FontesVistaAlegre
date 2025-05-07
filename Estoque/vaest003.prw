@@ -641,8 +641,8 @@ user function AjustEmp(cOP, aEmpenho)
 
         next
 
-        SB1->(DbCloseArea())
-        SD4->(DbCloseArea())
+        //SB1->(DbCloseArea())
+        //SD4->(DbCloseArea())
     endif
 
     SC2->(DbCloseArea())
@@ -716,9 +716,6 @@ static function AjuEmp(aEmp)
     private nQtdAnt2UM := 0
     private cLocal := Criavar("D4_LOCAL")
     private nQtdOriAnt := 0
-
-    DbSelectArea("SD4")
-    DbSetOrder(1) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
 
     RegToMemory("SD4", .t.)
 

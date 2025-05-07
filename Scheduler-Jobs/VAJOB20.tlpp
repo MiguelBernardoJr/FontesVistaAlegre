@@ -34,38 +34,75 @@ User Function JOB20VA() // U_JOB20VA()
 	Local nRecno 		:= 0 as Numeric 
 	Local aSemaforos 	:= {} as Array
 
-	_cQry := " WITH DADOS AS ( " + CRLF
-   	_cQry += " select Z0Y_CODEI, Z0Y_ROTA  AS ROTAS , Z0Y_RECEIT AS RECEITA , Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
-   	_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
-	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC <> '1' " + CRLF 
-	_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF 
-	_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF 
-	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF 
-	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF 
-	_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF
-	//_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
-	_cQry += " 	UNION  " + CRLF
-	_cQry += " select TOP(1) Z0Y_CODEI, Z0Y_ROTA  AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF
-   	_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
-	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC = '1' " + CRLF 
-	_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF
-	_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF
-	_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF
-	_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF
-	_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF 
-	//_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
-	_cQry += " 	UNION  " + CRLF 
-   	_cQry += " select TOP(1) Z0W_CODEI, Z0W_ROTA  AS ROTAS , Z0W_RECEIT AS RECEITA ,Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
-   	_cQry += "   FROM "+RetSqlName("Z0W")+" Z0W " + CRLF 
-	_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0W_FILIAL AND Z0X_CODIGO = Z0W_CODEI AND Z0X_DATA = Z0W_DATA AND Z0X.D_E_L_E_T_ =' '  --AND Z0X_OPERAC = '1'" + CRLF 
-	_cQry += " 	 WHERE ( Z0W_QTDREA > 0 OR Z0W_PESDIG > 0)  " + CRLF 
-	_cQry += " 	   AND Z0W_DATPRC = ' '  " + CRLF 
-	_cQry += " 	   AND Z0W_CONFER = 'T' " + CRLF 
-	_cQry += " 	   AND Z0W_DATA = '" +DTOS(dDataBase)+ "'" + CRLF 
-	_cQry += " 	   AND Z0W.D_E_L_E_T_ =' '  " + CRLF
-	//_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
-	_cQry += " 	   ) " + CRLF
-	_cQry += " 	   SELECT DISTINCT RECNO, ROTAS, RECEITA, OPERACAO FROM DADOS ORDER BY OPERACAO DESC " + CRLF
+	_cQry := " 	WITH DADOS AS (  " + CRLF
+	_cQry += "     SELECT Z0Y_CODEI, Z0Y_ROTA AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO  " + CRLF
+	_cQry += "       FROM "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
+	_cQry += "       JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ = ' '  " + CRLF
+	_cQry += "      WHERE (Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)   " + CRLF
+	_cQry += "        AND Z0Y_DATPRC = ' '   " + CRLF
+	_cQry += "        AND Z0Y_CONFER = 'T'  " + CRLF
+	_cQry += "        AND Z0Y_DATA = '" +DTOS(dDataBase)+ "'  " + CRLF
+	_cQry += "        AND Z0Y.D_E_L_E_T_ = ' '   " + CRLF
+	_cQry += "     UNION   " + CRLF
+	_cQry += "     SELECT TOP(1) Z0Y_CODEI, Z0Y_ROTA AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO  " + CRLF
+	_cQry += "       FROM "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
+	_cQry += "       JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ = ' '  " + CRLF
+	_cQry += "      WHERE (Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)   " + CRLF
+	_cQry += "        AND Z0Y_DATPRC = ' '   " + CRLF
+	_cQry += "        AND Z0Y_CONFER = 'T'  " + CRLF
+	_cQry += "        AND Z0Y_DATA = '" +DTOS(dDataBase)+ "'  " + CRLF
+	_cQry += "        AND Z0Y.D_E_L_E_T_ = ' '   " + CRLF
+	_cQry += "     UNION   " + CRLF
+	_cQry += "     SELECT TOP(1) Z0W_CODEI, Z0W_ROTA AS ROTAS, Z0W_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO  " + CRLF
+	_cQry += "       FROM Z0W010 Z0W  " + CRLF
+	_cQry += "       JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0W_FILIAL AND Z0X_CODIGO = Z0W_CODEI AND Z0X_DATA = Z0W_DATA AND Z0X.D_E_L_E_T_ = ' '   " + CRLF
+	_cQry += "      WHERE (Z0W_QTDREA > 0 OR Z0W_PESDIG > 0)   " + CRLF
+	_cQry += "        AND Z0W_DATPRC = ' '   " + CRLF
+	_cQry += "        AND Z0W_CONFER = 'T'  " + CRLF
+	_cQry += "        AND Z0W_DATA = '" +DTOS(dDataBase)+ "' " + CRLF
+	_cQry += "        AND Z0W.D_E_L_E_T_ = ' ' " + CRLF
+	_cQry += " ), ENUMERADO AS ( " + CRLF
+	_cQry += "     SELECT  " + CRLF
+	_cQry += "         RECNO, ROTAS, RECEITA, OPERACAO, " + CRLF
+	_cQry += "         ROW_NUMBER() OVER (PARTITION BY RECEITA ORDER BY NEWID()) AS RN " + CRLF
+	_cQry += "     FROM DADOS " + CRLF
+	_cQry += " ) " + CRLF
+	_cQry += " SELECT RECNO, ROTAS, RECEITA, OPERACAO " + CRLF
+	_cQry += " FROM ENUMERADO " + CRLF
+	_cQry += " ORDER BY RN,RECEITA " + CRLF
+
+	//_cQry := " WITH DADOS AS ( " + CRLF
+   	//_cQry += " select Z0Y_CODEI, Z0Y_ROTA  AS ROTAS , Z0Y_RECEIT AS RECEITA , Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
+   	//_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
+	//_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC <> '1' " + CRLF 
+	//_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF 
+	//_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF 
+	//_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF 
+	//_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF 
+	//_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF
+	////_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
+	//_cQry += " 	UNION  " + CRLF
+	//_cQry += " select TOP(1) Z0Y_CODEI, Z0Y_ROTA  AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF
+   	//_cQry += "   FROM "+RetSqlName("Z0Y")+" Z0Y " + CRLF 
+	//_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ =' ' --AND Z0X_OPERAC = '1' " + CRLF 
+	//_cQry += " 	 WHERE ( Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)  " + CRLF
+	//_cQry += " 	   AND Z0Y_DATPRC = ' '  " + CRLF
+	//_cQry += " 	   AND Z0Y_CONFER = 'T' " + CRLF
+	//_cQry += " 	   AND Z0Y_DATA = '" +DTOS(dDataBase)+ "' " + CRLF
+	//_cQry += " 	   AND Z0Y.D_E_L_E_T_ =' '  " + CRLF 
+	////_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
+	//_cQry += " 	UNION  " + CRLF 
+   	//_cQry += " select TOP(1) Z0W_CODEI, Z0W_ROTA  AS ROTAS , Z0W_RECEIT AS RECEITA ,Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO " + CRLF 
+   	//_cQry += "   FROM "+RetSqlName("Z0W")+" Z0W " + CRLF 
+	//_cQry += " 	 JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0W_FILIAL AND Z0X_CODIGO = Z0W_CODEI AND Z0X_DATA = Z0W_DATA AND Z0X.D_E_L_E_T_ =' '  --AND Z0X_OPERAC = '1'" + CRLF 
+	//_cQry += " 	 WHERE ( Z0W_QTDREA > 0 OR Z0W_PESDIG > 0)  " + CRLF 
+	//_cQry += " 	   AND Z0W_DATPRC = ' '  " + CRLF 
+	//_cQry += " 	   AND Z0W_CONFER = 'T' " + CRLF 
+	//_cQry += " 	   AND Z0W_DATA = '" +DTOS(dDataBase)+ "'" + CRLF 
+	//_cQry += " 	   AND Z0W.D_E_L_E_T_ =' '  " + CRLF
+	////_cQry += " 	   AND Z0X.Z0X_CODIGO = '0000042610' " + CRLF
+	//_cQry += " 	   ) " + CRLF
+	//_cQry += " 	   SELECT DISTINCT RECNO, ROTAS, RECEITA, OPERACAO FROM DADOS ORDER BY OPERACAO DESC " + CRLF
 	
 	cAlias := MpSysOpenQuery(_cQry)
 
@@ -77,7 +114,7 @@ User Function JOB20VA() // U_JOB20VA()
 	
 	i := 1
 
-	//cONoUT(_cQry)
+	cONoUT(_cQry)
 	While !((cAlias)->(EOF()))
 
 		aSemaforos := {}
@@ -85,9 +122,9 @@ User Function JOB20VA() // U_JOB20VA()
 		cDieta := ""
 		Z0X->(DbGoTo(nRecno))
 		
-		While nRecNo == (cAlias)->RECNO .and. cDieta != (cAlias)->RECEITA
+		While !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) <= 3
 			aAdd(aSemaforos, {(cAlias)->RECNO,(cAlias)->ROTAS,cSemaforo+"_"+(cAlias)->ROTAS})
-			cDieta := (cAlias)->RECEITA
+			cDieta += "|" + Alltrim((cAlias)->RECEITA)
 			(cAlias)->(DBSkip())
 		enddo
 		
