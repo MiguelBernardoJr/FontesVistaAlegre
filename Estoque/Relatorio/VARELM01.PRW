@@ -59,12 +59,12 @@ If nOpc == 1
 			// aRet[4] := MsDate()
 			MV_PAR04 := MsDate()
 		EndIf
-		FWMsgRun(, {|| RELM01VA( /* aRet[2], aRet[3], aRet[4], aRet[5], aRet */ ) }, 'Geração Relatório Baia x Pasto','Gerando excel, Por Favor Aguarde...')
+		FWMsgRun(, {|| U_RELM01VA( /* aRet[2], aRet[3], aRet[4], aRet[5], aRet */ ) }, 'Geração Relatório Baia x Pasto','Gerando excel, Por Favor Aguarde...')
 		
 	EndIf
 EndIf
 
-If lower(cUserName) $ 'mbernardo,atoshio,admin'
+If Type("oMainWnd") != "U" .and. lower(cUserName) $ 'mbernardo,atoshio,admin'
 	Alert('Tempo de processamento: ' + ElapTime( cTimeINI, Time() ) )
 EndIf
 
@@ -79,7 +79,7 @@ Return nil
  |                                                                                |
  | Obs.:  -                                                                       |
  '--------------------------------------------------------------------------------*/
-Static Function RELM01VA( /* nAgrup, nDiasAb, dDTReferencia, dDtMoviment, _aParam */ )
+User Function RELM01VA( /* nAgrup, nDiasAb, dDTReferencia, dDtMoviment, _aParam */ )
 
 Local aLinVazia	  	:= {}
 Local cStyle		:= ""
@@ -93,12 +93,15 @@ Private aDadTp4     := {}
 Private aCurSint    := {}
 Private aPasSint    := {}
 
-Private cPath 	    := "C:\totvs_relatorios\"
-Private cArquivo    := cPath + "VARELM01_"+; // __cUserID+"_"+;
-								DtoS(dDataBase)+; 
-								"_"+; 
-								StrTran(SubS(Time(),1,5),":","")+;
-								".xml"
+if Type("cPath") == "U"
+	Private cPath 	    := "C:\totvs_relatorios\"
+	Private cArquivo    := cPath + "VARELM01_"+; // __cUserID+"_"+;
+									DtoS(dDataBase)+; 
+									"_"+; 
+									StrTran(SubS(Time(),1,5),":","")+;
+									".xml"
+endif
+
 Private oExcelApp   := nil
 
 // utilizados em todo o processo
@@ -351,14 +354,16 @@ else
 
 	FClose(nHandle)
 
-	If ApOleClient("MSExcel")				//	 U_VARELM01()
-		oExcelApp := MsExcel():New()
-		oExcelApp:WorkBooks:Open( cArquivo )
-		oExcelApp:SetVisible(.T.) 	
-		oExcelApp:Destroy()	
-		// ou >  ShellExecute( "Open", cNameFile , '', '', 1 ) //Abre o arquivo na tela após salvar 
-	Else
-		MsgAlert("O Excel não foi encontrado. Arquivo " + cArquivo + " gerado em " + cPath + ".", "MsExcel não encontrado" )
+	if Type("oMainWnd") != "U"
+		If ApOleClient("MSExcel")				//	 U_VARELM01()
+			oExcelApp := MsExcel():New()
+			oExcelApp:WorkBooks:Open( cArquivo )
+			oExcelApp:SetVisible(.T.)
+			oExcelApp:Destroy()	
+			// ou >  ShellExecute( "Open", cNameFile , '', '', 1 ) //Abre o arquivo na tela após salvar 
+		Else
+			MsgAlert("O Excel não foi encontrado. Arquivo " + cArquivo + " gerado em " + cPath + ".", "MsExcel não encontrado" )
+		EndIf
 	EndIf
 
 	(_cAliaEST)->(DbCloseArea())
@@ -371,45 +376,45 @@ Return Nil
 // FIM DA FUNCAO: RELM01VA
 
 User Function CabXMLExcel(cStyle)
-Local   cRet   := ""
-Default cStyle := ""
+	Local   cRet   := ""
+	Default cStyle := ""
 
-cRet := '<?xml version="1.0"?>' + CRLF
-cRet += '<?mso-application progid="Excel.Sheet"?>' + CRLF
-cRet += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' + CRLF
-cRet += '  xmlns:o="urn:schemas-microsoft-com:office:office"' + CRLF
-cRet += '  xmlns:x="urn:schemas-microsoft-com:office:excel"' + CRLF
-cRet += '  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"' + CRLF
-cRet += '  xmlns:html="http://www.w3.org/TR/REC-html40">' + CRLF
-cRet += '  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">' + CRLF
-cRet += '   <Author>Miguel Bernardo</Author>' + CRLF
-cRet += '   <LastAuthor>Miguel Bernardo</LastAuthor>' + CRLF
-cRet += '   <Created>' + U_TimeStamp() + 'Z</Created>' + CRLF
-cRet += '   <Version>16.00</Version>' + CRLF
-cRet += '  </DocumentProperties>' + CRLF
-cRet += '  <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">' + CRLF
-cRet += '   <AllowPNG/>' + CRLF
-cRet += '  </OfficeDocumentSettings>' + CRLF
-cRet += '   <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">' + CRLF
-cRet += '     <WindowHeight>14190</WindowHeight>' + CRLF
-cRet += '     <WindowWidth>28800</WindowWidth>' + CRLF
-cRet += '     <WindowTopX>32767</WindowTopX>' + CRLF
-cRet += '     <WindowTopY>32767</WindowTopY>' + CRLF
-// cRet += '     <ActiveSheet>1</ActiveSheet>' + CRLF
-cRet += '     <ProtectStructure>False</ProtectStructure>' + CRLF
-cRet += '     <ProtectWindows>False</ProtectWindows>' + CRLF
-cRet += '  </ExcelWorkbook>' + CRLF
-cRet += '  <Styles>' + CRLF
-cRet += '   <Style ss:ID="Default" ss:Name="Normal">' + CRLF
-cRet += '    <Alignment ss:Vertical="Bottom"/>' + CRLF
-cRet += '    <Borders/>' + CRLF
-cRet += '    <Font ss:FontName="Arial Narrow" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>' + CRLF
-cRet += '    <Interior/>' + CRLF
-cRet += '    <NumberFormat/>' + CRLF
-cRet += '    <Protection/>' + CRLF
-cRet += '   </Style>' + CRLF
-cRet += cStyle
-cRet += '  </Styles>' + CRLF
+	cRet := '<?xml version="1.0"?>' + CRLF
+	cRet += '<?mso-application progid="Excel.Sheet"?>' + CRLF
+	cRet += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' + CRLF
+	cRet += '  xmlns:o="urn:schemas-microsoft-com:office:office"' + CRLF
+	cRet += '  xmlns:x="urn:schemas-microsoft-com:office:excel"' + CRLF
+	cRet += '  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"' + CRLF
+	cRet += '  xmlns:html="http://www.w3.org/TR/REC-html40">' + CRLF
+	cRet += '  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">' + CRLF
+	cRet += '   <Author>Miguel Bernardo</Author>' + CRLF
+	cRet += '   <LastAuthor>Miguel Bernardo</LastAuthor>' + CRLF
+	cRet += '   <Created>' + U_TimeStamp() + 'Z</Created>' + CRLF
+	cRet += '   <Version>16.00</Version>' + CRLF
+	cRet += '  </DocumentProperties>' + CRLF
+	cRet += '  <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">' + CRLF
+	cRet += '   <AllowPNG/>' + CRLF
+	cRet += '  </OfficeDocumentSettings>' + CRLF
+	cRet += '   <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">' + CRLF
+	cRet += '     <WindowHeight>14190</WindowHeight>' + CRLF
+	cRet += '     <WindowWidth>28800</WindowWidth>' + CRLF
+	cRet += '     <WindowTopX>32767</WindowTopX>' + CRLF
+	cRet += '     <WindowTopY>32767</WindowTopY>' + CRLF
+	// cRet += '     <ActiveSheet>1</ActiveSheet>' + CRLF
+	cRet += '     <ProtectStructure>False</ProtectStructure>' + CRLF
+	cRet += '     <ProtectWindows>False</ProtectWindows>' + CRLF
+	cRet += '  </ExcelWorkbook>' + CRLF
+	cRet += '  <Styles>' + CRLF
+	cRet += '   <Style ss:ID="Default" ss:Name="Normal">' + CRLF
+	cRet += '    <Alignment ss:Vertical="Bottom"/>' + CRLF
+	cRet += '    <Borders/>' + CRLF
+	cRet += '    <Font ss:FontName="Arial Narrow" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>' + CRLF
+	cRet += '    <Interior/>' + CRLF
+	cRet += '    <NumberFormat/>' + CRLF
+	cRet += '    <Protection/>' + CRLF
+	cRet += '   </Style>' + CRLF
+	cRet += cStyle
+	cRet += '  </Styles>' + CRLF
 
 Return cRet
 // FIM DA FUNCAO: CabXMLExcel
@@ -424,216 +429,218 @@ Return cRet
  | Obs.:  -                                                                       |
  '--------------------------------------------------------------------------------*/
 Static Function VASQLEST( nAgrup, cDiasAb, dDTReferencia )
-Local _cQry := ""
+	Local _cQry := ""
 
-_cQry := " WITH SALDO_ATUAL AS ( " + CRLF
-_cQry += " 	SELECT DISTINCT B2_FILIAL, B2_COD, B2_LOCAL, '' B8_LOTECTL, B1_X_CURRA, B1_XANIMAL, B1_XANIITE, B1_X_ERA, B1_XLOTE, " + CRLF
-_cQry += " 			CASE B1_RASTRO WHEN 'L' THEN 'L' ELSE 'N' END B1_RASTRO, " + CRLF
-_cQry += " 			B1_XPESOCO, B1_XLOTCOM, B1_XRACA, B1_X_SEXO, B1_XDENTIC, B1_XDATACO, " + CRLF
-_cQry += " 			100 AS DiasAbate, " + CRLF
-_cQry += "  			CASE B1_XDATACO " + CRLF
-_cQry += "   				WHEN ' ' THEN 0 " + CRLF
-_cQry += "   				ELSE DATEDIFF(DAY, CONVERT(DATETIME, B1_XDATACO, 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103)) " + CRLF
-_cQry += "   			END AS Dias, " + CRLF
-_cQry += "   			CASE B1_XDATACO " + CRLF
-_cQry += "   				WHEN ' ' THEN ' ' " + CRLF
-_cQry += "   				ELSE CONVERT( VARCHAR, CONVERT(DATETIME, B1_XDATACO, 103)+"+cDiasAb+", 112) " + CRLF
-_cQry += "   			END PrjecAba, " + CRLF
-_cQry += " 			SUM(B2_QATU) B2_QATU, --A2_NOME " + CRLF
-_cQry += " 			A2_NOME --ISNULL(A2_NOME, ' ' ) A2_NOME " + CRLF
-//_cQry += "          --ISNULL((SELECT DISTINCT A2_NOME FROM SA2010 SA2 WHERE SA2.D_E_L_E_T_ = ' ' AND A2_COD+A2_LOJA IN (SELECT C7_FORNECE+C7_LOJA FROM SC7010 WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND D_E_L_E_T_ = ' ' AND C7_PRODUTO LIKE 'BOV0%' )),'') A2_NOME  " + CRLF
-_cQry += "          --ISNULL((SELECT DISTINCT A2_NOME FROM " + RetSqlName('SA2') + " SA2 WHERE SA2.D_E_L_E_T_ = ' ' AND A2_COD = (SELECT DISTINCT C7_FORNECE FROM " + RetSqlName('SC7') + " WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND C7_PRODUTO LIKE 'BOV%' AND D_E_L_E_T_ = ' ' AND C7_FORNECE = A2_COD AND C7_LOJA = A2_LOJA)),'') A2_NOME  " + CRLF
-_cQry += " 	FROM " + RetSqlName('SB1') + "  B1 " + CRLF
-_cQry += " 	JOIN " + RetSqlName('SB2') + " B2 ON B1_FILIAL=' ' AND B2_FILIAL='"+FWxFilial('SB2')+"' AND B1_COD=B2_COD AND B1.D_E_L_E_T_= ' ' AND B2.D_E_L_E_T_=' ' " + CRLF
-_cQry += " 	LEFT JOIN " + RetSqlName('SC7') + " C7 ON C7_FILIAL+C7_NUM = B1_XLOTCOM AND B1.D_E_L_E_T_=' ' AND C7_PRODUTO LIKE 'BOV0%'  AND C7.D_E_L_E_T_=' ' " + CRLF 
-_cQry += " 	LEFT JOIN " + RetSqlName('SA2') + " A2 ON A2_FILIAL=' ' AND A2_COD=C7_FORNECE AND A2_LOJA=C7_LOJA AND A2.D_E_L_E_T_=' ' " + CRLF
-_cQry += " 	WHERE B1_GRUPO IN ('BOV') " + CRLF
-_cQry += " 	  AND B1_RASTRO = 'L' AND B2_QATU > 0 " + CRLF
-_cQry += " 	GROUP BY B2_FILIAL, B2_COD, B2_LOCAL, B1_RASTRO, B1_X_CURRA, B1_XANIMAL, B1_XANIITE, B1_X_ERA, B1_XLOTE, B1_XPESOCO, B1_XLOTCOM " + CRLF
-_cQry += "         , B1_XRACA, B1_X_SEXO, B1_XDENTIC, B1_XDATACO, A2_NOME " + CRLF
-_cQry += " ), " + CRLF
-_cQry += " " + CRLF
-_cQry += " SALDO_LOTE AS ( " + CRLF
-_cQry += " 	SELECT DISTINCT B8_FILIAL, B8_PRODUTO, B8_LOCAL, B8_LOTECTL, 'L' B1_RASTRO, " + CRLF
-_cQry += " 			B8_XPESOCO, B8_GMD, B8_XRENESP, " + CRLF
-_cQry += " 			B8_DIASCO DiasAbate, B8_XDATACO, " + CRLF
-_cQry += "     			CASE B8_XDATACO " + CRLF
-_cQry += " 				WHEN ' ' THEN 0 " + CRLF
-_cQry += " 				ELSE DATEDIFF(DAY, CONVERT(DATETIME, B8_XDATACO, 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103))" + CRLF
-_cQry += " 			END AS Dias," + CRLF
-_cQry += " 			CASE B8_XDATACO " + CRLF
-_cQry += " 				WHEN ' ' THEN ' ' " + CRLF
-_cQry += " 				ELSE CONVERT( VARCHAR, CONVERT(DATETIME, B8_XDATACO, 103)+B8_DIASCO, 112) " + CRLF
-_cQry += "          END PrjecAba," + CRLF
-_cQry += " 			SUM(B8_SALDO) B8_SALDO, --A2_NOME " + CRLF
-_cQry += " 			 --ISNULL(A2_NOME, ' ' ) A2_NOME " + CRLF
-//_cQry += "          ISNULL((SELECT DISTINCT A2_NOME FROM SA2010 WHERE D_E_L_E_T_ = ' ' AND A2_COD+A2_LOJA = (SELECT DISTINCT C7_FORNECE+C7_LOJA FROM " + RetSqlName('SC7') + " WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND C7_PRODUTO LIKE 'BOV%' AND D_E_L_E_T_ = ' ' )),'') A2_NOME  " + CRLF
-_cQry += "          ISNULL((SELECT DISTINCT A2_NOME FROM " + RetSqlName('SA2') + " WHERE D_E_L_E_T_ = ' ' AND A2_COD = (SELECT DISTINCT C7_FORNECE FROM " + RetSqlName('SC7') + " WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND C7_PRODUTO LIKE 'BOV%' AND D_E_L_E_T_ = ' ' AND C7_FORNECE = A2_COD AND C7_LOJA = A2_LOJA)),'') A2_NOME  " + CRLF
-_cQry += " 	FROM " + RetSqlName('SB1') + "  B1 " + CRLF
-_cQry += " 	JOIN " + RetSqlName('SB8') + "  B8 ON B1_FILIAL='"+FWxFilial('SB1')+"' AND B8_FILIAL='"+FWxFilial('SB8')+"' AND B1_COD=B8_PRODUTO AND B1.D_E_L_E_T_= ' ' AND B8.D_E_L_E_T_=' ' " + CRLF
-_cQry += " 	--LEFT JOIN " + RetSqlName('SC7') + " C7 ON C7_FILIAL+C7_NUM = B1_XLOTCOM AND B1.D_E_L_E_T_=' ' AND C7_PRODUTO LIKE 'BOV0%'  AND C7.D_E_L_E_T_=' ' " + CRLF
-_cQry += " 	--LEFT JOIN " + RetSqlName('SA2') + " A2 ON A2_FILIAL=' ' AND A2_COD=C7_FORNECE AND A2_LOJA=C7_LOJA AND A2.D_E_L_E_T_=' ' " + CRLF 
-_cQry += " 	WHERE B1_GRUPO IN ('BOV')  AND B1.D_E_L_E_T_ = ' ' AND B8_SALDO > 0" + CRLF
-_cQry += " 	GROUP BY B8_FILIAL, B8_PRODUTO, B8_LOCAL, B8_LOTECTL, B1_RASTRO, B8_XPESOCO, B8_GMD, " + CRLF
-_cQry += " 	 		 B8_XRENESP, B8_DIASCO, B8_XDATACO, B1_XLOTCOM " + CRLF
-_cQry += " ), " + CRLF
-_cQry += CRLF
-_cQry += " CURRAL AS ( " + CRLF
-_cQry += " 		SELECT DISTINCT SB8.B8_FILIAL, SB8.B8_PRODUTO, SB8.B8_LOCAL, SB8.B8_LOTECTL, SB8.B8_X_CURRA, SB8.D_E_L_E_T_ " + CRLF
-_cQry += " 		FROM " + RetSqlName('SB8') + " SB8 "+ CRLF
-_cQry += " 	    JOIN SALDO_LOTE SL ON  "+ CRLF
-_cQry += "  	     SL.B8_FILIAL = SB8.B8_FILIAL "+ CRLF
-_cQry += "	     AND SL.B8_PRODUTO = SB8.B8_PRODUTO "+ CRLF
-_cQry += "		 AND SL.B8_LOCAL = SB8.B8_LOCAL "+ CRLF
-_cQry += "		 AND SL.B8_LOTECTL = SB8.B8_LOTECTL "+ CRLF
-//_cQry += " 		WHERE SB8.D_E_L_E_T_ = ' ' AND B8_FILIAL+B8_PRODUTO+B8_LOCAL+B8_LOTECTL IN ( SELECT DISTINCT B8_FILIAL+B8_PRODUTO+B8_LOCAL+B8_LOTECTL FROM SALDO_LOTE ) " + CRLF
-_cQry += " 		WHERE SB8.D_E_L_E_T_ = ' ' " +CRLF
-//_cQry += "        AND SB8.B8_LOTECTL = (SELECT DISTINCT B8_LOTECTL FROM SALDO_LOTE SL WHERE SB8.B8_FILIAL = SL.B8_FILIAL AND SB8.B8_PRODUTO = SL.B8_PRODUTO AND SB8.B8_LOTECTL = SL.B8_LOTECTL ) " + CRLF
-_cQry += " 		  AND SB8.B8_X_CURRA<>' ' " + CRLF
-_cQry += " 		  AND SB8.B8_SALDO > 0 " + CRLF
-_cQry += " ) " + CRLF
-_cQry += CRLF
-_cQry += " , DADOS AS ( " + CRLF
-_cQry += " SELECT --CASE ISNULL(Z08_TIPO,'*') WHEN '*' THEN 'SEM CLASSIFICAÇÃO' ELSE Z08_TIPO END Z08_TIPO, " + CRLF
-_cQry += " CASE WHEN ISNULL(L.B8_LOTECTL, A.B1_XLOTE) IN (SELECT Z0F_LOTE FROM Z0F010 WHERE Z0F_FILIAL = '"+FwxFilial("ZF0")+"' AND Z0F_LOTE = ISNULL(L.B8_LOTECTL, A.B1_XLOTE) AND D_E_L_E_T_ = ' ') THEN '1' " + CRLF
-_cQry += " 		ELSE " + CRLF
-_cQry += "           CASE ISNULL(Z08_TIPO,'*') WHEN '*' THEN 'SEM CLASSIFICAÇÃO' ELSE Z08_TIPO END " + CRLF
-_cQry += " 		END Z08_TIPO, " + CRLF
-_cQry += " 		ISNULL(L.B1_RASTRO,A.B1_RASTRO) B1_RASTRO, " + CRLF
-_cQry += " 		 CASE WHEN ISNULL(L.B8_LOTECTL, A.B1_XLOTE) IN (SELECT Z0F_LOTE FROM Z0F010 WHERE Z0F_FILIAL = '"+FwxFilial("ZF0")+"' AND Z0F_LOTE = ISNULL(L.B8_LOTECTL, A.B1_XLOTE) AND D_E_L_E_T_ = ' ') THEN ('1'+RTRIM(Z08_LINHA)+Z08_SEQUEN) ELSE " + CRLF
-_cQry += "		ISNULL(Z08_TIPO+RTRIM(Z08_LINHA)+Z08_SEQUEN,9999) END  ORDEM, " + CRLF
-_cQry += " 		 " + CRLF
-//_cQry += " 		ISNULL(Z08_TIPO+RTRIM(Z08_LINHA)+Z08_SEQUEN,9999) ORDEM, " + CRLF
-_cQry += " 		B2_COD, B2_LOCAL, " + CRLF
-_cQry += " 		ISNULL(C.B8_X_CURRA, B1_X_CURRA) B1_X_CURRA, " + CRLF
-_cQry += " 		ISNULL(L.B8_LOTECTL, A.B1_XLOTE) B1_XLOTE, " + CRLF
-_cQry += " 		CASE B1_X_ERA WHEN ' ' THEN 'SEM CLASSIFICAÇÃO' ELSE B1_X_ERA END B1_X_ERA, " + CRLF
-_cQry += " 		ISNULL(B8_SALDO,0) B2_QATU, " + CRLF
-_cQry += " 		ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) B1_XPESOCO, " + CRLF
-_cQry += " 		B1_XLOTCOM, B1_XRACA, B1_X_SEXO, B1_XDENTIC, " + CRLF
-_cQry += " 		--CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END Z09_GMDESP, Z09_VLREST, Z09_DIAABT, " + CRLF
-_cQry += " 		Z09_GMDESP, Z09_VLREST, Z09_DIAABT, " + CRLF
-_cQry += " 		ISNULL(L.B8_XDATACO, A.B1_XDATACO) B1_XDATACO, " + CRLF
-_cQry += " 		CASE L.DiasAbate WHEN 0 THEN A.DiasAbate ELSE L.DiasAbate END DiasAbate," + CRLF
-_cQry += " 		ISNULL(L.Dias, A.Dias) Dias," + CRLF
-_cQry += " 		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
-_cQry += "   			WHEN 0 THEN 0 " + CRLF
-_cQry += "   			ELSE (DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
-_cQry += "   		END PesoAtual, " + CRLF
-_cQry += " 		ISNULL(L.PrjecAba, A.PrjecAba) PrjecAba, " + CRLF
-_cQry += " 		--CASE B8_XRENESP WHEN 0 THEN Z09_RENESP ELSE B8_XRENESP END Z09_RENESP, " + CRLF
-_cQry += " 		Z09_RENESP, " + CRLF
-_cQry += "   		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
-_cQry += "   		  WHEN 0 THEN 0 " + CRLF
-_cQry += "   		  ELSE (DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), (CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103)+"+cDiasAb+"))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
-_cQry += "   		END PesoFinal, " + CRLF
-_cQry += "   		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
-_cQry += "   		  WHEN 0 THEN 0 " + CRLF
-_cQry += "   		  ELSE ((DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), (CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103)+"+cDiasAb+"))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO)) * ISNULL(B8_SALDO,0) " + CRLF
-_cQry += "   		END PesoFinalTOTAL, " + CRLF
-_cQry += "   		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
-_cQry += "   		  WHEN 0 THEN 0 " + CRLF
-_cQry += "   		  ELSE ((DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), (CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103)+"+cDiasAb+"))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO))*( (CASE B8_XRENESP WHEN 0 THEN Z09_RENESP ELSE B8_XRENESP END) /100) " + CRLF
-_cQry += "   		END PesoCarcacaFinal, ISNULL(L.A2_NOME, A.A2_NOME) A2_NOME, " + CRLF
-_cQry += " 		SubString(ISNULL(L.PrjecAba, A.PrjecAba),1,6) GRUPO2 " + CRLF
-_cQry += " " + CRLF
-_cQry += " FROM	 SALDO_LOTE L " + CRLF
-_cQry += " LEFT JOIN SALDO_ATUAL A ON B2_FILIAL=B8_FILIAL AND B2_COD=B8_PRODUTO AND B2_LOCAL=B8_LOCAL " + CRLF
-_cQry += " LEFT JOIN CURRAL     C ON L.B8_FILIAL=C.B8_FILIAL AND L.B8_PRODUTO=C.B8_PRODUTO AND L.B8_LOCAL=C.B8_LOCAL AND L.B8_LOTECTL=C.B8_LOTECTL AND C.D_E_L_E_T_=' ' " + CRLF
-_cQry += " LEFT JOIN " + RetSqlName('Z08') + " Z8 ON Z08_FILIAL='"+FWxFilial('Z08')+"' AND RTRIM(UPPER(Z08_CODIGO))=RTRIM(UPPER(ISNULL(C.B8_X_CURRA, A.B1_X_CURRA))) AND Z8.D_E_L_E_T_=' ' " + CRLF
-_cQry += " LEFT JOIN " + RetSqlName('Z09') + " Z9 ON Z09_FILIAL='"+FWxFilial('Z09')+"' AND Z09_CODIGO=B1_XANIMAL AND Z09_ITEM=B1_XANIITE AND Z9.D_E_L_E_T_=' ' " + CRLF
-_cQry += " ), " + CRLF
-_cQry += "" + CRLF
-_cQry += " ENTRADA AS ( " + CRLF
-_cQry += " 		SELECT	D1_FILIAL, D1_COD, D1_LOCAL, SUM(D1_X_PESCH) / SUM(D1_QUANT) MEDIA " + CRLF
-_cQry += " 		FROM	" + RetSqlName('SD1') + " " + CRLF
-_cQry += " 		WHERE	D_E_L_E_T_=' ' " + CRLF
-_cQry += " 			AND D1_X_PESCH > 0 AND D1_QUANT > 0 " + CRLF
-_cQry += " 		GROUP BY D1_FILIAL, D1_COD, D1_LOCAL " + CRLF
-_cQry += " ) " + CRLF
-_cQry += "" + CRLF
-_cQry += " , FINAL AS (" + CRLF
-_cQry += " SELECT DISTINCT Z08_TIPO," + CRLF
-_cQry += " 			B1_RASTRO," + CRLF
-_cQry += " 			ORDEM," + CRLF
-_cQry += " 			B2_COD, B2_LOCAL," + CRLF
-_cQry += " 			B1_X_CURRA," + CRLF
-_cQry += " 			B1_XLOTE," + CRLF
-_cQry += " 			B1_X_ERA," + CRLF
-_cQry += " 			B2_QATU," + CRLF
-_cQry += "			CASE" + CRLF
-_cQry += "				WHEN B1_XPESOCO = 0 AND Z08_TIPO<>'1' " + CRLF
-_cQry += "					THEN MEDIA " + CRLF
-_cQry += "					ELSE B1_XPESOCO " + CRLF
-_cQry += "			END B1_XPESOCO, " + CRLF
-_cQry += " 			B1_XLOTCOM, B1_XRACA, B1_X_SEXO, B1_XDENTIC," + CRLF
-_cQry += " 			Z09_GMDESP, Z09_VLREST, Z09_DIAABT," + CRLF
-_cQry += " 			B1_XDATACO," + CRLF
-_cQry += " 			DiasAbate, " + CRLF
-_cQry += " 			Dias, " + CRLF
-_cQry += " 			PesoAtual," + CRLF
-_cQry += " 			PrjecAba," + CRLF
-_cQry += " 			Z09_RENESP," + CRLF
-_cQry += "   			PesoFinal," + CRLF
-_cQry += "   			PesoFinalTOTAL," + CRLF
-_cQry += "   			PesoCarcacaFinal," + CRLF
-_cQry += "			A2_NOME," + CRLF
-_cQry += " 			GRUPO2" + CRLF
-_cQry += " FROM DADOS " + CRLF
-_cQry += " LEFT JOIN ENTRADA ON D1_FILIAL='"+FWxFilial("SD1")+"' AND D1_COD=B2_COD AND D1_LOCAL=B2_LOCAL " + CRLF
-_cQry += " ) " + CRLF
-/*
-MB : 02.09.2020
-	levei a ordenação para o SQL; a pedido do toshio
-	*/
-_cQry += CRLF
-_cQry += " , ORDENACAO AS ( " + CRLF
-_cQry += "  	SELECT B1_XLOTE, B1_X_CURRA, " + CRLF
-_cQry += "	-- MAX(CONVERT(DATE,B1_XDATACO)) " + CRLF
-_cQry += "		MAX( CASE B1_XDATACO  " + CRLF
-_cQry += " 				WHEN ' ' THEN 0  " + CRLF
-_cQry += " 				ELSE DATEDIFF(DAY, CONVERT(DATETIME, B1_XDATACO, 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103)) " + CRLF
-_cQry += " 			END) AS  " + CRLF
-_cQry += "		MAIOR_DATA " + CRLF
-_cQry += "  	FROM FINAL " + CRLF
-_cQry += "  	GROUP BY B1_XLOTE, B1_X_CURRA " + CRLF
-_cQry += CRLF
-_cQry += " ) " + CRLF
-_cQry += "  " + CRLF
-_cQry += " SELECT    F.*  " + CRLF
-_cQry += " FROM      FINAL     F " + CRLF
-_cQry += "      JOIN ORDENACAO O ON O.B1_X_CURRA=F.B1_X_CURRA AND F.B1_XLOTE = O.B1_XLOTE" + CRLF
-_cQry += CRLF
+	_cQry := " WITH SALDO_ATUAL AS ( " + CRLF
+	_cQry += " 	SELECT DISTINCT B2_FILIAL, B2_COD, B2_LOCAL, '' B8_LOTECTL, B1_X_CURRA, B1_XANIMAL, B1_XANIITE, B1_X_ERA, B1_XLOTE, " + CRLF
+	_cQry += " 			CASE B1_RASTRO WHEN 'L' THEN 'L' ELSE 'N' END B1_RASTRO, " + CRLF
+	_cQry += " 			B1_XPESOCO, B1_XLOTCOM, B1_XRACA, B1_X_SEXO, B1_XDENTIC, B1_XDATACO, " + CRLF
+	_cQry += " 			100 AS DiasAbate, " + CRLF
+	_cQry += "  			CASE B1_XDATACO " + CRLF
+	_cQry += "   				WHEN ' ' THEN 0 " + CRLF
+	_cQry += "   				ELSE DATEDIFF(DAY, CONVERT(DATETIME, B1_XDATACO, 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103)) " + CRLF
+	_cQry += "   			END AS Dias, " + CRLF
+	_cQry += "   			CASE B1_XDATACO " + CRLF
+	_cQry += "   				WHEN ' ' THEN ' ' " + CRLF
+	_cQry += "   				ELSE CONVERT( VARCHAR, CONVERT(DATETIME, B1_XDATACO, 103)+"+cDiasAb+", 112) " + CRLF
+	_cQry += "   			END PrjecAba, " + CRLF
+	_cQry += " 			SUM(B2_QATU) B2_QATU, --A2_NOME " + CRLF
+	_cQry += " 			A2_NOME --ISNULL(A2_NOME, ' ' ) A2_NOME " + CRLF
+	//_cQry += "          --ISNULL((SELECT DISTINCT A2_NOME FROM SA2010 SA2 WHERE SA2.D_E_L_E_T_ = ' ' AND A2_COD+A2_LOJA IN (SELECT C7_FORNECE+C7_LOJA FROM SC7010 WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND D_E_L_E_T_ = ' ' AND C7_PRODUTO LIKE 'BOV0%' )),'') A2_NOME  " + CRLF
+	_cQry += "          --ISNULL((SELECT DISTINCT A2_NOME FROM " + RetSqlName('SA2') + " (nolock) SA2 WHERE SA2.D_E_L_E_T_ = ' ' AND A2_COD = (SELECT DISTINCT C7_FORNECE FROM " + RetSqlName('SC7') + " WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND C7_PRODUTO LIKE 'BOV%' AND D_E_L_E_T_ = ' ' AND C7_FORNECE = A2_COD AND C7_LOJA = A2_LOJA)),'') A2_NOME  " + CRLF
+	_cQry += " 	FROM " + RetSqlName('SB1') + " (nolock) B1 " + CRLF
+	_cQry += " 	JOIN " + RetSqlName('SB2') + " (nolock) B2 ON B1_FILIAL=' ' AND B2_FILIAL='"+FWxFilial('SB2')+"' AND B1_COD=B2_COD AND B1.D_E_L_E_T_= ' ' AND B2.D_E_L_E_T_=' ' " + CRLF
+	_cQry += " 	LEFT JOIN " + RetSqlName('SC7') + " (nolock) C7 ON C7_FILIAL+C7_NUM = B1_XLOTCOM AND B1.D_E_L_E_T_=' ' AND C7_PRODUTO LIKE 'BOV0%'  AND C7.D_E_L_E_T_=' ' " + CRLF 
+	_cQry += " 	LEFT JOIN " + RetSqlName('SA2') + " (nolock) A2 ON A2_FILIAL=' ' AND A2_COD=C7_FORNECE AND A2_LOJA=C7_LOJA AND A2.D_E_L_E_T_=' ' " + CRLF
+	_cQry += " 	WHERE B1_GRUPO IN ('BOV') " + CRLF
+	_cQry += " 	  AND B1_RASTRO = 'L' AND B2_QATU > 0 " + CRLF
+	_cQry += " 	GROUP BY B2_FILIAL, B2_COD, B2_LOCAL, B1_RASTRO, B1_X_CURRA, B1_XANIMAL, B1_XANIITE, B1_X_ERA, B1_XLOTE, B1_XPESOCO, B1_XLOTCOM " + CRLF
+	_cQry += "         , B1_XRACA, B1_X_SEXO, B1_XDENTIC, B1_XDATACO, A2_NOME " + CRLF
+	_cQry += " ), " + CRLF
+	_cQry += " " + CRLF
+	_cQry += " SALDO_LOTE AS ( " + CRLF
+	_cQry += " 	SELECT DISTINCT B8_FILIAL, B8_PRODUTO, B8_LOCAL, B8_LOTECTL, 'L' B1_RASTRO, " + CRLF
+	_cQry += " 			B8_XPESOCO, B8_GMD, B8_XRENESP, " + CRLF
+	_cQry += " 			B8_DIASCO DiasAbate, B8_XDATACO, " + CRLF
+	_cQry += "     			CASE B8_XDATACO " + CRLF
+	_cQry += " 				WHEN ' ' THEN 0 " + CRLF
+	_cQry += " 				ELSE DATEDIFF(DAY, CONVERT(DATETIME, B8_XDATACO, 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103))" + CRLF
+	_cQry += " 			END AS Dias," + CRLF
+	_cQry += " 			CASE B8_XDATACO " + CRLF
+	_cQry += " 				WHEN ' ' THEN ' ' " + CRLF
+	_cQry += " 				ELSE CONVERT( VARCHAR, CONVERT(DATETIME, B8_XDATACO, 103)+B8_DIASCO, 112) " + CRLF
+	_cQry += "          END PrjecAba," + CRLF
+	_cQry += " 			SUM(B8_SALDO) B8_SALDO, --A2_NOME " + CRLF
+	_cQry += " 			 --ISNULL(A2_NOME, ' ' ) A2_NOME " + CRLF
+	//_cQry += "          ISNULL((SELECT DISTINCT A2_NOME FROM SA2010 WHERE D_E_L_E_T_ = ' ' AND A2_COD+A2_LOJA = (SELECT DISTINCT C7_FORNECE+C7_LOJA FROM " + RetSqlName('SC7') + " WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND C7_PRODUTO LIKE 'BOV%' AND D_E_L_E_T_ = ' ' )),'') A2_NOME  " + CRLF
+	_cQry += "          ISNULL((SELECT DISTINCT A2_NOME FROM " + RetSqlName('SA2') + " (nolock) WHERE D_E_L_E_T_ = ' ' AND A2_COD = (SELECT DISTINCT C7_FORNECE FROM " + RetSqlName('SC7') + " WHERE C7_FILIAL+C7_NUM = B1_XLOTCOM AND C7_PRODUTO LIKE 'BOV%' AND D_E_L_E_T_ = ' ' AND C7_FORNECE = A2_COD AND C7_LOJA = A2_LOJA)),'') A2_NOME  " + CRLF
+	_cQry += " 	FROM " + RetSqlName('SB1') + " (nolock) B1 " + CRLF
+	_cQry += " 	JOIN " + RetSqlName('SB8') + " (nolock) B8 ON B1_FILIAL='"+FWxFilial('SB1')+"' AND B8_FILIAL='"+FWxFilial('SB8')+"' AND B1_COD=B8_PRODUTO AND B1.D_E_L_E_T_= ' ' AND B8.D_E_L_E_T_=' ' " + CRLF
+	_cQry += " 	--LEFT JOIN " + RetSqlName('SC7') + " (nolock) C7 ON C7_FILIAL+C7_NUM = B1_XLOTCOM AND B1.D_E_L_E_T_=' ' AND C7_PRODUTO LIKE 'BOV0%'  AND C7.D_E_L_E_T_=' ' " + CRLF
+	_cQry += " 	--LEFT JOIN " + RetSqlName('SA2') + " (nolock) A2 ON A2_FILIAL=' ' AND A2_COD=C7_FORNECE AND A2_LOJA=C7_LOJA AND A2.D_E_L_E_T_=' ' " + CRLF 
+	_cQry += " 	WHERE B1_GRUPO IN ('BOV')  AND B1.D_E_L_E_T_ = ' ' AND B8_SALDO > 0" + CRLF
+	_cQry += " 	GROUP BY B8_FILIAL, B8_PRODUTO, B8_LOCAL, B8_LOTECTL, B1_RASTRO, B8_XPESOCO, B8_GMD, " + CRLF
+	_cQry += " 	 		 B8_XRENESP, B8_DIASCO, B8_XDATACO, B1_XLOTCOM " + CRLF
+	_cQry += " ), " + CRLF
+	_cQry += CRLF
+	_cQry += " CURRAL AS ( " + CRLF
+	_cQry += " 		SELECT DISTINCT SB8.B8_FILIAL, SB8.B8_PRODUTO, SB8.B8_LOCAL, SB8.B8_LOTECTL, SB8.B8_X_CURRA, SB8.D_E_L_E_T_ " + CRLF
+	_cQry += " 		FROM " + RetSqlName('SB8') + " (nolock) SB8 "+ CRLF
+	_cQry += " 	    JOIN SALDO_LOTE SL ON  "+ CRLF
+	_cQry += "  	     SL.B8_FILIAL = SB8.B8_FILIAL "+ CRLF
+	_cQry += "	     AND SL.B8_PRODUTO = SB8.B8_PRODUTO "+ CRLF
+	_cQry += "		 AND SL.B8_LOCAL = SB8.B8_LOCAL "+ CRLF
+	_cQry += "		 AND SL.B8_LOTECTL = SB8.B8_LOTECTL "+ CRLF
+	//_cQry += " 		WHERE SB8.D_E_L_E_T_ = ' ' AND B8_FILIAL+B8_PRODUTO+B8_LOCAL+B8_LOTECTL IN ( SELECT DISTINCT B8_FILIAL+B8_PRODUTO+B8_LOCAL+B8_LOTECTL FROM SALDO_LOTE ) " + CRLF
+	_cQry += " 		WHERE SB8.D_E_L_E_T_ = ' ' " +CRLF
+	//_cQry += "        AND SB8.B8_LOTECTL = (SELECT DISTINCT B8_LOTECTL FROM SALDO_LOTE SL WHERE SB8.B8_FILIAL = SL.B8_FILIAL AND SB8.B8_PRODUTO = SL.B8_PRODUTO AND SB8.B8_LOTECTL = SL.B8_LOTECTL ) " + CRLF
+	_cQry += " 		  AND SB8.B8_X_CURRA<>' ' " + CRLF
+	_cQry += " 		  AND SB8.B8_SALDO > 0 " + CRLF
+	_cQry += " ) " + CRLF
+	_cQry += CRLF
+	_cQry += " , DADOS AS ( " + CRLF
+	_cQry += " SELECT --CASE ISNULL(Z08_TIPO,'*') WHEN '*' THEN 'SEM CLASSIFICAÇÃO' ELSE Z08_TIPO END Z08_TIPO, " + CRLF
+	_cQry += " CASE WHEN ISNULL(L.B8_LOTECTL, A.B1_XLOTE) IN (SELECT Z0F_LOTE FROM " + RetSqlName('Z0F') + " (nolock) WHERE Z0F_FILIAL = '"+FwxFilial("ZF0")+"' AND Z0F_LOTE = ISNULL(L.B8_LOTECTL, A.B1_XLOTE) AND D_E_L_E_T_ = ' ') THEN '1' " + CRLF
+	_cQry += " 		ELSE " + CRLF
+	_cQry += "           CASE ISNULL(Z08_TIPO,'*') WHEN '*' THEN 'SEM CLASSIFICAÇÃO' ELSE Z08_TIPO END " + CRLF
+	_cQry += " 		END Z08_TIPO, " + CRLF
+	_cQry += " 		ISNULL(L.B1_RASTRO,A.B1_RASTRO) B1_RASTRO, " + CRLF
+	_cQry += " 		 CASE WHEN ISNULL(L.B8_LOTECTL, A.B1_XLOTE) IN (SELECT Z0F_LOTE FROM " + RetSqlName('Z0F') + " (nolock) WHERE Z0F_FILIAL = '"+FwxFilial("ZF0")+"' AND Z0F_LOTE = ISNULL(L.B8_LOTECTL, A.B1_XLOTE) AND D_E_L_E_T_ = ' ') THEN ('1'+RTRIM(Z08_LINHA)+Z08_SEQUEN) ELSE " + CRLF
+	_cQry += "		ISNULL(Z08_TIPO+RTRIM(Z08_LINHA)+Z08_SEQUEN,9999) END  ORDEM, " + CRLF
+	_cQry += " 		 " + CRLF
+	//_cQry += " 		ISNULL(Z08_TIPO+RTRIM(Z08_LINHA)+Z08_SEQUEN,9999) ORDEM, " + CRLF
+	_cQry += " 		B2_COD, B2_LOCAL, " + CRLF
+	_cQry += " 		ISNULL(C.B8_X_CURRA, B1_X_CURRA) B1_X_CURRA, " + CRLF
+	_cQry += " 		ISNULL(L.B8_LOTECTL, A.B1_XLOTE) B1_XLOTE, " + CRLF
+	_cQry += " 		CASE B1_X_ERA WHEN ' ' THEN 'SEM CLASSIFICAÇÃO' ELSE B1_X_ERA END B1_X_ERA, " + CRLF
+	_cQry += " 		ISNULL(B8_SALDO,0) B2_QATU, " + CRLF
+	_cQry += " 		ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) B1_XPESOCO, " + CRLF
+	_cQry += " 		B1_XLOTCOM, B1_XRACA, B1_X_SEXO, B1_XDENTIC, " + CRLF
+	_cQry += " 		--CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END Z09_GMDESP, Z09_VLREST, Z09_DIAABT, " + CRLF
+	_cQry += " 		Z09_GMDESP, Z09_VLREST, Z09_DIAABT, " + CRLF
+	_cQry += " 		ISNULL(L.B8_XDATACO, A.B1_XDATACO) B1_XDATACO, " + CRLF
+	_cQry += " 		CASE L.DiasAbate WHEN 0 THEN A.DiasAbate ELSE L.DiasAbate END DiasAbate," + CRLF
+	_cQry += " 		ISNULL(L.Dias, A.Dias) Dias," + CRLF
+	_cQry += " 		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
+	_cQry += "   			WHEN 0 THEN 0 " + CRLF
+	_cQry += "   			ELSE (DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
+	_cQry += "   		END PesoAtual, " + CRLF
+	_cQry += " 		ISNULL(L.PrjecAba, A.PrjecAba) PrjecAba, " + CRLF
+	_cQry += " 		--CASE B8_XRENESP WHEN 0 THEN Z09_RENESP ELSE B8_XRENESP END Z09_RENESP, " + CRLF
+	_cQry += " 		Z09_RENESP, " + CRLF
+	_cQry += "   		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
+	_cQry += "   		  WHEN 0 THEN 0 " + CRLF
+	_cQry += "   		  ELSE (DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), (CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103)+"+cDiasAb+"))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
+	_cQry += "   		END PesoFinal, " + CRLF
+	_cQry += "   		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
+	_cQry += "   		  WHEN 0 THEN 0 " + CRLF
+	_cQry += "   		  ELSE ((DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), (CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103)+"+cDiasAb+"))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO)) * ISNULL(B8_SALDO,0) " + CRLF
+	_cQry += "   		END PesoFinalTOTAL, " + CRLF
+	_cQry += "   		CASE ISNULL(L.B8_XPESOCO, A.B1_XPESOCO) " + CRLF
+	_cQry += "   		  WHEN 0 THEN 0 " + CRLF
+	_cQry += "   		  ELSE ((DATEDIFF(DAY, CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103), (CONVERT(DATETIME, ISNULL(L.B8_XDATACO, A.B1_XDATACO), 103)+"+cDiasAb+"))*(CASE B8_GMD WHEN 0 THEN Z09_GMDESP ELSE B8_GMD END))+ISNULL(L.B8_XPESOCO, A.B1_XPESOCO))*( (CASE B8_XRENESP WHEN 0 THEN Z09_RENESP ELSE B8_XRENESP END) /100) " + CRLF
+	_cQry += "   		END PesoCarcacaFinal, ISNULL(L.A2_NOME, A.A2_NOME) A2_NOME, " + CRLF
+	_cQry += " 		SubString(ISNULL(L.PrjecAba, A.PrjecAba),1,6) GRUPO2 " + CRLF
+	_cQry += " " + CRLF
+	_cQry += " FROM	 SALDO_LOTE L " + CRLF
+	_cQry += " LEFT JOIN SALDO_ATUAL A ON B2_FILIAL=B8_FILIAL AND B2_COD=B8_PRODUTO AND B2_LOCAL=B8_LOCAL " + CRLF
+	_cQry += " LEFT JOIN CURRAL     C ON L.B8_FILIAL=C.B8_FILIAL AND L.B8_PRODUTO=C.B8_PRODUTO AND L.B8_LOCAL=C.B8_LOCAL AND L.B8_LOTECTL=C.B8_LOTECTL AND C.D_E_L_E_T_=' ' " + CRLF
+	_cQry += " LEFT JOIN " + RetSqlName('Z08') + " (nolock) Z8 ON Z08_FILIAL='"+FWxFilial('Z08')+"' AND RTRIM(UPPER(Z08_CODIGO))=RTRIM(UPPER(ISNULL(C.B8_X_CURRA, A.B1_X_CURRA))) AND Z8.D_E_L_E_T_=' ' " + CRLF
+	_cQry += " LEFT JOIN " + RetSqlName('Z09') + " (nolock) Z9 ON Z09_FILIAL='"+FWxFilial('Z09')+"' AND Z09_CODIGO=B1_XANIMAL AND Z09_ITEM=B1_XANIITE AND Z9.D_E_L_E_T_=' ' " + CRLF
+	_cQry += " ), " + CRLF
+	_cQry += "" + CRLF
+	_cQry += " ENTRADA AS ( " + CRLF
+	_cQry += " 		SELECT	D1_FILIAL, D1_COD, D1_LOCAL, SUM(D1_X_PESCH) / SUM(D1_QUANT) MEDIA " + CRLF
+	_cQry += " 		FROM	" + RetSqlName('SD1') + " (nolock) " + CRLF
+	_cQry += " 		WHERE	D_E_L_E_T_=' ' " + CRLF
+	_cQry += " 			AND D1_X_PESCH > 0 AND D1_QUANT > 0 " + CRLF
+	_cQry += " 		GROUP BY D1_FILIAL, D1_COD, D1_LOCAL " + CRLF
+	_cQry += " ) " + CRLF
+	_cQry += "" + CRLF
+	_cQry += " , FINAL AS (" + CRLF
+	_cQry += " SELECT DISTINCT Z08_TIPO," + CRLF
+	_cQry += " 			B1_RASTRO," + CRLF
+	_cQry += " 			ORDEM," + CRLF
+	_cQry += " 			B2_COD, B2_LOCAL," + CRLF
+	_cQry += " 			B1_X_CURRA," + CRLF
+	_cQry += " 			B1_XLOTE," + CRLF
+	_cQry += " 			B1_X_ERA," + CRLF
+	_cQry += " 			B2_QATU," + CRLF
+	_cQry += "			CASE" + CRLF
+	_cQry += "				WHEN B1_XPESOCO = 0 AND Z08_TIPO<>'1' " + CRLF
+	_cQry += "					THEN MEDIA " + CRLF
+	_cQry += "					ELSE B1_XPESOCO " + CRLF
+	_cQry += "			END B1_XPESOCO, " + CRLF
+	_cQry += " 			B1_XLOTCOM, B1_XRACA, B1_X_SEXO, B1_XDENTIC," + CRLF
+	_cQry += " 			Z09_GMDESP, Z09_VLREST, Z09_DIAABT," + CRLF
+	_cQry += " 			B1_XDATACO," + CRLF
+	_cQry += " 			DiasAbate, " + CRLF
+	_cQry += " 			Dias, " + CRLF
+	_cQry += " 			PesoAtual," + CRLF
+	_cQry += " 			PrjecAba," + CRLF
+	_cQry += " 			Z09_RENESP," + CRLF
+	_cQry += "   			PesoFinal," + CRLF
+	_cQry += "   			PesoFinalTOTAL," + CRLF
+	_cQry += "   			PesoCarcacaFinal," + CRLF
+	_cQry += "			A2_NOME," + CRLF
+	_cQry += " 			GRUPO2" + CRLF
+	_cQry += " FROM DADOS " + CRLF
+	_cQry += " LEFT JOIN ENTRADA ON D1_FILIAL='"+FWxFilial("SD1")+"' AND D1_COD=B2_COD AND D1_LOCAL=B2_LOCAL " + CRLF
+	_cQry += " ) " + CRLF
+	/*
+	MB : 02.09.2020
+		levei a ordenação para o SQL; a pedido do toshio
+		*/
+	_cQry += CRLF
+	_cQry += " , ORDENACAO AS ( " + CRLF
+	_cQry += "  	SELECT B1_XLOTE, B1_X_CURRA, " + CRLF
+	_cQry += "	-- MAX(CONVERT(DATE,B1_XDATACO)) " + CRLF
+	_cQry += "		MAX( CASE B1_XDATACO  " + CRLF
+	_cQry += " 				WHEN ' ' THEN 0  " + CRLF
+	_cQry += " 				ELSE DATEDIFF(DAY, CONVERT(DATETIME, B1_XDATACO, 103), CONVERT(DATETIME, '" + dDTReferencia + "', 103)) " + CRLF
+	_cQry += " 			END) AS  " + CRLF
+	_cQry += "		MAIOR_DATA " + CRLF
+	_cQry += "  	FROM FINAL " + CRLF
+	_cQry += "  	GROUP BY B1_XLOTE, B1_X_CURRA " + CRLF
+	_cQry += CRLF
+	_cQry += " ) " + CRLF
+	_cQry += "  " + CRLF
+	_cQry += " SELECT    F.*  " + CRLF
+	_cQry += " FROM      FINAL     F " + CRLF
+	_cQry += "      JOIN ORDENACAO O ON O.B1_X_CURRA=F.B1_X_CURRA AND F.B1_XLOTE = O.B1_XLOTE" + CRLF
+	_cQry += CRLF
 
-_cQry += " ORDER BY " + CRLF
+	_cQry += " ORDER BY " + CRLF
 
-_cQry += " 	Z08_TIPO, " + CRLF
+	_cQry += " 	Z08_TIPO, " + CRLF
 
-if MV_PAR08 == 2
-	_cQry += " O.MAIOR_DATA DESC, " + CRLF
-	_cQry += " O.B1_X_CURRA, " + CRLF
-EndIf
+	if MV_PAR08 == 2
+		_cQry += " O.MAIOR_DATA DESC, " + CRLF
+		_cQry += " O.B1_X_CURRA, " + CRLF
+	EndIf
 
-If nAgrup == 2
-	_cQry += " PrjecAba, " + CRLF
-EndIf
+	If nAgrup == 2
+		_cQry += " PrjecAba, " + CRLF
+	EndIf
+		
+	_cQry += " ORDEM, " + CRLF
+	_cQry += " B1_X_ERA, B2_COD, B2_LOCAL, " + CRLF
+
+	if MV_PAR08 <> 2
+		_cQry += " B1_X_CURRA, " + CRLF
+	EndIf
+
+	_cQry += " B2_QATU DESC " + CRLF
+
+	If Type("oMainWnd") != "U" .and. lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador'
+		MemoWrite(StrTran(cArquivo,".xml","")+"Quadro1.sql" , _cQry)
+	EndIf
+	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_cAliaEST),.F.,.F.) 
 	
-_cQry += " ORDEM, " + CRLF
-_cQry += " B1_X_ERA, B2_COD, B2_LOCAL, " + CRLF
-
-if MV_PAR08 <> 2
-	_cQry += " B1_X_CURRA, " + CRLF
-EndIf
-
-_cQry += " B2_QATU DESC " + CRLF
-
-If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador'
-	MemoWrite(StrTran(cArquivo,".xml","")+"Quadro1.sql" , _cQry)
-EndIf
-dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_cAliaEST),.F.,.F.) 
-
-TcSetField(_cAliaEST, "B1_XDATACO", "D")
-TcSetField(_cAliaEST, "PrjecAba"  , "D")
+	if !(_cAliaEST)->(Eof())
+		TcSetField(_cAliaEST, "B1_XDATACO", "D")
+		TcSetField(_cAliaEST, "PrjecAba"  , "D")
+	endif
 
 Return nil
 
@@ -647,16 +654,16 @@ Return nil
  '--------------------------------------------------------------------------------*/
 Static Function fQuadro1(nAgrup, cDiasAb, dDTReferencia )
 
-Local cXML 		 := ""
-Local cWorkSheet := "1-Lista Currais"
+	Local cXML 		 := ""
+	Local cWorkSheet := "1-Lista Currais"
 
-Local aDados 	 := Array(21)
-Local aDadosA 	 := Array(21)
-Local cAgrupa    := ""
+	Local aDados 	 := Array(21)
+	Local aDadosA 	 := Array(21)
+	Local cAgrupa    := ""
 
-Local nQATU		 := 0
+	Local nQATU		 := 0
 
-Local aLinVazia  := {}
+	Local aLinVazia  := {}
 
 	
 	(_cAliaEST)->(DbGoTop())
@@ -2324,16 +2331,16 @@ Local cChave	 := ""
 
 _cQry := " WITH SALDO_ATUAL AS ( " + CRLF
 _cQry += " 	SELECT  DISTINCT B2_FILIAL, B2_COD, B2_LOCAL, B1_XLOTE, B1_X_CURRA " + CRLF
-_cQry += " 	FROM " + RetSqlName('SB1') + "  B1 " + CRLF
-_cQry += " 	JOIN " + RetSqlName('SB2') + " B2 ON B1_FILIAL='"+FWxFilial('SB1')+"' AND B2_FILIAL='"+FWxFilial('SB2')+"' AND B1_COD=B2_COD AND B1.D_E_L_E_T_= ' ' AND B2.D_E_L_E_T_=' ' " + CRLF
+_cQry += " 	FROM " + RetSqlName('SB1') + " (nolock) B1 " + CRLF
+_cQry += " 	JOIN " + RetSqlName('SB2') + " (nolock) B2 ON B1_FILIAL='"+FWxFilial('SB1')+"' AND B2_FILIAL='"+FWxFilial('SB2')+"' AND B1_COD=B2_COD AND B1.D_E_L_E_T_= ' ' AND B2.D_E_L_E_T_=' ' " + CRLF
 // _cQry += " 	WHERE B1_GRUPO='BOV' AND B1_RASTRO <> 'L' " + CRLF
 _cQry += " 	WHERE B1_GRUPO IN ('BOV','01') " + CRLF
 _cQry += " ), " + CRLF
 _cQry += " " + CRLF
 _cQry += " SALDO_LOTE AS ( " + CRLF
 _cQry += " 	SELECT DISTINCT B8_FILIAL, B8_PRODUTO, B8_LOCAL, B8_X_CURRA, B8_LOTECTL " + CRLF
-_cQry += " 	FROM " + RetSqlName('SB1') + "  B1 " + CRLF
-_cQry += " 	JOIN " + RetSqlName('SB8') + "  B8 ON B1_FILIAL='"+FWxFilial('SB1')+"' AND B8_FILIAL='"+FWxFilial('SB8')+"' AND B1_COD=B8_PRODUTO AND B1.D_E_L_E_T_= ' ' AND B8.D_E_L_E_T_=' ' " + CRLF
+_cQry += " 	FROM " + RetSqlName('SB1') + " (nolock) B1 " + CRLF
+_cQry += " 	JOIN " + RetSqlName('SB8') + " (nolock) B8 ON B1_FILIAL='"+FWxFilial('SB1')+"' AND B8_FILIAL='"+FWxFilial('SB8')+"' AND B1_COD=B8_PRODUTO AND B1.D_E_L_E_T_= ' ' AND B8.D_E_L_E_T_=' ' " + CRLF
 // _cQry += " 	WHERE B1_GRUPO='BOV' AND B1_RASTRO = 'L' " + CRLF
 _cQry += " 	WHERE B1_GRUPO IN ('BOV','01') " + CRLF
 _cQry += " ), " + CRLF
@@ -2346,7 +2353,7 @@ _cQry += " 	ISNULL(L.B8_LOTECTL, A.B1_XLOTE) B1_XLOTE, " + CRLF
 _cQry += " 	ISNULL(L.B8_X_CURRA, A.B1_X_CURRA) B1_X_CURRA " + CRLF
 _cQry += " 	FROM	 SALDO_ATUAL A " + CRLF
 _cQry += "  JOIN SALDO_LOTE L ON B2_FILIAL=B8_FILIAL AND B2_COD=B8_PRODUTO AND B2_LOCAL=B8_LOCAL " + CRLF
-_cQry += "  JOIN " + RetSqlName('Z08') + " Z8 ON Z08_FILIAL='"+FWxFilial('Z08')+"' AND RTRIM(UPPER(Z08_CODIGO))=RTRIM(UPPER(ISNULL(L.B8_X_CURRA, A.B1_X_CURRA))) AND Z8.D_E_L_E_T_=' ' " + CRLF
+_cQry += "  JOIN " + RetSqlName('Z08') + " (nolock) Z8 ON Z08_FILIAL='"+FWxFilial('Z08')+"' AND RTRIM(UPPER(Z08_CODIGO))=RTRIM(UPPER(ISNULL(L.B8_X_CURRA, A.B1_X_CURRA))) AND Z8.D_E_L_E_T_=' ' " + CRLF
 _cQry += " ), " + CRLF
 _cQry += " " + CRLF
 _cQry += " MOVIMENTOS AS ( " + CRLF
@@ -2369,9 +2376,9 @@ _cQry += " 	 D3_TM,  B1_DESC, " + CRLF
 _cQry += " 	 D3_LOTECTL, " + CRLF
 _cQry += " 	 P.B1_X_CURRA, " + CRLF
 _cQry += " 	 D3_GRUPO, D3_QUANT, D3_EMISSAO, D3_USUARIO, D3_X_OBS " + CRLF
-_cQry += " 	 FROM SD3010 D " + CRLF
-_cQry += " 	 LEFT JOIN SF5010 F ON F5_FILIAL=' ' AND F5_CODIGO=D3_TM AND F.D_E_L_E_T_=' ' AND D.D_E_L_E_T_=' ' " + CRLF
-_cQry += " 	 JOIN " + RetSqlName('SB1') + "  B ON B1_FILIAL=' ' AND B1_COD=D3_COD AND B.D_E_L_E_T_=' ' " + CRLF
+_cQry += " 	 FROM " + RetSqlName('SD3') + " (nolock) D " + CRLF
+_cQry += " 	 LEFT JOIN " + RetSqlName('SF5') + " (nolock) F ON F5_FILIAL=' ' AND F5_CODIGO=D3_TM AND F.D_E_L_E_T_=' ' AND D.D_E_L_E_T_=' ' " + CRLF
+_cQry += " 	 JOIN " + RetSqlName('SB1') + " (nolock) B ON B1_FILIAL=' ' AND B1_COD=D3_COD AND B.D_E_L_E_T_=' ' " + CRLF
 _cQry += " 	 JOIN PRODUTOS P ON D3_FILIAL=B2_FILIAL AND D3_COD=B2_COD AND D3_LOCAL=B2_LOCAL AND D3_LOTECTL=P.B1_XLOTE " + CRLF
 _cQry += " 	WHERE " + CRLF
 _cQry += " 	     D3_EMISSAO BETWEEN '"+ dDtMoviment +"' AND '"+ dDTReferencia + "' " + CRLF
@@ -2386,8 +2393,8 @@ _cQry += " 	 D2_DOC+D2_SERIE, CONVERT(VARCHAR,D.R_E_C_N_O_), 'SAIDA', 'VENDAS', 
 _cQry += " 	 D2_LOTECTL, " + CRLF
 _cQry += " 	 P.B1_X_CURRA, " + CRLF
 _cQry += " 	 D2_GRUPO, D2_QUANT, D2_EMISSAO, '', '' " + CRLF
-_cQry += " 	 FROM " + RetSqlName('SD2') + " D " + CRLF
-_cQry += " 	 JOIN " + RetSqlName('SB1') + "  B ON B1_FILIAL=' ' AND B1_COD=D2_COD AND B.D_E_L_E_T_=' ' AND D.D_E_L_E_T_=' ' " + CRLF
+_cQry += " 	 FROM " + RetSqlName('SD2') + " (nolock) D " + CRLF
+_cQry += " 	 JOIN " + RetSqlName('SB1') + " (nolock) B ON B1_FILIAL=' ' AND B1_COD=D2_COD AND B.D_E_L_E_T_=' ' AND D.D_E_L_E_T_=' ' " + CRLF
 _cQry += "      JOIN PRODUTOS P ON D2_FILIAL=B2_FILIAL AND D2_COD=B2_COD AND D2_LOCAL=B2_LOCAL  AND D2_LOTECTL=P.B1_XLOTE AND D.D_E_L_E_T_=' ' " + CRLF
 _cQry += " 	 WHERE D2_EMISSAO BETWEEN '"+ dDtMoviment +"' AND '"+ dDTReferencia + "' " + CRLF
 _cQry += " " + CRLF
@@ -2400,8 +2407,8 @@ _cQry += " 	 D1_DOC+D1_SERIE, CONVERT(VARCHAR,D.R_E_C_N_O_), 'ENTRADA', 'COMPRAS
 _cQry += " 	 D1_LOTECTL, " + CRLF
 _cQry += " 	 P.B1_X_CURRA, " + CRLF
 _cQry += " 	 D1_GRUPO, D1_QUANT, D1_EMISSAO, '', '' " + CRLF
-_cQry += " 	 FROM " + RetSqlName('SD1') + " D " + CRLF
-_cQry += " 	 JOIN " + RetSqlName('SB1') + "  B ON B1_FILIAL=' ' AND B1_COD=D1_COD AND B.D_E_L_E_T_=' ' AND D.D_E_L_E_T_=' ' " + CRLF
+_cQry += " 	 FROM " + RetSqlName('SD1') + " (nolock) D " + CRLF
+_cQry += " 	 JOIN " + RetSqlName('SB1') + " (nolock) B ON B1_FILIAL=' ' AND B1_COD=D1_COD AND B.D_E_L_E_T_=' ' AND D.D_E_L_E_T_=' ' " + CRLF
 _cQry += "      JOIN PRODUTOS P ON D1_FILIAL=B2_FILIAL AND D1_COD=B2_COD AND D1_LOCAL=B2_LOCAL AND D1_LOTECTL=P.B1_XLOTE AND D.D_E_L_E_T_=' ' " + CRLF
 _cQry += " 	 WHERE D1_EMISSAO BETWEEN '"+ dDtMoviment +"' AND '"+ dDTReferencia + "' " + CRLF
 _cQry += " ) " + CRLF
@@ -2414,10 +2421,10 @@ _cQry += " ORDER BY Z08_TIPO, D3_FILIAL, D3_COD, D3_LOCAL, D3_EMISSAO, NUMSEQ, S
 	// If Select(_cAlia) > 0
 		// (_cAlia)->(DbCloseArea())
 	// EndIf
-	If lower(cUserName) $ 'mbernardo,atoshio,admin'
+	If Type("oMainWnd") != "U" .and. lower(cUserName) $ 'mbernardo,atoshio,admin'
 		MemoWrite(StrTran(cArquivo,".xml","")+"Quadro5.sql" , _cQry)
 	EndIf
-	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_cAliaMOV),.F.,.F.) 
+	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_cAliaMOV),.F.,.F.)
 	
 	aMov := {}
 	While !(_cAliaMOV)->(Eof())
@@ -2879,7 +2886,7 @@ Local nI		 := 0
 		cXML += '<Cell ss:StyleID="s72" ss:Index="2"><Data ss:Type="Number">' + U_FrmtVlrExcel(aDados[02]) +'</Data></Cell>' + CRLF
 		cXML += '<Cell ss:StyleID="s72" ss:Index="6"><Data ss:Type="Number">' + U_FrmtVlrExcel(aDados[06]) +'</Data></Cell>' + CRLF
 		cXML += '<Cell ss:StyleID="s72" ss:Index="7"><Data ss:Type="Number">' + U_FrmtVlrExcel(aDados[07]) +'</Data></Cell>' + CRLF
-		cXML += '<Cell ss:StyleID="s68" ss:Index="18"><Data ss:Type="Number">'+ U_FrmtVlrExcel(aDados[19]) +'</Data></Cell>' + CRLF
+		cXML += '<Cell ss:StyleID="s68" ss:Index="18"><Data ss:Type="Number">'+ U_FrmtVlrExcel(aDados[16]) +'</Data></Cell>' + CRLF
 		cXML += '</Row>' + CRLF
 		
 		// Final da Planilha
@@ -3226,8 +3233,8 @@ _cQry += "  		   D3.D3_EMISSAO					EMISSAO,     		 " + CRLF
 _cQry += "      	   SUM(D3.D3_QUANT)					QTD,		 " + CRLF
 _cQry += "      	   SUM(D3.D3_CUSTO1)				CUSTO		 " + CRLF
 _cQry += "		   , B1_X_TRATO " + CRLF
-_cQry += "      FROM SD3010 D3		 " + CRLF
-_cQry += "      JOIN " + RetSQLName('SB1') + " B1 ON 		 " + CRLF
+_cQry += "      FROM " + RetSqlName('SD3') + " (nolock) D3		 " + CRLF
+_cQry += "      JOIN " + RetSQLName('SB1') + " (nolock) B1 ON 		 " + CRLF
 _cQry += "      D3_COD = B1_COD 		 " + CRLF
 _cQry += "      WHERE D3.D3_TM = '001'		 " + CRLF
 _cQry += "      AND D3.D3_EMISSAO BETWEEN '" + dToS( MV_PAR04-MV_PAR03 ) + "' AND '" + dToS( MV_PAR04-1 ) + "' " + CRLF
@@ -3242,7 +3249,7 @@ _cQry += "      	   --D3.D3_EMISSAO					 " + CRLF
 _cQry += "  	),		 " + CRLF
 _cQry += "  INS_CARR		 " + CRLF
 _cQry += "  AS (		 " + CRLF
-_cQry += "  	SELECT P.FILIAL, P.CODIGO, D3.D3_FILIAL, D3_COD, D3.D3_EMISSAO, SUM(D3_QUANT) QTD, SUM(D3_CUSTO1) CUSTO FROM SD3010 D3		 " + CRLF
+_cQry += "  	SELECT P.FILIAL, P.CODIGO, D3.D3_FILIAL, D3_COD, D3.D3_EMISSAO, SUM(D3_QUANT) QTD, SUM(D3_CUSTO1) CUSTO FROM " + RetSqlName('SD3') + " (nolock) D3		 " + CRLF
 _cQry += "  	  JOIN PROD_RACAO P ON		 " + CRLF
 _cQry += "  	       D3.D3_FILIAL				=			P.FILIAL		 " + CRLF
 _cQry += "  	   AND D3.D3_OP					=			P.OP		 " + CRLF
@@ -3274,7 +3281,7 @@ _cQry += "  	 		 P.FILIAL,
 _cQry += "  			 P.CODIGO, 	
 _cQry += "  	 		 P.EMISSAO	
 
-If lower(cUserName) $ 'mbernardo,atoshio,admin'
+If Type("oMainWnd") != "U" .and. lower(cUserName) $ 'mbernardo,atoshio,admin'
 	MemoWrite(StrTran(cArquivo,".xml","")+"Quadro" + cTipo + ".sql" , _cQry)
 EndIf
 

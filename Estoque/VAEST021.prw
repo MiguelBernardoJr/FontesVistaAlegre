@@ -3,7 +3,7 @@
 #IFNDEF _ENTER_
 	#DEFINE _ENTER_ (Chr(13)+Chr(10))
 	// Alert("miguel")
-#ENDIF 
+#ENDIF
 
 //##########################################################################################
 // Projeto: AVA1000002 - AVA- APONTAMENTOS CUSTO RACAO E ANIMAIS 

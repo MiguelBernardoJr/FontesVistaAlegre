@@ -530,7 +530,7 @@ User Function BTIMPALL()
 	EndIf
 Return nil
 
-Static Function AltPrdS()
+User Function AltPrdS()
 	Local cDtAltP 	:= ""
 	Local _oSl01C 	:= nil
 	Local _oSl02C 	:= nil
@@ -677,7 +677,7 @@ User Function btnPrc()
 
 	nAviso := Aviso("Processamento","Deseja fazer o apontamento de produção de  ?",{"Todos","Atual","Cancela"})
 	
-	NAviso := 1
+	//NAviso := 1
 	MontaQuery(nAviso)
 	//memowrite("C:\TOTVS_RELATORIOS\LogTabela_antes.txt", U_zLogAlias(1))
 
@@ -907,7 +907,7 @@ aAux := FwStruTrigger(;
 				0 ,; // Ordem da tabela a ser posicionada
 				"" ,; // Chave de busca da tabela a ser posicionada
 				NIL ,; // Condicao para execucao do gatilho
-				"06" ) // Sequencia do gatilho (usado para identificacao no caso de erro)   
+				"06" ) // Sequencia do gatilho (usado para identificacao no caso de erro)
 oStrGrdZ0W:AddTrigger(aAux[1], aAux[2], aAux[3], aAux[4])
 /* ------------------------------------------------------------------------------------------------------------ */
 
@@ -4522,7 +4522,9 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 		else
 			cSequen := Soma1(cSequen)
 		endif
-	
+
+		ConOut("Sequencia Z02-Z0W: " + cSequen)
+
 		RecLock("Z02", .T.)
 			Z02->Z02_FILIAL := fwxFilial("Z02")
 			Z02->Z02_SEQUEN := cSequen
@@ -4607,7 +4609,6 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 		if Len(aDadTrt) > 0
 		
 			TryException
-
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
 							"[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
 							"Funcao: PrcBatTrt" + _ENTER_ +;
@@ -4615,9 +4616,10 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 							.T./* lConOut */,;
 							/* lAlert */ )
 				ConOut("4645")
-				FWMsgRun(, {|| U_PROCZ02(aDadTrt, Z02->Z02_SEQUEN) },;
+				FWMsgRun(, {|| U_PROCZ02(aDadTrt, cSequen) },;
 								"Processando [VAEST020]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
-								"Processando os dados [" + Z02->Z02_SEQUEN + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]" )
+								"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]" )
+				//	U_ProcZ02(aDadTrt, Z02->Z02_SEQUEN)
 			
 			CatchException Using oException
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
@@ -5411,7 +5413,7 @@ Local aDSilo 		:= {}
 			cAgua 	:= IIF(EMPTY(GETMV("MV_AGUAPH") ),Space(TamSX3("B1_COD")[1]),GETMV("MV_AGUAPH") )
 
 			IF sToD(cDtAltP) <> Date()
-				AltPrdS()
+				U_AltPrdS()
 			endif
 
 			nPData  	:= aScan(aHeaderCSV, { |x| Upper(x) == 'DATA'})
@@ -6388,12 +6390,8 @@ Static Function fsVldCpo(cOpc,cProd)
 		endif 
 	else
 		MsgStop("Produto invalido!")
-		Return .F. 
-	endif 
+		Return .F.
+	endif
 
 	FwRestArea(aArea)
 Return .T.
-
-User FUnction AltPrdS()
-	AltPrdS()
-Return

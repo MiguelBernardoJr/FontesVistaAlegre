@@ -1,0 +1,62 @@
+#Include "Totvs.ch"
+#INCLUDE "TLPP-CORE.TH"
+
+User Function VAJOB21() AS Logical
+
+    ConOut('VAJOB21(): ' + Time())
+	
+	If Type("oMainWnd") == "U"
+		ConOut('oMainWnd: ' + Time())
+		U_RunFunc("U_JOB21VA()",'01','01',3)
+	Else
+		ConOut('Else oMainWnd: ' + Time())
+		U_JOB21VA()
+	EndIf
+
+Return .T.
+
+User Function JOB21VA() // U_JOB21VA()
+	Private cPerg      	:= "VARELM01"
+	Private cTitulo    	:= "Relatorio Baia e Pasto"
+	Private aSay       	:= {}
+	Private aButton    	:= {}
+	Private cPath 	    := "\BAIAxPASTO\"
+	Private cArquivo    := cPath + "Baia e Pastos - "+; // __cUserID+"_"+;
+									StrTran(DToC(dDataBase),"/","-")+; 
+									"_"+; 
+									StrTran(SubS(Time(),1,5),":","")+;
+									".xml"
+
+	Pergunte( cPerg, .F.)
+	
+	If MV_PAR04 > MsDate()
+		Aviso("Aviso", "A data de referência informada [" + dToC(MV_PAR05) + "]" + ;
+					" não pode ser maior que a data atual ["+dToC(MsDate())+"]." + CRLF + ;
+					"Data de referência atualizada para data do sistema.", {"Ok"}, 2 )
+		MV_PAR04 := MsDate()
+	EndIf
+	
+	if Type("MV_PAR01") == "N"
+		MV_PAR01 := 3
+		MV_PAR02 := "100"
+		MV_PAR03 := 0
+		MV_PAR04 := dDataBase
+		MV_PAR05 := dDataBase
+		MV_PAR06 := 1
+		MV_PAR07 := 2
+		MV_PAR08 := 2
+
+		FWMsgRun(, {|| U_RELM01VA() }, 'Geração Relatório Baia x Pasto','Gerando excel, Por Favor Aguarde...')
+	endif
+
+	//u_EnvMail("igor.oliveira@vistaalegre.agr.br",;
+	//			/* _cCc */,;
+	//			/* _cBCC */,;
+	//			"Relatório diário BAIA x PASTO - Data: " + dToc(dDataBase) ,;
+	//			{cArquivo},;
+	//			"Arquivo gerado no dia "+dToc(dDataBase)+" às " + TIME(), /* _lAudit */)
+	//
+	//DirRemove( "\BAIAxPASTO\*.xml" )
+	//DirRemove( "\BAIAxPASTO\*.sql" )
+
+Return .T.

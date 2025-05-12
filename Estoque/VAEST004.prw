@@ -21,7 +21,7 @@
  */
 /*/{Protheus.doc} vesta004
 
- Apontamento de alimentação de animais
+Apontamento de alimentação de animais
 
 @type function
 @author JRScatolon Informatica
@@ -50,13 +50,22 @@ cIndividuo := PadR(cIndividuo, TamSX3("B1_COD")[1])
 cRacao := PadR(cRacao, TamSX3("B1_COD")[1])
 
 DbSelectArea("SC2")
-DbSetorder(1) // C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD
+SC2->(DbSetorder(1)) // C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD
 
 DbSelectArea("SB1")
-DbSetOrder(1) // B1_FILIAL+B1_COD
+SB1->(DbSetOrder(1)) // B1_FILIAL+B1_COD
 
 DbSelectArea("SB2")
-DbSetOrder(1) // B2_FILIAL+B2_COD+B2_LOCAL
+SB2->(DbSetOrder(1)) // B2_FILIAL+B2_COD+B2_LOCAL
+
+DbSelectArea("SD4") 
+SD4->(DbSetOrder(1)) // D4_FILIAL+D4_OP+D4_COD+D4_LOCAL
+
+DbSelectArea("SC2")
+SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
+
+DbSelectArea("SD3")
+SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 
 if SB1->(DbSeek(xFilial("SB1")+cIndividuo))
 
@@ -84,9 +93,6 @@ if SB1->(DbSeek(xFilial("SB1")+cIndividuo))
             else
                 MsgStop("Racao [" + AllTrim(cRacao) + "] não foi encontrada no cadastro de produtos." )
             endif
-        //else
-        //    MsgStop("O Animal [" + AllTrim(cIndividuo) + "] possui saldo em estoque inválido para essa operação. Por favor verifique se o produto se trata de um animal." )
-        //endif
     else
         MsgStop("O Animal [" + AllTrim(cIndividuo) + "] não possui saldo em estoque. Por favor verifique." )
     endif
@@ -94,6 +100,8 @@ else
     MsgStop("O Animal [" + AllTrim(cIndividuo) + "] não cadastrado. Por favor verifique." )
 endif
 
+SD3->(DBCloseArea())
+SD4->(DBCloseArea())
 SB2->(DBCloseArea())
 SB1->(DBCloseArea())
 SC2->(DBCloseArea())

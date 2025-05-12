@@ -1637,8 +1637,8 @@ Local cLote   := ""
 
 Default lPasto := .F.
 
-//DBSelectArea("Z0S")
-//Z0S->(DBSetOrder(1))
+DBSelectArea("Z0S")
+Z0S->(DBSetOrder(1))
 
 If (!(Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aDadSel[1]))))
 	Return (Nil)
@@ -1716,11 +1716,16 @@ If lCnt
 			nVlrSub := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[1]
 			cRot 	:= aDadSel[1]
 			nTotCRt := nTotCRt + 1
+			//aCurLin[nIndCnf][nIndLin][nIndCur-1]:Refresh()
+			//aCurLin[nIndCnf][nIndLin][nIndCur]:Refresh()
 		ElseIf ((cCrRot $ aCurLin[nIndCnf][nIndLin][nIndCur - 1]:GetCss()) .AND. (aCurLin[nIndCnf][nIndLin][nIndCur - 1]:TagGroup == 1))
 			aCurLin[nIndCnf][nIndLin][nIndCur - 1]:SetCss("QWidget { background-color: RGB(255,255,255); }")
 			nTotTrt -= aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[1]
 			cRot 	:= Space(6)
 			nTotCRt := nTotCRt - 1
+			nTotCRt := nTotCRt + 1
+			//aCurLin[nIndCnf][nIndLin][nIndCur-1]:Refresh()
+			//aCurLin[nIndCnf][nIndLin][nIndCur]:Refresh()
 		EndIf
 		
 	Else
@@ -1784,6 +1789,8 @@ EndIf
 
 	// MB : 27.11.2020
 	_cCurral := fLoadCurrais(aParRet[1], aDadSel[1])
+
+	MsgAlert("Teste")
 
 Return (Nil)
 

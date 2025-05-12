@@ -22,7 +22,7 @@ static aCpoMdZ05G := { "Z05_DATA", "Z05_DIETA", "Z05_CABECA","Z0I_NOTMAN","Z0I_N
 //PUBLISH USER MODEL REST NAME customNaturezasCrudSED SOURCE "custom.naturezas.crudSED"
 
 //-------------------------------------------------------------------
-/*/{Protheus.doc} crudSED
+/*/{Protheus.doc} VAPCPA17
 Rotina será usada na chamada <F4> da rotina VAPCPA05
 
 @sample custom.naturezas.u_crudSED()
@@ -65,21 +65,16 @@ user function ModelDef() as object
 	local oModel   := nil as object
 	local oStrZ06G := Z06GrdMStr(1) as object
 	local oStrZ06D := Z06GrdMStr(2) as object
-	local oStrZ05C := Z05FldMStr() as object
 	local oStrZ05G := Z05GrdMStr() as object
 	local oStrRot  := RotGrdMStr() as object
     local oStrHide := HidGrdMStr() as object
 
 	local bLoadRot    := {|oModel, lCopia| LoadRot(oModel, lCopia) } as codeblock
 	local bLoadHide   := {|oModel, lCopia| LoadHide(oModel, lCopia) } as codeblock
-	local bLoadZ05C    := {|oModel, lCopia| LoadZ05C(oModel, lCopia) } as codeblock
 	local bLoadZ05G    := {|oModel, lCopia| LoadZ05G(oModel, lCopia) } as codeblock
 	local bLoadZ06G   := {|oModel, lCopia| LoadZ06G(oModel, lCopia) } as codeblock
 	local bLoadZ06D   := {|oModel, lCopia| LoadZ06D(oModel, lCopia) } as codeblock
 	
-	//local bZ06LinePr := {|oModel, nLin, cOperacao, cCampo, xValAtr, xValAnt| Z06LinPreG(oModel, nLin, cOperacao, cCampo, xValAtr, xValAnt)}
-	local bZ06PreD     := {|oModel, nLin, cAction| Z06PreD(oModel, nLin, cAction)}
-	//local bZ06LinePo := {|oModel, nLin| Z06LinPost(oModel, nLin)}
 	local bCommitGeral := {|| CommitGeral()}
 	
 	Local aRelacaoZ06  	:= {} as array
@@ -102,9 +97,8 @@ user function ModelDef() as object
 	
     oModel:AddFields("MdFieldRota" ,""           , oStrHide,/*bPreValid*/		,/* bPosValid */, bLoadHide)
     oModel:AddGrid("MdGridRota"    ,"MdFieldRota", oStrRot ,/*bLinePre*/		,/* bLineROT *//*bLinePost*/,/*bPre */,/*bPost*/, bLoadRot)
-    oModel:AddGrid("MdGridZ06G"    ,"MdGridRota"  , oStrZ06G,/* {|| ValidZ06g(1)} *//* bZ06LinePr */,/* {|| ValidZ06g(2)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06G)
+    oModel:AddGrid("MdGridZ06G"    ,"MdGridRota" , oStrZ06G,/* {|| ValidZ06g(1)} *//* bZ06LinePr */,/* {|| ValidZ06g(2)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06G)
     oModel:AddGrid("MdGridZ06D"    ,"MdGridZ06G" , oStrZ06D,/* {|| ValidZ06g(3)} *//* bZ06LinePr */	,/* {|| ValidZ06g(4)} */ /* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06D)
-    //oModel:AddFields("MdFieldZ05C" ,"MdGridZ06G" , oStrZ05C,/* {|| ValidZ06g(5)} *//*bPreValid*/	,/* {|| ValidZ06g(6)} */ /*bPosValid*/, bLoadZ05C)
     oModel:AddGrid("MdGridZ05G"    ,"MdGridZ06G" , oStrZ05G,/* {|| ValidZ06g(7)} *//* bZ06LinePr */	,/* {|| ValidZ06g(8)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ05G)
 
 	aAdd(aRelacaoRotas, {'XX1_ROTAS', 'Z0T_ROTA'} )
@@ -116,14 +110,11 @@ user function ModelDef() as object
 	oModel:SetRelation('MdGridZ06D', aRelacaoZ06, Z06->(IndexKey(1)))
 
 	aAdd(aRelacaoZ05, {'Z06_LOTE'  , 'Z05_LOTE'} )
-	//oModel:SetRelation('MdFieldZ05C', aRelacaoZ05/* , Z05->(IndexKey(1)) */)
-
 	oModel:SetRelation('MdGridZ05G', aRelacaoZ05/* , Z05->(IndexKey(1)) */)
 
 	oModel:GetModel("MdGridZ06G"):SetDescription("Programacao")
 	oModel:GetModel("MdGridZ06D"):SetDescription("Dados do Lote")
     oModel:GetModel("MdGridRota"):SetDescription("Currais")
-    //oModel:GetModel("MdFieldZ05C"):SetDescription("Plano de Trato")
     oModel:GetModel("MdGridZ05G"):SetDescription("Programação anterior")
     oModel:GetModel("MdFieldRota"):SetDescription("CAB_ROTAS")
 
@@ -132,10 +123,7 @@ user function ModelDef() as object
     oModel:GetModel('MdGridRota' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridZ05G' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridZ05G'):SetOnlyQuery(.T.)
-    // oModel:GetModel('MdFieldZ05C'):SetOnlyView(.T.)
-    //oModel:GetModel('MdFieldZ05C'):SetOnlyQuery(.T.)
     oModel:GetModel('MdGridZ06G' ):SetOnlyView(.T.)
-    //oModel:SetOnlyView('MdGridZ06D' , .T.)
 
 	oModel:getModel("MdGridRota"):SetNoInsertLine(.T.)
     oModel:getModel("MdGridRota"):SetNoDeleteLine(.T.)
@@ -153,10 +141,12 @@ user function ModelDef() as object
     oModel:AddCalc('TOTAIS1', 'MdGridRota', 'MdGridZ06G', 'Z05_TOTMSC', 'XX1_TOTMSC', 'SUM'		, , , "Tot MS Calc" )
     oModel:AddCalc('TOTAIS1', 'MdGridRota', 'MdGridZ06G', 'Z05_TOTMNC', 'XX1_TOTMNC', 'SUM'		, , , "Tot MN Calc"   )
     
-	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMSTR', 'XX2_KGMSTR', 'SUM', , , "KG Mat Seca"   )
-	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMNTR', 'XX2_KGMNTR', 'SUM', , , "KG Mat Natur"   )
-	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_MEGCAL', 'XX2_MEGCAL', 'SUM', , , "Mega Caloria"   )
-	oModel:AddCalc('TOTAIS2', 'MdGridRota', 'MdGridZ06G', 'Z05_CABECA', 'XX2_CABECA', 'SUM', , , "Cabeças"   )
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMSTR', 'XX2_KGMSTR', 'SUM', , , "KG Mat Seca"   	)
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMNTR', 'XX2_KGMNTR', 'SUM', , , "KG Mat Natur"   	)
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_MEGCAL', 'XX2_MEGCAL', 'SUM', , , "Mega Caloria"   	)
+	oModel:AddCalc('TOTAIS2', 'MdGridRota', 'MdGridZ06G', 'Z05_CABECA', 'XX2_CABECA', 'SUM', , , "Cabeças"   		)
+	
+	//oModel:AddCalc('TOTAIS3', 'MdGridRota', 'MdGridRota', 'Z06_KGMNT' , 'XX3_KGMNT' , 'AVERAGE', , , "KG MN Total")
 
 	oModel:SetOptional("MdGridZ05G"	, .T.)
 	oModel:SetOptional("MdGridZ06G"	, .T.)
@@ -174,7 +164,9 @@ user function ViewDef() as object
     local oStrZ06D 	:= nil as object
 	local oStrRot  	:= nil as object
     local oStrHide 	:= nil as object
-	local oStrTot1  	:= nil as object
+	local oStrTot1  := nil as object
+	local oStrTot2  := nil as object
+	//local oStrTot3  := nil as object
 
 	if IsInCallStack("U_VAPCPA05") .or. !Empty((cTrbBrowse)->B8_LOTECTL) 
 		
@@ -188,18 +180,19 @@ user function ViewDef() as object
     	oStrZ06D    := Z06GrdVStr(2)
 		oStrTot1 	:= FWCalcStruct(oModel:GetModel('TOTAIS1' ))
 		oStrTot2 	:= FWCalcStruct(oModel:GetModel('TOTAIS2' ))
+//		oStrTot3 	:= FWCalcStruct(oModel:GetModel('TOTAIS3' ))
 
 		oView 	:= FwFormView():New()
 		oView:SetModel(oModel)
 		
         oView:AddField("VwFieldRotas"	, oStrHide 	, "MdFieldRota"	)
-		//oView:AddField("VwFieldZ05"	, oStrZ05C	, "MdFieldZ05C"	)
         oView:AddGrid("VwGridZ05G" 	, oStrZ05G 	, "MdGridZ05G"	)
         oView:AddGrid("VwGridZ06G" 	, oStrZ06G 	, "MdGridZ06G"	)
         oView:AddGrid("VwGridZ06D" 	, oStrZ06D 	, "MdGridZ06D"	)
         oView:AddGrid("VwGridROT" 	, oStrROT  	, "MdGridRota"	)
         oView:AddField("VwKgTot1" 	, oStrTot1  , "TOTAIS1" )
         oView:AddField("VwKgTot2" 	, oStrTot2  , "TOTAIS2" )
+        //oView:AddField("VwKgTot3" 	, oStrTot3  , "TOTAIS3" )
 
         oView:SetViewProperty("VwGridROT", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; selection-color: #FFFFFF; }"} )
         oView:SetViewProperty("VwGridZ06G", "SETCSS", {"QTableView { selection-background-color:rgb(119, 190, 207); selection-color: #FFFFFF; }"} )
@@ -207,9 +200,9 @@ user function ViewDef() as object
 		oView:CreateHorizontalBox("CAB_ROTAS"   , 10)
         oView:CreateHorizontalBox("ITENS"       , 90)
 
-        oView:CreateVerticalBox("ROTAS",  10, "ITENS")
+        oView:CreateVerticalBox("ROTAS",  15, "ITENS")
         oView:CreateVerticalBox("PROGR",  45, "ITENS")
-        oView:CreateVerticalBox("LOTES",  45, "ITENS")
+        oView:CreateVerticalBox("LOTES",  40, "ITENS")
 
 		oView:CreateHorizontalBox("PROGR_CIMA"  , 90, "PROGR")
 		oView:CreateHorizontalBox("PROGR_BAIXO" , 10, "PROGR")
@@ -226,9 +219,9 @@ user function ViewDef() as object
 
 		oView:SetOwnerView("VwFieldRotas"  	, "CAB_ROTAS"	)
 		oView:SetOwnerView("VwGridROT"  	, "ROTAS_CIMA"  )
+		//oView:SetOwnerView("VwKgTot3"    	, "ROTAS_BAIXO" )
 		oView:SetOwnerView("VwGridZ06G"  	, "PROGR_CIMA"  )
 		oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CIMA"  )
-		//oView:SetOwnerView("VwFieldZ05" 	, "LOTES_CENTER")
 		oView:SetOwnerView("VwKgTot2" 		, "LOTES_CENTER")
 		oView:SetOwnerView("VwGridZ05G" 	, "LOTES_BAIXO" )
 		oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO"	)
@@ -237,15 +230,14 @@ user function ViewDef() as object
         oView:SetNoDeleteLine("VwGridROT")
 
         oView:EnableTitleView('VwGridROT' 	, "Currais")
+        //oView:EnableTitleView('VwKgTOTAIS3'	, "Totais por Rota")
         oView:EnableTitleView('VwGridZ06G'	, "Programação")
         oView:EnableTitleView('VwGridZ06D'	, "Dados do Lote")
         oView:EnableTitleView('VwFieldRotas', "Seleção de Rotas")
-        //oView:EnableTitleView('VwFieldZ05'	, "Plano de trato")
         oView:EnableTitleView('VwKgTot2'	, "Totais por Lote")
         oView:EnableTitleView('VwGridZ05G'	, "Programação anterior")
         oView:EnableTitleView('VwKgTot1'   	, "Totais por Rota")
 
-		oView:AddUserButton( 'Mat Natural', 'CLIPS', {|oView| u_MatNat()}, "Mostra o detalhamento do calculo de matéria natural <F4>.", VK_F4,,.T.)
 		if Inclui .or. Altera
 			oView:AddUserButton( 'Reprogramar LOTE', 'CLIPS', {|oView| Reprograma(1)}, "Reprograma o trato de acordo com parâmetros <F5>.", VK_F5,,.T.)
 			oView:AddUserButton( 'Reprogramar ROTA', 'CLIPS', {|oView| Reprograma(2)}, "Reprograma o trato de acordo com parâmetros <F5>.", VK_F5,,.T.)
@@ -304,7 +296,8 @@ static function HidGrdMStr() AS Object
 	local aCombo  := {} as Array
 	local cZ0TROTA  := IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,(cTrbBrowse)->Z0T_ROTA)
 
-	cQry := " SELECT Z0T_ROTA FROM "+RetSqlName("Z0T")+" " + CRLF 
+	cQry := " SELECT Z0T_ROTA " + CRLF 
+	cQry += " FROM "+RetSqlName("Z0T")+" " + CRLF 
  	cQry += " WHERE Z0T_DATA = '"+dToS(Z0R->Z0R_DATA)+"' " + CRLF
 	cQry += " AND D_E_L_E_T_ = '' " + CRLF
 	cQry += " AND Z0T_ROTA != '' " + CRLF
@@ -324,7 +317,7 @@ static function HidGrdMStr() AS Object
                      "",;              				// [02]  C   ToolTip do campo
                      "XX1_ROTAS",;   				// [03]  C   Id do Field
                      "C",; 							// [04]  C   Tipo do campo
-                     10 ,; 							// [05]  N   Tamanho do campo
+                     12 ,; 							// [05]  N   Tamanho do campo
                      0,; 							// [06]  N   Decimal do campo
                      /* {|| U_RefreshRotaVAPCPA17()} */ ,;// [07]  B   Code-block de validação do campo
                      nil,;                      	// [08]  B   Code-block de validação When do campo
@@ -345,11 +338,12 @@ static function HidGrdVStr() as Object
 	Local cAlias  := ""	as Character
 	local aCombo  := {} as Array
 	
-	cQry := " SELECT Z0T_ROTA FROM "+RetSqlName("Z0T")+" " + CRLF 
+	cQry := " SELECT Z0T_ROTA " + CRLF 
+	cQry += "   FROM "+RetSqlName("Z0T")+" " + CRLF
  	cQry += " WHERE Z0T_DATA = '"+dToS(Z0R->Z0R_DATA)+"' " + CRLF
 	cQry += " AND Z0T_ROTA != '' " + CRLF
  	cQry += " AND D_E_L_E_T_ = '' " + CRLF
- 	cQry += " GROUP BY Z0T_ROTA  " + CRLF
+ 	cQry += " GROUP BY Z0T_ROTA   "  + CRLF
 
 	cAlias := MpSysOpenQuery(cQry)
 
@@ -848,7 +842,7 @@ static function LoadZ06D(oFormGrid, lCopia) as Array
 	Local cLote  	:= oFormGrid:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE") AS Character
 	Local nReg 		:= 0 as Numeric
 	local cZ0TROTA  := IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,(cTrbBrowse)->Z0T_ROTA)
-
+	
 	oExecZ06D:SetString(1,cZ0TROTA)
 	oExecZ06D:SetString(2,cLote)
 
@@ -1079,7 +1073,7 @@ User Function PreparaQuerys()
 	next
 
 	// Query LoadRot()
-	cQry := " select Z0T_ROTA " + CRLF
+	cQry := " select Z0T_ROTA  " + CRLF
 	cQry += "	, Z06_TRATO " + CRLF
 	cQry += "	, SUM(Z06_KGMNT) AS Z06_KGMNT " + CRLF
 	cQry += "   from "+RetSqlName("Z06")+" Z06  " + CRLF
@@ -1099,11 +1093,6 @@ User Function PreparaQuerys()
 
 	cQry := " SELECT * " + CRLF
 	cQry += " FROM "+RetSqlName("Z05")+" Z05" + CRLF
-	//cQry += " JOIN "+RetSqlName("Z06")+" Z06 ON " + CRLF
-	//cQry += " 	Z05_FILIAL = Z06_FILIAL" + CRLF
-	//cQry += " AND Z05_DATA = Z06_DATA" + CRLF
-	//cQry += " AND Z05_VERSAO = Z06_VERSAO" + CRLF
-	//cQry += " AND Z05_LOTE = Z06_LOTE" + CRLF
 	cQry += " WHERE Z05.D_E_L_E_T_ = ''" + CRLF
 	cQry += " AND Z05.R_E_C_N_O_ = ? " + CRLF
 
@@ -1216,9 +1205,7 @@ Return nil
 //Validação dos campos Z06_TRATO Z06_DIETA Z06_KGMSTR
 User Function VAPCP05VALID()
 	Local lRet 		:= .T. as Logical
-	local oModel	:= FWModelActive() as Object
 
-	//oGridZ06D:SetOnlyQuery(.F.)
 
 	if FUNNAME() == "VAPCPA17"
 		lRet := U_VAPCP17VALID()
@@ -1454,7 +1441,6 @@ static function AjuMateria(oModel)
 	local nCmsPn     := 0 as Numeric
 	local nI, nLen 		  as Numeric
 	local cQry := "" as Character
-	local cZ0TROTA  := IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,(cTrbBrowse)->Z0T_ROTA)
 
     nLen := oGridZ06D:Length()
     for nI := 1 to nLen

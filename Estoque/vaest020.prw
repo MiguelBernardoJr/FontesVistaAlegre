@@ -450,18 +450,42 @@ ProcRegua(Len(aDados))
 
 If Len(aDados) > 0
 	If !Empty( _cMSG := Z04xSB2Sld020( cSequencia ) )
-		MemoWrite( GetTempPath() + "TRATO_"+AllTrim(cSequencia)+"SB2.TXT", _cMSG)
-		MsgStop(_cMSG)
+        IF Type("oMainWnd") == "U"
+            ConOut(_ENTER_)
+            ConOut("VAEST020 - Z04xSB2Sld020")
+            ConOut(_ENTER_)
+            ConOut(_cMSG)
+            ConOut(_ENTER_)
+        ELSE 
+            MemoWrite( GetTempPath() + "TRATO_"+AllTrim(cSequencia)+"SB2.TXT", _cMSG)
+            MsgStop(_cMSG)
+        ENDIF 
 	EndIf
 	
 	If !Empty( _cMSG := Z04xSB8Sld020( cSequencia, cArmazem ) )
-		MemoWrite( GetTempPath() + "TRATO_"+AllTrim(cSequencia)+"SB8.TXT", _cMSG)
-		MsgStop(_cMSG)
+        IF Type("oMainWnd") == "U"
+            ConOut(_ENTER_)
+            ConOut("VAEST020 - Z04xSB8Sld020")
+            ConOut(_ENTER_)
+            ConOut(_cMSG)
+            ConOut(_ENTER_)
+        ELSE 
+            MemoWrite( GetTempPath() + "TRATO_"+AllTrim(cSequencia)+"SB8.TXT", _cMSG)
+            MsgStop(_cMSG)
+        ENDIF
 	EndIf
 	
 	If !Empty( _cMSG := LoteZ04xSB8( cSequencia ) )
-		MemoWrite( GetTempPath() + "TRATO_"+AllTrim(cSequencia)+"Z04xSB8.TXT", _cMSG)
-		MsgStop(_cMSG)
+        IF Type("oMainWnd") == "U"
+            ConOut(_ENTER_)
+            ConOut("VAEST020 - LoteZ04xSB8")
+            ConOut(_ENTER_)
+            ConOut(_cMSG)
+            ConOut(_ENTER_)
+        ELSE
+            MemoWrite( GetTempPath() + "TRATO_"+AllTrim(cSequencia)+"Z04xSB8.TXT", _cMSG)
+            MsgStop(_cMSG)
+        ENDIF
 	EndIf
 EndIf
 

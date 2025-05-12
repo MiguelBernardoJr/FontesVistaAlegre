@@ -55,12 +55,10 @@ user function vaest003(cCodPro, nQuant, cArmz, aEmpenho)
     Local cClvl		:= GetMV("VA_CLPRDBA")
     Local cNameLock := " "
 
-    if SELECT("SB1") == 0
-        DbSelectArea("SB1")
-    endif
-
+    DbSelectArea("SB1")
     SB1->(DbSetOrder(1))
     SB1->(DbSeek(xFilial("SB1")+cCodPro))
+
     If aScan(aEmpenho,{|x| Alltrim(x[1]) == Alltrim(SB1->B1_XCODAPR)}) == 0
         aAdd( aEmpenho, { SB1->B1_XCODAPR , SB1->B1_LOCPAD , nQuant } )
     Endif
@@ -88,6 +86,16 @@ user function vaest003(cCodPro, nQuant, cArmz, aEmpenho)
         enddo
 
     endif
+    
+
+    DbSelectArea("SD4") 
+    SD4->(DbSetOrder(1)) // D4_FILIAL+D4_OP+D4_COD+D4_LOCAL
+
+    DbSelectArea("SC2")
+    SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
+
+    DbSelectArea("SD3")
+    SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 
     FWMsgRun(, {|| cNumOp := u_CriaOp(cCodPro, nQuant, cArmz) },;
                     "Processando [VAEST003]",;
@@ -103,6 +111,11 @@ user function vaest003(cCodPro, nQuant, cArmz, aEmpenho)
     FWMsgRun(, {|| u_ApontaOP(cNumOp, cMovBat, cCC, cIC, cClvl)},;
                                     "Processando [VAEST003]",;
                                     cMsg )
+    
+    SD3->(DBCloseArea())
+    SC2->(DBCloseArea())
+    SD4->(DBCloseArea())
+    SB1->(DBCloseArea())
     
     if IsInCallStack("u_ConnOne") .and. cNameLock != ""
         UnLockByName(cNameLock)
@@ -149,10 +162,7 @@ user function CriaOP(cCodPro, nQuant, cArmz)
         Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
     EndIf
 
-    DbSelectArea("SC2")
     SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
-
-    DbSelectArea("SB1")
     SB1->(DbSetOrder(1)) // B1_FILIAL + B1_COD
 
     if SB1->(DbSeek(xFilial("SB1")+cCodPro))
@@ -212,9 +222,6 @@ user function CriaOP(cCodPro, nQuant, cArmz)
         MsgStop("Produto [" + cCodPro + "] não cadastrado." )
     endif
 
-    SC2->(DbCloseArea())
-    SB1->(DbCloseArea())
-
     RestArea(aArea)
 return cOP
 
@@ -236,97 +243,91 @@ Efetua o apontamento da ordem de produção
 @obs A função lançará uma excessão em caso de erro.
 /*/
 user function ApontaOP(cOP, cTpMov, cCC, cIC, cClvl, cLoteCTL, cCurral ) as Logical
-local aArea 			:= GetArea()
-local aApon 			:= {}
-local i, nLen
-local lRet 				:= .T.
+    local aArea 			:= GetArea()
+    local aApon 			:= {}
+    local i, nLen
+    local lRet 				:= .T.
 
-local aErroAuto 		:= {}
-local cErroAuto 		:= ""
+    local aErroAuto 		:= {}
+    local cErroAuto 		:= ""
 
-private lMsErroAuto 	:= .f.
-private lMsHelpAuto 	:= .t.
-private lAutoErrNoFile 	:= .t.
+    private lMsErroAuto 	:= .f.
+    private lMsHelpAuto 	:= .t.
+    private lAutoErrNoFile 	:= .t.
 
-Default cLoteCTL     	:= ""
-Default cCurral		 	:= ""
+    Default cLoteCTL     	:= ""
+    Default cCurral		 	:= ""
 
-If Type("__DATA") == "U"
-	Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
-EndIf
-If Type("cFile") == "U"
-	Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
-EndIf
+    If Type("__DATA") == "U"
+        Private __DATA		:= iIf(IsInCallStack("U_JOBPrcLote"), MsDate(), dDataBase)
+    EndIf
+    If Type("cFile") == "U"
+        Private cFile 		:= "C:\TOTVS_RELATORIOS\JOBPrcLote_" + DtoS(__DATA) + ".TXT"
+    EndIf
 
-DbSelectArea("SD3")
-SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
+    SD3->(DbSetOrder(1)) // D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 
-DbSelectArea("SC2")
-SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_SEQUEN + C2_ITEMGRD
+    SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_SEQUEN + C2_ITEMGRD
 
-//ConOUt("MATA250 ENTRADA")
-if SC2->(DbSeek(xFilial("SC2")+cOP))
+    //ConOUt("MATA250 ENTRADA")
+    if SC2->(DbSeek(xFilial("SC2")+cOP))
 
-	aAdd( aApon, {"D3_TM"		, cTpMov									, nil } )
-	aAdd( aApon, {"D3_OP"		, SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN  	, nil } )
-	
-	If Empty(cLoteCTL)
-		aAdd( aApon, {"D3_COD"		, SC2->C2_PRODUTO						, nil } )
-		aAdd( aApon, {"D3_UM"		, SC2->C2_UM	 						, nil } )
-		aAdd( aApon, {"D3_LOCAL"	, SC2->C2_LOCAL							, nil } )
-		aAdd( aApon, {"D3_QUANT"	, SC2->C2_QUANT							, nil } )
-		aAdd( aApon, {"D3_EMISSAO"	, dDataBase								, nil } )
-		aAdd( aApon, {"D3_CC"		, cCC									, nil } )
-		aAdd( aApon, {"D3_ITEMCTA"	, cIC									, nil } )
-		aAdd( aApon, {"D3_CLVL"		, cClvl									, nil } )
-	Else
-
-        _cB8_PRODUTO := POSICIONE( 'SB8', 7, XFILIAL('SB8') + cLoteCTL + cCurral, 'B8_PRODUTO')
+        aAdd( aApon, {"D3_TM"		, cTpMov									, nil } )
+        aAdd( aApon, {"D3_OP"		, SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN  	, nil } )
         
-        aAdd( aApon, {"D3_COD"		, _cB8_PRODUTO						    , nil } )
-		aAdd( aApon, {"D3_LOTECTL"  , cLoteCTL							    , nil } )
-		aAdd( aApon, {"D3_X_CURRA"  , cCurral							    , nil } )
-		aAdd( aApon, {"D3_DTVALID"  , iIf(Empty(cLoteCTL),sToD(""),SB8->B8_DTVALID), nil } )
-		if !Empty(SB8->B8_X_CURRA)
-		    aAdd( aApon, {"D3_X_CURRA", SB8->B8_X_CURRA, nil} )
-		endif
-	EndIf
+        If Empty(cLoteCTL)
+            aAdd( aApon, {"D3_COD"		, SC2->C2_PRODUTO						, nil } )
+            aAdd( aApon, {"D3_UM"		, SC2->C2_UM	 						, nil } )
+            aAdd( aApon, {"D3_LOCAL"	, SC2->C2_LOCAL							, nil } )
+            aAdd( aApon, {"D3_QUANT"	, SC2->C2_QUANT							, nil } )
+            aAdd( aApon, {"D3_EMISSAO"	, dDataBase								, nil } )
+            aAdd( aApon, {"D3_CC"		, cCC									, nil } )
+            aAdd( aApon, {"D3_ITEMCTA"	, cIC									, nil } )
+            aAdd( aApon, {"D3_CLVL"		, cClvl									, nil } )
+        Else
 
-    // TODO - Adicionar campo D3_X_CURRA preenchendo com conteúdo da SB8.
+            _cB8_PRODUTO := POSICIONE( 'SB8', 7, XFILIAL('SB8') + cLoteCTL + cCurral, 'B8_PRODUTO')
+            
+            aAdd( aApon, {"D3_COD"		, _cB8_PRODUTO						    , nil } )
+            aAdd( aApon, {"D3_LOTECTL"  , cLoteCTL							    , nil } )
+            aAdd( aApon, {"D3_X_CURRA"  , cCurral							    , nil } )
+            aAdd( aApon, {"D3_DTVALID"  , iIf(Empty(cLoteCTL),sToD(""),SB8->B8_DTVALID), nil } )
+            if !Empty(SB8->B8_X_CURRA)
+                aAdd( aApon, {"D3_X_CURRA", SB8->B8_X_CURRA, nil} )
+            endif
+        EndIf
 
-	FG_X3ORD("C", , aApon )
-	
-    //ConOut(u_atOs(aApon))
-	
-    MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 3 ) //3-Inclusao
-    if lMsErroAuto
+        // TODO - Adicionar campo D3_X_CURRA preenchendo com conteúdo da SB8.
+
+        FG_X3ORD("C", , aApon )
+        
+        //ConOut(u_atOs(aApon))
+        
+        MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 3 ) //3-Inclusao
+        if lMsErroAuto
+            lRet := .f.
+            cLogFile := CriaTrab(,.f.) + ".log"
+            aErroAuto := GetAutoGRLog()
+            for i := 1 to Len(aErroAuto)
+                cErroAuto += aErroAuto[i] + CRLF
+            next
+            
+            U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+                            "ERRO5: "+cErroAuto,;
+                            .T./* lConOut */,;
+                            /* lAlert */ )
+
+            MemoWrite(cLogFile, cErroAuto)
+            RestArea(aArea)
+            MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Apontamento de produção.")
+        endIf
+
+    else
         lRet := .f.
-        cLogFile := CriaTrab(,.f.) + ".log"
-        aErroAuto := GetAutoGRLog()
-        for i := 1 to Len(aErroAuto)
-            cErroAuto += aErroAuto[i] + CRLF
-        next
-		
-		U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-						  "ERRO5: "+cErroAuto,;
-						  .T./* lConOut */,;
-						  /* lAlert */ )
+        MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível efetuar os apontamentos de produção. Por favor verifique!!!")
+    endif
 
-        MemoWrite(cLogFile, cErroAuto)
-        RestArea(aArea)
-        MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Apontamento de produção.")
-    endIf
-
-else
-    lRet := .f.
-    MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível efetuar os apontamentos de produção. Por favor verifique!!!")
-endif
-//ConOUt("MATA250 SAIDA")
-
-SD3->(DBCloseArea())
-SC2->(DBCloseArea())
-
-RestArea(aArea)
+    RestArea(aArea)
 return lRet
 
 /*/{Protheus.doc} EncerOP
@@ -452,6 +453,7 @@ user function EstornOP(cOP)
 
     if !SC2->(DbSeek(xFilial("SC2")+cOP))
         MsgStop("Ordem de produção [" + cOP + "] não encontrada. Não é possível encerrar a OP.")
+        RETURN NIL
     endif
 
     if SC2->C2_QUJE <> 0 
@@ -605,15 +607,11 @@ user function AjustEmp(cOP, aEmpenho)
     private lMsHelpAuto := .t.
     private lAutoErrNoFile := .t.
 
-    DbSelectArea("SC2")
     SC2->(DbSetOrder(1)) // C2_FILIAL + C2_NUM + C2_ITEM + `C2_SEQUEN + C2_ITEMGRD
 
     if SC2->(DbSeek(xFilial("SC2")+cOP+"01001"))
 
-        DbSelectArea("SB1")
         SB1->(DbSetOrder(1)) // B1_FILIAL + B1_COD
-
-        DbSelectArea("SD4")
         SD4->(DbSetOrder(1)) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
         
         nLen := Len(aEmpenho)
@@ -641,11 +639,7 @@ user function AjustEmp(cOP, aEmpenho)
 
         next
 
-        //SB1->(DbCloseArea())
-        //SD4->(DbCloseArea())
     endif
-
-    SC2->(DbCloseArea())
 
     RestArea( aArea )
 return lRet
@@ -666,8 +660,7 @@ user function LimpaEmp(cOP)
     local lRet      := .t.
     Local cNameLock := ""
 
-    DbSelectArea("SD4")
-    DbSetOrder(2) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
+    SD4->(DbSetOrder(2)) // D4_FILIAL + D4_OP + D4_COD + D4_LOCAL
 
     if IsInCallStack("u_ConnOne")
         cNameLock := "LIMPAEMP"
@@ -687,8 +680,6 @@ user function LimpaEmp(cOP)
         ConOut("Desbloqueio de " + cNameLock)    
     endif
 
-
-    SD4->(dbCloseArea())
     RestArea( aArea )
 return lRet
 
@@ -710,12 +701,12 @@ static function AjuEmp(aEmp)
     local nQtdeEmp := 0
     local nQtde2UM := 0
 
-    private cLoteAnt := Criavar("D4_NUMLOTE")
-    private cLotCtlAnt := Criavar("D4_LOTECTL")
-    private nQtdAnt := 0
-    private nQtdAnt2UM := 0
-    private cLocal := Criavar("D4_LOCAL")
-    private nQtdOriAnt := 0
+    private cLoteAnt    := Criavar("D4_NUMLOTE")
+    private cLotCtlAnt  := Criavar("D4_LOTECTL")
+    private nQtdAnt     := 0
+    private nQtdAnt2UM  := 0
+    private cLocal      := Criavar("D4_LOCAL")
+    private nQtdOriAnt  := 0
 
     RegToMemory("SD4", .t.)
 
