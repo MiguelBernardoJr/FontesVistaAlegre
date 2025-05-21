@@ -4018,9 +4018,10 @@ user function vap05mnt(cAlias, nReg, nOpc)
 
 	Private oExecZ05C  as object
 	Private oExecZ05G  as object
-	Private oExecRota as object
-	Private oExecZ06D as object
-	Private oExecZ06G as object
+	Private oExecRotaG as object
+	Private oExecRotaD as object
+	Private oExecZ06D  as object
+	Private oExecZ06G  as object
 
     EnableKey(.F.)
 
@@ -4054,9 +4055,13 @@ user function vap05mnt(cAlias, nReg, nOpc)
 					oExecZ06D:Destroy()
 					oExecZ06D := Nil
 				endif
-				if oExecRota != nil
-					oExecRota:Destroy()
-					oExecRota := Nil
+				if oExecRotaD != nil
+					oExecRotaD:Destroy()
+					oExecRotaD := Nil
+				endif
+				if oExecRotaG != nil
+					oExecRotaG:Destroy()
+					oExecRotaG := Nil
 				endif
 				if oExecZ05C != nil
 					oExecZ05C:Destroy()

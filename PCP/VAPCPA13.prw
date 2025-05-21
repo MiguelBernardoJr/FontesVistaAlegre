@@ -681,11 +681,11 @@ User Function btnPrc()
 	MontaQuery(nAviso)
 	//memowrite("C:\TOTVS_RELATORIOS\LogTabela_antes.txt", U_zLogAlias(1))
 
-	If LockByName("BTNPRC", .T., .T.) .and. nAviso == 1
+	If LockByName("BTNPRC1", .T., .T.) .and. nAviso == 1
 
 		U_fPrcLote()
 
-	ElseIf LockByName("BTNPRC", .T., .T.) .and. nAviso == 2
+	ElseIf LockByName("BTNPRC1", .T., .T.) .and. nAviso == 2
 		aParRet := {}
 
 		AAdd(aParRet, Z0X->Z0X_DATA)
@@ -716,7 +716,7 @@ User Function btnPrc()
 
 	//memowrite("C:\TOTVS_RELATORIOS\LogTabela_depois.txt", U_zLogAlias(1))
 
-	UnlockByName("BTNPRC")
+	UnlockByName("BTNPRC1")
 
 	If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin, administrador' .And. !nAviso == 3 
 		cMsg := 'Inicio: ' + cTimeINI + _ENTER_
