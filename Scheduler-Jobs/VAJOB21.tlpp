@@ -36,27 +36,15 @@ User Function JOB21VA() // U_JOB21VA()
 		MV_PAR04 := MsDate()
 	EndIf
 	
-	if Type("MV_PAR01") == "N"
-		MV_PAR01 := 3
-		MV_PAR02 := "100"
-		MV_PAR03 := 0
-		MV_PAR04 := dDataBase
-		MV_PAR05 := dDataBase
-		MV_PAR06 := 1
-		MV_PAR07 := 2
-		MV_PAR08 := 2
+	MV_PAR01 := 3
+	MV_PAR02 := "100"
+	MV_PAR03 := 0
+	MV_PAR04 := dDataBase
+	MV_PAR05 := dDataBase
+	MV_PAR06 := 1
+	MV_PAR07 := 2
+	MV_PAR08 := 2
 
-		FWMsgRun(, {|| U_RELM01VA() }, 'Geração Relatório Baia x Pasto','Gerando excel, Por Favor Aguarde...')
-	endif
-
-	//u_EnvMail("igor.oliveira@vistaalegre.agr.br",;
-	//			/* _cCc */,;
-	//			/* _cBCC */,;
-	//			"Relatório diário BAIA x PASTO - Data: " + dToc(dDataBase) ,;
-	//			{cArquivo},;
-	//			"Arquivo gerado no dia "+dToc(dDataBase)+" às " + TIME(), /* _lAudit */)
-	//
-	//DirRemove( "\BAIAxPASTO\*.xml" )
-	//DirRemove( "\BAIAxPASTO\*.sql" )
+	FWMsgRun(, {|| U_RELM01VA() }, 'Geração Relatório Baia x Pasto','Gerando excel, Por Favor Aguarde...')
 
 Return .T.

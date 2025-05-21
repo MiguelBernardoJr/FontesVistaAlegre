@@ -4325,6 +4325,7 @@ Begin Transaction
 	oZ0YQry:SetString(1, fwxFilial("Z0X"))
 	oZ0YQry:SetString(2, aParRet[2])
 	oZ0YQry:SetDate(3  , aParRet[1])
+	ConOut("Data: " + dToC(aParRet[1]))
 	if Len(aParRet) == 3
 		oZ0YQry:SetString(4, aParRet[3])
 	endif
@@ -4335,7 +4336,6 @@ Begin Transaction
 
 	cAlias := oZ0YQry:OpenAlias()
 	
-	ConOut("Linha 4342")
 	If !((cAlias)->(EOF()))
 		cCodRec := (cAlias)->RECEITA
 		cCodOrd := (cAlias)->ORDEM
@@ -4374,7 +4374,6 @@ Begin Transaction
 				FWMsgRun(, {|| /* cNumOP :=   */U_VAEST003(cCodRec, nQtdTot, "01", aEmp) },;
 								"Processando [VAEST003]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
 								"Processando os dados [" + cSequen + "-" + AllTrim((cAlias)->ORDEM) + "]" )
-				ConOut("Linha 4380: cNumOp: " + cNumOp)
 			CatchException Using oException
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
 						   "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
@@ -4510,7 +4509,7 @@ Begin Transaction
 	
 End Transaction
 
-ConOut("Entrando na Z0W:")
+ConOut("Entrando na Z0W - Z0W_CODEI: " + Z0X->Z0X_CODIGO)
 
 If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 
@@ -4566,20 +4565,34 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 		
 			nDifBT := (cAlias)->TOTBAT - (cAlias)->TOTTRT
 			
-			If (nDifBT = 0 )
+			If (nDifBT == 0 )
 				nQtdTrt := (cAlias)->QTDREA
 			ElseIf (nDifBT > 0 )
 			
 				nPrcDf := ((100 * (cAlias)->QTDREA)/(cAlias)->TOTTRT)
-				nQTdTrt := (cAlias)->QTDREA + ((nPrcDf * nDifBT)/100) 
-			
+				nQTdTrt := (cAlias)->QTDREA + ((nPrcDf * nDifBT)/100)
+
+				numeroStr = cValToChar(nQTdTrt)
+				numeroDeCasasDecimais = Len(SubStr(numeroStr, At(".",numeroStr)+1, LEN(numeroStr)))
+
+				IF numeroDeCasasDecimais > 4
+					nQTdTrt := Round((cAlias)->QTDREA + ((nPrcDf * nDifBT)/100),TamSX3("D3_QUANT")[2])
+				ENDIF
+
 			ElseIf (nDifBT < 0 )
 			
 				nDifBT := nDifBT * -1
 		
 				nPrcDf := ((100 * (cAlias)->QTDREA)/(cAlias)->TOTTRT)
 				nQTdTrt := (cAlias)->QTDREA - ((nPrcDf * nDifBT)/100)
-		
+
+				numeroStr = cValToChar(nQTdTrt)
+				numeroDeCasasDecimais = Len(SubStr(numeroStr, At(".",numeroStr)+1, LEN(numeroStr)))
+
+				IF numeroDeCasasDecimais > 4
+					nQTdTrt := Round(nQTdTrt, TamSX3("D3_QUANT")[2])
+				ENDIF
+			
 			EndIf
 
 			cIndividuo 	:= (cAlias)->LOTE
@@ -4615,12 +4628,10 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 							"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]",;
 							.T./* lConOut */,;
 							/* lAlert */ )
-				ConOut("4645")
 				FWMsgRun(, {|| U_PROCZ02(aDadTrt, cSequen) },;
 								"Processando [VAEST020]" + "[" + AllTrim(Z0X->Z0X_CODIGO) + "]" ,;
 								"Processando os dados [" + cSequen + "-" + AllTrim(Z0X->Z0X_CODIGO) + "]" )
-				//	U_ProcZ02(aDadTrt, Z02->Z02_SEQUEN)
-			
+		
 			CatchException Using oException
 				U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
 							"[" + AllTrim(Z0X->Z0X_CODIGO) + "]" +_ENTER_+;
@@ -4649,7 +4660,7 @@ If (Z0X->Z0X_OPERAC = "1" .AND. Z0X->Z0X_STATUS != "G")
 			_cQry += "   AND Z0W_CODEI = '"+aParRet[2]+"' " + _ENTER_
 			IF Len(aParRet) == 3 
 				_cQry += "   AND Z0W_ROTA = '"+aParRet[3]+"' " + _ENTER_
-			endif 
+			endif
 			_cQry += "   AND Z0W_CONFER = 'T' "
 			_cQry += "   AND Z0W_DATPRC = '' "
 
@@ -4691,8 +4702,7 @@ Z04->(DBCLOSEAREA())
 
 RestArea(aArea)
 
-Return .t. 
-
+Return .t.
 
 /* ====================================================================== */
 User Function GravaArq( cFile, cMsg, lConOut, lAlert )

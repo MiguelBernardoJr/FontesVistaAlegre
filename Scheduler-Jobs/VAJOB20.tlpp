@@ -31,7 +31,7 @@ User Function JOB20VA() // U_JOB20VA()
 	Local cIDThread		:= cValToChar(ThreadId()) as Character
 	local nThreads		:= 1 as Numeric
 	Local nI,nJ			:= 0 as Numeric
-	Local nRecno 		:= 0 as Numeric 
+	Local nRecno 		:= 0 as Numeric
 	Local aSemaforos 	:= {} as Array
 	Local oZ0XQry		:= Nil
 
@@ -46,17 +46,7 @@ User Function JOB20VA() // U_JOB20VA()
 	_cQry += "       AND Z0Y_DATA = '" +DTOS(dDataBase)+ "'  " + CRLF
 	_cQry += "       AND Z0Y.D_E_L_E_T_ = ' '   " + CRLF
 	_cQry += "    UNION   " + CRLF
-	_cQry += "    SELECT TOP(1) Z0Y_CODEI, Z0Y_ROTA AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
-	_cQry += "      FROM "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
-	_cQry += "      JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ = ' '  " + CRLF
-	_cQry += "	  JOIN "+RetSqlName("ZV0")+" ZV0 ON ZV0_CODIGO = Z0X_EQUIP AND ZV0.D_E_L_E_T_ = ' '  " + CRLF
-	_cQry += "     WHERE (Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)   " + CRLF
-	_cQry += "       AND Z0Y_DATPRC = ' '   " + CRLF
-	_cQry += "       AND Z0Y_CONFER = 'T'  " + CRLF
-	_cQry += "       AND Z0Y_DATA = '" +DTOS(dDataBase)+ "'  " + CRLF
-	_cQry += "       AND Z0Y.D_E_L_E_T_ = ' '   " + CRLF
-	_cQry += "    UNION   " + CRLF
-	_cQry += "    SELECT TOP(1) Z0W_CODEI, Z0W_ROTA AS ROTAS, Z0W_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
+	_cQry += "    SELECT Z0W_CODEI, Z0W_ROTA AS ROTAS, Z0W_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
 	_cQry += "      FROM "+RetSqlName("Z0W")+" Z0W  " + CRLF
 	_cQry += "      JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0W_FILIAL AND Z0X_CODIGO = Z0W_CODEI AND Z0X_DATA = Z0W_DATA AND Z0X.D_E_L_E_T_ = ' '   " + CRLF
 	_cQry += "	  JOIN "+RetSqlName("ZV0")+" ZV0 ON ZV0_CODIGO = Z0X_EQUIP AND ZV0.D_E_L_E_T_ = ' '  " + CRLF
@@ -96,13 +86,16 @@ User Function JOB20VA() // U_JOB20VA()
 		cDieta := ""
 		Z0X->(DbGoTo(nRecno))
 		
-		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) <= 3
+		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) < 2 .and. ;
+			   iif("ADAPTACAO03" $ Alltrim((cAlias)->RECEITA), !("FINAL" $ cDieta), IIF("FINAL" $ Alltrim((cAlias)->RECEITA), !("ADAPTACAO03" $ cDieta), .T.))
+
 			aAdd(aSemaforos, {(cAlias)->RECNO,(cAlias)->ROTAS,cSemaforo+"_"+iif(Empty(Alltrim((cAlias)->ROTAS)),cValToChar((cAlias)->RECNO),Alltrim((cAlias)->ROTAS))})
+			
 			cDieta += "|" + Alltrim((cAlias)->RECEITA)
 			(cAlias)->(DBSkip())
 		enddo
 		
-		if Len(aSemaforos) == 0
+		if Len(aSemaforos) == 0 
 			ConOut("Nenhum semaforo encontrado")
 			Exit
 		endif
@@ -269,9 +262,9 @@ Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, 
 		//EndIf
 		
 		nMinThread := 1 //Val(GetSrvProfString( "ThreadMinOrdem", cValToChar(nTotThread) ))
-		nMaxThread := 1 //Val(GetSrvProfString( "ThreadMaxOrdem", "30" ))
-		nFreeThread := 1
-		nIncThread := 1
+		nMaxThread := 2 //Val(GetSrvProfString( "ThreadMaxOrdem", "30" ))
+		nFreeThread := 2
+		nIncThread := 2
 	EndIf
 
 	// encerra o manualJob
@@ -476,6 +469,8 @@ Function u_ConnOne(lBreak,nRecno,cRota) AS Logical
 	If Type("__DATA") == "U"
 		Private __DATA		:= dDataBase as Date
 	EndIf
+	
+	ConOut("Data Base: " + dToC(__DATA))
 
 	aParRet := {}
 	AAdd(aParRet, __DATA)
@@ -521,92 +516,3 @@ Function u_ConnOne(lBreak,nRecno,cRota) AS Logical
 	A330ULckGlb(cGlbName)
 
 Return .T.
-
-User Function JOB20TST() // U_JOB20TST()
-   	Local aArea	   		:= GetArea() as Array
-	Local _cQry    		:= "" as Character
-	Local cAlias 		:= "" as Character
-	Local cSSKey     	:= cEmpAnt+CHR(255)+cFilAnt+CHR(255) as Character
-	Local cIDThread		:= cValToChar(ThreadId()) as Character
-	local nThreads		:= 1 as Numeric
-	Local nI,nJ			:= 0 as Numeric
-	Local nRecno 		:= 0 as Numeric 
-	Local aSemaforos 	:= {} as Array
-
-	_cQry := "WITH DADOS AS ( " + CRLF
-	_cQry += "    SELECT Z0Y_CODEI, Z0Y_ROTA AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
-	_cQry += "      FROM "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
-	_cQry += "      JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ = ' '  " + CRLF
-	_cQry += "	  JOIN "+RetSqlName("ZV0")+" ZV0 ON ZV0_CODIGO = Z0X_EQUIP AND ZV0.D_E_L_E_T_ = ' '  " + CRLF
-	_cQry += "     WHERE (Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)   " + CRLF
-	_cQry += "       AND Z0Y_DATPRC = ' '   " + CRLF
-	_cQry += "       AND Z0Y_CONFER = 'T'  " + CRLF
-	_cQry += "       AND Z0Y_DATA = '" +DTOS(dDataBase)+ "'  " + CRLF
-	_cQry += "       AND Z0Y.D_E_L_E_T_ = ' '   " + CRLF
-	_cQry += "    UNION   " + CRLF
-	_cQry += "    SELECT TOP(1) Z0Y_CODEI, Z0Y_ROTA AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
-	_cQry += "      FROM "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
-	_cQry += "      JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0Y_FILIAL AND Z0X_CODIGO = Z0Y_CODEI AND Z0X_DATA = Z0Y_DATA AND Z0X.D_E_L_E_T_ = ' '  " + CRLF
-	_cQry += "	  JOIN "+RetSqlName("ZV0")+" ZV0 ON ZV0_CODIGO = Z0X_EQUIP AND ZV0.D_E_L_E_T_ = ' '  " + CRLF
-	_cQry += "     WHERE (Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)   " + CRLF
-	_cQry += "       AND Z0Y_DATPRC = ' '   " + CRLF
-	_cQry += "       AND Z0Y_CONFER = 'T'  " + CRLF
-	_cQry += "       AND Z0Y_DATA = '" +DTOS(dDataBase)+ "'  " + CRLF
-	_cQry += "       AND Z0Y.D_E_L_E_T_ = ' '   " + CRLF
-	_cQry += "    UNION   " + CRLF
-	_cQry += "    SELECT TOP(1) Z0W_CODEI, Z0W_ROTA AS ROTAS, Z0W_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
-	_cQry += "      FROM "+RetSqlName("Z0W")+" Z0W  " + CRLF
-	_cQry += "      JOIN "+RetSqlName("Z0X")+" Z0X ON Z0X_FILIAL = Z0W_FILIAL AND Z0X_CODIGO = Z0W_CODEI AND Z0X_DATA = Z0W_DATA AND Z0X.D_E_L_E_T_ = ' '   " + CRLF
-	_cQry += "	  JOIN "+RetSqlName("ZV0")+" ZV0 ON ZV0_CODIGO = Z0X_EQUIP AND ZV0.D_E_L_E_T_ = ' '  " + CRLF
-	_cQry += "     WHERE (Z0W_QTDREA > 0 OR Z0W_PESDIG > 0)   " + CRLF
-	_cQry += "       AND Z0W_DATPRC = ' '   " + CRLF
-	_cQry += "       AND Z0W_CONFER = 'T'  " + CRLF
-	_cQry += "       AND Z0W_DATA = '" +DTOS(dDataBase)+ "' " + CRLF
-	_cQry += "       AND Z0W.D_E_L_E_T_ = ' '   " + CRLF
-	_cQry += "), ENUMERADO AS ( " + CRLF
-	_cQry += "    SELECT  " + CRLF
-	_cQry += "        RECNO, ROTAS, RECEITA, OPERACAO,ORDEM, " + CRLF
-	_cQry += "        ROW_NUMBER() OVER (PARTITION BY RECEITA ORDER BY NEWID()) AS RN " + CRLF
-	_cQry += "    FROM DADOS " + CRLF
-	_cQry += ") " + CRLF
-	_cQry += "SELECT RECNO, ROTAS, RECEITA, OPERACAO, ORDEM " + CRLF
-	_cQry += "FROM ENUMERADO " + CRLF
-	_cQry += "ORDER BY ORDEM asc, RN, RECEITA " + CRLF
-
-	oZ0XQry := FwExecStatement():New(_cQry)
-
-	cIDThread := cValToChar(ThreadID())
-	cSemaforo := Upper("VAJOB20"+cIDThread)
-	
-	i := 1
-
-	MEMOWRITE("C:\TOTVS_RELATORIOS\JOB20TST.sql", oZ0XQry:getFixQuery())
-
-	//cONoUT(_cQry)
-
-	cAlias := oZ0XQry:OpenAlias()
-	
-	While !((cAlias)->(EOF()))
-
-		aSemaforos := {}
-		nRecNo := (cAlias)->RECNO
-		cDieta := ""
-		Z0X->(DbGoTo(nRecno))
-		
-		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) < 2
-			aAdd(aSemaforos, {(cAlias)->RECNO,(cAlias)->ROTAS,cSemaforo+"_"+iif(Empty(Alltrim((cAlias)->ROTAS)),cValToChar((cAlias)->RECNO),Alltrim((cAlias)->ROTAS))})
-			cDieta += "|" + Alltrim((cAlias)->RECEITA)
-			(cAlias)->(DBSkip())
-		enddo
-		
-		IF ((cAlias)->(EOF()))
-			
-			(cAlias)->(DBCloseArea())
-			
-			cAlias := oZ0XQry:OpenAlias()
-		ENDIF
-	EndDo
-	(cAlias)->(DBCloseArea())
-
-    RestArea(aArea)
-Return

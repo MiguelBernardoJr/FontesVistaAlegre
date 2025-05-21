@@ -108,6 +108,9 @@ user function vaest003(cCodPro, nQuant, cArmz, aEmpenho)
                         cMsg := "Apontamento OP: " + AllTrim(cNumOp),;
                         .T./* lConOut */,;
                         /* lAlert */ )
+    
+            
+
     FWMsgRun(, {|| u_ApontaOP(cNumOp, cMovBat, cCC, cIC, cClvl)},;
                                     "Processando [VAEST003]",;
                                     cMsg )
@@ -118,7 +121,9 @@ user function vaest003(cCodPro, nQuant, cArmz, aEmpenho)
     SB1->(DBCloseArea())
     
     if IsInCallStack("u_ConnOne") .and. cNameLock != ""
-        UnLockByName(cNameLock)
+        IF LockByName(cNameLock)
+            UnLockByName(cNameLock)
+        ENDIF
         ConOut("Desbloqueio de " + cNameLock)
     endif
 
@@ -197,9 +202,8 @@ user function CriaOP(cCodPro, nQuant, cArmz)
                 {"AUTEXPLODE", "S",        Nil} } 
         
         lMsErroAuto :=.F.
-        //ConOut("MATA650 ENTRADA")
+        
         MSExecAuto({|x,y| MATA650(x,y)}, aOP, 3)  //Inclusao
-        //ConOut("MATA650 SAIDA")
 
         if lMsErroAuto
             cLogFile := CriaTrab(,.f.) + ".log"
@@ -250,7 +254,8 @@ user function ApontaOP(cOP, cTpMov, cCC, cIC, cClvl, cLoteCTL, cCurral ) as Logi
 
     local aErroAuto 		:= {}
     local cErroAuto 		:= ""
-
+    local cNameLock         := ""
+    
     private lMsErroAuto 	:= .f.
     private lMsHelpAuto 	:= .t.
     private lAutoErrNoFile 	:= .t.
@@ -302,25 +307,27 @@ user function ApontaOP(cOP, cTpMov, cCC, cIC, cClvl, cLoteCTL, cCurral ) as Logi
         FG_X3ORD("C", , aApon )
         
         //ConOut(u_atOs(aApon))
-        
-        MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 3 ) //3-Inclusao
-        if lMsErroAuto
-            lRet := .f.
-            cLogFile := CriaTrab(,.f.) + ".log"
-            aErroAuto := GetAutoGRLog()
-            for i := 1 to Len(aErroAuto)
-                cErroAuto += aErroAuto[i] + CRLF
-            next
-            
-            U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-                            "ERRO5: "+cErroAuto,;
-                            .T./* lConOut */,;
-                            /* lAlert */ )
 
-            MemoWrite(cLogFile, cErroAuto)
-            RestArea(aArea)
-            MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Apontamento de produção.")
-        endIf
+
+            MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 3 ) //3-Inclusao
+            if lMsErroAuto
+                lRet := .f.
+                cLogFile := CriaTrab(,.f.) + ".log"
+                aErroAuto := GetAutoGRLog()
+                for i := 1 to Len(aErroAuto)
+                    cErroAuto += aErroAuto[i] + CRLF
+                next
+                
+                U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+                                "ERRO5: "+cErroAuto,;
+                                .T./* lConOut */,;
+                                /* lAlert */ )
+
+                MemoWrite(cLogFile, cErroAuto)
+                RestArea(aArea)
+                MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Apontamento de produção.")
+            endIf
+
 
     else
         lRet := .f.
@@ -676,7 +683,9 @@ user function LimpaEmp(cOP)
     end
 
     if IsInCallStack("u_ConnOne") .AND. cNameLock != ""
-        UnLockByName(cNameLock)
+        IF LockByName(cNameLock)
+            UnLockByName(cNameLock)
+        ENDIF 
         ConOut("Desbloqueio de " + cNameLock)    
     endif
 
@@ -855,3 +864,5 @@ static function LimpaEmp()
 
     RestArea(aArea)
 return nil
+
+

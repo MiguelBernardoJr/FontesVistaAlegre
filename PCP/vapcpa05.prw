@@ -118,7 +118,7 @@ EnableKey(.T.)
 nNroTratos := u_GetNroTrato()
 
 AtuSX1(@cPerg)
-U_PosSX1({{cPerg, "01", cToD("01/11/2024") }})
+U_PosSX1({{cPerg, "01", dDataBase }})
 
     DbSelectArea("SX3")
     DbSetOrder(2) // X3_CAMPO
@@ -284,7 +284,7 @@ U_PosSX1({{cPerg, "01", cToD("01/11/2024") }})
 
                 //-------------------
                 //Criação do objeto
-                //-------------------
+                //------------------- 
                 oTmpZ06 := FWTemporaryTable():New(cTrbBrowse)
                 oTmpZ06:SetFields(aFields)
                 
@@ -3985,21 +3985,23 @@ Faz a chamada do viewdef trazendo apenas os botões Confirmar e Fechar
 /*/
 user function vap05mnt(cAlias, nReg, nOpc)
     local aArea   := GetArea()
+    local nPos        := oBrowse:nAt
     local aEnButt := {{.F., nil},;      // 1 - Copiar
-                    {.F., nil},;      // 2 - Recortar
-                    {.F., nil},;      // 3 - Colar
-                    {.F., nil},;      // 4 - Calculadora
-                    {.F., nil},;      // 5 - Spool
-                    {.F., nil},;      // 6 - Imprimir
-                    {.T., "Confirmar"},; // 7 - Confirmar
-                    {.T., "Fechar"},;    // 8 - Cancelar
-                    {.F., nil},;      // 9 - WalkTrhough
-                    {.F., nil},;      // 10 - Ambiente
-                    {.F., nil},;      // 11 - Mashup
-                    {.T., nil},;      // 12 - Help
-                    {.F., nil},;      // 13 - Formulário HTML
-                    {.F., nil},;      // 14 - ECM
-                    {.F., nil}}       // 15 - Salvar e Criar novo
+                    {.F., nil},;        // 2 - Recortar
+                    {.F., nil},;        // 3 - Colar
+                    {.F., nil},;        // 4 - Calculadora
+                    {.F., nil},;        // 5 - Spool
+                    {.F., nil},;        // 6 - Imprimir
+                    {.F., nil},;        // 7 - Confirmar
+                    {.T., "Fechar"}   ,;// 8 - Cancelar
+                    {.F., nil},;        // 9 - WalkTrhough
+                    {.F., nil},;        // 10 - Ambiente
+                    {.F., nil},;        // 11 - Mashup
+                    {.T., nil},;        // 12 - Help
+                    {.F., nil},;        // 13 - Formulário HTML
+                    {.F., nil},;        // 14 - ECM
+                    {.F., nil}}         // 15 - Salvar e Criar novo
+    local aAreaTrb    := (cTrbBrowse)->(GetArea())
 
     if Empty((cTrbBrowse)->Z0T_ROTA)
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele não possui Rota.", 1, 0,,,,,, {"Operação não permitida."})
@@ -4035,9 +4037,11 @@ user function vap05mnt(cAlias, nReg, nOpc)
 				Custom.VAPCPA17.u_PreparaQuerys()
                 
                 cBakFun := FunName()
+
                 SetFunName("VAPCPA17")
                 
                 FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+            
                 ReleaseZ05()
 
                 SetFunName(cBakFun)
@@ -4063,30 +4067,6 @@ user function vap05mnt(cAlias, nReg, nOpc)
 					oExecZ05G := Nil
 				endif
             endif
-        elseif !Empty((cTrbBrowse)->B8_LOTECTL)
-            if FillTrato()
-				Custom.VAPCPA17.u_PreparaQuerys()
-
-                FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt)
-                ReleaseZ05()
-
-				if oExecZ06G != nil
-					oExecZ06G:Destroy()
-					oExecZ06G := Nil
-				endif
-				if oExecZ06D != nil
-					oExecZ06D:Destroy()
-					oExecZ06D := Nil
-				endif
-				if oExecRota != nil
-					oExecRota:Destroy()
-					oExecRota := Nil
-				endif
-				if oExecZ05 != nil
-					oExecZ05:Destroy()
-					oExecZ05 := Nil
-				endif
-            endif
         endif
     elseif Z0R->Z0R_LOCK = '2' 
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
@@ -4094,17 +4074,19 @@ user function vap05mnt(cAlias, nReg, nOpc)
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
     endif
 
+    oTmpZ06:Zap()
+    oBrowse:Refresh()
+
+    (cTrbBrowse)->(RestArea(aAreaTrb))
+    FWMsgRun(, { || LoadTrat(Z0R->Z0R_DATA)}, "Recarregando o trato", "Recarregando o trato")  
+    oBrowse:Refresh()
+
     EnableKey(.T.)
 
     if !Empty(aArea)
         RestArea(aArea)
     endif
-    
-    //teste aqui
-    U_UpdTrbTmp()
-    //u_vap05rec()
 return nil
-
 
 /*/{Protheus.doc} vap05man
 Faz a chamada do viewdef trazendo apenas os botões Confirmar e Fechar
@@ -4992,6 +4974,8 @@ static function LoadZ06(oFormGrid, lCopia)
                 " and Z06.Z06_LOTE   = '" + Z05->Z05_LOTE + "'" +;
                 " and Z06.D_E_L_E_T_ = ' '" +;
         " order by Z06.Z06_TRATO" ;
+    
+    cAlias := MpSysOpenQuery(cQry)
 
     while !(cAlias)->(Eof())
         AAdd(aRet, aClone(aTemplate))
@@ -7483,7 +7467,6 @@ default lExclui  := .F.
             (cTrbBrowse)->CMS_PV     := Z05->Z05_CMSPN
             (cTrbBrowse)->Z05_MEGCAL := Z05->Z05_MEGCAL
             
-
             for i := 1 to nNroTratos
                 if Z06->(DbSeek(FWxFilial("Z06")+DToS(Z05->Z05_DATA)+Z05->Z05_VERSAO+Z05->Z05_CURRAL+Z05->Z05_LOTE+AllTrim(Str(i))))
                     (cTrbBrowse)->&("Z06_DIETA" + StrZero(i, 1)) := Z06->Z06_DIETA
@@ -7753,7 +7736,7 @@ EnableKey(.T.)
     endif
 
     (cTrbBrowse)->(RestArea(aAreaTrb))
-    oBrowse:nAt := nPos 
+    oBrowse:nAt := nPos
     oBrowse:Refresh()
 
 EnableKey(.T.)
