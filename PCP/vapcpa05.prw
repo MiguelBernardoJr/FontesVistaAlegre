@@ -4033,7 +4033,7 @@ user function vap05mnt(cAlias, nReg, nOpc)
         DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     
         if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-            if U_CanUseZ05()
+            //if U_CanUseZ05()
 				
 				Custom.VAPCPA17.u_PreparaQuerys()
                 
@@ -4043,7 +4043,7 @@ user function vap05mnt(cAlias, nReg, nOpc)
                 
                 FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
             
-                ReleaseZ05()
+                //ReleaseZ05()
 
                 SetFunName(cBakFun)
 
@@ -4071,7 +4071,7 @@ user function vap05mnt(cAlias, nReg, nOpc)
 					oExecZ05G:Destroy()
 					oExecZ05G := Nil
 				endif
-            endif
+            //endif
         endif
     elseif Z0R->Z0R_LOCK = '2' 
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
@@ -7730,7 +7730,7 @@ EnableKey(.T.)
             elseif mv_par01 > nMaxTrato
                 Help(/*Descontinuado*/,/*Descontinuado*/,"QTDE TRATO INVALIDA",/**/,"A quantidade de tratos deve ser menor que " + AllTrim(Str(nMaxTrato)) +".", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, digite uma quatidade de tratos válida." })
             else    
-                FWMsgRun(, { || ProcTrato()}, "Nro de Tratos", "Ajustando numero de tratos para " + AllTrim(Str(mv_par01))+ "...")
+                FWMsgRun(, { || U_ProcTrato()}, "Nro de Tratos", "Ajustando numero de tratos para " + AllTrim(Str(mv_par01))+ "...")
             endif
         endif
         mv_par01 := aParam[1]; mv_par02 := aParam[2]; mv_par03 := aParam[3]; mv_par04 := aParam[4]; mv_par05 := aParam[5]
@@ -7808,7 +7808,7 @@ Filtra os registros do browse que deverão sofrer alteração na quantidade de trat
 @return nil
 @type function
 /*/
-static function ProcTrato()
+User function ProcTrato()
     local cQry      := ""
     local cAlias    := ""
 
@@ -7817,7 +7817,7 @@ static function ProcTrato()
             " where Z0T_ROTA between '" + mv_par02 + "' and '" + mv_par03 + "'" +; 
                 " and Z08_CODIGO between '" + mv_par04 + "' and '" + mv_par05 + "'" +;
                 " and B8_LOTECTL <> '" + Space(TamSX3("B8_LOTECTL")[1]) + "'" +;
-                " and D_E_L_E_T_ = ' '" 
+                " and D_E_L_E_T_ = ' '"
 
     cAlias := MpSysOpenQuery(cQry)
 
@@ -7829,6 +7829,16 @@ static function ProcTrato()
                     Help(,, "CANUSEZ05.",, "Curral " + AllTrim((cTrbBrowse)->Z08_CODIGO) + " - Lote " + ((cTrbBrowse)->B8_LOTECTL) + "  em uso.", 1, 0,,,,,, {"A operação será cancelada."})
                     DisarmTransaction()
                     break
+                else
+                    if IsInCallStack("CUSTOM.VAPCPA17.VAP17TRA")
+                        if Len(aTratos) == 0
+                            aAdd(aTratos, {(cTrbBrowse)->Z0T_ROTA, {}})
+                        elseif aScan(aTratos, {|x| x[1] == (cTrbBrowse)->Z0T_ROTA}) == 0
+                            aAdd(aTratos, {(cTrbBrowse)->Z0T_ROTA, {}})
+                        endif
+                        
+                        aAdd(aTratos[aScan(aTratos, {|x| x[1] == (cTrbBrowse)->Z0T_ROTA}),2], { (cTrbBrowse)->Z08_CODIGO, (cTrbBrowse)->B8_LOTECTL})
+                    endif
                 endif
             else
                 Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral " + (cTrbBrowse)->Z08_CODIGO + ". É necessário criar o trato manualmente para ele.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"O trato não foi alterado."})
@@ -9077,7 +9087,7 @@ EnableKey(.F.)
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
     endif
 
-EnableKey(.T.)
+    EnableKey(.T.)
     u_vap05rec()
 return nil 
 
@@ -9147,7 +9157,7 @@ local cAlias := ""
             " from " + oTmpZ06:GetRealName() +;
             " where Z0T_ROTA between '" + mv_par01 + "' and '" + mv_par02 + "'" +;
             " and Z08_CODIGO between '" + mv_par03 + "' and '" + mv_par04 + "'"
-    
+
     cAlias := MpSysOpenQuery(cQry)
 
     begin transaction
@@ -9157,6 +9167,16 @@ local cAlias := ""
                 if !AjuNroDiet(aTrato)
                     DisarmTransaction()
                     break
+                else
+                    if IsInCallStack("CUSTOM.VAPCPA17.VAP17TRT")
+                        if Len(aTratos) == 0
+                            aAdd(aTratos, {(cTrbBrowse)->Z0T_ROTA, {}})
+                        elseif aScan(aTratos, {|x| x[1] == (cTrbBrowse)->Z0T_ROTA}) == 0
+                            aAdd(aTratos, {(cTrbBrowse)->Z0T_ROTA, {}})
+                        endif
+                        
+                        aAdd(aTratos[aScan(aTratos, {|x| x[1] == (cTrbBrowse)->Z0T_ROTA}),2], { (cTrbBrowse)->Z08_CODIGO, (cTrbBrowse)->B8_LOTECTL})
+                    endif
                 endif
             else
                 Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral " + (cTrbBrowse)->Z08_CODIGO + ". É necessário criar o trato manualmente para ele.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"O trato não foi alterado."})

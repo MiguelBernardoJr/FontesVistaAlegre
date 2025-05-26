@@ -35,8 +35,14 @@
 		},
 		{
 			"label": "sigamid"
+		},
+		{
+			"label": "sigaest"
+		},
+		{
+			"label": "sigaCOM"
 		}
 	],
-	"lastProgramExecuted": "sigamdi",
+	"lastProgramExecuted": "sigaest",
 	"lastProgramArguments": []
 }

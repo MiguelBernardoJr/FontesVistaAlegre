@@ -2,5 +2,6 @@
     "totvsLanguageServer.editor.linter.includes": "E:\\.Protheus-Producao\\includes",
     "totvsLanguageServer.welcomePage": false,
     "advpl.debug_multiThread": true,
-    "totvsLanguageServer.askCompileResult": false
+    "totvsLanguageServer.askCompileResult": false,
+    "totvsLanguageServer.workspaceServerConfig": false
 }
