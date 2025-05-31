@@ -1024,7 +1024,7 @@ User Function I08PROC()
 				Z02->(MsUnLock())
 
 			TryException
-				FWMsgRun(, {|| &('StaticCall(VAEST020, PROCZ02, aDados, cSequen)') },;
+				FWMsgRun(, {|| U_PROCZ02(aDados, cSequen) },;
 								"Processando [VAEST020]" + "[" + AllTrim(ZVG->ZVG_CODIGO) + "]" ,;
 								"Processando os dados [" + cSequen + "-" + AllTrim(ZVG->ZVG_CODIGO) + "]" )
 			

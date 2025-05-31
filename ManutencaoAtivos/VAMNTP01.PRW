@@ -90,12 +90,12 @@ While !TMPTQN->(Eof())
 
 		TQN->(DbGoto(TMPTQN->(RECTQN)))
 		RecLock("TQN", .f.)
-		TQN->TQN_VUNABA := nValComb
-		TQN->TQN_VTTABA := TQN->TQN_VUNABA * TQN->TQN_QUANT
-		If Empty(TQN->TQN_FORST9)
-			TQN->TQN_FORST9 := TMPTQN->(T9_FORNECE)
-			TQN->TQN_LOJST9 := TMPTQN->(T9_LOJA)
-		Endif
+			TQN->TQN_VUNABA := nValComb
+			TQN->TQN_VTTABA := TQN->TQN_VUNABA * TQN->TQN_QUANT
+			If Empty(TQN->TQN_FORST9)
+				TQN->TQN_FORST9 := TMPTQN->(T9_FORNECE)
+				TQN->TQN_LOJST9 := TMPTQN->(T9_LOJA)
+			Endif
 		MsUnlock()
 		lProcess := .t.
 	Else

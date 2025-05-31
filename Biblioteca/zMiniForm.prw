@@ -16,7 +16,7 @@ User Function zMiniForm()
     Private oDlgForm
     Private oGrpForm
     Private oGetForm
-    Private cGetForm := "U_VATST01()"//PadR(GetMV("MV_ZMINFOR",,""), 250) //Space(250)
+    Private cGetForm := "U_JOB20VA()               "//PadR(GetMV("MV_ZMINFOR",,""), 250) //Space(250)
     Private oGrpAco
     Private oBtnExec
     //Tamanho da Janela
