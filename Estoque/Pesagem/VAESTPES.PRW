@@ -402,6 +402,7 @@ User Function PegaPeso( lGravPeso, nBalanca )
 	Local aArea         := GetArea()
 	Local oModel 		:= FwModelActivate()
 	Local oMdl1 		:= oModel:GetModel("ZPB_1")
+	Local oMdl3 		:= oModel:GetModel("ZPB_3")
 	Local oMdl4 		:= oModel:GetModel("ZPB_4")
 	Local oMdl5 		:= oModel:GetModel("ZPB_5")
 	Local oView 		:= FWViewActive()
@@ -422,15 +423,36 @@ User Function PegaPeso( lGravPeso, nBalanca )
 				lGravPeso := .F. 
 			endif
 		else
+
 			if nPeso1 == 0
 				MsgAlert("Informe o peso de entrada antes do peso de Saida!")
 				lGravPeso := .F.
 			else
 				//cBalanca := '000006' // CRIAR PARAMETRO PARA DX6_CODBAL]
-				aParBal := {cBalSai,.T.,.T.,.F.}
-				nOpcA := 2
-				if nPeso2 > 0 .and. !MsgYesNo('Peso de saida do caminhão preenchido, deseja informar o peso do caminhão novamente?')
-					lGravPeso := .F. 
+				IF Alltrim(oMdl3:GetValue("ZPB_PRODUT")) == '020017' // se for produto de grãos, não permitir pesagem de saida
+					ZPA->(DbSetOrder(1))
+					if !(ZPA->(DbSeek( FwXFilial("ZPB") +;
+									oMdl1:GetValue('ZPB_CODIGO')+;
+									dToS(oMdl4:GetValue('ZPB_DATA')))))
+						MsgAlert("É necessário informar as medições do milho antes de informar o peso de saída!" + CRLF +;
+									"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.")
+						lGravPeso := .F.
+					else
+						oMdl3:LoadValue("ZPB_UMID"  , ZPA->ZPA_UMID)
+						oMdl3:LoadValue("ZPB_IMPUR" , ZPA->ZPA_IMPUR)
+						oMdl3:LoadValue("ZPB_AVARIA", ZPA->ZPA_AVARIA)
+						oMdl3:LoadValue("ZPB_TEMP"  , ZPA->ZPA_TEMP)
+						oMdl3:LoadValue("ZPB_SILO"  , ZPA->ZPA_SILO)
+					endif
+					ZPA->(dbCloseArea())
+				endif
+
+				IF lGravPeso
+					aParBal := {cBalSai,.T.,.T.,.F.}
+					nOpcA := 2
+					if nPeso2 > 0 .and. !MsgYesNo('Peso de saida do caminhão preenchido, deseja informar o peso do caminhão novamente?')
+						lGravPeso := .F. 
+					endif
 				endif
 			endif 
 		endif
@@ -683,22 +705,25 @@ User Function PPeso1()
 	endif
 	
 	if lMilho .and. oMdl5:GetValue("ZPB_PESOS") > 0
-		if Empty(oMdl3:GetValue("ZPB_UMID") )
-			MSGSTOP("Informe o campo Umidade [ABA 03] antes de imprimir o ticket")
+		ZPA->(DbSetOrder(1))
+		if !(ZPA->(DbSeek( FwXFilial("ZPB") +;
+						oMdl1:GetValue('ZPB_CODIGO')+;
+						dToS(oMdl4:GetValue('ZPB_DATA')))))
+
+			MsgAlert("É necessário informar as medições do milho antes de informar o peso de saída!" + CRLF +;
+						"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.")
+			ZPA->(dbCloseArea())
 			Return
-		elseif Empty(oMdl3:GetValue("ZPB_IMPUR"))
-			MSGSTOP("Informe o campo Impureza [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_AVARIA"))
-			MSGSTOP("Informe o campo Avaria [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_TEMP"))
-			MSGSTOP("Informe o campo Temperatura [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_SILO"))
-			MSGSTOP("Informe o campo Silo [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_NOTFIS"))
+		else
+			oMdl3:LoadValue("ZPB_UMID"  , ZPA->ZPA_UMID)
+			oMdl3:LoadValue("ZPB_IMPUR" , ZPA->ZPA_IMPUR)
+			oMdl3:LoadValue("ZPB_AVARIA", ZPA->ZPA_AVARIA)
+			oMdl3:LoadValue("ZPB_TEMP"  , ZPA->ZPA_TEMP)
+			oMdl3:LoadValue("ZPB_SILO"  , ZPA->ZPA_SILO)
+		endif
+		ZPA->(dbCloseArea())
+
+		if Empty(oMdl3:GetValue("ZPB_NOTFIS"))
 			MSGSTOP("Informe o campo Notas Fiscais [ABA 05] antes de imprimir o ticket")
 			Return
 		endif
@@ -755,7 +780,7 @@ User Function PPeso1()
 					'Imprimindo ticket')
 	endif
 
-	if oModel:GetOperation() == 3 .or. oModel:GetOperation() == 3 
+	if oModel:GetOperation() == 3 .or. oModel:GetOperation() == 4
 		if oModel:VldData()
 			if oModel:CommitData() 
 				AtualPsgemNF() //colocar atualiza pesagem aqui
@@ -774,7 +799,7 @@ User Function PPeso2()
 	if Empty(ZPB->ZPB_CPFMOT)
 		MSGSTOP("Informe o campo CPF Motorista [ABA 02] antes de imprimir o ticket")
 		return
-	endif 
+	endif
 	if Empty(ZPB->ZPB_CODFOR)
 		MSGSTOP("Informe o campo Codigo Fornecedor [ABA 02] antes de imprimir o ticket")
 		return
@@ -798,6 +823,26 @@ User Function PPeso2()
 	endif
 	
 	if lMilho .and. ZPB->ZPB_PESOS > 0
+		ZPA->(DbSetOrder(1))
+		if !(ZPA->(DbSeek( ZPB->ZPB_FILIAL +;
+						ZPB->ZPB_CODIGO+;
+						dToS(ZPB->ZPB_DATA))))
+
+			MsgAlert("É necessário informar as medições do milho antes de informar o peso de saída!" + CRLF +;
+						"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.")
+			ZPA->(dbCloseArea())
+			Return
+		else
+			RecLock("ZPB",.F.)
+				ZPB->ZPB_UMID	:= ZPA->ZPA_UMID
+				ZPB->ZPB_IMPUR	:= ZPA->ZPA_IMPUR
+				ZPB->ZPB_AVARIA	:= ZPA->ZPA_AVARIA
+				ZPB->ZPB_TEMP	:= ZPA->ZPA_TEMP
+				ZPB->ZPB_SILO	:= ZPA->ZPA_SILO
+			ZPB->(MsUnlock())
+		endif
+		ZPA->(dbCloseArea())
+
 		if Empty(ZPB->ZPB_UMID )
 			MSGSTOP("Informe o campo Umidade [ABA 03] antes de imprimir o ticket")
 			Return
@@ -1112,39 +1157,20 @@ Static Function fQuadro( nQuadro ,aPeso,lMilho)
 			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := AllTrim(Transform( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_TEMP"})][2], X3Picture("ZPB_TEMP") ) )
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Temperatura....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow 		, nColLabel + 130, "Temperatura....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow         , nColInfo + 130, cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := AllTrim(Transform( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_IMPUR"})][2], X3Picture("ZPB_IMPUR") ) )
 			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Impureza.......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := AllTrim(Transform( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_AVARIA"})][2], X3Picture("ZPB_AVARIA") ) )
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Avariado.......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow			, nColLabel + 130, "Avariado.......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow         , nColInfo + 130 , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := "Silo " + aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_SILO"})][2]
 			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Destino........:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			
-		else 
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Umidade.....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Temperatura.:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Impureza....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Avariado....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Destino....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "O"/*cText>*/, oFBolinha/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo + 10, " -  Silo 1"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo + 60, "O"/*cText>*/, oFBolinha/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo + 70, " -  Silo 2"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 		Endif
 		
 	endif
@@ -1720,4 +1746,4 @@ User Function zWhenMl()
 		Return .F.
 	endif
 
-Return .T.
+Return .F.

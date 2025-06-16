@@ -309,22 +309,24 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
             oResponse["error"] 				:= ""
             oResponse["totvs_sync_date"] 	:= cDateTime
 
+            cQry := "SELECT MAX(ZWS_CODIGO) AS ZWS_CODIGO FROM "+RetSqlName("ZWS")+" (nolock) WHERE D_E_L_E_T_ = ' '"
+            cCod := StrZero(Val(MpSySExecScalar( cQry , "ZWS_CODIGO")) + 1,TamSx3("ZWS_CODIGO")[1])
             // Gravação dos dados
             RecLock("ZWS", .T.)
-            ZWS->ZWS_CODIGO := GetSXENum('ZWS','ZWS_CODIGO')
-            ZWS->ZWS_TIPO   := "J"
-            ZWS->ZWS_STATUS := "R"
-            ZWS->ZWS_WSDATA := MsDate()
-            ZWS->ZWS_WSHORA := Time()
-            ZWS->ZWS_METODO := "POST NotasDasBaias"
-            ZWS->ZWS_CONTEU := cBody
-            ZWS->ZWS_RESULT := (cResult := oResponse:toJson())
-            ZWS->(MsUnLock())
+                ZWS->ZWS_CODIGO := cCod
+                ZWS->ZWS_TIPO   := "J"
+                ZWS->ZWS_STATUS := "R"
+                ZWS->ZWS_WSDATA := MsDate()
+                ZWS->ZWS_WSHORA := Time()
+                ZWS->ZWS_METODO := "POST NotasDasBaias"
+                ZWS->ZWS_CONTEU := cBody
+                ZWS->ZWS_RESULT := (cResult := oResponse:toJson())
+                ZWS->(MsUnLock())
             ConfirmSX8()
             // Fim da gravação
 
             /* MB : 17.06.2024 
-                -> Conforme sugestão do Toshio, estarei chamando o processamento do json recebido diretamente da
+                -> Confmando o procesorme sugestão do Toshio, estarei chasamento do json recebido diretamente da
                 WS após gravacao na tabela intermediária. */
             U_fIntegrar( 'U' )
         Else

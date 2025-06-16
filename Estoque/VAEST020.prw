@@ -522,7 +522,7 @@ User function ProcZ02(aDados, cSequencia, cArmazem)
                         RecLock('Z04', .f.)
                             Z04->Z04_NUMOP := u_AToS(aNumOp)
                         Z04->(MsUnLock())
-                    ENDIF 
+                    ENDIF
                 endif
             endif
         endif
@@ -630,7 +630,7 @@ static function ProcLote(cLote, cRacao, nQuant, cArmz, cArmzRac)
 						  .T./* lConOut */,;
 						  /* lAlert */ )
             // u_vaest021( cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac, Lote  ) TODO: Enviar em Array cRacao, nQuant, cArmzRec
-			aAuxNumOp := FWMsgRun(, {|| u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, nQuant*(cAlias)->(B8_SALDO/TOTAL), cArmzRac, (cAlias)->B8_LOTECTL ) },;
+			FWMsgRun(, {|| aAuxNumOp :=  u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, nQuant*(cAlias)->(B8_SALDO/TOTAL), cArmzRac, (cAlias)->B8_LOTECTL ) },;
 							"Processando [VAEST020: ProcLote]",;
 							"Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(nRegistros,5) + ": " + AllTrim((cAlias)->B1_COD) +"]")
 			AAdd( aNumOp , aAuxNumOp )
@@ -649,7 +649,7 @@ static function ProcLote(cLote, cRacao, nQuant, cArmz, cArmzRac)
                 nQtdApro := Round(nQtdApro,TamSX3("D3_QUANT")[2])
             ENDIF
 
-            aAuxNumOp := FWMsgRun(, {|| u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, nQuant-nQtdApro, cArmzRac, (cAlias)->B8_LOTECTL ) },;
+            FWMsgRun(, {|| aAuxNumOp := u_vaest021( (cAlias)->B1_COD, (cAlias)->B8_SALDO, cArmz, cRacao, nQuant-nQtdApro, cArmzRac, (cAlias)->B8_LOTECTL ) },;
 							"Processando [VAEST020: ProcLote]",;
 							"Processando dados ["+ StrZero(i,5) + ' de ' + StrZero(nRegistros,5) + ": " + AllTrim((cAlias)->B1_COD) +"]")
 			AAdd( aNumOp , aAuxNumOp )

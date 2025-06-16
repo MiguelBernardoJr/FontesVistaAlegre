@@ -1418,8 +1418,8 @@ User Function VAPCP17VALID() as Logical
 				if oGridZ06D:GetValue("Z06_KGMSTR") < 0
 					Help(,, "Valor inválido",, "O campo Dieta é obrigatório e deve ser igual ou superior a 0.", 1, 0,,,,,, {"Por favor digite um valor válido."})
 					lRet := .F.
-				elseif oGridZ06D:GetValue("Z06_KGMSTR") == 0
-					lRet := MsgYesNo("A quantidade de trato digitada é 0. Confirma a quantidade?", "Quantidade Zero")
+				//elseif oGridZ06D:GetValue("Z06_KGMSTR") == 0
+				//	lRet := MsgYesNo("A quantidade de trato digitada é 0. Confirma a quantidade?", "Quantidade Zero")
 				elseif oGridZ06D:GetValue("Z06_KGMSTR") > GetMV("VA_MXVALTR",,15.0) 
 					Help(,, "Valor pode estar errado",, "O valor digitado é considerado muito grande para um trato mas será aceito pela rotina.", 1, 0,,,,,, {"Por favor, certifique-se que o valor digitado está correto."})
 				endif
@@ -2079,3 +2079,4 @@ Static Function AtualizaTela()
 	
 	oView:Refresh()
 Return 
+

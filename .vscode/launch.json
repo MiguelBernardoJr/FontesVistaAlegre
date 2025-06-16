@@ -7,6 +7,7 @@
 			"name": "Web Debug",
 			"program": "${command:AskForProgramName}",
 			"isMultiSession": true,
+			"enableMultiThread": true,
 			"enableTableSync": true
 		},
 		{
@@ -16,6 +17,7 @@
 			"program": "${command:AskForProgramName}",
 			"cwb": "${workspaceFolder}",
 			"smartclientBin": "C:\\SMARTCLIENT/smartclient.exe",
+			"enableMultiThread": true,
 			"isMultiSession": true,
 			"enableTableSync": true,
 			"extendFeatures": {
@@ -41,8 +43,11 @@
 		},
 		{
 			"label": "sigaCOM"
+		},
+		{
+			"label": "xxxx"
 		}
 	],
-	"lastProgramExecuted": "sigaest",
+	"lastProgramExecuted": "sigaCOM",
 	"lastProgramArguments": []
 }
