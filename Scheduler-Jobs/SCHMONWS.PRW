@@ -185,7 +185,8 @@ Static Function IntEmLote()
 
     Local nZ0I_CODIGO := 0
     Local nPos        := 0
-
+    Local sDataQry       := ""
+    Local cPeriodo    := ""
 
     ConOut(" ")
     ConOut("Inicio - " + FunName() + ": " + nInicio )
@@ -212,58 +213,78 @@ Static Function IntEmLote()
         ZWS->ZWS_SCHHRA := Time()
         ZWS->ZWS_STATUS := "P" // I=Importado para ZFL
 
-        // If Left(ZWS->ZWS_METODO, 6) == "DELETE"
-        //     // if U_GetPodeManipular( AllTrim(ZWS->ZWS_RECEIV) /* oObjResul:agendamento_id */) // SIM = PODE MANIPULAR
-        //     //     SCH_DELETE( oObjResul )
-        //     //     U_LogWs( __cTxt := "AgendamentoId: " + AllTrim(ZWS->ZWS_RECEIV) + " excluido com sucesso.", "E")
-        //     // Else // NAO == ERRO
-        //     //     ZWS->ZWS_STATUS := "3" // 3=Erro;I=Importado para ZFL
-        //     //     U_LogWs( __cTxt := "Não foi liberado para manipular o registro: " + AllTrim(ZWS->ZWS_RECEIV), "E")
-        //     // EndIf
-        // Else
-
         If AllTrim(ZWS->ZWS_METODO) == "POST NotasDasBaias"
 
             oResult:FromJson( DecodeUTF8( __cTxt := ZWS->ZWS_CONTEU ) )
             aSort( oResult:CURRAIS,,, { |x,y| x:CURRAL < y:CURRAL } )
+            
+            /* 
+                Igor Oliveira - 2023-10-16
+                Ajuste solicitado pelo Toshio.
+                Se nota de cocho for de noite e hora > 21hrs pegar próxima data
+            */
+
+            cPeriodo := ""
+            For nI := 1 to Len(oResult:currais)
+                if ValType(oResult:currais[nI]['NOTA_MANHA']) <> "U"
+                    cPeriodo := "MANHA"
+                    exit
+                elseif ValType(oResult:currais[nI]['NOTA_NOITE']) <> "U"
+                    cPeriodo := "NOITE"
+                    exit
+                endif
+            Next nI
+
+            if cPeriodo == "MANHA" // Mantem o comportamento original
+                sDataQry := DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1))                               
+                sDataRec := DTOS(cToD( Left(oResult:DATA, 10) ))
+            else
+                if Val(SubStr(Time(),1,2)) >= 21 .and. cToD( Left(oResult:DATA, 10) ) == Date() // Se for a data de hoje e hora >= 21:00
+                    sDataQry  := DTOS(cToD( Left(oResult:DATA, 10) ))
+                    sDataRec  := DTOS(DaySum(cToD( Left(oResult:DATA, 10) ),1))
+                else // Se for a data de hoje e hora < 21:00 // mantem o comportamento original
+                    sDataQry := DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1))               
+                    sDataRec := DTOS(cToD( Left(oResult:DATA, 10) ))
+                endif
+            endif
 
             cQryCur := "" + ENTER
             // cQryCur := " USE TotvsAntigo " + ENTER
             cQryCur += " SELECT Z08.Z08_LINHA AS LINHA, Z08.Z08_SEQUEN AS SEQ, Z08.Z08_CODIGO AS CURRAL, SB8.B8_LOTECTL AS LOTE " + ENTER
             //cQryCur += "       ,(SELECT SUM(Z04.Z04_TOTREA) FROM " + RetSqlName("Z04") +  " Z04 WHERE Z04.Z04_DTIMP  = DATEADD(dd, -1, cast('" + DTOS(cToD( Left(oResult:DATA, 10) )) + "' as datetime)) AND Z04.Z04_FILIAL = '" + xFilial("Z04") + "' AND Z04.D_E_L_E_T_ <> '*' AND Z04.Z04_LOTE = SB8.B8_LOTECTL) AS TOTREA " + ENTER
             //cQryCur += "       ,(SELECT SUM(Z04.Z04_TOTAPR) FROM " + RetSqlName("Z04") +  " Z04 WHERE Z04.Z04_DTIMP  = DATEADD(dd, -1, cast('" + DTOS(cToD( Left(oResult:DATA, 10) )) + "' as datetime)) AND Z04.Z04_FILIAL = '" + xFilial("Z04") + "' AND Z04.D_E_L_E_T_ <> '*' AND Z04.Z04_LOTE = SB8.B8_LOTECTL) AS TOTAPR " + ENTER
-            cQryCur += "       ,(SELECT SUM(Z0WA.Z0W_QTDPRE) Z0W_QTDPRE  FROM " + RetSqlName("Z0W") +  " Z0WA WHERE Z0WA.Z0W_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z0WA.Z0W_FILIAL = '" + xFilial("Z05") + "' AND Z0WA.D_E_L_E_T_ <> '*' AND Z0WA.Z0W_LOTE = SB8.B8_LOTECTL ) AS  TOTAPR " + ENTER
-            cQryCur += "       ,(SELECT SUM(Z0WA.Z0W_QTDREA) Z0W_QTDREA  FROM " + RetSqlName("Z0W") +  " Z0WA WHERE Z0WA.Z0W_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z0WA.Z0W_FILIAL = '" + xFilial("Z05") + "' AND Z0WA.D_E_L_E_T_ <> '*' AND Z0WA.Z0W_LOTE = SB8.B8_LOTECTL ) AS  TOTREA " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 5)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD5 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 5)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD5 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 5)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV5  " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 5)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD5 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 5)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD5 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 5)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND5 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 4)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD4 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 4)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD4 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 4)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV4 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 4)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD4 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 4)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD4 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 4)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND4 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 3)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD3 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 3)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD3 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 3)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV3 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 3)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD3 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 3)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD3 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 3)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND3 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 2)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD2 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 2)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD2 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 2)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV2 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 2)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD2 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 2)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD2 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 2)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND2 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD1 " + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD1" + ENTER
-            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV1" + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD1 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD1 " + ENTER
-            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND1 " + ENTER
+            cQryCur += "       ,(SELECT SUM(Z0WA.Z0W_QTDPRE) Z0W_QTDPRE  FROM " + RetSqlName("Z0W") +  " Z0WA WHERE Z0WA.Z0W_DATA  = '" + sDataQry + "' AND Z0WA.Z0W_FILIAL = '" + xFilial("Z05") + "' AND Z0WA.D_E_L_E_T_ <> '*' AND Z0WA.Z0W_LOTE = SB8.B8_LOTECTL ) AS  TOTAPR " + ENTER
+            cQryCur += "       ,(SELECT SUM(Z0WA.Z0W_QTDREA) Z0W_QTDREA  FROM " + RetSqlName("Z0W") +  " Z0WA WHERE Z0WA.Z0W_DATA  = '" + sDataQry + "' AND Z0WA.Z0W_FILIAL = '" + xFilial("Z05") + "' AND Z0WA.D_E_L_E_T_ <> '*' AND Z0WA.Z0W_LOTE = SB8.B8_LOTECTL ) AS  TOTREA " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 5)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD5 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 5)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD5 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 5)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV5  " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 5)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD5 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 5)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD5 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 5)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND5 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 4)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD4 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 4)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD4 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 4)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV4 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 4)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD4 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 4)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD4 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 4)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND4 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 3)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD3 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 3)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD3 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 3)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV3 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 3)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD3 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 3)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD3 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 3)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND3 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 2)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD2 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 2)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD2 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 2)) + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV2 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 2)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD2 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 2)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD2 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + DTOS(DaySub(sToD(sDataQry), 2)) + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND2 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_DIETA  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + sDataQry + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS DIETD1 " + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_KGMSDI FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + sDataQry + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  KGMSD1" + ENTER
+            cQryCur += "       ,(SELECT Z05A.Z05_CMSPN  FROM " + RetSqlName("Z05") +  " Z05A WHERE Z05A.Z05_DATA  = '" + sDataQry + "' AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' AND Z05A.Z05_LOTE = SB8.B8_LOTECTL AND Z05A.Z05_CURRAL = Z08.Z08_CODIGO) AS  CMSPV1" + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTMAN FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + sDataQry + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTMD1 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTTAR FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + sDataQry + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTTD1 " + ENTER
+            cQryCur += "       ,(SELECT Z0IA.Z0I_NOTNOI FROM " + RetSqlName("Z0I") +  " Z0IA WHERE Z0IA.Z0I_DATA  = '" + sDataQry + "' AND Z0IA.Z0I_FILIAL = '" + xFilial("Z0I") + "' AND Z0IA.D_E_L_E_T_ <> '*' AND Z0IA.Z0I_LOTE = SB8.B8_LOTECTL) AS NOTND1 " + ENTER
             cQryCur += " FROM       " + RetSqlName("SB8") +  " SB8 " + ENTER
             cQryCur += " RIGHT JOIN " + RetSqlName("Z08") +  " Z08 ON Z08.Z08_CODIGO = SB8.B8_X_CURRA AND Z08.Z08_FILIAL = '" + xFilial("Z08") + "' AND Z08.D_E_L_E_T_ <> '*' " + ENTER
             cQryCur += " WHERE SB8.D_E_L_E_T_ <> '*' AND SB8.B8_X_CURRA <> '' AND SB8.B8_FILIAL = '" + xFilial("SB8") + "' " + ENTER
@@ -272,8 +293,6 @@ Static Function IntEmLote()
             cQryCur += " ORDER BY Z08.Z08_CODIGO--Z08.Z08_LINHA, Z08.Z08_SEQUEN, SB8.B8_LOTECTL " + ENTER
 
             MPSysOpenQuery( cQryCur, "QRYCUR" )
-
-            // MEMOWRITE("C:\TOTVS_RELATORIOS\MANCCHPRE.txt", cQryCur)
 
             DBSelectArea("Z0I")
             Z0I->(DBSetOrder(1))
@@ -292,14 +311,14 @@ Static Function IntEmLote()
                             /* Fonte da nota de cocho new : VAPCPA16  */
                             Z0I->(DBSetOrder( 1 ))
                             lInclui := !Z0I->(DBSeek( oResult:Currais[ nPos ]:FILIAL +;
-                                DtoS(CtoD(Left(oResult:DATA, 10))) +;
+                                sDataRec +;
                                 QRYCUR->CURRAL +;
                                 QRYCUR->LOTE ))
 
                             RecLock("Z0I", lInclui)
 
                             Z0I->Z0I_FILIAL := oResult:Currais[ nPos ]:FILIAL // xFilial("Z0I")
-                            Z0I->Z0I_DATA   := cToD( Left(oResult:DATA, 10) )
+                            Z0I->Z0I_DATA   := sToD(sDataRec)
                             Z0I->Z0I_CURRAL := QRYCUR->CURRAL
                             Z0I->Z0I_LOTE   := QRYCUR->LOTE
 
@@ -316,8 +335,13 @@ Static Function IntEmLote()
                                 Z0I->Z0I_NOTMAN := oResult:Currais[ nPos ]:NOTA_MANHA
                             EndIf
                             // Z0I->Z0I_NOTNOI := Space(6)
+                            /* 
+                                Igor Oliveira - 2023-10-16
+                                Ajuste solicitado pelo Toshio.
+                                Colocar as notas de cocho da noite no campo Z0I_NOTTAR - NOTA TARDE
+                            */
                             If ValType( oResult:Currais[ nPos ]:NOTA_NOITE ) == "C"
-                                Z0I->Z0I_NOTNOI := oResult:Currais[ nPos ]:NOTA_NOITE
+                                Z0I->Z0I_NOTTAR := oResult:Currais[ nPos ]:NOTA_NOITE
                             EndIf
                             If ValType( oResult:Currais[ nPos ]:AJUSTE ) == "C"
                                 Z0I->Z0I_AJUSTE := Val( oResult:Currais[ nPos ]:AJUSTE )

@@ -33,6 +33,7 @@ Static Function MenuDef()
 	ADD OPTION aRot TITLE 'Alterar'    		ACTION 'VIEWDEF.VAESTI08' 			OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
 	ADD OPTION aRot TITLE 'Excluir'    		ACTION 'VIEWDEF.VAESTI08' 			OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
 	ADD OPTION aRot TITLE 'Processar'  		ACTION 'U_I08PROC'		 			OPERATION 6 					 ACCESS 0 //OPERATION 5
+	ADD OPTION aRot TITLE 'Processar Todos' ACTION 'U_I08PRALL'		 			OPERATION 6 					 ACCESS 0 //OPERATION 5
 Return aRot
 
 Static Function ModelDef()
@@ -920,6 +921,50 @@ Static Function I08HPRE(oGrid, nLine, cAction, cField)
 
 Return lRet
 
+User Function I08PRALL()
+	Local cPerg 	:= "I08PRALL"
+	Local cAlias 	:= ""
+	Local cQry 		:= ""
+	Local aArea 	:= FWGetArea()
+	Local dBakDate 	:= dDataBase
+	
+	GeraX1(cPerg)
+	
+	if Pergunte(cPerg,.T.,"Data de processamento")
+		dDataBase := MV_PAR01 // Data de processamento
+		cQry := "SELECT * FROM " + RetSqlName("ZVG") + CRLF
+		cQry += " WHERE ZVG_STATUS = 'A' " + CRLF
+		cQry += "   AND ZVG_DATA = '" + DtoS(MV_PAR01) + "'" + CRLF
+		cQry += "   AND D_E_L_E_T_ = ' '" + CRLF
+		cQry += " ORDER BY ZVG_FILIAL" + CRLF
+		
+		cAlias := MpSysOpenQuery(cQry)
+
+		if (cALias)->(Eof())
+			MsgStop("Nenhuma movimentação encontrada para o dia " + DtoS(MV_PAR01) + ".")
+			(cALias)->(DbCloseArea())
+			FwRestArea(aArea)
+			Return .F.
+		else
+			ZVG->(DbSetOrder(1)) // ZVG_FILIAL+ZVG_CODIGO
+			WHile !(cALias)->(Eof())
+
+				IF ZVG->(DbSeek((cALias)->ZVG_FILIAL + (cALias)->ZVG_CODIGO))
+				
+					FWMsgRun(, {|| U_I08PROC() },;
+									"Processando os dados [Filial: "+(cALias)->ZVG_FILIAL+"], [Código: "+(cALias)->ZVG_CODIGO+"]" )
+				ENDIF
+				(cALias)->(DbSkip())
+			enddo 
+			(cALias)->(DbCloseArea())
+		endif 
+		dDataBase := dBakDate // Restaura a data do banco de dados
+	endif
+
+	FwRestArea(aArea)
+Return
+
+Return .T.
 User Function I08PROC()
 	Local aArea  	:= FWGetArea()
 	Local cQry 	 	:= ""
@@ -1034,10 +1079,66 @@ User Function I08PROC()
 			EndException
 		
 			RecLock("ZVG",.F.)
-				ZVG->ZVG_STATUS := "M"	
+				ZVG->ZVG_STATUS := "M"
 			ZVG->(MsUnLock())
 		End Transaction
 	endif 
 
 	FwRestArea(aArea)
 Return 
+
+Static Function GeraX1(cPerg)
+
+Local _aArea	:= GetArea()
+Local aRegs     := {}
+Local nX		:= 0
+Local nPergs	:= 0
+Local aRegs		:= {}
+Local i := 0, j := 0
+
+//Conta quantas perguntas existem ualmente.
+DbSelectArea('SX1')
+DbSetOrder(1)
+SX1->(DbGoTop())
+If SX1->(DbSeek(cPerg))
+	While !SX1->(Eof()) .And. X1_GRUPO = cPerg
+		nPergs++
+		SX1->(DbSkip())
+	EndDo
+EndIf
+
+aAdd(aRegs,{cPerg,"01", "Data de processamento:		", "", "", "MV_CH1", "D", 8, 0, 0, "G", "", "MV_PAR01", "", "", "", "", "", "","","","","","","","","","","","","","","","","","","","","U","","","",""})
+
+//Se quantidade de perguntas for diferente, apago todas
+SX1->(DbGoTop())
+If nPergs <> Len(aRegs)
+	For nX:=1 To nPergs
+		If SX1->(DbSeek(cPerg))		
+			If RecLock('SX1',.F.)
+				SX1->(DbDelete())
+				SX1->(MsUnlock())
+			EndIf
+		EndIf
+	Next nX
+EndIf
+
+// gravação das perguntas na tabela SX1
+If nPergs <> Len(aRegs)
+	dbSelectArea("SX1")
+	dbSetOrder(1)
+	For i := 1 to Len(aRegs)
+		If !dbSeek(cPerg+aRegs[i,2])
+			RecLock("SX1",.T.)
+				For j := 1 to FCount()
+					If j <= Len(aRegs[i])
+						FieldPut(j,aRegs[i,j])
+					Endif
+				Next j
+			MsUnlock()
+		EndIf
+	Next i
+EndIf
+
+RestArea(_aArea)
+
+Return nil
