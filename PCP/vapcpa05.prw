@@ -864,7 +864,8 @@ static function RecrTrato(cRotaDe, cRotaAte, cCurralDe, cCurralAte, cLoteDe, cLo
                     "   and TMP.B8_LOTECTL between '" + cLoteDe + "' and '" + cLoteAte + "'" +CRLF+;
                     "   and TMP.Z0S_EQUIP  between '" + cVeicDe + "' and '" + cVeicAte + "'" ;
 
-        cAliZU5A
+        cAliZU5A := MpSysOpenQuery(_cSql)
+        
         if !(cAliZU5A)->(Eof()) .or. Z0R->Z0R_LOCK = '2' 
 
             if (lContinua := MsgYesNo("Existem arquivos gerado que fazem referência a um ou mais currais no filtro. Para continuar é necessário versionar o trato. Deseja continuar?", "Recriação de trato"))
@@ -6654,7 +6655,7 @@ default cVersao  := Z0R->Z0R_VERSAO
     if !Empty(aIMS)
         _cQry := " select SUM(G1_QUANT) QTDE " + _ENTER_ +;
                 "    from "+RetSqlName("SG1")+" SG1" + _ENTER_ +;
-                "   where G1_FILIAL = "+FWxFilial("SG1")+" "+ _ENTER_ +;
+                "   where G1_FILIAL = '"+FWxFilial("SG1")+"' "+ _ENTER_ +;
                 "     and G1_COD = '"+cDieta+"' "  + _ENTER_ +;
                 "     and SG1.D_E_L_E_T_ = ' ' "   
                                 
@@ -6846,7 +6847,7 @@ if !oGridModel:IsDeleted()
                 cLog += "Novo valor de Matéria Natural: " + AllTrim(Str(oGridModel:GetValue("Z06_KGMNTR"))) + CRLF
                 Z06->Z06_KGMSTR := M->Z06_KGMSTR
                 Z06->Z06_KGMNTR := oGridModel:GetValue("Z06_KGMNTR")
-                Z06->Z06_KGMNT  := oGridModel:GetValue("Z06_KGMNT") * Z05->Z05_CABECA
+                Z06->Z06_KGMNT  := oGridModel:GetValue("Z06_KGMNTR") * Z05->Z05_CABECA
                 Z06->Z06_MEGCAL := oGridModel:GetValue("Z06_MEGCAL")
 
             MsUnlock()

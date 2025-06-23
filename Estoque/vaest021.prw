@@ -178,7 +178,7 @@ user function vaest021(cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac, c
 					_cQry += " WHERE B8_FILIAL ='"+xFilial("SB8")+"' 
 					_cQry += " 	 AND B8_PRODUTO='"+cIndividuo+"'
 					_cQry += " 	 AND B8_LOTECTL='"+cLoteCTL+"'
-					_cQry += " 	 AND D_E_L_E_T_=' '
+					_cQry += " 	 AND D_E_L_E_T_=' ' "
 					
 					cAlias        := GetNextAlias()
 					DbUseArea(.T.,'TOPCONN',TCGENQRY(,,ChangeQuery(_cQry)),(cAlias),.T.,.T.)

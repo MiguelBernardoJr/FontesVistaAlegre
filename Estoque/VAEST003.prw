@@ -308,26 +308,24 @@ user function ApontaOP(cOP, cTpMov, cCC, cIC, cClvl, cLoteCTL, cCurral ) as Logi
         
         //ConOut(u_atOs(aApon))
 
+        MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 3 ) //3-Inclusao
+        if lMsErroAuto
+            lRet := .f.
+            cLogFile := CriaTrab(,.f.) + ".log"
+            aErroAuto := GetAutoGRLog()
+            for i := 1 to Len(aErroAuto)
+                cErroAuto += aErroAuto[i] + CRLF
+            next
+            
+            U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
+                            "ERRO5: "+cErroAuto,;
+                            .T./* lConOut */,;
+                            /* lAlert */ )
 
-            MSExecAuto( { |x,y| MATA250(x,y) }, aApon, 3 ) //3-Inclusao
-            if lMsErroAuto
-                lRet := .f.
-                cLogFile := CriaTrab(,.f.) + ".log"
-                aErroAuto := GetAutoGRLog()
-                for i := 1 to Len(aErroAuto)
-                    cErroAuto += aErroAuto[i] + CRLF
-                next
-                
-                U_GravaArq( iIf(IsInCallStack("U_JOBPrcLote"), cFile, ""),;
-                                "ERRO5: "+cErroAuto,;
-                                .T./* lConOut */,;
-                                /* lAlert */ )
-
-                MemoWrite(cLogFile, cErroAuto)
-                RestArea(aArea)
-                MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Apontamento de produção.")
-            endIf
-
+            MemoWrite(cLogFile, cErroAuto)
+            RestArea(aArea)
+            MsgStop("Ocorreu um erro durante a execução da rotina automática MATA250 - Apontamento de produção.")
+        endIf
 
     else
         lRet := .f.

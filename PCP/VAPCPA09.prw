@@ -32,7 +32,8 @@ Private __dDtPergunte := StoD("")
 
 aDadSel := {"ROTA01", dDataBase, "0001", "03"}
 
-U_PosSX1({{cPrgRot, "01", DTOS(dDataBase)}})
+U_PosSX1({{cPrgRot, "01", CtoD("24/06/2025")}})
+//U_PosSX1({{cPrgRot, "01", DTOS(dDataBase)}})
 
 While ((nOpcRotas > 0))
 
@@ -187,7 +188,7 @@ Static Function VAPCPA09A(lPShwZer, lPShwGer)
 			//----------------------------
 			//Cria o trato caso necessário
 			//----------------------------
-			FWMsgRun(, { || U_CriaTrato(aDadSel[2])}, "Geracao de trato", "Gerando trato para o dia " + DTOC(aDadSel[2]) + "...")
+			FWMsgRun(, { || U_CriaTrat(aDadSel[2])}, "Geracao de trato", "Gerando trato para o dia " + DTOC(aDadSel[2]) + "...")
 			if (!Z05->(DBSeek(xFilial("Z05") + DTOS(aDadSel[2]) + aDadSel[3])))
 				nOpcRotas := 0
 				Return (Nil)
@@ -415,7 +416,7 @@ Static Function VAPCPA09A(lPShwZer, lPShwGer)
 							AllTrim((cALias)->LOTE)  ,;  // 02
 							(cALias)->QTD_POR_TRATO  ,;  // 03
 							AllTrim((cALias)->DIETA) ,;  // 04
-							.F.					  } ) // 05
+							.F.					  } ) 	// 05
 		If (aScan(aCrDie , { |x| x[1] == (cALias)->DIETA}) == 0)
 			If (nCrAux < Len(aCrDBs))
 				// https://shdo.wordpress.com/online/tabela-de-cores-rgb/
@@ -724,10 +725,10 @@ Static Function VAPCPA09A(lPShwZer, lPShwGer)
 							Z0T->Z0T_DATA   := aDadSel[2]
 							Z0T->Z0T_VERSAO := aDadSel[3]
 							Z0T->Z0T_ROTA   := cRotAux
-							Z0T->Z0T_CONF   := aDdTlC[nCntAll][nCntLin][nCntCur][11]
-							Z0T->Z0T_LINHA  := aDdTlC[nCntAll][nCntLin][nCntCur][01]
+							Z0T->Z0T_CONF   := aDdTlC[nCntAll][nCntLin][nCntCur][10]
+							Z0T->Z0T_LINHA  := aDdTlC[nCntAll][nCntLin][01]
 							Z0T->Z0T_SEQUEN := aDdTlC[nCntAll][nCntLin][nCntCur][01]
-							Z0T->Z0T_CURRAL := aDdTlC[nCntAll][nCntLin][nCntCur][12]
+							Z0T->Z0T_CURRAL := aDdTlC[nCntAll][nCntLin][nCntCur][11]
 							Z0T->Z0T_LOTE   := aDdTlC[nCntAll][nCntLin][nCntCur][02]
 						Z0T->(MSUnlock())
 
