@@ -79,6 +79,7 @@ While ((nOpcRotas > 0))
 	
 	If (Len(aParRet) > 0)
 		aDadSel[2] := aParRet[1]
+		//U_zPulo1()
 		VAPCPA09A(lShwZer, lShwGer)
 	Else
 		nOpcRotas := 0
@@ -879,12 +880,13 @@ Operador
 			Else
 				//ScrollArea:New([aoWnd], [anTop], [anLeft], [anHeight], [anWidth], [alVertical], [alHorizontal], [alBorder])
 				AAdd(aScrCnf, TScrollArea():New(oTFldr:aDialogs[nChvCnf], 001, 001, (aPObjs[1][3]/2), (aPObjs[1][4]/2), .T., .T.)) 
-				AAdd(aPnlCnf, TPanel():New(001, 001,, aScrCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[1], (aPObjs[1][4]/2), (160 * (Len(aDadTl[nCntAll]) + 1)))) //
+				//AAdd(aPnlCnf, TPanel():New(001, 001,, aScrCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[1], (aPObjs[1][4]/2), (160 * (Len(aDadTl[nCntAll]) + 1)))) //
+				AAdd(aPnlCnf, TPanel():New(001, 001,, aScrCnf[nChvCnf], oTFntGr, .T.,, rgb(0,0,139), rgb(0,255,127), (aPObjs[1][4]/2), (160 * (Len(aDadTl[nCntAll]) + 1)))) //
 				AAdd(aLinCnf, {})
 				AAdd(aCurLin, {})
 				
 				aScrCnf[nChvCnf]:SetFrame(aPnlCnf[nChvCnf])
-			EndIf  
+			EndIf
 			
 		EndIf
 		
@@ -920,7 +922,6 @@ Operador
 				cLtCur := aDadTl[nCntAll][nCntLin][nCntCur][09] + "' + Chr(10) + '" + aDadTl[nCntAll][nCntLin][nCntCur][02]
 				cQtCab := ALLTRIM(STR(aDadTl[nCntAll][nCntLin][nCntCur][03], 4)) + "' + Chr(10) + '"
 				cPlCur := ALLTRIM(aDadTl[nCntAll][nCntLin][nCntCur][12]) + "' + Chr(10) + '" + ALLTRIM(STR(aDadTl[nCntAll][nCntLin][nCntCur][05])) + "' + Chr(10) + '" + TRANSFORM((aDadTl[nCntAll][nCntLin][nCntCur][07] * aDadTl[nCntAll][nCntLin][nCntCur][03]), "@E 999,999.99")
-//				cDsCur := ALLTRIM(STR(aDadTl[nCntAll][nCntLin][nCntCur][05]))
 				cDiCur := aDadTl[nCntAll][nCntLin][nCntCur][06] 
 				
 				If(aDadTl[nCntAll][nCntLin][nCntCur][09] = aDadSel[1])
@@ -984,14 +985,14 @@ Operador
 						AAdd(aCurLin[nChvCnf][nCntLin - 1][nChvCur]:aControls, cDiCur)
 						AAdd(aCurLin[nChvCnf][nCntLin - 1][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][02])
 					
-//						TSay():New(005, 040, &("{|| '" + cQtCab + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntSb,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 20)
-//						TSay():New(015, 005, &("{|| '" + cPlCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 40)
-//						TSay():New(025, 005, &("{|| '" + cDsCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 20)
+						//						TSay():New(005, 040, &("{|| '" + cQtCab + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntSb,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 20)
+						//						TSay():New(015, 005, &("{|| '" + cPlCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 40)
+						//						TSay():New(025, 005, &("{|| '" + cDsCur + "'}"), aCurLin[nChvCnf][nCntLin - 1][nChvCur],,oTFntGr,,,,.T., aCorTl[5], IIf(cLtCur = 'SEM LOTE', CLR_GRAY, aCrDie[nCrAux][2]), 200, 20)
 						
 						tButton():New(050, 001, "TRT", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VP05Form(aDadSel[2], aDadSel[3], '" + ALLTRIM(cChvLin) + ALLTRIM(aDadTl[nCntAll][nCntLin][nCntCur][01]) + "', '" + cLote + "')}"), 15, 15,,oTFntGr,, .T.)
 						tButton():New(050, 022, "KDX", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VAESTR16({{'" + cLote + "', '" + AllTrim(cChvLin) + aDadTl[nCntAll][nCntLin][nCntCur][01] + "'}}) }"), 15, 15,,oTFntGr,, .T.) 
 						tButton():New(050, 044, "INF", aCurLin[nChvCnf][nCntLin - 1][nChvCur], &("{|| U_VAPCPM01('" + cLote + "') }"), 15, 15,,oTFntGr,, .T.) 
-//						tButton():New([anRow], [anCol], [acCaption], [aoWnd], [abAction], [anWidth], [anHeight], [nPar8], [aoFont], [lPar10], [alPixel],[lPar12],[cPar13], [lPar14], [abWhen], [bPar16], [lPar17]) 
+						//						tButton():New([anRow], [anCol], [acCaption], [aoWnd], [abAction], [anWidth], [anHeight], [nPar8], [aoFont], [lPar10], [alPixel],[lPar12],[cPar13], [lPar14], [abWhen], [bPar16], [lPar17]) 
 	
 					EndIf
 				
@@ -1135,7 +1136,7 @@ Operador
 		 	
 		 	AAdd(aHdrRes, {"Rota"         , "ROTA"       , ""                 , 10, 0, ""                      , "", "C", "ZRT"   , "R", "", "", "", "V"})
 			AAdd(aHdrRes, {"Dieta"        , "DIETA"      , ""                 , 20, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
-//			AAdd(aHdrRes, {"Descricao"    , "DSCDIE"     , ""                 , 40, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
+			//			AAdd(aHdrRes, {"Descricao"    , "DSCDIE"     , ""                 , 40, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
 			AAdd(aHdrRes, {"Total Trato"  , "TOTTRT"     , "@E 999,999,999.99", 14, 2, ""                      , "", "N", ""      , "R", "", "", "", "V"})
 			AAdd(aHdrRes, {"Veiculo"      , "VEIC"       , ""                 , 06, 0, "U_GRVVEI(&(ReadVar()))", "", "C", "ZV0VEI", "R", "", "", "", "A"})
 			AAdd(aHdrRes, {"Descricao"    , "DSCVEI"     , ""                 , 20, 0, ""                      , "", "C", ""      , "R", "", "", "", "V"})
@@ -1243,7 +1244,7 @@ Operador
 				QRYRES->(DBSkip()) 
 			EndDo
 			QRYRES->(DBCloseArea())
-	//				   MsNewGetDados():New( Top, Left                   , Bottom         ,  Right  , [ nStyle], [ cLinhaOk]  , [ cTudoOk]   , [ cIniCpos]  , [ aAlter]         , F, Max, [ cFieldOk]  ,   ,              , [ oWnd]                              , [ aPartHeader], [ aParCols], [ uChange], [ cTela], [ aColsSize] )
+			//				   MsNewGetDados():New( Top, Left                   , Bottom         ,  Right  , [ nStyle], [ cLinhaOk]  , [ cTudoOk]   , [ cIniCpos]  , [ aAlter]         , F, Max, [ cFieldOk]  ,   ,              , [ oWnd]                              , [ aPartHeader], [ aParCols], [ uChange], [ cTela], [ aColsSize] )
 			oGrdRTr := MsNewGetDados():New( 005, (aPObjs[1][4]/2) - 100, 085             , (aPObjs[1][4]/2),          , "AllwaysTrue", "AllwaysTrue",              ,                   , 0, 999, "AllwaysTrue", "", "AllwaysTrue", oTFldr:aDialogs[Len(oTFldr:aDialogs)], aHdrRTr       , aClsRTr)
 			oGrdRes := MsNewGetDados():New( 090, 005                   , (aPObjs[1][3]/2), (aPObjs[1][4]/2), GD_UPDATE, "AllwaysTrue", "AllwaysTrue",              , {"VEIC", "OPVEIC"}, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oTFldr:aDialogs[Len(oTFldr:aDialogs)], aHdrRes       , aClsRes, {|| U_ChgTrR(n)})
 			oGrdRes:oBrowse:SetBlkBackColor({|| SetClrResumo(oGrdRes) })
@@ -2373,3 +2374,47 @@ Local nRet := 0
 	cTMP->(DBCloseArea())
 
 Return nRet
+
+User Function zPulo1()
+    Local aArea := GetArea()
+ 
+    fMontaTela()
+ 
+    RestArea(aArea)
+Return
+ 
+Static Function fMontaTela()
+    Local nLargBtn      := 50
+    //Objetos e componentes
+    Private oDlgPulo
+    Private oFwLayer
+    Private oPanTitulo
+    Private oPanGrid
+    //Cabeçalho
+    Private oSayModulo, cSayModulo := 'TST'
+    Private oSayTitulo, cSayTitulo := 'Pulo do Gato na Montagem de Dialogs'
+    Private oSaySubTit, cSaySubTit := 'Exemplo usando FWLayer'
+    //Tamanho da janela
+    Private aSize := MsAdvSize(.F.)
+    Private nJanLarg := aSize[5]
+    Private nJanAltu := aSize[6]
+    //Fontes
+    Private cFontUti    := "Tahoma"
+    Private oFontMod    := TFont():New(cFontUti, , -38)
+    Private oFontSub    := TFont():New(cFontUti, , -20)
+    Private oFontSubN   := TFont():New(cFontUti, , -20, , .T.)
+    Private oFontBtn    := TFont():New(cFontUti, , -14)
+    Private oFontSay    := TFont():New(cFontUti, , -12)
+    //Grid
+    Private aCampos := {}
+    Private cAliasTmp := "TST_" + RetCodUsr()
+    Private aColunas := {}
+ 
+
+    //Cria a janela
+    DEFINE MSDIALOG oDlgPulo TITLE "Exemplo de Pulo do Gato"  FROM 0, 0 TO nJanAltu, nJanLarg COLORS CLR_YELLOW,CLR_BLUE PIXEL
+ 		oPanel	:= tPanel():New(01,01,"Teste",oDlgPulo,oFontMod,.T.,,CLR_YELLOW,CLR_BLUE,50,50)
+		oPanel1 := tPanel():Create(oDlgPulo,52,52,"Teste",oFontMod,.F.,,CLR_YELLOW,CLR_BLUE,100,100)
+    Activate MsDialog oDlgPulo Centered
+Return
+ 

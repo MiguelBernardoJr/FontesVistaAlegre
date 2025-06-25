@@ -956,8 +956,8 @@ Static Function ProcPed()
             else 
                 oModel:SetErrorMessage("","","","","Formulário inválido", 'Cliente não encontrado!', "") 
                 lRet := .F.
-            Endif 
-        endif  
+            Endif
+        endif
 
         SA1->(DBCLOSEAREA())
     endif

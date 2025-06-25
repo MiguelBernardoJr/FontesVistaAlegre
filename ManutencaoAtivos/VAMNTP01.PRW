@@ -65,6 +65,7 @@ cQuery += " FROM "+RetSqlName("TQN")+" TQN "
 cQuery += " JOIN "+RetSqlName("ST9")+" ST9 ON TQN.TQN_FILIAL = ST9.T9_FILIAL AND TQN.TQN_FROTA = ST9.T9_CODBEM "
 cQuery += "  AND ST9.D_E_L_E_T_ = ' ' AND ST9.T9_PROPRIE = '2'
 cQuery += "  WHERE TQN.D_E_L_E_T_ = ' ' AND TQN.TQN_DTABAS BETWEEN '"+Dtos(dDatIni)+"' AND '"+Dtos(dDatFin)+"' "
+cQuery += "  AND TQN_FILIAL = '"+FwxFilial("TQN")+"' "
 DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPTQN", .f., .f.)
 
 Begin Transaction
