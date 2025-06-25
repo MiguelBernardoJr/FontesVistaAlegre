@@ -1,4 +1,4 @@
-s#INCLUDE 'PROTHEUS.CH'
+#INCLUDE 'PROTHEUS.CH'
 #INCLUDE "TOTVS.CH"
 #INCLUDE "TBICONN.CH"
 #INCLUDE "COLORS.CH"
@@ -402,6 +402,7 @@ User Function PegaPeso( lGravPeso, nBalanca )
 	Local aArea         := GetArea()
 	Local oModel 		:= FwModelActivate()
 	Local oMdl1 		:= oModel:GetModel("ZPB_1")
+	Local oMdl3 		:= oModel:GetModel("ZPB_3")
 	Local oMdl4 		:= oModel:GetModel("ZPB_4")
 	Local oMdl5 		:= oModel:GetModel("ZPB_5")
 	Local oView 		:= FWViewActive()
@@ -411,106 +412,133 @@ User Function PegaPeso( lGravPeso, nBalanca )
 	Local cBalEnt		:= SuperGetMv("MV_BALENT", ,"000002")
 	Local cBalSai		:= SuperGetMv("MV_BALSAI", ,"000005")
 	Local lPesagManu	:= .f.
+	Local nOpc 		:= oModel:GetOperation()
 
-	if nBalanca == 1
-		aParBal := {cBalEnt,.T.,.T.,.F.}
-		nOpcA := 1
-		
-		if nPeso1 > 0 .and. !MsgYesNo('Peso de entrada do caminhão preenchido, deseja informar o peso do caminhão novamente?')
-			lGravPeso := .F. 
-		endif
-	else
-		if nPeso1 == 0
-			MsgAlert("Informe o peso de entrada antes do peso de Saida!")
-			lGravPeso := .F.
-		else
-			//cBalanca := '000006' // CRIAR PARAMETRO PARA DX6_CODBAL]
-			aParBal := {cBalSai,.T.,.T.,.F.}
-			nOpcA := 2
-			if nPeso2 > 0 .and. !MsgYesNo('Peso de saida do caminhão preenchido, deseja informar o peso do caminhão novamente?')
+	if nOpc == 3 .or. nOpc == 4
+		if nBalanca == 1
+			aParBal := {cBalEnt,.T.,.T.,.F.}
+			nOpcA := 1
+			
+			if nPeso1 > 0 .and. !MsgYesNo('Peso de entrada do caminhão preenchido, deseja informar o peso do caminhão novamente?')
 				lGravPeso := .F. 
 			endif
-		endif 
-	endif
-	
-	if lGravPeso .and. (INCLUI .or. ALTERA)
+		else
 
-		AGRX003A( @nPeso, .t.,aParBal, /*cMask*/,@lPesagManu, nPeso1, nPeso2, nOpcA )
+			if nPeso1 == 0
+				MsgAlert("Informe o peso de entrada antes do peso de Saida!")
+				lGravPeso := .F.
+			else
+				//cBalanca := '000006' // CRIAR PARAMETRO PARA DX6_CODBAL]
+				IF Alltrim(oMdl3:GetValue("ZPB_PRODUT")) == '020017' // se for produto de grãos, não permitir pesagem de saida
+					ZPA->(DbSetOrder(1))
+					if !(ZPA->(DbSeek( FwXFilial("ZPB") +;
+									oMdl1:GetValue('ZPB_CODIGO')+;
+									dToS(oMdl4:GetValue('ZPB_DATA')))))
+						MsgAlert("É necessário informar as medições do milho antes de informar o peso de saída!" + CRLF +;
+									"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.")
+						lGravPeso := .F.
+					else
+						oMdl3:LoadValue("ZPB_UMID"  , ZPA->ZPA_UMID)
+						oMdl3:LoadValue("ZPB_IMPUR" , ZPA->ZPA_IMPUR)
+						oMdl3:LoadValue("ZPB_AVARIA", ZPA->ZPA_AVARIA)
+						oMdl3:LoadValue("ZPB_TEMP"  , ZPA->ZPA_TEMP)
+						oMdl3:LoadValue("ZPB_SILO"  , ZPA->ZPA_SILO)
+					endif
+					ZPA->(dbCloseArea())
+				endif
+
+				IF lGravPeso
+					aParBal := {cBalSai,.T.,.T.,.F.}
+					nOpcA := 2
+					if nPeso2 > 0 .and. !MsgYesNo('Peso de saida do caminhão preenchido, deseja informar o peso do caminhão novamente?')
+						lGravPeso := .F. 
+					endif
+				endif
+			endif 
+		endif
 		
-		if nPeso > 0
-			if lPesagManu
-				lGravPeso := fAutoriza()
-			endif
+		if lGravPeso .and. (INCLUI .or. ALTERA)
+
+			AGRX003A( @nPeso, .t.,aParBal, /*cMask*/,@lPesagManu, nPeso1, nPeso2, nOpcA )
 			
-			If lGravPeso 
+			if nPeso > 0
+				if lPesagManu
+					lGravPeso := fAutoriza()
+				endif
 				
-				if nOpcA == 1 // verificar linha que esta posicionado e ver se a primeira pesagem já está preenchida //oSZJGtDad:aCols[nPos,nPZJQTEMB]
-					//M->ZPB_OPESOE := nPeso
-					if oMdl4:GetValue("ZPB_PESOE") > 0
-						MBSaveLog():FULLWrite(, .F., "PegaPeso Entrada / Placa: - "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
-													" - Codigo: " + AllTrim( oMdl1:GetValue("ZPB_CODIGO") )+;
-													" - Peso Anterior: " + AllTrim( cValToChar(oMdl4:GetValue("ZPB_PESOE")) )+;
-													" - Tipo: " + iif(oMdl4:GetValue("ZPB_PEMAN1")== 'M' ,"Manual","Automatica")+;
-													" - Usuario: " + oMdl4:GetValue("ZPB_USRP1"))
-					endif
-
-					MBSaveLog():FULLWrite(, .F., "PegaPeso Entrada / Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
-												" - Codigo: " + AllTrim( oMdl1:GetValue("ZPB_CODIGO") )+;
-												" - Peso Capturado: " + AllTrim( cValToChar(nPeso) )+;
-												" - Tipo: " + iif(lPesagManu,"Manual","Automatica")+;
-												" - Usuario: " + UsrFullName( ))
-
-					cPlacaTGet := oMdl1:GetValue("ZPB_PLACA")
-					oMdl1:LoadValue("ZPB_PLACA" 	, "")
-					oMdl1:LoadValue("ZPB_PLACA" 	, cPlacaTGet)
+				If lGravPeso 
 					
-					oMdl4:SetValue("ZPB_HORA" 	, Time())
-					oMdl4:SetValue("ZPB_PESOE" 	, nPeso )
-					oMdl5:SetValue("ZPB_PESOL" 	, ABS(nPeso - iIf(ValType(oMdl5:GetValue("ZPB_PESOS"))=="U", 0, oMdl5:GetValue("ZPB_PESOS"))))
-					oMdl4:SetValue("ZPB_PEMAN1" , iif(lPesagManu,"M","A") )
-					oMdl4:SetValue("ZPB_USRP1" 	, UsrFullName( ))
-					oView:lModify := .T.
+					if nOpcA == 1 // verificar linha que esta posicionado e ver se a primeira pesagem já está preenchida //oSZJGtDad:aCols[nPos,nPZJQTEMB]
+						//M->ZPB_OPESOE := nPeso
+						if oMdl4:GetValue("ZPB_PESOE") > 0
+							MBSaveLog():FULLWrite(, .F., "PegaPeso Entrada / Placa: - "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
+														" - Codigo: " + AllTrim( oMdl1:GetValue("ZPB_CODIGO") )+;
+														" - Peso Anterior: " + AllTrim( cValToChar(oMdl4:GetValue("ZPB_PESOE")) )+;
+														" - Tipo: " + iif(oMdl4:GetValue("ZPB_PEMAN1")== 'M' ,"Manual","Automatica")+;
+														" - Usuario: " + oMdl4:GetValue("ZPB_USRP1"))
+						endif
 
-				elseif nOpcA == 2
-					if oMdl5:GetValue("ZPB_PESOS") > 0
-						MBSaveLog():FULLWrite(, .F., "PegaPeso Saida / Placa: - "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
+						MBSaveLog():FULLWrite(, .F., "PegaPeso Entrada / Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
 													" - Codigo: " + AllTrim( oMdl1:GetValue("ZPB_CODIGO") )+;
-													" - Peso Anterior: " + AllTrim( cValToChar(oMdl5:GetValue("ZPB_PESOS")) )+;
-													" - Tipo: " + iif(oMdl5:GetValue("ZPB_PEMAN2")== 'M' ,"Manual","Automatica")+;
-													" - Usuario: " + oMdl5:GetValue("ZPB_USRP2"))
+													" - Peso Capturado: " + AllTrim( cValToChar(nPeso) )+;
+													" - Tipo: " + iif(lPesagManu,"Manual","Automatica")+;
+													" - Usuario: " + UsrFullName( ))
+
+						cPlacaTGet := oMdl1:GetValue("ZPB_PLACA")
+						oMdl1:LoadValue("ZPB_PLACA" 	, "")
+						oMdl1:LoadValue("ZPB_PLACA" 	, cPlacaTGet)
+						
+						oMdl4:SetValue("ZPB_HORA" 	, Time())
+						oMdl4:SetValue("ZPB_PESOE" 	, nPeso )
+						oMdl5:SetValue("ZPB_PESOL" 	, ABS(nPeso - iIf(ValType(oMdl5:GetValue("ZPB_PESOS"))=="U", 0, oMdl5:GetValue("ZPB_PESOS"))))
+						oMdl4:SetValue("ZPB_PEMAN1" , iif(lPesagManu,"M","A") )
+						oMdl4:SetValue("ZPB_USRP1" 	, UsrFullName( ))
+						oView:lModify := .T.
+
+					elseif nOpcA == 2
+						if oMdl5:GetValue("ZPB_PESOS") > 0
+							MBSaveLog():FULLWrite(, .F., "PegaPeso Saida / Placa: - "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
+														" - Codigo: " + AllTrim( oMdl1:GetValue("ZPB_CODIGO") )+;
+														" - Peso Anterior: " + AllTrim( cValToChar(oMdl5:GetValue("ZPB_PESOS")) )+;
+														" - Tipo: " + iif(oMdl5:GetValue("ZPB_PEMAN2")== 'M' ,"Manual","Automatica")+;
+														" - Usuario: " + oMdl5:GetValue("ZPB_USRP2"))
+						endif
+
+						MBSaveLog():FULLWrite(, .F., "PegaPeso Saida / Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
+													" - Codigo: " + AllTrim( oMdl1:GetValue("ZPB_CODIGO") )+;
+													" - Peso Capturado: " + AllTrim( cValToChar(nPeso) )+;
+													" - Tipo: " + iif(lPesagManu,"Manual","Automatica")+;
+													" - Usuario: " + UsrFullName( ))
+						
+						cPlacaTGet := oMdl1:GetValue("ZPB_PLACA")
+						oMdl1:LoadValue("ZPB_PLACA" 	, "")
+						oMdl1:LoadValue("ZPB_PLACA" 	, cPlacaTGet)
+
+						oMdl5:SetValue("ZPB_DATAF"	, Date())
+						oMdl5:SetValue("ZPB_HORAF"	, Time())
+						oMdl5:SetValue("ZPB_PESOS"	, nPeso )
+						oMdl5:SetValue("ZPB_PESOL"	, ABS(nPeso - iIf(ValType(oMdl4:GetValue("ZPB_PESOE"))=="U", 0, oMdl4:GetValue("ZPB_PESOE"))))
+						oMdl5:SetValue("ZPB_PEMAN2" , iif(lPesagManu,"M","A") )
+						oMdl5:SetValue("ZPB_USRP2" 	, UsrFullName( ))
+						oView:lModify := .T.
 					endif
-
-					MBSaveLog():FULLWrite(, .F., "PegaPeso Saida / Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) +;
-												" - Codigo: " + AllTrim( oMdl1:GetValue("ZPB_CODIGO") )+;
-												" - Peso Capturado: " + AllTrim( cValToChar(nPeso) )+;
-												" - Tipo: " + iif(lPesagManu,"Manual","Automatica")+;
-												" - Usuario: " + UsrFullName( ))
-					
-					cPlacaTGet := oMdl1:GetValue("ZPB_PLACA")
-					oMdl1:LoadValue("ZPB_PLACA" 	, "")
-					oMdl1:LoadValue("ZPB_PLACA" 	, cPlacaTGet)
-
-					oMdl5:SetValue("ZPB_DATAF"	, Date())
-					oMdl5:SetValue("ZPB_HORAF"	, Time())
-					oMdl5:SetValue("ZPB_PESOS"	, nPeso )
-					oMdl5:SetValue("ZPB_PESOL"	, ABS(nPeso - iIf(ValType(oMdl4:GetValue("ZPB_PESOE"))=="U", 0, oMdl4:GetValue("ZPB_PESOE"))))
-					oMdl5:SetValue("ZPB_PEMAN2" , iif(lPesagManu,"M","A") )
-					oMdl5:SetValue("ZPB_USRP2" 	, UsrFullName( ))
-					oView:lModify := .T.
 				endif
 			endif
 		endif
-	endif
 
-	if lGravPeso
-		if oModel:VldData()
-			if oModel:CommitData()
-				MBSaveLog():FULLWrite(, .F., "PegaPeso COMMIT / Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) )
+		if lGravPeso
+			if oModel:VldData()
+				if oModel:CommitData()
+					MBSaveLog():FULLWrite(, .F., "PegaPeso COMMIT / Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) )
+				endif
 			endif
 		endif
+
+		oView:Refresh()
+	else
+		MsgInfo("Apenas para Inclusão e Alteração!")
 	endif
 
-	oView:Refresh()
 	RestArea(aArea)
 Return nPeso
 User Function ReLoadLiquido()
@@ -677,22 +705,25 @@ User Function PPeso1()
 	endif
 	
 	if lMilho .and. oMdl5:GetValue("ZPB_PESOS") > 0
-		if Empty(oMdl3:GetValue("ZPB_UMID") )
-			MSGSTOP("Informe o campo Umidade [ABA 03] antes de imprimir o ticket")
+		ZPA->(DbSetOrder(1))
+		if !(ZPA->(DbSeek( FwXFilial("ZPB") +;
+						oMdl1:GetValue('ZPB_CODIGO')+;
+						dToS(oMdl4:GetValue('ZPB_DATA')))))
+
+			MsgAlert("É necessário informar as medições do milho antes de informar o peso de saída!" + CRLF +;
+						"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.")
+			ZPA->(dbCloseArea())
 			Return
-		elseif Empty(oMdl3:GetValue("ZPB_IMPUR"))
-			MSGSTOP("Informe o campo Impureza [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_AVARIA"))
-			MSGSTOP("Informe o campo Avaria [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_TEMP"))
-			MSGSTOP("Informe o campo Temperatura [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_SILO"))
-			MSGSTOP("Informe o campo Silo [ABA 03] antes de imprimir o ticket")
-			Return
-		elseif Empty(oMdl3:GetValue("ZPB_NOTFIS"))
+		else
+			oMdl3:LoadValue("ZPB_UMID"  , ZPA->ZPA_UMID)
+			oMdl3:LoadValue("ZPB_IMPUR" , ZPA->ZPA_IMPUR)
+			oMdl3:LoadValue("ZPB_AVARIA", ZPA->ZPA_AVARIA)
+			oMdl3:LoadValue("ZPB_TEMP"  , ZPA->ZPA_TEMP)
+			oMdl3:LoadValue("ZPB_SILO"  , ZPA->ZPA_SILO)
+		endif
+		ZPA->(dbCloseArea())
+
+		if Empty(oMdl3:GetValue("ZPB_NOTFIS"))
 			MSGSTOP("Informe o campo Notas Fiscais [ABA 05] antes de imprimir o ticket")
 			Return
 		endif
@@ -749,13 +780,15 @@ User Function PPeso1()
 					'Imprimindo ticket')
 	endif
 
-	if oModel:VldData()
-		if oModel:CommitData() 
-			AtualPsgemNF() //colocar atualiza pesagem aqui
-			MBSaveLog():FULLWrite(, .F., "PPeso1 - Imprimindo ticket/ Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) )
-			cPlacaTGet   := CriaVar( 'DA3_PLACA' , .F.)
-			nQualPesagem := 0
-		endif 
+	if oModel:GetOperation() == 3 .or. oModel:GetOperation() == 4
+		if oModel:VldData()
+			if oModel:CommitData() 
+				AtualPsgemNF() //colocar atualiza pesagem aqui
+				MBSaveLog():FULLWrite(, .F., "PPeso1 - Imprimindo ticket/ Placa: "+ AllTrim(oMdl1:GetValue("ZPB_PLACA") ) )
+				cPlacaTGet   := CriaVar( 'DA3_PLACA' , .F.)
+				nQualPesagem := 0
+			endif
+		endif
 	endif
 return
 
@@ -766,7 +799,7 @@ User Function PPeso2()
 	if Empty(ZPB->ZPB_CPFMOT)
 		MSGSTOP("Informe o campo CPF Motorista [ABA 02] antes de imprimir o ticket")
 		return
-	endif 
+	endif
 	if Empty(ZPB->ZPB_CODFOR)
 		MSGSTOP("Informe o campo Codigo Fornecedor [ABA 02] antes de imprimir o ticket")
 		return
@@ -790,6 +823,26 @@ User Function PPeso2()
 	endif
 	
 	if lMilho .and. ZPB->ZPB_PESOS > 0
+		ZPA->(DbSetOrder(1))
+		if !(ZPA->(DbSeek( ZPB->ZPB_FILIAL +;
+						ZPB->ZPB_CODIGO+;
+						dToS(ZPB->ZPB_DATA))))
+
+			MsgAlert("É necessário informar as medições do milho antes de informar o peso de saída!" + CRLF +;
+						"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.")
+			ZPA->(dbCloseArea())
+			Return
+		else
+			RecLock("ZPB",.F.)
+				ZPB->ZPB_UMID	:= ZPA->ZPA_UMID
+				ZPB->ZPB_IMPUR	:= ZPA->ZPA_IMPUR
+				ZPB->ZPB_AVARIA	:= ZPA->ZPA_AVARIA
+				ZPB->ZPB_TEMP	:= ZPA->ZPA_TEMP
+				ZPB->ZPB_SILO	:= ZPA->ZPA_SILO
+			ZPB->(MsUnlock())
+		endif
+		ZPA->(dbCloseArea())
+
 		if Empty(ZPB->ZPB_UMID )
 			MSGSTOP("Informe o campo Umidade [ABA 03] antes de imprimir o ticket")
 			Return
@@ -1003,16 +1056,30 @@ Static Function fQuadro( nQuadro ,aPeso,lMilho)
 	Else
 		cAux := "Fornecedor.....:"
 	EndIf
+	
 	oPrinter:Say ( nRow+=nTamLin, nColLabel, cAux/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	oPrinter:Say ( nRow         , nColInfo , aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_NOMFOR"})][2]/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+
+	if ( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CLIFOR"})][2] == "C" )
+		cAux := Alltrim(Posicione("SA1",1,fWxFilial("SA1")+aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CODFOR"})][2],"A1_COD") ) + " - " +;
+				Transform(Alltrim(Posicione("SA1",1,fWxFilial("SA1")+aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CODFOR"})][2],"A1_CGC")), X3Picture("A2_CGC"))
+	else 
+		cAux := Posicione("SA2",1,fWxFilial("SA2")+aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CODFOR"})][2],"A2_COD") + " - " +;
+				Transform(Alltrim(Posicione("SA2",1,fWxFilial("SA2")+aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CODFOR"})][2],"A2_CGC")), X3Picture("A2_CGC"))
+	endif
+
+	oPrinter:Say ( nRow+=nTamLin, nColLabel, "CPF / CNPJ.....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+	If !Empty(cAux)
+		oPrinter:Say ( nRow     , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+	EndIf
+
+	oPrinter:Say ( nRow+=nTamLin, nColLabel, "Motorista......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+	oPrinter:Say ( nRow         , nColInfo , aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_NOMMOT"})][2]/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 
 	oPrinter:Say ( nRow+=nTamLin, nColLabel, "CPF / CNPJ.....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	If !Empty(aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CPFMOT"})][2])
 		oPrinter:Say ( nRow     , nColInfo , Transform(aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_CPFMOT"})][2], X3Picture("ZPB_CPFMOT"))/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	EndIf
-
-	oPrinter:Say ( nRow+=nTamLin, nColLabel, "Motorista......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-	oPrinter:Say ( nRow         , nColInfo , aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_NOMMOT"})][2]/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 
 	oPrinter:Say ( nRow+=nTamLin, nColLabel, "Notas Fiscais..:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 	oPrinter:Say ( nRow         , nColInfo , aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_NOTFIS"})][2]/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
@@ -1090,39 +1157,20 @@ Static Function fQuadro( nQuadro ,aPeso,lMilho)
 			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := AllTrim(Transform( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_TEMP"})][2], X3Picture("ZPB_TEMP") ) )
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Temperatura....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow 		, nColLabel + 130, "Temperatura....:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow         , nColInfo + 130, cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := AllTrim(Transform( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_IMPUR"})][2], X3Picture("ZPB_IMPUR") ) )
 			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Impureza.......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := AllTrim(Transform( aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_AVARIA"})][2], X3Picture("ZPB_AVARIA") ) )
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Avariado.......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow			, nColLabel + 130, "Avariado.......:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
+			oPrinter:Say ( nRow         , nColInfo + 130 , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			
 			cAux := "Silo " + aPeso[1][aScan(aPeso[1], {|x| Upper(x[1]) == "ZPB_SILO"})][2]
 			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Destino........:"/*cText>*/, oFLabel/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 			oPrinter:Say ( nRow         , nColInfo , cAux/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			
-		else 
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Umidade.....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Temperatura.:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Impureza....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Avariado....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "|______________|"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-
-			oPrinter:Say ( nRow+=nTamLin, nColLabel, "Destino....:"/*cText>*/, oFLabMil/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo, "O"/*cText>*/, oFBolinha/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo + 10, " -  Silo 1"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo + 60, "O"/*cText>*/, oFBolinha/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
-			oPrinter:Say ( nRow+1		, nColInfo + 70, " -  Silo 2"/*cText>*/, oFInfo/*oFont*/, /*nWidth*/, /*nClrText*/, /*nAngle*/ )
 		Endif
 		
 	endif
@@ -1698,4 +1746,4 @@ User Function zWhenMl()
 		Return .F.
 	endif
 
-Return .T.
+Return .F.

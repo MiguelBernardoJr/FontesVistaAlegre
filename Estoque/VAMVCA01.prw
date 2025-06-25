@@ -1665,9 +1665,9 @@ For nI := 1 To oGridZ0E:Length()
 	cQry := "SELECT  B8_LOTECTL, COUNT(B8_LOTECTL) QTDREG " + CRLF 
 	cQry += " FROM	"+RetSqlName("SB8")+" SB8 " + CRLF 
 	cQry += " WHERE	B8_FILIAL  =  '"+FwxFilial("SB8")+"' " + CRLF
-	cQry += " 	AND B8_LOTECTL <> ? " + CRLF 
-	cQry += " 	AND B8_X_CURRA =  ? " + CRLF 
-	cQry += " 	AND B8_SALDO   >  0 " + CRLF 
+	cQry += " 	AND B8_LOTECTL <> ? " + CRLF
+	cQry += " 	AND B8_X_CURRA =  ? " + CRLF
+	cQry += " 	AND B8_SALDO   >  0 " + CRLF
 	cQry += " 	AND SB8.D_E_L_E_T_ = ' ' " + CRLF
 	cQry += " GROUP BY B8_LOTECTL " + CRLF
 	cQry += " ORDER BY B8_LOTECTL " + CRLF

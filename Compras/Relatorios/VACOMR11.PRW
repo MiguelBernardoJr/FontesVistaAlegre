@@ -1,6 +1,5 @@
 #INCLUDE "TOTVS.CH"
 #INCLUDE "RPTDEF.CH"
-#Include "TryException.ch"
 #Include "FWPrintSetup.ch"
 
 //Alinhamentos
@@ -115,9 +114,9 @@ Static Function ImpTicket( lEnd )
     Private nTotLinOBS  := 4
     Private nPosSeq     := nColLabel-15
     Private nPosQtd     := nColLabel+15
-    Private nPosUnd     := nColLabel+65
-    Private nPosCod     := nColLabel+85.75
-    Private nPosProd    := nColLabel+130
+    Private nPosUnd     := nColLabel+75
+    Private nPosCod     := nColLabel+95.75
+    Private nPosProd    := nColLabel+140
     Private nPosUnit    := nColLabel+300
     Private nPosICMS    := nColLabel+375
     Private nPosIPI     := nColLabel+425

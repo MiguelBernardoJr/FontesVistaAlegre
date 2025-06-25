@@ -60,7 +60,7 @@ Return aRotina
  |                                                                                |
  | Obs.:  -                                                                       |
  '--------------------------------------------------------------------------------*/
-User Function FTCAD01LV(cAlias, nReg, nOpc)
+User Function FTCAD01VA(cAlias, nReg, nOpc)
 
 Local aArea		 := GetArea()
 Local oDlg
@@ -108,10 +108,11 @@ oDlg:lMaximized := .T.
 
 /* #################################################################################################################### */
 oGrp1  := TGroup():New(aPObjs[1,1],aPObjs[1,2],aPObjs[1,3],aPObjs[1,4],"Dados do abate",oDlg,,, .T.,)
-oMGet  := MsMGet():New( cAlias, nReg, Iif(nGDOpc==0,2,nOpc),,,,, aPObjs[1],,,,,, oGrp1 ) // ,,,.F./* lColumn */,nil /* caTela */,,.T. /* lProperty */)
-oMGet:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+oMGet  := MsMGet():New( cAlias, nReg, Iif(nGDOpc==0,2,nOpc),,,,, {aPObjs[1,1]+7,aPObjs[1,2],aPObjs[1,3],aPObjs[1,4]},,,,,, oGrp1 ) // ,,,.F./* lColumn */,nil /* caTela */,,.T. /* lProperty */)
+//oMGet:oBox:Align := CONTROL_ALIGN_ALLCLIENT
 
-/* #################################################################################################################### */oGrp2  := TGroup():New(aPObjs[2,1],aPObjs[2,2],aPObjs[2,3], aPObjs[2,4],"Itens da Nota para relacionamento",oDlg,,, .T.,)
+/* #################################################################################################################### */
+oGrp2  := TGroup():New(aPObjs[2,1],aPObjs[2,2],aPObjs[2,3], aPObjs[2,4],"Itens da Nota para relacionamento",oDlg,,, .T.,)
 // If GetMV("MV_RASTRO",,"S") == "S"
 	// cWhere := " JOIN SF4010 ON D2_TES = F4_CODIGO AND SF4010.D_E_L_E_T_=' ' AND SD2010.D_E_L_E_T_=' ' "
 	// cWhere += " WHERE F4_TRANFIL = '2' AND rTrim(D2_LOTECTL) = '"+Iif(Empty(M->ZAB_BAIA),"NAO_TRAZER_NADA", M->ZAB_BAIA)+"' 
@@ -129,19 +130,19 @@ nPosQuant  := aScan( aSD2Head, { |x| AllTrim(x[2]) == "D2_QUANT"   } )
 nPosCodAbt := aScan( aSD2Head, { |x| AllTrim(x[2]) == "D2_XCODABT" } )
 nPosRecno  := aScan( aSD2Head, { |x| AllTrim(x[2]) == "R_E_C_N_O_" } )
 // aSD2Cols[ 1, nPMrkSD2] := "LBNO"
-oSD2GDad := MsNewGetDados():New( aPObjs[2][1], aPObjs[2][2], aPObjs[2][3], aPObjs[2][4], nGDOpc, /* "U_f18LinhaOk" */;
+oSD2GDad := MsNewGetDados():New( aPObjs[2][1]+7, aPObjs[2][2], aPObjs[2][3], aPObjs[2][4], nGDOpc, /* "U_f18LinhaOk" */;
 						, , , , , , , , , oGrp2, aClone(aSD2Head), aClone( aSD2Cols ) )
-oSD2GDad:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT	
+//oSD2GDad:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT	
 oSD2GDad:oBrowse:BlDblClick := { || iIf(/* oSD2GDad:oBrowse:nColPos == 1 .and. */ fCanSelGrid(nOpc), U_SetMark(oSD2GDad, , nPMrkSD2, "ALL"), oSD2GDad:EditCell() ) }
 
 /* #################################################################################################################### */
 oGrp3 := TGroup():New(aPObjs[3,1],aPObjs[3,2],aPObjs[3,3], aPObjs[3,4],"Totalizadores" ,oDlg,,, .T.,)
 //                            Titulo,     Campo, Tipo, Tamanho,  Decimal,       Pict,                  Valid, Obrigat, Nivel,                           Inic Padr, F3, When, Visual, Chave, CBox, Folder, N Alteravel, PictVar, Gatilho
 aAdd(_aField, { "Total Selecionado: ", "_nSelec",  "N",   	 4,        0, "@E 9,999", /* { || VldCpo(2) } */,     .F.,     1, /* GetSX8Num('ZAD','ZAD_CODIGO') */, "",  "" ,    .T.,   .F.,   "",     "",         .F.,      "",    "N"} )
-oEnch := MsMGet():New(,,2,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/,aPObjs[3],/*aAlterEnch*/,/*nModelo*/,;
+oEnch := MsMGet():New(,,2,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/,{aPObjs[3,1]+7,aPObjs[3,2],aPObjs[3,3], aPObjs[3,4]},/*aAlterEnch*/,/*nModelo*/,;
 						/*nColMens*/,/*cMensagem*/, /*cTudoOk*/, oGrp3,/*lF3*/,/*lMemoria*/,.F./*lColumn*/,;
 						nil/* caTela */,/*lNoFolder*/,.T./*lProperty*/,_aField,/* aFolder */,/*lCreate*/,/*lNoMDIStretch*/,/* cTela */)
-oEnch:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+//oEnch:oBox:Align := CONTROL_ALIGN_ALLCLIENT
 If nOpc <> 3
 	For nI := 1 to Len( oSD2GDad:aCols )
 		_nSelec += oSD2GDad:aCols[ nI, nPosQuant ]

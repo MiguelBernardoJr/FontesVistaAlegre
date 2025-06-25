@@ -1245,7 +1245,7 @@ If nOpc == 3 .or. nOpc == 4 .or. nOpc == 6 .or. nOpc == 7 .or. nOpc == 8
 						For nF := 1 to len(aFolderG)
 							
 							if nOpc == 4 /* .and. M->ZCC_STATUS == 'N' */ .and. !Empty(ZBC->ZBC_PEDIDO) .and. ( &( "o" + cPFoBCQtd + "ZBCGDad"):aCols[ nI, nPZBCQtd ] != ZBC->ZBC_QUANT .or. ;
-																												&( "o" + cPFoBCPrc + "ZBCGDad"):aCols[ nI, nPZBCPrc ] != ZBC->ZBC_VLRPTA .or.;
+																												NoRound(&( "o" + cPFoBCPrc + "ZBCGDad"):aCols[ nI, nPZBCPrc ],2) != ZBC->ZBC_VLRPTA .or.;
 																												&( "o" + cPFoBC1IC + "ZBCGDad"):aCols[ nI, nPZBC1IC ] != ZBC->ZBC_SB1ZIC )
 								Alert("Grid foi alterada. Altere o Pedido de Compra (F9) antes de salvar!", "Atenção!")
 								
@@ -1256,6 +1256,8 @@ If nOpc == 3 .or. nOpc == 4 .or. nOpc == 6 .or. nOpc == 7 .or. nOpc == 8
 								endif
 								
 								ZBC->( MsUnlock() )
+
+								DisarmTransaction()
 								return nil
 							endif
 							
@@ -3879,59 +3881,7 @@ Static Function ReajusteResiduo( cPedido )
 						Processa({|lEnd| MA235PC(mv_par01,mv_par08,mv_par02,mv_par03,mv_par04,mv_par05,;
 													mv_par06,mv_par07,mv_par09,mv_par10,mv_par11,mv_par12,;
 													mv_par14,mv_par15,lConsEIC,aRecSC7)})
-						/*If mv_par08 == 1 //Pedido de compra
-							lIntegDef	:=  FWHasEAI("MATA120",.T.,,.T.)
-							If	lIntegDef
-								If Len(aRecSC7) > 0
-									//-- Somente PC processada pela funcao MA235PC
-									For n1Cnt := 1 To Len(aRecSC7)
-										SC7->(DbGoTo(aRecSC7[n1Cnt]))
-
-										lIntReg := INTREG("SC7",SC7->C7_NUM)
-										If Ascan(aNumSC7,SC7->C7_NUM) == 0 .And. lIntReg
-											AAdd(aNumSC7,SC7->C7_NUM)
-											Inclui := .T.
-											Altera := .T.
-											aRet := FwIntegDef( 'MATA120' )
-
-											If Valtype(aRet) == "A"
-												If Len(aRet) == 2
-													If !aRet[1]
-														If Empty(AllTrim(aRet[2]))
-															cMsgRet := STR0011
-														Else
-															cMsgRet := AllTrim(aRet[2])
-														Endif
-														Aviso(STR0010,cMsgRet,{STR0013},3)
-														DisarmTransaction()
-														Return .F.
-													Endif
-												Endif
-											Endif
-										EndIf
-									Next n1Cnt
-								Endif
-							EndIf
-						Endif*/
-
-						// _cQry := " SELECT  SUM(D1_QUANT) QUANT" + CRLF
-						// _cQry += " FROM    SD1010" + CRLF
-						// _cQry += " WHERE	D1_FILIAL+D1_PEDIDO+D1_ITEMPC = '" + FWxFilial('ZBC')+&( "o" + cPFoBCQtd + "ZBCGDad"):aCols[ nUltimo, nPZBCPed ]+&( "o" + cPFoBCQtd + "ZBCGDad"):aCols[ nUltimo, nPZBCPIt ] + "'" + CRLF
-						// _cQry += " 	AND D_E_L_E_T_=' '"
-	//
-						// If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador'
-						// 	MemoWrite("C:\totvs_relatorios\ReajusteResiduo1.sql" , _cQry)
-						// EndIf
-	//
-						// dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_cAlias),.F.,.F.)
-						// // _D1QUANT := 0
-						// If !(_cAlias)->(Eof())
-						// 	// _D1QUANT := Posicione('SD1', 22, "010284590001", "D1_QUANT")
-						// 	&( "o" + cPFoBCQtd + "ZBCGDad"):aCols[ nUltimo, nPZBCQtd ] := (_cAlias)->QUANT //_D1QUANT
-						// 	U_miZBCFieldOK('ZBC_QUANT', (_cAlias)->QUANT, nUltimo )
-						// EndIf
-						// (_cAlias)->(DbCloseArea())
-	//
+						
 						_cQry := " WITH " + CRLF
 						_cQry += " CONTRATO AS (" + CRLF
 						_cQry += " 	SELECT  ZBC_FILIAL+ZBC_PEDIDO+ZBC_ITEMPC CHAVE, ZCC_QTTTAN, SUM(ZBC_QUANT) TOTAL" + CRLF
@@ -3974,25 +3924,10 @@ Static Function ReajusteResiduo( cPedido )
 
 						dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_cAlias),.F.,.F.)
 
-						// If (xNovo := o1ZBCGDad:AddLine())
-						// 	For nI := 1 to Len(o1ZBCGDad:aHeader)
-						// 		If AllTrim(o1ZBCGDad:aHeader[ nI, 2 ]) == 'ZBC_QUANT'
-						// 			If !(_cAlias)->(Eof())
-						// 				o1ZBCGDad:aCols[ nUltimo+1, nI] := (_cAlias)->RESTANTE
-						// 			EndIf
-						// 		ElseIf !AllTrim(o1ZBCGDad:aHeader[ nI, 2 ]) $ ('ZBC_PEDIDO,ZBC_ITEMPC')
-						// 			o1ZBCGDad:aCols[ nUltimo+1, nI] := o1ZBCGDad:aCols[ nUltimo, nI]
-						// 		EndIf
-						// 	Next nI
-						// 	o1ZBCGDad:ForceRefresh()
-
 						RecLock('ZCC', .F.)
 							ZCC->ZCC_QTDRES := (_cAlias)->RESTANTE
 						ZCC->(MsUnLock())
 
-						// 	oMGet:Refresh()
-						// 	U_miZBCFieldOK('ZBC_QUANT', (_cAlias)->RESTANTE, nUltimo+1 )
-						// EndIf
 						(_cAlias)->(DbCloseArea())
 
 						Aviso("Aviso", ;
@@ -4000,12 +3935,7 @@ Static Function ReajusteResiduo( cPedido )
 							{"Sair"} )
 
 					End Transaction
-
-					// If xNovo
-					// 	GrvTable()
-					// EndIf
 				EndIf
-			// Else
 			EndIf
 		EndIf
 
@@ -4018,50 +3948,17 @@ Return nil
 //Validação da exclusão da linha da base contratual (Pedido)
 user function ZBCDelOk(oObj)
 	Local lRet     	:= .T.
-	Local nI 	   	:=  0
-	Local nX 	   	:=  0
 	Local nAt      	:= oObj:oBrowse:nAt
-	Local nPedido	:= oObj:aCols[nAt][Len(oObj:aHeader)]
 
 	MBSaveLog():FULLWrite(, .F., "Inicio: ZBCDelOk()")
 
 	if !empty(oObj:aCols[ nAt, nPZBCPed])
 		Alert("Não é possível deletar um registro com pedido já gerado")
 		return .F.
-	else
-		//for nI := 1 to len(aZBD)
-		//	if nPedido == aZBD[nI][1]
-		//		For nX := 1 to Len(aZBD[nI][2])
-		//			aZBD[nI][2][nX][5] := !(aZBD[nI][2][nX][5])
-		//		Next nX
-		//		o8ZBCGDad:setArray(aZBD[nI][2])		
-		//		exit
-		//	endif
-		//Next nI
-		//o8ZBCGDad:Refresh()
 	endIf
 
 	MBSaveLog():FULLWrite(, .F., "Fim: ZBCDelOk()")
 return lRet
-
-/* MJ : 24.01.2018 */
-// Static Function fCanSelIC()
-// Local lRet := .T.
-//
-// 	If !( lRet := !Empty( oZICGDad:aCols[ oZICGDad:oBrowse:nAt, nPZICSxo] ) )
-// 		Alert('O campo sexo não informado, por isso o item nao poderá ser selecionado.')
-//
-// 	ElseIf !( lRet := !Empty( oZICGDad:aCols[ oZICGDad:oBrowse:nAt, nPZBC1IC/* nPZICPrd */] ) )
-// 		Alert('Produto não informada, por isso o item nao poderá ser selecionado.')
-//
-// 	ElseIf !( lRet := !Empty( oZICGDad:aCols[ oZICGDad:oBrowse:nAt, nPZICQtd] ) )
-// 		Alert('Quantidade não informada, por isso o item nao poderá ser selecionado.')
-//
-// 	EndIf
-//
-// return lRet
-
-/* MJ : 24.01.2018 */
 Static Function fCanSelBC()
 	Local lRet := .T.
 
@@ -4466,8 +4363,6 @@ If nOpcA == 1
 		Next i
 
 		If _cTotZJC > 0
-			// &( "o" + cPFoBCJur + "ZBCGDad"):aCols[ nLZJC, nPZBCJur ] := _cTotZJC
-
 			U_ZBCFieldOK('ZBC_JUROS', _cTotZJC, nLZJC /* , oTFoldeG:nOption */ )
 		EndIf
 		MBSaveLog():FULLWrite(, .F., "COMM11JR() - Fim da Transação")
@@ -6591,6 +6486,7 @@ Static Function MSAutSC7()
 					nRecC7 := SC7->(Recno())
 				else
 					MsgAlert("Registro não encontrado, operação será cancelada.", "Atenção...")
+					DisarmTransaction()
 					return nil
 				endif
 				
@@ -6678,13 +6574,7 @@ Static Function MSAutSC7()
 						o1ZBCGDad:aCols[ nI, nPMrkZBC] := "LBNO"
 					EndIf
 				Next nI
-				// Enviar Email somente qdo executado do ambiente de PRODUÇÃO
-				/* 				
-				If GetServerIP() == GetMV("MB_IP_PROD",,"192.168.0.242")
-					U_ExecAutoOK( FWxFilial('SC7') + SC7->C7_NUM )
-				EndIf 
-				*/
-
+			
 				//Adicionado por Renato de Bianchi
 				//Verifica se já atendeu ao contrato completamente
 				if M->ZCC_QTDRES == 0

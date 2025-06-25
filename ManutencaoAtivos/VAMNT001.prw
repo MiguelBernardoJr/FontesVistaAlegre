@@ -117,7 +117,7 @@ oPanelBot:= tPanel():New(0,0,"",oDlg,,,,,, 0, 50 )
 oPanelBot:align := CONTROL_ALIGN_ALLCLIENT
 oGDados := MsNewGetDados():New( aPObjs[2][1], aPObjs[2][2], aPObjs[2][3], aPObjs[2][4], nGDOpc, /* "U_f18LinhaOk" */, , , , , , , , , oPanelBot, _aHead, _aCols )
 // oGDados:oBrowse:BlDblClick := { || SetMark(oGDados)}
-oGDados:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT	
+oGDados:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 
 // Inicializadores
 _cCodigo := GetSX8Num('ZAD','ZAD_CODIGO') // U_VAMNT001()

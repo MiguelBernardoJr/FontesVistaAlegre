@@ -1,0 +1,410 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TLPP-CORE.TH"
+#INCLUDE "FWMVCDEF.CH"
+
+namespace custom.VAESTI09
+
+USER FUNCTION VAESTI09()
+	Private oBrowse as object
+	Private _cPlacaS := CriaVar('ZPB_PLACA', .F.) as Character
+
+	oBrowse := FWLoadBrw("custom.VAESTI09.VAESTI09")
+	oBrowse:Activate()
+	oBrowse:DeActivate()
+	oBrowse:Destroy()
+	FreeObj(oBrowse)
+	oBrowse := nil
+
+Return
+
+user function BrowseDef() as object
+	local oBrowse as object
+
+	oBrowse := FWMBrowse():New()
+	oBrowse:SetAlias("ZPA")
+	oBrowse:SetDescription("Medições de Milho")
+
+return oBrowse
+
+user Function MenuDef()
+	Local aRot := {}
+	
+	ADD OPTION aRot TITLE 'Incluir'    	    	ACTION 'VIEWDEF.custom.VAESTI09.VAESTI09' 			OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
+	ADD OPTION aRot TITLE 'Alterar'    			ACTION 'VIEWDEF.custom.VAESTI09.VAESTI09' 			OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
+	ADD OPTION aRot TITLE 'Visualizar' 			ACTION 'VIEWDEF.custom.VAESTI09.VAESTI09' 			OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
+	ADD OPTION aRot TITLE 'Excluir'    			ACTION 'VIEWDEF.custom.VAESTI09.VAESTI09' 			OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
+	ADD OPTION aRot TITLE 'Visualizar Pesagem' 	ACTION 'custom.VAESTI09.U_VA09VISUALIZAZPB()'		OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
+	ADD OPTION aRot TITLE 'Imprimir Ticket' 	ACTION 'U_PPeso2'      				OPERATION  7 ACCESS 0 //OPERATION X
+
+Return aRot
+
+user function ModelDef() as object
+	local oModel   := nil as object
+	local oStruct  := FWFormStruct(1,'ZPA') as object
+
+    oStruct:SetProperty("ZPA_PLACA" , MODEL_FIELD_OBRIGAT, .T.)
+    oStruct:SetProperty("ZPA_DATA"  , MODEL_FIELD_OBRIGAT, .T.)
+    oStruct:SetProperty("ZPA_UMID"  , MODEL_FIELD_OBRIGAT, .T.)
+    oStruct:SetProperty("ZPA_TEMP"  , MODEL_FIELD_OBRIGAT, .T.)
+    oStruct:SetProperty("ZPA_IMPUR" , MODEL_FIELD_OBRIGAT, .T.)
+    oStruct:SetProperty("ZPA_AVARIA", MODEL_FIELD_OBRIGAT, .T.)
+    oStruct:SetProperty("ZPA_SILO"  , MODEL_FIELD_OBRIGAT, .T.)
+
+	oModel := MPFormModel():New("custom.VAESTI09.VA09EST")
+	oModel:SetDescription("Medições de Milho")
+	
+    oModel:AddFields("ZPAMASTER" ,"" , oStruct)
+
+	oModel:SetPrimaryKey({"ZPA_FILIAL","ZPA_CODZPB","ZPA_DATA"})
+
+    oModel:GetModel("ZPAMASTER"):SetDescription("Seleção atual")
+
+return oModel
+
+user Function ViewDef()
+	Local oModel   := FWLoadModel("custom.VAESTI09.VAESTI09") as Object
+	Local oStruct  := FWFormStruct(2,'ZPA') as object
+	Local oView    := NIL
+
+	oView := FWFormView():New()
+	oView:SetModel(oModel)
+
+	oView:AddField("VIEW_1" , oStruct  , "ZPAMASTER")
+
+	oView:CreateHorizontalBox('CAB_1', 100)
+
+	oView:SetOwnerView('VIEW_1'  	,'CAB_1'	)
+
+    oView:EnableTitleView('VIEW_1'	, 'Dados da Pesagem' 		) 
+
+	oView:SetContinuousForm(.T.)
+	
+	oView:SetCloseOnOk( { |oView| .T. } )
+
+Return oView
+
+User Function VA09EST()
+	Local aParam 		:= PARAMIXB
+	Local lRet 			:= .T.
+	Local cIdPonto 		:= ''
+	Local cIdModel 		:= ''
+	Local cIdIXB5		:= ''
+	Local cIdIXB4		:= ''
+	Local oModel 	 	:= nil
+	Local oStruct		:= nil
+	
+	If aParam <> NIL
+		oModel 	 := aParam[1]
+		cIdPonto := aParam[2]
+		cIdModel := aParam[3]
+
+		if len(aParam) >= 4
+			cIdIXB4  := aParam[4]
+		endif
+
+		if len(aParam) >= 5
+			cIdIXB5  := aParam[5]
+		endif 
+		
+		if cIdPonto == "MODELVLDACTIVE"
+			nOper := oModel:nOperation
+			//Se for inclusão, define o ini padrão
+			if nOper == 3
+				oStruct := oModel:GetModel( 'ZPAMASTER' ):GetStruct()
+				oStruct:SetProperty( 'ZPA_PLACA' , MODEL_FIELD_WHEN , FwBuildFeature( STRUCT_FEATURE_WHEN, ".T." ))
+			elseIf nOper != 3
+				oStruct := oModel:GetModel( 'ZPAMASTER' ):GetStruct()
+
+                ZPB->(DbSetOrder(1))
+                IF ZPB->(DBSEEK(FWXFilial('ZPB')+DtoS(ZPA->ZPA_DATA)+ZPA->ZPA_CODZPB))
+                    oStruct:SetProperty( 'ZPA_PLACA' , MODEL_FIELD_WHEN , FwBuildFeature( STRUCT_FEATURE_WHEN, ".F." ))
+
+                    oStruct:SetProperty( 'ZPA_CPFMOT', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_CPFMOT+"'" ) )
+                    oStruct:SetProperty( 'ZPA_NOMMOT', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_NOMMOT+"'" ) )
+                    oStruct:SetProperty( 'ZPA_FORNOM', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_NOMFOR+"'" ) )
+                    oStruct:SetProperty( 'ZPA_NOTFIS', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_NOTFIS+"'" ) )
+                    oStruct:SetProperty( 'ZPA_PESOE' , MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, ""+cValToChar(ZPB->ZPB_PESOE)+"" ) )
+                    oStruct:SetProperty( 'ZPA_PESOS' , MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, ""+cValToChar(ZPB->ZPB_PESOS)+"" ) )
+                    oStruct:SetProperty( 'ZPA_PESOL' , MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, ""+cValToChar(ZPB->ZPB_PESOL)+"" ) )
+                ENDIF
+                ZPB->(DbCloseArea())
+			endif
+		endif
+	endif
+Return lRet 
+
+User Function EST09ZPB()
+    Local aArea	 := GetArea()
+	Local oDlg, oLbx
+    Local aCpos  := {}
+    Local aRet   := {}
+    Local _cQry  := ""
+    Local cAlias := ""
+    Local lRet   := .F.
+    Local cArquivo      := "C:\TOTVS_RELATORIOS\"
+    Local cPerg         := FunName()
+	Local oView		    := FWViewActive()
+	Local oModel  	    := FWModelActive()
+	Local oStCab        := oModel:GetModel('ZPAMASTER')
+	Local oFontNormal   := TFont():New( "Courier New",0,-15,,.T.,0,,400,.F.,.F.,,,,,, )
+
+	_cQry := " Select   ZPB_FILIAL" + CRLF
+	_cQry += "		,  ZPB_DATA " 	+ CRLF
+	_cQry += "		,  ZPB_HORAF " 	+ CRLF
+	_cQry += "		,  ZPB_CODIGO " + CRLF
+	_cQry += "		,  ZPB_CODFOR " + CRLF
+	_cQry += "		,  ZPB_LOJFOR " + CRLF
+	_cQry += "		,  ZPB_NOMFOR " + CRLF
+	_cQry += "		,  ZPB_PLACA  " + CRLF
+	_cQry += "		,  ZPB_PESOE  " + CRLF
+	_cQry += "		,  ZPB_PESOS  " + CRLF
+	_cQry += "		,  ZPB_PESOL " 	+ CRLF
+	_cQry += "		,  ZPB_NOMMOT " + CRLF
+	_cQry += "		,  ZPB_NOTFIS " + CRLF
+	_cQry += "	FROM "+RetSqlName("ZPB")+" ZPB " + CRLF
+	_cQry += "	WHERE   ZPB_FILIAL = '"+FwxFilial('ZPB')+"'" + CRLF 
+	_cQry += "		AND ZPB_DATA  = '"+DtoS(Date())+"' " + CRLF 
+	_cQry += "		AND ZPB_PRODUT IN ('020017')" + CRLF // CREME DE LEVEDURA
+	_cQry += "		AND ZPB_PESOE > 0" + CRLF
+	//_cQry += "		AND ZPB_PESOS > 0" + CRLF
+	_cQry += "				AND ZPB_FILIAL + ZPB_DATA + ZPB_CODIGO NOT IN (SELECT ZPA_FILIAL + ZPA_DATA + ZPA_CODZPB  " + CRLF
+	_cQry += "															FROM "+RetSqlName("ZPA")+" ZPA" + CRLF
+	_cQry += "															JOIN "+RetSqlName("ZPB")+" ZPB ON ZPA_FILIAL = ZPB_FILIAL" + CRLF
+	_cQry += "																AND ZPB_DATA  = ZPA_DATA " + CRLF
+	_cQry += "																AND ZPB_CODIGO = ZPA_CODZPB" + CRLF
+	_cQry += "																AND ZPB_PLACA  = ZPA_PLACA" + CRLF
+	_cQry += "																AND ZPB.D_E_L_E_T_ = ''" + CRLF
+	_cQry += "															WHERE ZPA.D_E_L_E_T_ = '' ) " + CRLF
+	_cQry += "		AND ZPB.D_E_L_E_T_ = ''" + CRLF
+	_cQry += "		ORDER BY 2 DESC " + CRLF
+
+ 	If lower(cUserName) $ 'bernardo,ioliveira,atoshio'
+		MemoWrite(StrTran(cArquivo,".xml","")+cPerg+".sql" , _cQry)
+	EndIf
+
+    cAlias:=  MpSysOpenQuery(_cQry)
+
+    While !(cAlias)->(EOF())
+        aAdd(aCpos,{		(cAlias)->ZPB_DATA,;
+				    		(cAlias)->ZPB_HORAF,;
+					AllTrim((cAlias)->ZPB_CODIGO),;
+					AllTrim((cAlias)->ZPB_NOTFIS),;
+					AllTrim((cAlias)->ZPB_CODFOR),;
+					AllTrim((cAlias)->ZPB_LOJFOR),;
+					AllTrim((cAlias)->ZPB_NOMFOR),;
+					AllTrim((cAlias)->ZPB_PLACA),;
+							(cAlias)->ZPB_PESOE,;
+							(cAlias)->ZPB_PESOS,;
+							(cAlias)->ZPB_PESOL,;
+					AllTrim((cAlias)->ZPB_NOMMOT)})
+        (cAlias)->(dbSkip())
+    End
+    (cAlias)->(dbCloseArea())
+
+    If Len(aCpos) < 1
+        aAdd(aCpos,{"","","","","","","","","","","",""})
+    EndIf
+
+    DEFINE MSDIALOG oDlg TITLE /*STR0083*/ "Listagem das Pesagens" FROM 0,0 TO 325,1250 PIXEL
+
+    @ 0,0 LISTBOX oLbx FIELDS HEADER 'DATA' /*"Produto"*/,;
+        'HORA F.',;
+		'CODIGO',;
+		'NOTA FISCAL',;
+		'COD FORNEC',;
+		'LOJA FORNEC',;
+		'FORNECEDOR',;
+		'PLACA',;
+		'PESO E.',;
+		'PESO S.',;
+		'PESO L.',;
+		'MOTORISTA' SIZE 630,150 OF oDlg PIXEL
+
+    oLbx:oFont := oFontNormal
+    oDlg:oFont := oFontNormal
+
+    oLbx:SetArray( aCpos )
+    oLbx:bLine     := {|| { sToD(aCpos[oLbx:nAt,1]),;
+                            aCpos[oLbx:nAt,2],;
+                            aCpos[oLbx:nAt,3],;
+                            aCpos[oLbx:nAt,4],;
+                            aCpos[oLbx:nAt,5],;
+                            aCpos[oLbx:nAt,6],;
+                            aCpos[oLbx:nAt,7],;
+                            aCpos[oLbx:nAt,8],;
+                            aCpos[oLbx:nAt,9],;
+                            aCpos[oLbx:nAt,10],;
+                            aCpos[oLbx:nAt,11],;
+                            aCpos[oLbx:nAt,12]}}
+    oLbx:bLDblClick := {|| {oDlg:End(), lRet:=.T., aRet := {sToD(oLbx:aArray[oLbx:nAt,1]),;
+                            oLbx:aArray[oLbx:nAt,2],;
+                            oLbx:aArray[oLbx:nAt,3],;
+                            oLbx:aArray[oLbx:nAt,4],;
+                            oLbx:aArray[oLbx:nAt,5],;
+                            oLbx:aArray[oLbx:nAt,6],;
+                            oLbx:aArray[oLbx:nAt,7],;
+                            oLbx:aArray[oLbx:nAt,8],;
+                            oLbx:aArray[oLbx:nAt,9],;
+                            oLbx:aArray[oLbx:nAt,10],;
+                            oLbx:aArray[oLbx:nAt,11],;
+                            oLbx:aArray[oLbx:nAt,12]}}}
+    DEFINE SBUTTON FROM 150,590 TYPE 1 ACTION (oDlg:End(), lRet:=.T.,;
+        aRet := {sToD(oLbx:aArray[oLbx:nAt,1]),;
+                 oLbx:aArray[oLbx:nAt,2],;
+                 oLbx:aArray[oLbx:nAt,3],;
+                 oLbx:aArray[oLbx:nAt,4],;
+                 oLbx:aArray[oLbx:nAt,5],;
+                 oLbx:aArray[oLbx:nAt,6],;
+                 oLbx:aArray[oLbx:nAt,7],;
+                 oLbx:aArray[oLbx:nAt,8],;
+                 oLbx:aArray[oLbx:nAt,9],;
+                 oLbx:aArray[oLbx:nAt,10],;
+                 oLbx:aArray[oLbx:nAt,11],;
+                 oLbx:aArray[oLbx:nAt,12]})  ENABLE OF oDlg
+    
+    
+    
+    ACTIVATE MSDIALOG oDlg CENTER
+
+    If Len(aRet) > 0 .And. lRet
+        If Empty(aRet[6])
+            lRet := .F.
+        Else
+			_cPlacaS	:= aRet[8]
+
+            ZPB->(DbSetOrder(1))
+            IF ZPB->(DbSeek(FWXFilial('ZPB')+DTOs(aRet[1])+aRet[3]))
+    			oStCab:SetValue("ZPA_CODZPB"  , ZPB->ZPB_CODIGO)
+                oStCab:SetValue("ZPA_DATA"    , ZPB->ZPB_DATA)
+                oStCab:SetValue("ZPA_CPFMOT"  , ZPB->ZPB_CPFMOT)
+                oStCab:SetValue("ZPA_NOMMOT"  , ZPB->ZPB_NOMMOT)
+                oStCab:SetValue("ZPA_PLACA"   , ZPB->ZPB_PLACA)
+                oStCab:SetValue("ZPA_PESOE"   , ZPB->ZPB_PESOE)
+                oStCab:SetValue("ZPA_PESOS"   , ZPB->ZPB_PESOS)
+                oStCab:SetValue("ZPA_PESOL"   , ZPB->ZPB_PESOL)
+                oStCab:SetValue("ZPA_NOTFIS"  , ZPB->ZPB_NOTFIS)
+                oStCab:SetValue("ZPA_FORNEC"  , ZPB->ZPB_CODFOR)
+                oStCab:SetValue("ZPA_LOJA"    , ZPB->ZPB_LOJFOR)
+                oStCab:SetValue("ZPA_FORNOM"  , ZPB->ZPB_NOMFOR)
+            ENDIF
+
+            ZPB->(DbCloseArea())
+        EndIf
+    EndIf
+	
+	IF lower(cUserName) $ 'ioliveira,bernardo,mbernardo,atoshio,admin,administrador'
+	    MemoWrite(StrTran(cArquivo,".xml","")+"ZPB_"+cPerg + cValToChar(dDataBase)+".sql" , _cQry)
+    ENDIF
+
+	oView:Refresh()
+	RestArea(aArea)
+RETURN lRet
+//custom.VAESTI09.U_PosZPBZPA("ZPB_PESOL")
+User Function PosZPBZPA(cCampo)
+Return Posicione("ZPB",1,ZPA->ZPA_FILIAL+DTOS(ZPA->ZPA_DATA)+ZPA->ZPA_CODZPB,cCampo)
+
+User Function VA09VISUALIZAZPB()
+	Local aArea := FwGetArea()
+	Local cFunBkp := FunName()
+	
+	SetFunName("VAESTPES")
+	ZPB->(DbSetOrder(1))
+	IF ZPB->(DbSeek(FWXFilial('ZPB')+DtoS(ZPA->ZPA_DATA)+ZPA->ZPA_CODZPB))
+		FWExecView('Visualizar: Placa '+ZPA->ZPA_PLACA+' ] '+Space(10)+'  ', 'VAESTPES', MODEL_OPERATION_VIEW,,{||.T.})
+	ELSE
+		MsgAlert("Placa não encontrada! Verifique se a pesagem foi realizada corretamente.", "Atenção")
+	ENDIF 	
+
+	SetFunName(cFunBkp)
+	FwRestArea(aArea)
+Return 
+
+User Function VA09IMPRIMEZPB()
+	Local aArea := FwGetArea()
+	Local aPeso  := {}
+	Local lMilho := .F. 
+	
+	ZPB->(DbSetOrder(1))
+	IF ZPB->(DbSeek(FWXFilial('ZPB')+DtoS(ZPA->ZPA_DATA)+ZPA->ZPA_CODZPB))
+
+		if Empty(ZPB->ZPB_CPFMOT)
+			MSGSTOP("Informe o campo CPF Motorista [ABA 02] antes de imprimir o ticket")
+			return
+		endif
+		if Empty(ZPB->ZPB_CODFOR)
+			MSGSTOP("Informe o campo Codigo Fornecedor [ABA 02] antes de imprimir o ticket")
+			return
+		endif 
+		if Empty(ZPB->ZPB_PRODUT)
+			MSGSTOP("Informe o campo Produto [ABA 03] antes de imprimir o ticket")
+			return
+		endif 
+		if Empty(ZPB->ZPB_PESOE)
+			MSGSTOP("Informe o campo Peso de Entrada [ABA 04] antes de imprimir o ticket")
+			return
+		endif
+
+		if Empty(ZPB->ZPB_UMID )
+			MSGSTOP("Informe o campo Umidade [ABA 03] antes de imprimir o ticket")
+			Return
+		elseif Empty(ZPB->ZPB_IMPUR)
+			MSGSTOP("Informe o campo Impureza [ABA 03] antes de imprimir o ticket")
+			Return
+		elseif Empty(ZPB->ZPB_AVARIA)
+			MSGSTOP("Informe o campo Avaria [ABA 03] antes de imprimir o ticket")
+			Return
+		elseif Empty(ZPB->ZPB_TEMP)
+			MSGSTOP("Informe o campo Temperatura [ABA 03] antes de imprimir o ticket")
+			Return
+		elseif Empty(ZPB->ZPB_SILO)
+			MSGSTOP("Informe o campo Silo [ABA 03] antes de imprimir o ticket")
+			Return
+		elseif Empty(ZPB->ZPB_NOTFIS)
+			MSGSTOP("Informe o campo Notas Fiscais [ABA 05] antes de imprimir o ticket")
+			Return
+		endif
+
+		aAdd(aPeso, {;
+				{"ZPB_CODIGO"	, ZPB->ZPB_CODIGO},;
+				{"ZPB_STATUS"	, ZPB->ZPB_STATUS},;
+				{"ZPB_PLACA" 	, ZPB->ZPB_PLACA},;
+				{"ZPB_DATA"  	, ZPB->ZPB_DATA},;
+				{"ZPB_HORA"  	, ZPB->ZPB_HORA},;
+				{"ZPB_CPFMOT"	, ZPB->ZPB_CPFMOT},;
+				{"ZPB_CODMOT"	, ZPB->ZPB_CODMOT},;
+				{"ZPB_NOMMOT"	, ZPB->ZPB_NOMMOT},;
+				{"ZPB_CLIFOR"	, ZPB->ZPB_CLIFOR},;
+				{"ZPB_CODFOR"	, ZPB->ZPB_CODFOR},;
+				{"ZPB_LOJFOR"	, ZPB->ZPB_LOJFOR},;
+				{"ZPB_NOMFOR"	, ZPB->ZPB_NOMFOR},;
+				{"ZPB_NOTFIS"	, ZPB->ZPB_NOTFIS},;
+				{"ZPB_PRODUT"	, ZPB->ZPB_PRODUT},;
+				{"ZPB_DESC"  	, ZPB->ZPB_DESC},;
+				{"ZPB_PESOE" 	, ZPB->ZPB_PESOE},;
+				{"ZPB_PESOS" 	, ZPB->ZPB_PESOS},;
+				{"ZPB_DATAF" 	, ZPB->ZPB_DATAF},;
+				{"ZPB_HORAF" 	, ZPB->ZPB_HORAF},;
+				{"ZPB_PESOL" 	, ZPB->ZPB_PESOL},;
+				{"ZPB_LOCAL" 	, ZPB->ZPB_LOCAL},;
+				{"ZPB_BAIA"  	, ZPB->ZPB_BAIA},;
+				{"ZPB_OBSERV"	, ZPB->ZPB_OBSERV},;
+				{"ZPB_NROGTA"	, ZPB->ZPB_NROGTA},;
+				{"ZPB_QTANIM"	, ZPB->ZPB_QTANIM},;
+				{"ZPB_USRP1"	, ZPB->ZPB_USRP1},;
+				{"ZPB_USRP2"	, ZPB->ZPB_USRP2},;
+				{"ZPB_UMID"		, ZPB->ZPB_UMID},;
+				{"ZPB_IMPUR"	, ZPB->ZPB_IMPUR},;
+				{"ZPB_AVARIA"	, ZPB->ZPB_AVARIA},;
+				{"ZPB_TEMP"		, ZPB->ZPB_TEMP},;
+				{"ZPB_SILO"		, ZPB->ZPB_SILO},;
+		})
+
+		if Len(aPeso) > 0
+			FWMsgRun(, {|| mbPesoPrint(aPeso,lMilho) },;
+						'Por Favor Aguarde...',; 
+						'Imprimindo ticket')
+		endif 
+	ELSE
+		MsgAlert("Placa não encontrada! Verifique se a pesagem foi realizada corretamente.", "Atenção")
+	ENDIF 	
+Return

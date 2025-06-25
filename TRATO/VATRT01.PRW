@@ -70,7 +70,7 @@ User Function VATST01()
 						//----------------------------
 						//Cria o trato caso necessário
 						//----------------------------
-						FWMsgRun(, { || U_CriaTrato(aDadSel[2])}, "Geracao de trato", "Gerando trato para o dia " + DTOC(aDadSel[2]) + "...")
+						FWMsgRun(, { || U_CriaTrat(aDadSel[2])}, "Geracao de trato", "Gerando trato para o dia " + DTOC(aDadSel[2]) + "...")
 						if (!Z05->(DBSeek(xFilial("Z05") + DTOS(aDadSel[2]) + aDadSel[3])))
 							nOpcRotas := 0
 							Return (Nil)

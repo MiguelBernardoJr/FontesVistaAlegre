@@ -105,10 +105,10 @@ user function VaEstR08()
 	@ aPObjs[1,1]+10, aPObjs[1,2]+45+200+70+50 MSGET oQtde  VAR cQtde PICTURE "@!" SIZE 30,010 OF oGrp1 PIXEL
 
 	//oGrp2a
-	oGetSin := MsNewGetDados():New( 0, 0, 0, 0, nOpc, cLinOk, cTudoOk, cIniCpos, {"VW_QTDPES"},;
+	oGetSin := MsNewGetDados():New( aPObjs[2,1]+7,aPObjs[2,2],aPObjs[2,3]-1, nPosAux-1, nOpc, cLinOk, cTudoOk, cIniCpos, {"VW_QTDPES"},;
 		nFreeze, nMax, cFieldOk,cSuperDel, cDelOk, oGrp2a,;
 		aClone(aHeadSin), aClone(aColsSin) )
-	oGetSin:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+	//oGetSin:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 	oGetSin:oBrowse:BlDblClick := { || If( oGetSin:oBrowse:nColPos == 1 , SetMark(oGetSin, , 1), .T. ) }
 
 	//oGrp2b

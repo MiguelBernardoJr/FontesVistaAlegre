@@ -85,7 +85,7 @@ RegToMemory( cAlias, nOpcE == 3 )
 DbSelectArea(cAlias)
 (cAlias)->(DbGoTo(nReg))
 */
-DEFINE MSDIALOG oDlg TITLE OemToAnsi(cCadastro) From 0,0 to aSize[6],aSize[5] PIXEL of oMainWnd
+DEFINE MSDIALOG oDlg TITLE 	OemToAnsi(cCadastro) From 0,0 to aSize[6],aSize[5] PIXEL of oMainWnd
 // oDlg:lMaximized := .T.
 
 oMGet  := MsMGet():New( cAlias, nReg, nOpc ,,,,, aPObjs[1], U_LoadCustomCpo(cAlias)/* {"B8_GMD","B8_DIASCO","B8_XRENESP"} */ ,,,,, /* oGrp1 */ )
@@ -156,7 +156,7 @@ User Function FATB01Pes(cAlias, nReg, nOpc)
   		// oGDSd2:oBrowse:BHeaderClick   := {| oBrw, nCol | U_PDReordGD(oGDSd2, nCol)}
   					                                                                   
   		oPanCabFunc := tPanel():New(aPObjs[2, 1], aPObjs[2, 2], Nil, oDlg,,,, /*CLR_YELLOW*/, /*CLR_BLUE*/, aPObjs[2, 3], aPObjs[2, 4],, .T.)
-		oPanCabFunc:Align := CONTROL_ALIGN_BOTTOM
+		//oPanCabFunc:Align := CONTROL_ALIGN_BOTTOM
 
 //		oBtnCabFilt := TButton():New(005, 005, "Filtrar"     , oPanCabFunc, {|| FSFilRec(oCabFilter, Nil, Nil)						    }, 050, 010,, /*oFont*/,, .T.,,,, /*bWhen*/,,)
 		oBtnCabConf := TButton():New(005, 055, "Confirma"    , oPanCabFunc, {|| Processa({|| FSGrava()})                                }, 050, 010,, /*oFont*/,, .T.,,,, /*bWhen*/,,)
@@ -298,7 +298,7 @@ Static Function FSGrava()
 	
 	Local nSd2		  := 0
 	
-	Begin Transaction   					
+	Begin Transaction
 						
 		For nSd2 := 1 to Len(oGDSd2:aCols)
 			SD2->(dbGoto(oGdSd2:aCols[nSd2][nRecno]))
@@ -309,7 +309,7 @@ Static Function FSGrava()
 				SD2->D2_XDTABAT	:= oGdSd2:aCols[nSd2][nSd2XDtabat]
 			MsUnlock()
 		Next 
-							 	
+
 	End Transaction
 	
 	dbSelectArea("SF2")
@@ -325,6 +325,7 @@ Return(Nil)
 Static Function CountPeso()
 Local nPesTot := 0
 Local nSd2XPesliq  := IIf( oGdSd2 <> Nil, aScan(oGDSd2:aHeader, {|x| x[2] == "D2_XPESLIQ"}),0) 
+Local nSd2
 
 	If oGdSd2 <> Nil
 		For nSd2 := 1 to Len(oGDSd2:aCols)
