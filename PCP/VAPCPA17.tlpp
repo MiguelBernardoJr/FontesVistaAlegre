@@ -10,7 +10,7 @@ static aCpoMdRot  := { "Z0T_ROTA"	,"Z06_TRATO","Z06_KGMNT"}
 static aCpoMdZ06G := { "Z06_LOTE"	,"Z05_CURRAL","Z06_DIETA" ,"Z05_CABECA","Z05_DIASDI","Z05_PESOCO","Z05_TOTMSC","Z05_TOTMNC","Z05_RECNO","Z0T_ROTA"}
 static aCpoMdZ06D := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE"	,"Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
 static aCpoMdZ05G := { "Z05_DATA"	,"Z05_DIETA","Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
-static aCpoMdRt1  := { "Z0S_EQUIP"  ,"ZV0_DESC" ,"Z0T_ROTA", "Z06_LOTE","Z06_CURRAL"}
+static aCpoMdRt1  := { "Z0S_EQUIP"  ,"ZV0_DESC" ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
 
 /*/{Protheus.doc} VAPCPA17
 Rotina será usada na chamada <F4> da rotina VAPCPA05
@@ -257,8 +257,8 @@ user function ViewDef() as object
 		oView:CreateHorizontalBox("PROGR_CIMA"  , 80, "PROGR")
 		oView:CreateHorizontalBox("PROGR_BAIXO" , 20, "PROGR")
 		
-		oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  28, "PROGR_BAIXO")
-		oView:CreateVerticalBox("PROGR_BAIXO_DIR",  72, "PROGR_BAIXO")
+		oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  35, "PROGR_BAIXO")
+		oView:CreateVerticalBox("PROGR_BAIXO_DIR",  65, "PROGR_BAIXO")
 
 		oView:CreateHorizontalBox("ROTAS_CIMA" , 65, "ROTAS")
 		//oView:CreateHorizontalBox("ROTAS_MEIO" , 40, "ROTAS")
@@ -266,8 +266,8 @@ user function ViewDef() as object
 
 		oView:CreateHorizontalBox("LOTES_CIMA"  , 10, "LOTES")
 		oView:CreateHorizontalBox("LOTES_CENTER", 30, "LOTES")
-		oView:CreateHorizontalBox("LOTES_BAIXO" , 22, "LOTES")
-		oView:CreateHorizontalBox("ROTAS_MEIO"  ,28, "LOTES")
+		oView:CreateHorizontalBox("LOTES_BAIXO" , 20, "LOTES")
+		oView:CreateHorizontalBox("ROTAS_MEIO"  ,30, "LOTES")
 		oView:CreateHorizontalBox("ROTAS_BAIXO", 10, "LOTES")
 		
 		oView:SetOwnerView("VwFieldRotas"  	, "CAB_ROTAS"	)
@@ -313,9 +313,13 @@ user function ViewDef() as object
 		oView:SetViewProperty("VwGridZ06G", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
 
 		if Inclui .or. Altera
-			oView:AddUserButton( "Atualizar" , 'OK', {|| AtualizaTela() } )
-			oView:AddUserButton( "Nro Tratos", 'OK', {|| vap17tra() } )
-			oView:AddUserButton( "Dietas"	 , 'OK', {|| vap17trt() } )
+			oView:AddUserButton( "Atualizar (F11)" , 'OK', {|| AtualizaTela() } )
+			SetKey(VK_F11, {|| AtualizaTela()})
+			oView:AddUserButton( "Nro Tratos (F8)", 'OK', {|| vap17tra() } )
+			SetKey(VK_F8, {|| vap17tra()})
+			oView:AddUserButton( "Dietas (F10) "	 , 'OK', {|| vap17trt() } )
+			SetKey(VK_F10, {|| vap17trt()})
+			
 		endif
 	//else
     //	Help(/*Descontinuado*/,/*Descontinuado*/,"SEM LOTE",/**/,"Não existe lote vinculado ao curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível atribuir um trato ao curral selecionado."})
@@ -395,7 +399,7 @@ static function Rt1GrdVStr() as Object
 		local nI 
 
 	SX3->(DbSetOrder(2))
-	aCpoMdRt1 := { "ZV0_DESC" ,"Z0T_ROTA", "Z06_LOTE","Z06_CURRAL"}
+	aCpoMdRt1 := { "ZV0_DESC" ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
 	For nI := 1 to Len(aCpoMdRt1)
 		if SX3->(DbSeek(Padr(aCpoMdRt1[nI], Len(SX3->X3_CAMPO))))
 			oStruct:AddField(;
@@ -1225,6 +1229,7 @@ User Function PreparaQuerys()
 	cQry += " , PERIODO.DIA " + CRLF
 	cQry += " , Z0I_NOTMAN " + CRLF
 	cQry += " , Z0I_NOTTAR " + CRLF
+	cQry += " ORDER BY Z05.Z05_DATA DESC " + CRLF
 	
 	oExecZ05G := FwExecStatement():New(cQry)
 
@@ -1281,8 +1286,11 @@ User Function PreparaQuerys()
 	RestArea(aArea)
 Return nil
 
+/*Toshio - 26-06-2025*/
+//Inclui na SX3 dos campos Z06_TRATO, Z06_DIETA, Z06_KGMSTR  - custom.VAPCPA17.U_VAPCP05VALID() - CONTEÚDO ANTERIOR U_vpcp05vl()
+
 //Validação dos campos Z06_TRATO Z06_DIETA Z06_KGMSTR
-User Function VAPCP05VALID()
+User Function VAPCP05VALID() 
 	Local lRet 		:= .T. as Logical
 
 	if FUNNAME() == "VAPCPA17"

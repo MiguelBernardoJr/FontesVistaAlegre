@@ -76,7 +76,7 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  		  , AVG(B8_XPESOCO) [PESO] " + _ENTER_ +;
         "  		  , ISNULL((CASE WHEN Z0O.Z0O_SEXO = 'M' THEN 'MACHO' " + _ENTER_ +;
         "  		                 WHEN Z0O.Z0O_SEXO = 'F' THEN 'FEMEA' " + _ENTER_ +;
-        "  						 WHEN Z0O.Z0O_SEXO = 'C' THEN 'CAP√O' " + _ENTER_ +;
+        "  						 WHEN Z0O.Z0O_SEXO = 'C' THEN 'CAPùO' " + _ENTER_ +;
         "  						 ELSE ' ' END),'') [SEXO] " + _ENTER_ +;
         "  		  , ISNULL((Z0O.Z0O_RACA),' ' ) [RACA] " + _ENTER_ +;
         "  	      , CASE WHEN Z0O_DINITR = ' ' THEN CONVERT(DATE,min(SB8.B8_XDATACO),103)  " + _ENTER_ +;
@@ -204,6 +204,7 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  ) " + _ENTER_ +;
         "   --SELECT DISTINCT DIETA FROM HISTORICO " + _ENTER_ +;
         "  SELECT D.* " + _ENTER_ +;
+        " 	  --, isnull((SELECT TOP(1) Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I_FILIAL = FILIAL AND Z0I_LOTE = LOTE AND Z0I.D_E_L_E_T_ = ' ' AND Z0I_DATA = (SELECT MAX(Z0I_DATA) FROM Z0I010 WHERE Z0I_FILIAL = '0101001' AND D_E_L_E_T_ =' '  )),'') ULTIMANOITE " + _ENTER_ +;
         " 	  , isnull((SELECT TOP(1) Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I_FILIAL = FILIAL AND Z0I_LOTE = LOTE AND Z0I.D_E_L_E_T_ = ' ' AND Z0I_DATA = CONVERT(DATE,GETDATE(), 103) ),'') ULTIMANOITE " + _ENTER_ +;
         " 	  , ROUND(ISNULL((SELECT TOP 1 HI.KG_MS FROM HISTORICO HI WHERE D.FILIAL = HI.Z0W_FILIAL AND D.LOTE = HI.Z0W_LOTE ORDER BY HI.Z0W_DATA DESC ),0) / (PESO + (DIAS_DE_COCHO * GMD_ESPERADO))*100,3) CMS" + _ENTER_ +;
         "     , H.DIETA[DIETA]" + _ENTER_ +;
@@ -311,7 +312,7 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
 
             cQry := "SELECT MAX(ZWS_CODIGO) AS ZWS_CODIGO FROM "+RetSqlName("ZWS")+" (nolock) WHERE D_E_L_E_T_ = ' '"
             cCod := StrZero(Val(MpSySExecScalar( cQry , "ZWS_CODIGO")) + 1,TamSx3("ZWS_CODIGO")[1])
-            // GravaÁ„o dos dados
+            // Gravaùùo dos dados
             RecLock("ZWS", .T.)
                 ZWS->ZWS_CODIGO := cCod
                 ZWS->ZWS_TIPO   := "J"
@@ -323,11 +324,11 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
                 ZWS->ZWS_RESULT := (cResult := oResponse:toJson())
                 ZWS->(MsUnLock())
             ConfirmSX8()
-            // Fim da gravaÁ„o
+            // Fim da gravaùùo
 
             /* MB : 17.06.2024 
-                -> Confmando o procesorme sugest„o do Toshio, estarei chasamento do json recebido diretamente da
-                WS apÛs gravacao na tabela intermedi·ria. */
+                -> Confmando o procesorme sugestùo do Toshio, estarei chasamento do json recebido diretamente da
+                WS apùs gravacao na tabela intermediùria. */
             U_fIntegrar( 'U' )
         Else
             
@@ -408,4 +409,3 @@ WsMethod GET CadastroDasNotas WSSERVICE WSNotaCocho
     FreeObj( oHeaderJson )
 
 Return .T.
-
