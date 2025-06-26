@@ -74,19 +74,19 @@ User Function VAFATB02(cAlias, nReg, nOpc)
 	aAdd(aField, { "Dt. Emissao Ate", "cDtEmAte"  , "D", TamSX3("F2_EMISSAO")[1], TamSX3("F2_EMISSAO")[2], PesqPict("SF2", "F2_EMISSAO"),  { || Vldfiltr(1) }                         , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
 	aAdd(aField, { "Data Abate"     , "cDtAbate"  , "D", TamSX3("D2_XDTABAT")[1], TamSX3("D2_XDTABAT")[2], PesqPict("SD2", "D2_XDTABAT"), /* { || VldCpo(2) } */                      , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
 	If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador,joao.santos'   
-	aAdd(aField, { "Mostra Marcados", "cMarcado"  , "C", 1                      , 0                      , "@!"                         ,                                             , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "S=Sim;N=Não",    ,     .F.,          "",      "N"} )
+		aAdd(aField, { "Mostra Marcados", "cMarcado"  , "C", 1                      , 0                      , "@!"                         ,                                             , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "S=Sim;N=Não",    ,     .F.,          "",      "N"} )
 	EndIf
 
-	oPnl1a  	 := tPanel():New(01,01,,oGrp1a,/* oTFont */,.T.,,/* CLR_YELLOW */, CLR_BLUE, 100, 100)
-	oPnl1a:align := CONTROL_ALIGN_ALLCLIENT
+	//oPnl1a  	 := tPanel():New(01,01,,oGrp1a,/* oTFont */,.T.,,/* CLR_YELLOW */, CLR_BLUE, 100, 100)
+	//oPnl1a:align := CONTROL_ALIGN_ALLCLIENT
 	oMGet1a 	 := MsMGet():New(,,nOpc,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/,;
-		{0,0,0,0}/* {omGrp1a:nTOP,oGrp1a:nLEFT,oGrp1a:nBOTTOM,oGrp1a:nRIGHT} */ /* aPObjs[1] */,/*aAlterEnch*/,/*nModelo*/,/*nColMens*/,/*cMensagem*/, /*cTudoOk*/, ;
-		oPnl1a/* oGrp1a */,/*lF3*/,.T. /*lMemoria*/, .T. /*lColumn*/,/*caTela*/,/*lNoFolder*/,/*lProperty*/, ;
+		{aPObjs[1,1]+7,aPObjs[1,2],aPObjs[1,3] / 1.2, nPosAux-1}/* {omGrp1a:nTOP,oGrp1a:nLEFT,oGrp1a:nBOTTOM,oGrp1a:nRIGHT} */ /* aPObjs[1] */,/*aAlterEnch*/,/*nModelo*/,/*nColMens*/,/*cMensagem*/, /*cTudoOk*/, ;
+		oGrp1a/* oGrp1a */,/*lF3*/,.T. /*lMemoria*/, .T. /*lColumn*/,/*caTela*/,/*lNoFolder*/,/*lProperty*/, ;
 		aField,/* aFolder */,/*lCreate*/, /*lNoMDIStretch*/,/*cTela*/)
-	oMGet1a:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+	//oMGet1a:oBox:Align := CONTROL_ALIGN_ALLCLIENT
 
-	oPesquisar := TButton():New( aPObjs[2,1]-90, nPosAux-150, "Localizar Notas Fiscais" , ;
-				oPnl1a , {|| MsgRun ("Consultando informacoes...",;
+	oPesquisar := TButton():New( (aPObjs[1,3] / 1.2)+5/* aPObjs[1,1]-90 */, nPosAux-150, "Localizar Notas Fiscais" , ;
+				oGrp1a , {|| MsgRun("Consultando informacoes...",;
 									 "Processando",;
 							 		{|| fPesquisar() } ) },70,10,,,.F.,.T.,.F.,,.F.,,,.F.)
 	oPesquisar:SetCss("QPushButton{ background: #0B0; color: #FFF; background-repeat: none; margin: 2px; font-weight: bold; }")
@@ -94,43 +94,43 @@ User Function VAFATB02(cAlias, nReg, nOpc)
 	/* #################################################################################################################### */
 	oGrp1b := TGroup():New(aPObjs[1,1],nPosAux+2,aPObjs[1,3],aPObjs[1,4],"Dados da Nota Fiscal de Enrada",oDlg,,, .T.,)
 
-	//aField := {}asdf
+	//aField := {}
 	////              Titulo,        Campo,       Tipo, Tamanho,                 Decimal,                 Pict,                          Valid,       	       Obrigat, Nivel, Inic Padr, F3, When, Visual, Chave, CBox, Folder, N Alteravel, PictVar, Gatilho
 	//aAdd(aField, { "NF. Origem"     , "cNfEnt" , "C", TamSX3("F2_X_NFENT")[1], TamSX3("F2_X_NFENT")[2], PesqPict("SF2", "F2_X_NFENT"), /* { || VldCpo(2) } */, .F.,     1,     "",        "", "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
 	//aAdd(aField, { "Serie Origem"   , "cSerEnt", "C", TamSX3("F2_XSERENT")[1], TamSX3("F2_XSERENT")[2], PesqPict("SF2", "F2_XSERENT"), /* { || VldCpo(2) } */, .F.,     1,     "",        "", "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
 	//aAdd(aField, { "Data NF Entrada", "cDtEnt" , "D", TamSX3("F2_X_DTENT")[1], TamSX3("F2_X_DTENT")[2], PesqPict("SF2", "F2_X_DTENT"), /* { || VldCpo(2) } */, .F.,     1,     "",        "", "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
 
-	oPnl1b  	 := tPanel():New(01,01,,oGrp1b,/* oTFont */,.T.,,/* CLR_YELLOW */, /* CLR_RED */, 100, 100)
-	oPnl1b:align := CONTROL_ALIGN_ALLCLIENT
-	// oMGet1b 	 := MsMGet():New(,,3,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/,;
-	// 					{0,0,0,0}/* {oGrp1b:nTOP,oGrp1b:nLEFT,oGrp1b:nBOTTOM,oGrp1b:nRIGHT} */ /* aPObjs[1] */,/*aAlterEnch*/,/*nModelo*/,/*nColMens*/,/*cMensagem*/, /*cTudoOk*/, ;
-	// 					oPnl1b/* oGrp1b */,/*lF3*/,.T./*lMemoria*/,.T./*lColumn*/,/*caTela*/,/*lNoFolder*/,/*lProperty*/, ;
-	// 					aField,/* aFolder */,/*lCreate*/, /*lNoMDIStretch*/,/*cTela*/)
-	// oMGet1b:oBox:Align := CONTROL_ALIGN_ALLCLIENT
-	nSuperior := 10
-	nEsquerda := 10
-	oTit1  := tSay():New(nSuperior, nEsquerda,{||'NF. Origem: ' }, oPnl1b,,oFont,,,,.T.,,,200,100)
-	@nSuperior,nEsquerda+65 MSGET oNfEnt VAR cNfEnt PICTURE PesqPict("SF2", "F2_X_NFENT") /* F3 "ZZM" */ SIZE 050,010 OF oPnl1b PIXEL HASBUTTON VALID ValNota("cNfEnt")
+	//oPnl1b  	 := tPanel():New(nPosAux+1,nPosAux+1,,oGrp1b,/* oTFont */,.T.,,/* CLR_YELLOW */, /* CLR_RED */, 100, 100)
+	//oPnl1b:align := CONTROL_ALIGN_ALLCLIENT
+	//oMGet1b 	 := MsMGet():New(,,3,/*aCRA*/,/*cLetras*/,/*cTexto*/,/*aCpoEnch*/,;
+	//					{aPObjs[1,1]+7,nPosAux+2,aPObjs[1,3]-1,aPObjs[1,4]-1}/* {oGrp1b:nTOP,oGrp1b:nLEFT,oGrp1b:nBOTTOM,oGrp1b:nRIGHT} */ /* aPObjs[1] */,/*aAlterEnch*/,/*nModelo*/,/*nColMens*/,/*cMensagem*/, /*cTudoOk*/, ;
+	//					oGrp1b/* oGrp1b */,/*lF3*/,.T./*lMemoria*/,.T./*lColumn*/,/*caTela*/,/*lNoFolder*/,/*lProperty*/, ;
+	//					aField,/* aFolder */,/*lCreate*/, /*lNoMDIStretch*/,/*cTela*/)
+	//oMGet1b:oBox:Align := CONTROL_ALIGN_ALLCLIENT
+	nSuperior := aPObjs[1,1] + 10
+	nEsquerda := nPosAux + 12
+	oTit1  := tSay():New(nSuperior, nEsquerda,{||'NF. Origem: ' }, oGrp1b,,oFont,,,,.T.,,,200,100)
+	@nSuperior,nEsquerda+65 MSGET oNfEnt VAR cNfEnt PICTURE PesqPict("SF2", "F2_X_NFENT") /* F3 "ZZM" */ SIZE 050,010 OF oGrp1b PIXEL HASBUTTON VALID ValNota("cNfEnt")
 
 	nSuperior += 25
-	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Serie Origem: ' }, oPnl1b,,oFont,,,,.T.,,,200,100)
-	@nSuperior,nEsquerda+65 MSGET oSerEnt VAR cSerEnt PICTURE PesqPict("SF2", "F2_XSERENT") /* F3 "ZZM" */ SIZE 050,010 OF oPnl1b PIXEL HASBUTTON
-
+	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Serie Origem: ' }, oGrp1b,,oFont,,,,.T.,,,200,100)
+	@nSuperior,nEsquerda+65 MSGET oSerEnt VAR cSerEnt PICTURE PesqPict("SF2", "F2_XSERENT") /* F3 "ZZM" */ SIZE 050,010 OF oGrp1b PIXEL HASBUTTON
+	
 	nSuperior += 25
-	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Data NF Entrada: ' }, oPnl1b,,oFont,,,,.T.,,,200,100)
-	@nSuperior,nEsquerda+65 MSGET oDtEnt VAR cDtEnt PICTURE PesqPict("SF2", "F2_X_DTENT") /* F3 "ZZM" */ SIZE 050,010 OF oPnl1b PIXEL HASBUTTON
-
+	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Data NF Entrada: ' }, oGrp1b,,oFont,,,,.T.,,,200,100)
+	@nSuperior,nEsquerda+65 MSGET oDtEnt VAR cDtEnt PICTURE PesqPict("SF2", "F2_X_DTENT") /* F3 "ZZM" */ SIZE 050,010 OF oGrp1b PIXEL HASBUTTON
+	
 	nSuperior += 25
-	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Valor NF Entrada: ' }, oPnl1b,,oFont,,,,.T.,,,200,100)
-	@nSuperior,nEsquerda+65 MSGET oValEntr VAR nValEntr PICTURE PesqPict("SF2", "F2_VALMERC") /* F3 "ZZM" */ SIZE 080,010 OF oPnl1b PIXEL HASBUTTON VALID AtuVlrSel()
-
+	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Valor NF Entrada: ' }, oGrp1b,,oFont,,,,.T.,,,200,100)
+	@nSuperior,nEsquerda+65 MSGET oValEntr VAR nValEntr PICTURE PesqPict("SF2", "F2_VALMERC") /* F3 "ZZM" */ SIZE 080,010 OF oGrp1b PIXEL HASBUTTON VALID AtuVlrSel()
+	
 	// nSuperior += 25
-	oTit1  := tSay():New(nSuperior, (nEsquerda+65)*2.5,{||'Total NFs Saida Selecionada: ' }, oPnl1b,,oFont,,,,.T.,,,200,100)
-	@nSuperior,(nEsquerda+65)*4 MSGET oTotSaida VAR nTotSaida PICTURE PesqPict("SF2", "F2_VALMERC") WHEN .F. /* F3 "ZZM" */ SIZE 080,010 OF oPnl1b PIXEL HASBUTTON
-
+	oTit1  := tSay():New(nSuperior, (nEsquerda+65)*2.5,{||'Total NFs Saida Selecionada: ' }, oGrp1b,,oFont,,,,.T.,,,200,100)
+	@nSuperior,(nEsquerda+65)*4 MSGET oTotSaida VAR nTotSaida PICTURE PesqPict("SF2", "F2_VALMERC") WHEN .F. /* F3 "ZZM" */ SIZE 080,010 OF oGrp1b PIXEL HASBUTTON
+	
 	nSuperior += 25
-	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Valor Nota Complementar: ' }, oPnl1b,,oFont,,,,.T.,,,200,100)
-	@nSuperior,nEsquerda+65 MSGET oValComp VAR nValComp PICTURE PesqPict("SF2", "F2_VALMERC") WHEN .F. /* F3 "ZZM" */ SIZE 080,010 OF oPnl1b PIXEL HASBUTTON
+	oTit1  := tSay():New(nSuperior, nEsquerda,{||'Valor Nota Complementar: ' }, oGrp1b,,oFont,,,,.T.,,,200,100)
+	@nSuperior,nEsquerda+95 MSGET oValComp VAR nValComp PICTURE PesqPict("SF2", "F2_VALMERC") WHEN .F. /* F3 "ZZM" */ SIZE 080,010 OF oGrp1b PIXEL HASBUTTON
 
 	/* #################################################################################################################### */
 	oGrp2  := TGroup():New(aPObjs[2,1],aPObjs[2,2],aPObjs[2,3],aPObjs[2,4],"Notas Fiscais de Saida",oDlg,,, .T.,)
@@ -139,8 +139,8 @@ User Function VAFATB02(cAlias, nReg, nOpc)
 	CargaDados( "SF2", @aSF2Head, @aSF2Cols, @nUSF2, 1, , nil ) // loadDados, CarregaDados
 	nPMrkSF2  := aScan( aSF2Head, { |x| AllTrim(x[2]) == 'SF2_MARK'})
 	aSF2Cols[ 1, nPMrkSF2] := "LBNO"
-	oSF2GDad := MsNewGetDados():New( 0, 0, 0, 0, nGDOpc, , , /* "+SF2_ITEM" */ , , , , , , /* "u_SF2DelOk()" */, oGrp2, aClone(aSF2Head), aClone( aSF2Cols ) )
-	oSF2GDad:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+	oSF2GDad := MsNewGetDados():New( aPObjs[2,1]+7,aPObjs[2,2],aPObjs[2,3]-1,aPObjs[2,4]-1, nGDOpc, , , /* "+SF2_ITEM" */ , , , , , , /* "u_SF2DelOk()" */, oGrp2, aClone(aSF2Head), aClone( aSF2Cols ) )
+	//oSF2GDad:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
 	// oSF2GDad:oBrowse:BlDblClick := { || If( oSF2GDad:oBrowse:nColPos == nPMrkSF2 /* .and. fCanSelIC() */, (U_SetMark(oSF2GDad, , nPMrkSF2, "ALL").and.AtuVlrSel()), oSF2GDad:EditCell() ) }
 	oSF2GDad:oBrowse:BlDblClick := { || (U_SetMark(oSF2GDad, , nPMrkSF2, "ALL").and.AtuVlrSel()) }
 	oSF2GDad:Disable()

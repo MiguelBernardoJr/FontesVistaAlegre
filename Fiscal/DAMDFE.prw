@@ -243,6 +243,7 @@ Static Function PrtDamdfe(oDamdfe,cAutoriza,cModalidade,cRecDthora,cRecDt)
 Local nCont	:= 1
 Local nLin	:= 0
 Local aCab	:= {}
+local cXfant:= Alltrim(if (Type("oNfe:_MDFE:_INFMDFE:_EMIT:_XFANT") <> "U", oNfe:_MDFE:_INFMDFE:_EMIT:_XFANT:TEXT, "" ))
 
 private cTipModal := "1"
 	
@@ -261,7 +262,7 @@ EndIf
 				cRecDt,;
 				cRecDthora,;
 				AllTrim(oNfe:_MDFE:_INFMDFE:_EMIT:_XNOME:TEXT),;
-				AllTrim(oNfe:_MDFE:_INFMDFE:_EMIT:_XFANT:TEXT);
+				cXfant;
 			   })
 
 	oDamdfe:StartPage()
@@ -606,7 +607,9 @@ Static Function DamdfeVCP(oDamdfe, nLin )
 			oDamdfe:Say(nLin-nPosIniCtg, 0105,  Padr(Transform(aValePed[nCount]:_CNPJForn:TEXT, "@R 99.999.999/9999-99" ),18) , oFont10N)
 			
 			//Nro Comprovante
-			oDamdfe:Say(nLin-nPosIniCtg, 0205,  aValePed[nCount]:_nCompra:TEXT , oFont10N)
+			if ValAtrib( "aValePed[" + Alltrim(Str(nCount)) + "]:_nCompra" ) == "O" .And. !empty(aValePed[nCount]:_nCompra:TEXT)
+				oDamdfe:Say(nLin-nPosIniCtg, 0205,  aValePed[nCount]:_nCompra:TEXT , oFont10N)
+			endIf
 			
 		Next nCount
 	endIf
@@ -727,7 +730,7 @@ Local aChNFe	:= {}
 			If ValType(oNfe:_MDfe:_InfMDfe:_infDoc:_infMunDescarga) == "A"
 				For nY := 1 to len(oNfe:_MDfe:_InfMDfe:_infDoc:_infMunDescarga)
 					If ValAtrType(oNfe:_MDfe:_InfMDfe:_infDoc:_infMunDescarga[nY]:_infNFe) == "A"
-						For nP := 1 to Len(oNfe:_MD_infMunDescargafe:_InfMDfe:_infDoc:_infMunDescarga[nY]:_infNFe)
+						For nP := 1 to Len(oNfe:_MDfe:_InfMDfe:_infDoc:_infMunDescarga[nY]:_infNFe)
 							aadd(aChNFe, oNfe:_MDfe:_InfMDfe:_infDoc:_infMunDescarga[nY]:_infNFe[nP])			
 						Next nP
 					Else

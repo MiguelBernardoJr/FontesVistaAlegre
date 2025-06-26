@@ -204,7 +204,7 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  ) " + _ENTER_ +;
         "   --SELECT DISTINCT DIETA FROM HISTORICO " + _ENTER_ +;
         "  SELECT D.* " + _ENTER_ +;
-        " 	  , isnull((SELECT TOP(1) Z0I_NOTNOI FROM Z0I010 Z0I WHERE Z0I_FILIAL = FILIAL AND Z0I_LOTE = LOTE AND Z0I.D_E_L_E_T_ = ' ' AND Z0I_DATA = CONVERT(DATE,GETDATE(), 103) ),'') ULTIMANOITE " + _ENTER_ +;
+        " 	  , isnull((SELECT TOP(1) Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I_FILIAL = FILIAL AND Z0I_LOTE = LOTE AND Z0I.D_E_L_E_T_ = ' ' AND Z0I_DATA = CONVERT(DATE,GETDATE(), 103) ),'') ULTIMANOITE " + _ENTER_ +;
         " 	  , ROUND(ISNULL((SELECT TOP 1 HI.KG_MS FROM HISTORICO HI WHERE D.FILIAL = HI.Z0W_FILIAL AND D.LOTE = HI.Z0W_LOTE ORDER BY HI.Z0W_DATA DESC ),0) / (PESO + (DIAS_DE_COCHO * GMD_ESPERADO))*100,3) CMS" + _ENTER_ +;
         "     , H.DIETA[DIETA]" + _ENTER_ +;
         " 	  , H.KG_MS" + _ENTER_ +;
@@ -309,22 +309,24 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
             oResponse["error"] 				:= ""
             oResponse["totvs_sync_date"] 	:= cDateTime
 
+            cQry := "SELECT MAX(ZWS_CODIGO) AS ZWS_CODIGO FROM "+RetSqlName("ZWS")+" (nolock) WHERE D_E_L_E_T_ = ' '"
+            cCod := StrZero(Val(MpSySExecScalar( cQry , "ZWS_CODIGO")) + 1,TamSx3("ZWS_CODIGO")[1])
             // Gravação dos dados
             RecLock("ZWS", .T.)
-            ZWS->ZWS_CODIGO := GetSXENum('ZWS','ZWS_CODIGO')
-            ZWS->ZWS_TIPO   := "J"
-            ZWS->ZWS_STATUS := "R"
-            ZWS->ZWS_WSDATA := MsDate()
-            ZWS->ZWS_WSHORA := Time()
-            ZWS->ZWS_METODO := "POST NotasDasBaias"
-            ZWS->ZWS_CONTEU := cBody
-            ZWS->ZWS_RESULT := (cResult := oResponse:toJson())
-            ZWS->(MsUnLock())
+                ZWS->ZWS_CODIGO := cCod
+                ZWS->ZWS_TIPO   := "J"
+                ZWS->ZWS_STATUS := "R"
+                ZWS->ZWS_WSDATA := MsDate()
+                ZWS->ZWS_WSHORA := Time()
+                ZWS->ZWS_METODO := "POST NotasDasBaias"
+                ZWS->ZWS_CONTEU := cBody
+                ZWS->ZWS_RESULT := (cResult := oResponse:toJson())
+                ZWS->(MsUnLock())
             ConfirmSX8()
             // Fim da gravação
 
             /* MB : 17.06.2024 
-                -> Conforme sugestão do Toshio, estarei chamando o processamento do json recebido diretamente da
+                -> Confmando o procesorme sugestão do Toshio, estarei chasamento do json recebido diretamente da
                 WS após gravacao na tabela intermediária. */
             U_fIntegrar( 'U' )
         Else

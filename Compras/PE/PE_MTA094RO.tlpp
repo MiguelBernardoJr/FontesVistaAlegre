@@ -14,11 +14,11 @@
 User Function MTA094RO()
     Local aRotina := PARAMIXB[1]
     AAdd(aRotina,{"Visualizar Cotação"   ,"u_AnalCotacao", 0, 1, 0, nil,,})
-    aAdd(aRotina,{"Consulta de Alteração","U_COM15FW()"  , 0, 4, 0,.f.})
-
+    aAdd(aRotina,{"Consulta de Alteração","U_COM15FW()"  , 0, 4, 0, .f.})
 Return aRotina
 
-/* MB : 18/02/2025
+/* 
+    MB : 18/02/2025
     -> Funcao: A161MapCot()
         Faz a chamada a rotina de analisar cotacao
 */
