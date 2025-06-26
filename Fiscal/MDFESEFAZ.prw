@@ -33,7 +33,7 @@ User Function XmlMDFeSef(cFil)
 	Local lPosterior	:= Type("cPoster") == "C" .And. SubStr(cPoster,1,1) == "1"
 	
 	Private aUF		    := {}
-	Private cTipModal   := IIF(Empty(cModal),"1", substr(cModal,1,1))    
+	Private cTipModal   := IIF( type("cModal") == "U" .or. Empty(cModal), "1", substr(cModal,1,1))    
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³Preenchimento do Array de UF                                            ³
@@ -85,10 +85,11 @@ User Function XmlMDFeSef(cFil)
 		If cTipModal =="1"
 			cString += MDFeModal(cVeiculo,aNota)
 		else
-		    cString += MDFeModalA()
+		    cString += MDFeModalA(cVeiculo)
 		EndIf
 		cString += MDFeInfDoc(aNota)
-		cString += MDFeProdPred()
+		cString += MDFeSeg()
+		cString += MDFeProdPred()		
 		cString += MDFeTotais()
 		cString += MDFeLacres()
 		cString += MDFeAutoriz()
@@ -224,13 +225,13 @@ cString += '<xLgr>'+IIF(!lEndFis,ConvType(FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCO
 
 If !lEndFis
 	If FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCOB)[2]<>0
-		cString += '<nro>'+FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCOB)[3]+'</nro>'  
+		cString += '<nro>'+Alltrim(FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCOB)[3])+'</nro>'  
 	Else
 		cString += '<nro>'+"SN"+'</nro>' 
 	EndIf
 Else
 	If FisGetEnd(SM0->M0_ENDENT,SM0->M0_ESTENT)[2]<>0
-		cString += '<nro>'+FisGetEnd(SM0->M0_ENDENT,SM0->M0_ESTENT)[3]+'</nro>' 
+		cString += '<nro>'+Alltrim(FisGetEnd(SM0->M0_ENDENT,SM0->M0_ESTENT)[3])+'</nro>' 
 	Else
 		cString += '<nro>'+"SN"+'</nro>'
 	EndIf
@@ -329,7 +330,7 @@ Montagem do elemento InfModal do XML
 @Return	cString
 /*/
 //-----------------------------------------------------------------------
-Static Function MDFeModal (cVeiculo,aNota)
+Static Function MDFeModal(cVeiculo,aNota)
 
 Local aVeiSF2		:= {}
 Local aVeiculo		:= {}
@@ -339,8 +340,10 @@ Local cString 		:= ""
 Local ctpProp		:= ""
 Local nCapcM3		:= 0
 Local nX			:= 0
+local nCond			:= 0
 Local lPosterior	:= .F.
 Local lMotorista	:= .F. 
+local lCondutores	:= type("oGetCondut") == "O"
 
 Default aNota		:= {}
 
@@ -353,55 +356,65 @@ cString += '<infANTT>'
 cString += NfeTag('<RNTRC>',ConvType(SM0->M0_RNTRC))
 cString += getInfCIOT()
 cString += valePed(cVeiculo)
+cString += getInfCont()
 cString += getInfPag()
 cString += '</infANTT>'
 
 If !Empty(cVeiculo)
 
-	dbSelectArea('TRB')
-	TRB->(dbGoToP())
-	While TRB->(!Eof())
-		If !Empty(TRB->TRB_MARCA)
-			If Len(aVeiSF2) == 0
-				If TRB->TRB_VEICU1 == cVeiculo
-					aadd(aVeiSF2,TRB->TRB_VEICU1)
-				ElseIf TRB->TRB_VEICU2 == cVeiculo
-					aadd(aVeiSF2,TRB->TRB_VEICU2)
-				ElseIf TRB->TRB_VEICU3 == cVeiculo
-					aadd(aVeiSF2,TRB->TRB_VEICU3)
-				EndIf
-			EndIf
+	aadd(aVeiSF2, cVeiculo )
 
-			If !Empty(TRB->TRB_VEICU1) .And. TRB->TRB_VEICU1 <> cVeiculo .And. Len(aVeiSF2) < 4
-				If (aScan(aVeiSF2,{|x| x == TRB->TRB_VEICU1 })) == 0
-					aadd(aVeiSF2,TRB->TRB_VEICU1)
-				EndIf
-			EndIf
-			If !Empty(TRB->TRB_VEICU2) .And. TRB->TRB_VEICU2 <> cVeiculo .And. Len(aVeiSF2) < 4
-				If (aScan(aVeiSF2,{|x| x == TRB->TRB_VEICU2 })) == 0
-					aadd(aVeiSF2,TRB->TRB_VEICU2)
-				EndIf
-			EndIf
-			If !Empty(TRB->TRB_VEICU3) .And. TRB->TRB_VEICU3 <> cVeiculo .And. Len(aVeiSF2) < 4
-				If (aScan(aVeiSF2,{|x| x == TRB->TRB_VEICU3 })) == 0
-					aadd(aVeiSF2,TRB->TRB_VEICU3)
-				EndIf
-			EndIf
+	if type("oGetReb:aCols") == "A" 
+		for nX := 1 to len(oGetReb:aCols)
+			if oGetReb:aCols[nX,len(oGetReb:aCols[nX])] .or. empty(oGetReb:aCols[nX,1]) .or. (aScan(aVeiSF2,{|x| alltrim(x) == alltrim(oGetReb:aCols[nX,1]) })) > 0
+				loop
+			endIf
+			aadd(aVeiSF2,oGetReb:aCols[nX,1])
+			if Len(aVeiSF2) >= 4
+				exit
+			endif
+		next
+	endif
 
-			If Len(aVeiSF2) >= 4
-				Exit
-			EndIf
-		EndIf	
-		
-		TRB->(dbSkip())
-	EndDo
+	if Len(aVeiSF2) < 4
+		dbSelectArea('TRB')
+		TRB->(dbGoToP())
+		While TRB->(!Eof())
+			If !Empty(TRB->TRB_MARCA)
+				If !Empty(TRB->TRB_VEICU1) .And. TRB->TRB_VEICU1 <> cVeiculo .And. Len(aVeiSF2) < 4
+					If (aScan(aVeiSF2,{|x| x == TRB->TRB_VEICU1 })) == 0
+						aadd(aVeiSF2,TRB->TRB_VEICU1)
+					EndIf
+				EndIf
+				If !Empty(TRB->TRB_VEICU2) .And. TRB->TRB_VEICU2 <> cVeiculo .And. Len(aVeiSF2) < 4
+					If (aScan(aVeiSF2,{|x| x == TRB->TRB_VEICU2 })) == 0
+						aadd(aVeiSF2,TRB->TRB_VEICU2)
+					EndIf
+				EndIf
+				If !Empty(TRB->TRB_VEICU3) .And. TRB->TRB_VEICU3 <> cVeiculo .And. Len(aVeiSF2) < 4
+					If (aScan(aVeiSF2,{|x| x == TRB->TRB_VEICU3 })) == 0
+						aadd(aVeiSF2,TRB->TRB_VEICU3)
+					EndIf
+				EndIf
 
-	If Type("cPoster") == "C" .And. SubStr(cPoster,1,1) == "1" .and. Len(aVeiSF2) == 0 //"1-Sim" Vincula posterior
-		aadd(aVeiSF2,cVeiculo)
-	EndIf
+				If Len(aVeiSF2) >= 4
+					Exit
+				EndIf
+			EndIf	
+			
+			TRB->(dbSkip())
+		EndDo
+	endif
+
+	dbSelectArea("DA3")
+	dbSetOrder(1)
+	dbSelectArea("DUT")
+	dbSetOrder(1)
+	dbSelectArea("SA2")
+	dbSetOrder(1)
 
 	For nX := 1 To Len(aVeiSF2)
-		If HasTemplate("DCLEST")	//ExistTemplate("OMSA200P")
+		if existTemplate("TDCVG001")
 			dbSelectArea("SA4")
 			dbSetOrder(1)
 			dbSelectArea("LBW")
@@ -503,64 +516,75 @@ If !Empty(cVeiculo)
 				EndIf
 			EndIf
 		Else
-			dbSelectArea("DA3")
-			dbSetOrder(1)
-			dbSelectArea("DUT")
-			dbSetOrder(1)
-			DA3->(MsSeek(xFilial("DA3")+aVeiSF2[nX]))
+			if DA3->(MsSeek(xFilial("DA3")+aVeiSF2[nX]))
 
-			aadd(aVeiculo,{})
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_COD)					
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_PLACA) 
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_ESTPLA)
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_TARA)
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_LOJFOR)
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_CODFOR)
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_MOTORI)
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_FROVEI) //Frota 1-Própria;2-Terceiro;3-Agregado
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_CAPACM) //Capacidade Máxima
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_ALTINT) //Altura Interna
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_LARINT) //Largura Interna
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_COMINT) //Comprimento Interno
-			
-			If DUT->( msSeek( xFilial( "DUT" ) + DA3->DA3_TIPVEI ) )
-				aadd( aVeiculo[Len(aVeiculo)] , DUT->DUT_TIPROD ) 	//Tipo de Rodado
-				aadd( aVeiculo[Len(aVeiculo)] , DUT->DUT_TIPCAR ) 	//Tipo de Carroceria
-			Else
-				aadd( aVeiculo[Len(aVeiculo)] , "" ) 	//Tipo de Rodado
-				aadd( aVeiculo[Len(aVeiculo)] , "" ) 	//Tipo de Carroceria
-			Endif
-			//Retirada validação dos campos abaixo por já existirem em outro tabela
-			//aadd(aVeiculo[Len(aVeiculo)],Iif(DA3->(FieldPos("DA3_TPROD")) > 0 ,DA3->DA3_TPROD,"")) 	//Tipo de Rodado
-			//aadd(aVeiculo[Len(aVeiculo)],Iif(DA3->(FieldPos("DA3_TPCAR")) > 0, DA3->DA3_TPCAR,"")) 	//Tipo de Carroceria
-			aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_RENAVA) //Renavam
-			
-			aadd(aProp,{})
-			If !Empty(aVeiculo[Len(aVeiculo)][5]) .and. !Empty(aVeiculo[Len(aVeiculo)][6])
-				dbSelectArea("SA2")
-				dbSetOrder(1)
-				MsSeek(xFilial("SA2")+aVeiculo[Len(aVeiculo)][6]+aVeiculo[Len(aVeiculo)][5])
+				aadd(aVeiculo,{})
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_COD)					
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_PLACA) 
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_ESTPLA)
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_TARA)
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_LOJFOR)
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_CODFOR)
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_MOTORI)
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_FROVEI) //Frota 1-Própria;2-Terceiro;3-Agregado
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_CAPACM) //Capacidade Máxima
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_ALTINT) //Altura Interna
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_LARINT) //Largura Interna
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_COMINT) //Comprimento Interno
 				
-				aadd(aProp[Len(aProp)],SA2->A2_COD)
-				aadd(aProp[Len(aProp)],SA2->A2_CGC)
-				aadd(aProp[Len(aProp)],SA2->A2_RNTRC)
-				aadd(aProp[Len(aProp)],SA2->A2_NOME)
-				aadd(aProp[Len(aProp)],SA2->A2_INSCR)
-				aadd(aProp[Len(aProp)],SA2->A2_EST)	
-			EndIf
-			
-			If nX == 1
-				aadd(aMotorista,{})
-				If !Empty(aVeiculo[Len(aVeiculo)][7])
-					dbSelectArea("DA4")
-					dbSetOrder(1)
-					MsSeek(xFilial("DA4")+aVeiculo[Len(aVeiculo)][7])
+				If DUT->( msSeek( xFilial( "DUT" ) + DA3->DA3_TIPVEI ) )
+					aadd( aVeiculo[Len(aVeiculo)] , DUT->DUT_TIPROD ) 	//Tipo de Rodado
+					aadd( aVeiculo[Len(aVeiculo)] , DUT->DUT_TIPCAR ) 	//Tipo de Carroceria
+				Else
+					aadd( aVeiculo[Len(aVeiculo)] , "" ) 	//Tipo de Rodado
+					aadd( aVeiculo[Len(aVeiculo)] , "" ) 	//Tipo de Carroceria
+				Endif
+				//Retirada validação dos campos abaixo por já existirem em outro tabela
+				//aadd(aVeiculo[Len(aVeiculo)],Iif(DA3->(FieldPos("DA3_TPROD")) > 0 ,DA3->DA3_TPROD,"")) 	//Tipo de Rodado
+				//aadd(aVeiculo[Len(aVeiculo)],Iif(DA3->(FieldPos("DA3_TPCAR")) > 0, DA3->DA3_TPCAR,"")) 	//Tipo de Carroceria
+				aadd(aVeiculo[Len(aVeiculo)],DA3->DA3_RENAVA) //Renavam
+				
+				aadd(aProp,{})
+				If !Empty(aVeiculo[Len(aVeiculo)][5]) .and. !Empty(aVeiculo[Len(aVeiculo)][6])
+					if SA2->(dbSeek(xFilial("SA2")+aVeiculo[Len(aVeiculo)][6]+aVeiculo[Len(aVeiculo)][5]))
 					
-					aadd(aMotorista[Len(aMotorista)],DA4->DA4_COD)
-					aadd(aMotorista[Len(aMotorista)],DA4->DA4_NOME)
-					aadd(aMotorista[Len(aMotorista)],DA4->DA4_CGC)
+						aadd(aProp[Len(aProp)],SA2->A2_COD)
+						aadd(aProp[Len(aProp)],SA2->A2_CGC)
+						aadd(aProp[Len(aProp)],SA2->A2_RNTRC)
+						aadd(aProp[Len(aProp)],SA2->A2_NOME)
+						aadd(aProp[Len(aProp)],SA2->A2_INSCR)
+						aadd(aProp[Len(aProp)],SA2->A2_EST)	
+					endif
 				EndIf
-			EndIf
+				
+				If nX == 1
+					aadd(aMotorista,{})
+
+					dbSelectArea("DA4")
+					DA4->(dbSetOrder(1))
+					if lMotorista .and. !empty(cMotorista)
+						DA4->(MsSeek(xFilial("DA4")+cMotorista))
+					elseIf !Empty(aVeiculo[Len(aVeiculo)][7])
+						DA4->(MsSeek(xFilial("DA4")+aVeiculo[Len(aVeiculo)][7]))
+					endif
+
+					If DA4->(found())
+						aadd(aMotorista[Len(aMotorista)],DA4->DA4_COD)
+						aadd(aMotorista[Len(aMotorista)],DA4->DA4_NOME)
+						aadd(aMotorista[Len(aMotorista)],DA4->DA4_CGC)
+					EndIf
+
+					if lCondutores
+						aCond := oGetCondut:aCols
+						for nCond := 1 to len(aCond)
+							if aCond[nCond,len(aCond[nCond])] .or. empty(aCond[nCond,1]) .or. empty(aCond[nCond,2]) .or. aScan(aMotorista, { |X| alltrim(X[3]) == alltrim(aCond[nCond,1]) } ) > 0
+								loop
+							endIf
+							aadd(aMotorista,{"",aCond[nCond,2],aCond[nCond,1]})
+						next nCond
+					endIf
+				EndIf
+			endif
 		EndIf
 	Next	
 EndIf
@@ -611,23 +635,15 @@ For nX := 1 To Len(aVeiculo)
 			EndIf
 		EndIf
 
-		If lMotorista
-			dbSelectArea("DA4")
-			dbSetOrder(1)
-			MsSeek(xFilial("DA4")+cMotorista)
-
-			cString += '<condutor>'
-			cString +=   '<xNome>' + ConvType(DA4->DA4_NOME) +'</xNome>'
-			cString +=   '<CPF>'   + AllTrim(DA4->DA4_CGC) +'</CPF>'
-			cString += '</condutor>'
-		Else
-			If Len(aMotorista[nX]) > 0
+		for nCond := 1 to len(aMotorista)
+			If Len(aMotorista[nCond]) > 0
 				cString += '<condutor>'
-				cString +=   '<xNome>' + ConvType(aMotorista[nX][2]) +'</xNome>'
-				cString +=   '<CPF>'   + AllTrim(aMotorista[nX][3]) +'</CPF>'
+				cString +=   '<xNome>' + ConvType(aMotorista[nCond][2]) +'</xNome>'
+				cString +=   '<CPF>'   + AllTrim(aMotorista[nCond][3]) +'</CPF>'
 				cString += '</condutor>'
 			EndIf
-		EndIf
+		next nCond
+
 		cString +=   '<tpRod>' + alltrim(aVeiculo[nX][13]) + '</tpRod>'
 		cString +=   '<tpCar>' + alltrim(aVeiculo[nX][14]) + '</tpCar>'
 		if !empty( aVeiculo[nX][3] )
@@ -706,32 +722,42 @@ Montagem do elemento InfModal  Aéreo do XML
 @Return	cString
 /*/
 //-----------------------------------------------------------------------
-Static Function MDFeModalA ()
+Static Function MDFeModalA(cVeiculo)
 Local cString 		:= ""
-Local cData         := alltrim(cDatVoo)
+Local dData         := dDatVoo
+local cData			:= ""
 Local aMarVei       := {}
 Local cMarca        := ""
+local aArea			:= {}
 
-cData := substr(cData,5,4)+'-'+substr(cData,3,2)+'-'+substr(cData,1,2)
-aMarVei:= FWGetSX5("M6",DA3->DA3_MARVEI)
-If len(aMarVei) > 0
-	If len(aMarVei[1]) > 0
-		If len(aMarVei[1][4]) > 0
-	    	cMarca := aMarVei[1][4]
+default cVeiculo := ""
+
+dbSelectArea("DA3")
+aArea := DA3->(getArea())
+DA3->(dbSetOrder(1)) //DA3_FILIAL+DA3_COD
+if !empty(cVeiculo) .And. DA3->(DBSeek(xFilial("DA3")+cVeiculo))
+
+	cData := alltrim(str(year(dData))) + '-' + strzero(month(dData),2) + '-' + strzero(day(dData),2)
+	aMarVei:= FWGetSX5("M6",DA3->DA3_MARVEI)
+	If len(aMarVei) > 0
+		If len(aMarVei[1]) > 0
+			If len(aMarVei[1][4]) > 0
+				cMarca := aMarVei[1][4]
+			EndIf
 		EndIf
 	EndIf
-EndIf
 
-cString += '<infModal versaoModal="'/*+cVersao*/+'">'
-cString += '<aereo>'
-cString += '<nac>'+Alltrim(cMarca)+'</nac>'
-cString += '<matr>'+Alltrim(DA3->DA3_PLACA)+'</matr>'
-cString += '<nVoo>'+Alltrim(cNumVoo)+'</nVoo>'
-cString += '<cAerEmb>'+Alltrim(cAerOrig)+'</cAerEmb>'
-cString += '<cAerDes>'+Alltrim(cAerDest)+'</cAerDes>'
-cString += '<dVoo>'+cData+'</dVoo>'
-cString += '</aereo>'
-cString += '</infModal>'
+	cString += '<infModal versaoModal="'/*+cVersao*/+'">'
+	cString += '<aereo>'
+	cString += '<nac>'+Alltrim(cMarca)+'</nac>'
+	cString += '<matr>'+Alltrim(DA3->DA3_PLACA)+'</matr>'
+	cString += '<nVoo>'+Alltrim(cNumVoo)+'</nVoo>'
+	cString += '<cAerEmb>'+Alltrim(cAerOrig)+'</cAerEmb>'
+	cString += '<cAerDes>'+Alltrim(cAerDest)+'</cAerDes>'
+	cString += '<dVoo>'+cData+'</dVoo>'
+	cString += '</aereo>'
+	cString += '</infModal>'
+endif
 
 Return cString
 
@@ -1266,7 +1292,7 @@ Responsavel por montar a TAG <tpTransp>
 static function retTpTransp(cVeiculo)
 local cString	:= ""
 local cTpProp	:= ""
-local cTpTransp	:= "3"
+local cTpTransp	:= ""
 
 default cVeiculo	:= ""
 
@@ -1274,15 +1300,20 @@ if !Empty(cVeiculo)
 	DA3->(dbSetOrder(1)) //"DA3_FILIAL+DA3_COD"
 	if DA3->(MsSeek(xFilial("DA3")+cVeiculo)) .and. !(DA3->DA3_FROVEI == '1') //1-Propria / 2-Terceiro / 3-Agregado
 
-		cTpProp := posicione("SA2", 1, xfilial("SA2")+DA3->DA3_CODFOR+DA3->DA3_LOJFOR, "A2_TIPO")
+		if !empty(DA3->DA3_CODFOR)
+			cTpProp := posicione("SA2", 1, xfilial("SA2")+DA3->DA3_CODFOR+DA3->DA3_LOJFOR, "A2_TIPO")
 
-		if cTpProp == "F"
-			cTpTransp := "2"
-		elseIf cTpProp == "J"
-			cTpTransp := "1"
-		endIf
-
-		cString := '<tpTransp>' + cTpTransp + '</tpTransp>' // 1-ETC  2-TAC  3-CTC 
+			if cTpProp == "F"
+				cTpTransp := "2"
+			elseIf cTpProp == "J"
+				cTpTransp := "1"
+			elseif cTpProp == "X"
+				cTpTransp	:= "3"
+			endIf
+			if !empty(cTpTransp)
+				cString := '<tpTransp>' + cTpTransp + '</tpTransp>' // 1-ETC  2-TAC  3-CTC 
+			endif
+		endif
 	endIf
 endIf
 
@@ -1413,5 +1444,131 @@ if type("oGettpCarga") <> "U" .and.;
 		endif
 	cString += "</prodPred>"
 EndIf
+
+return cString
+
+/*/{Protheus.doc} MDFeSeg()
+Retorna o conjunto de tag sobre o seguro
+
+@Return	cString
+/*/
+static function MDFeSeg()
+	local cString	 := ""
+	local nInfSeg	 := 0
+	local cXmlSeg	 := ""
+	local cRespSeg	 := ""
+	local cCNPJ		 := ""
+	local cCPF		 := ""
+	local cSeg		 := ""
+	local cCNPJSeg	 := ""
+	local cApolice	 := ""
+	local aAverb	 := {}
+	local nAverb	 := 0
+	local cAverb	 := ""
+
+	if type("aInfSeg") == "A" .and. len(aInfSeg) > 0
+
+		// Estrutura do array aInfSeg, é um subconjunto de:
+		// <seg> 0 - n
+		//		<infResp> 1 - 1 
+		//			1 <respSeg>	-> 1 - 1 
+		//			2 <CNPJ> 	-> 1 - 1 
+		//			3 <CPF>		-> 1 - 1 
+		//		<infSeg> 0 - 1 
+		//			4 <xSeg>	-> 1 - 1 
+		//			5 <CNPJ>	-> 1 - 1 
+		//		6 <nApol>	-> 0 - 1 
+		//		7 <nAver>	-> 0 - n 
+
+		cString := ''
+		for nInfSeg := 1 to len(aInfSeg)
+			if !aInfSeg[nInfSeg][len( aInfSeg[nInfSeg] )] .and. !empty(aInfSeg[nInfSeg][1])
+				cRespSeg := aInfSeg[nInfSeg][1]
+				cCNPJ := aInfSeg[nInfSeg][2]
+				cCPF := aInfSeg[nInfSeg][3]
+				cSeg := aInfSeg[nInfSeg][4]
+				cCNPJSeg := aInfSeg[nInfSeg][5]
+				cApolice := aInfSeg[nInfSeg][6]
+				aAverb := aInfSeg[nInfSeg][7]
+
+				cXmlSeg := '<seg>'
+				cXmlSeg += '<infResp>'
+				cXmlSeg += '<respSeg>' + cRespSeg + '</respSeg>'
+				if !empty(cCNPJ)
+					cXmlSeg += '<CNPJ>' + cCNPJ + '</CNPJ>'
+				elseif !empty(cCPF)
+					cXmlSeg += '<CPF>' + cCPF + '</CPF>'
+				endif
+				cXmlSeg += '</infResp>'
+				
+				if !empty(cSeg) .or. !empty(cCNPJSeg)
+					cXmlSeg += '<infSeg>'
+					if !empty(cSeg)
+						cXmlSeg += '<xSeg>' +  alltrim(cSeg) + '</xSeg>'
+					endif
+					if !empty(cCNPJSeg)
+						cXmlSeg += '<CNPJ>' + cCNPJSeg + '</CNPJ>'
+					endif
+					cXmlSeg += '</infSeg>'
+				endif
+				
+				if !empty(cApolice)
+					cXmlSeg += '<nApol>' +  alltrim(cApolice) + '</nApol>'
+				endif
+
+				for nAverb := 1 to len(aAverb)
+					if !aAverb[nAverb][len( aAverb[nAverb] )]
+						cAverb := alltrim(aAverb[nAverb][1])
+						if !empty(cAverb)
+							cXmlSeg += '<nAver>' + cAverb + '</nAver>'
+						endif
+					endif
+				next
+
+				cXmlSeg += '</seg>'
+				cString += cXmlSeg
+			endif
+		next
+
+	endif
+
+return cString
+
+/*/{Protheus.doc} getInfCont
+	Retorna o conjunto de tag sobre o infContrante
+
+/*/
+static function getInfCont()
+	local cString	 := ""
+	local nInfCont	 := 0
+	local aInfCont	 := if(type("oGetInfCnt:aCols")=="A",oGetInfCnt:aCols,{})
+
+	for nInfCont := 1 to len(aInfCont)
+		if aInfCont[nInfCont][len( aInfCont[nInfCont] )] .or. (empty(aInfCont[nInfCont][1]) .and. empty(aInfCont[nInfCont][2]) .and. empty(aInfCont[nInfCont][3]))
+			loop
+		endif
+		aInfCont[nInfCont][2] := alltrim(strTran(strTran(strTran(aInfCont[nInfCont][2],"."),"/"),"-"))
+		cString += '<infContratante>'
+		if !empty(aInfCont[nInfCont][1])
+			cString += 		'<xNome>' + alltrim(NoAcento(SubStr(aInfCont[nInfCont][1],1,60))) + '</xNome>'
+		endif
+		if !empty(aInfCont[nInfCont][3])
+			aInfCont[nInfCont][3] := alltrim(strTran(strTran(strTran(aInfCont[nInfCont][3],"."),"/"),"-"))
+			cString +=  '<idEstrangeiro>' + aInfCont[nInfCont][3] + '</idEstrangeiro>'
+		elseif len(aInfCont[nInfCont][2]) == 11
+			cString +=  '<CPF>' + aInfCont[nInfCont][2] + '</CPF>'
+		else
+			cString +=  '<CNPJ>'+ aInfCont[nInfCont][2] + '</CNPJ>'
+		endif
+		if len(aInfCont[nInfCont]) > 5
+			if !empty(aInfCont[nInfCont][4]) .and. !empty(aInfCont[nInfCont][5])
+				cString += '<infContrato>'
+				cString += NfeTag('<NroContrato>', ConvType(aInfCont[nInfCont][4],20,0))
+				cString += NfeTag('<vContratoGlobal>', ConvType(aInfCont[nInfCont][5],16,2))
+				cString += '</infContrato>'
+			endif
+		endif
+		cString += '</infContratante>'
+	next
 
 return cString

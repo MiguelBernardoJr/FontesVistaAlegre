@@ -180,7 +180,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry += "  		 WHERE D1_DTDIGIT						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'  " + CRLF
 	//_cQry += "				 --D1_EMISSAO						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'  " + CRLF
 	_cQry += "  		   AND D1.D_E_L_E_T_					=			' '   " + CRLF
-	_cQry += "  		   AND D1.D1_GRUPO						IN			('01','05','BOV')  " + CRLF
+	_cQry += "  		   AND D1.D1_GRUPO						IN			('01','05','BOV','BMS')  " + CRLF
 	_cQry += "  		   AND D1.D1_QUANT						>			0  " + CRLF	
 	_cQry += "    " + CRLF
 	_cQry += "  		UNION ALL  " + CRLF
@@ -223,7 +223,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry += "  		   AND B1.D_E_L_E_T_					=			' '   " + CRLF
 	_cQry += "  		 WHERE D2_EMISSAO						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'  " + CRLF
 	_cQry += "  		   AND D2.D_E_L_E_T_					=			' '   " + CRLF
-	_cQry += "  		   AND D2.D2_GRUPO						IN			('01','05','BOV')  " + CRLF
+	_cQry += "  		   AND D2.D2_GRUPO						IN			('01','05','BOV','BMS')  " + CRLF
 	_cQry += "  		   AND D2.D2_QUANT						>			0	  " + CRLF
 	
 	If Select(cAlias) > 0
@@ -330,7 +330,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry1 += " 		 WHERE D3.D3_EMISSAO						BETWEEN		'"+dToS(MV_PAR01)+"'		AND		'"+dToS(MV_PAR02)+"' " + CRLF
 	_cQry1 += " 		   AND D3.D3_TM							IN			('499','999') " + CRLF
 	_cQry1 += " 		   AND D3.D3_CF							IN			('DE4','RE4') " + CRLF
-	_cQry1 += " 		   AND D3.D3_GRUPO						IN			('01','05','BOV') " + CRLF
+	_cQry1 += " 		   AND D3.D3_GRUPO						IN			('01','05','BOV','BMS') " + CRLF
 	_cQry1 += " 		   AND D3.D_E_L_E_T_					=			' ' " + CRLF
 	_cQry1 += " 		   AND D3.D3_ESTORNO						<>			'S' " + CRLF
 	_cQry1 += " 	  ORDER BY D3.D3_EMISSAO, D3.D3_FILIAL, D3.D3_NUMSEQ, D3.D3_CHAVE   " + CRLF
@@ -420,7 +420,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry1 += " 		   AND B1.D_E_L_E_T_					=			' ' " + CRLF
 	_cQry1 += " 		 WHERE D3.D3_EMISSAO					BETWEEN		'"+dToS(MV_PAR01)+"'		AND		'"+dToS(MV_PAR02)+"' " + CRLF
 	_cQry1 += " 		   AND D3.D3_TM							IN			('"+MV_PAR04+"') " + CRLF
-	_cQry1 += " 		   AND D3.D3_GRUPO						IN			('01','05','BOV') " + CRLF
+	_cQry1 += " 		   AND D3.D3_GRUPO						IN			('01','05','BOV','BMS') " + CRLF
 	_cQry1 += " 		   AND D3.D_E_L_E_T_					=			' ' " + CRLF
 	_cQry1 += " 		   AND D3.D3_ESTORNO						<>			'S' " + CRLF
 	_cQry1 += " 	  ORDER BY D3.D3_EMISSAO, D3.D3_FILIAL, D3.D3_NUMSEQ, D3.D3_CHAVE   " + CRLF
@@ -514,7 +514,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry1 += " 		   AND B1.D_E_L_E_T_					=			' ' " + CRLF
 	_cQry1 += " 		 WHERE D3.D3_EMISSAO					BETWEEN		'"+dToS(MV_PAR01)+"'		AND		'"+dToS(MV_PAR02)+"' " + CRLF
 	_cQry1 += " 		   AND D3.D3_TM							IN			('"+MV_PAR03+"') " + CRLF
-	_cQry1 += " 		   AND D3.D3_GRUPO						IN			('01','05','BOV') " + CRLF
+	_cQry1 += " 		   AND D3.D3_GRUPO						IN			('01','05','BOV','BMS') " + CRLF
 	_cQry1 += " 		   AND D3.D_E_L_E_T_					=			' ' " + CRLF
 	_cQry1 += " 		   AND D3.D3_ESTORNO						<>			'S' " + CRLF
 	_cQry1 += " 	  ORDER BY D3.D3_EMISSAO, D3.D3_FILIAL, D3.D3_NUMSEQ, D3.D3_CHAVE   " + CRLF
@@ -660,7 +660,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry += "     	           AND D1F.D1_DOC					=			F8_NFDIFRE " +CRLF
 	_cQry += "     	           AND D1F.D1_SERIE					=			F8.F8_SEDIFRE " +CRLF
 	_cQry += "     	           AND D1F.D1_COD					=			D1.D1_COD " +CRLF
-	_cQry += "  			 WHERE D1.D1_GRUPO					IN			('01','05','BOV') " +CRLF
+	_cQry += "  			 WHERE D1.D1_GRUPO					IN			('01','05','BOV','BMS') " +CRLF
 	_cQry += "  			   AND D1.D1_DTDIGIT				BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "  			   AND D1.D_E_L_E_T_				=			' ' " +CRLF
 	_cQry += "  			   AND D1.D1_TIPO					=			'N' " +CRLF
@@ -909,7 +909,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry1 += "  		 WHERE D3_EMISSAO					BETWEEN			'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry1 += "  		   AND D3_TM						NOT IN			('001','002','011','511','499','999')  " + CRLF
 	_cQry1 += "  		   AND D3_CF 						LIKE 			'RE%'
-	_cQry1 += "  		   AND D3_GRUPO						IN				('01',',05','BOV')  " + CRLF
+	_cQry1 += "  		   AND D3_GRUPO						IN				('01',',05','BOV','BMS')  " + CRLF
 	_cQry1 += "  		   AND D3_QUANT						<>				0  " + CRLF
 	_cQry1 += "  		   AND D3.D_E_L_E_T_				=				' '   " + CRLF
 	_cQry1 += " 		   AND D3.D3_ESTORNO				<>				'S' " + CRLF
@@ -1038,7 +1038,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry1 += "  			   AND D2.D_E_L_E_T_			=					' '  " + CRLF
 	_cQry1 += "  			   AND D2.D2_QUANT				>					0  " + CRLF
 	_cQry1 += "  			   AND D2.D2_TIPO				=					'N'  " + CRLF
-	_cQry1 += "  			   AND D2.D2_GRUPO IN ('BOV','01','05') " + CRLF
+	_cQry1 += "  			   AND D2.D2_GRUPO IN ('BOV','01','05','BMS') " + CRLF
 	_cQry1 += "  		  ORDER BY D2.D2_EMISSAO  " + CRLF
 	
 	
@@ -1137,7 +1137,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry1 += "  		 WHERE D3_EMISSAO					BETWEEN			'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry1 += "  		   AND D3_TM						NOT IN			('001','002','011','511','499','999')  " + CRLF
 	_cQry1 += "  		   AND D3_CF 						LIKE 			'DE%'
-	_cQry1 += "  		   AND D3_GRUPO						IN				('01',',05','BOV')  " + CRLF
+	_cQry1 += "  		   AND D3_GRUPO						IN				('01',',05','BOV','BMS')  " + CRLF
 	_cQry1 += "  		   AND D3_QUANT						<>				0  " + CRLF
 	_cQry1 += "  		   AND D3.D_E_L_E_T_				=				' '   " + CRLF
 	_cQry1 += " 		   AND D3.D3_ESTORNO				<>				'S' " + CRLF
@@ -1255,7 +1255,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry += "  				ON F4.F4_CODIGO					=			D1.D1_TES " +CRLF
 	_cQry += "  			   AND F4.F4_TRANFIL				<>			'1' " +CRLF
 	_cQry += "  			   AND F4.D_E_L_E_T_				=			' ' " +CRLF
-	_cQry += "  			 WHERE D1.D1_GRUPO					IN			('01','05','BOV') " +CRLF
+	_cQry += "  			 WHERE D1.D1_GRUPO					IN			('01','05','BOV','BMS') " +CRLF
 	_cQry += "  			   AND D1.D1_EMISSAO				BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "  			   AND D1.D_E_L_E_T_				=			' ' " +CRLF
 	_cQry += "  			   AND D1.D1_TIPO					=			'D' " +CRLF
@@ -1476,7 +1476,7 @@ oExcel:AddTable(  cWorkSheet, cTitulo)
 	_cQry1 += "  			   AND D2.D_E_L_E_T_			=					' '  " + CRLF
 	_cQry1 += "  			   AND D2.D2_QUANT				>					0  " + CRLF
 	_cQry1 += "  			   AND D2.D2_TIPO				=					'D'  " + CRLF
-	_cQry1 += "  			   AND D2.D2_GRUPO IN ('BOV','01','05') " + CRLF
+	_cQry1 += "  			   AND D2.D2_GRUPO IN ('BOV','BMS','01','05') " + CRLF
 	_cQry1 += "  		  ORDER BY D2.D2_EMISSAO  " + CRLF
 	
 	
@@ -1578,7 +1578,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   				ON F4.F4_CODIGO					=			D1.D1_TES  " + CRLF
 	_cQry += "   			   AND F4.F4_TRANFIL				<>			'1'  " + CRLF
 	_cQry += "   			   AND F4.D_E_L_E_T_				=			' '  " + CRLF
-	_cQry += "   			 WHERE D1.D1_GRUPO					IN			('01','05','BOV')  " + CRLF
+	_cQry += "   			 WHERE D1.D1_GRUPO					IN			('01','05','BOV','BMS')  " + CRLF
 	_cQry += "   			   AND D1.D1_EMISSAO				BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   			   AND D1.D_E_L_E_T_				=			' '  " + CRLF
 	_cQry += "   			   AND D1.D1_TIPO					=			'N'  " + CRLF
@@ -1605,7 +1605,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   			   AND B1.D_E_L_E_T_			=					' '   " + CRLF
 	_cQry += "   			 WHERE D2.D2_EMISSAO			BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   			   AND D2.D_E_L_E_T_			=					' '   " + CRLF
-	_cQry += "   			   AND D2.D2_GRUPO				IN					('01','05','BOV')  " + CRLF
+	_cQry += "   			   AND D2.D2_GRUPO				IN					('01','05','BOV','BMS')  " + CRLF
 	_cQry += "   			   AND D2.D2_QUANT				>					0   " + CRLF
 	_cQry += " 		  GROUP BY D2.D2_FILIAL, B1.B1_DESC " + CRLF
 	_cQry += "   		  --ORDER BY D2.D2_EMISSAO   " + CRLF
@@ -1633,7 +1633,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND B1.D_E_L_E_T_					=			' '    " + CRLF
 	_cQry += "   		 WHERE D1_DTDIGIT						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D1.D_E_L_E_T_					=			' '    " + CRLF
-	_cQry += "   		   AND D1.D1_GRUPO						IN			('01','05','BOV')   " + CRLF
+	_cQry += "   		   AND D1.D1_GRUPO						IN			('01','05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D1.D1_QUANT						>			0   " + CRLF
 	_cQry += "     GROUP BY D1.D1_FILIAL, B1.B1_DESC " + CRLF
 	_cQry += "   		UNION ALL   " + CRLF
@@ -1658,7 +1658,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND B1.D_E_L_E_T_					=			' '    " + CRLF
 	_cQry += "   		 WHERE D2_EMISSAO						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D2.D_E_L_E_T_					=			' '    " + CRLF
-	_cQry += "   		   AND D2.D2_GRUPO						IN			('01','05','BOV')   " + CRLF
+	_cQry += "   		   AND D2.D2_GRUPO						IN			('01','05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D2.D2_QUANT						>			0	   " + CRLF
 	_cQry += " 		   GROUP BY D2.D2_FILIAL, B1.B1_DESC " + CRLF
 	_cQry += " 		), " + CRLF
@@ -1679,7 +1679,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND F5.D_E_L_E_T_				=				' '    " + CRLF
 	_cQry += "   		 WHERE D3_EMISSAO					BETWEEN			'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D3_TM						NOT IN			('001','002','011','511','499','999')   " + CRLF
-	_cQry += "   		   AND D3_GRUPO						IN				('01',',05','BOV')   " + CRLF
+	_cQry += "   		   AND D3_GRUPO						IN				('01',',05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D3_QUANT						<>				0   " + CRLF
 	_cQry += "   		   AND D3.D_E_L_E_T_				=				' '    " + CRLF
 	_cQry += " 		       AND D3.D3_ESTORNO					<>				'S' " + CRLF
@@ -1869,7 +1869,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   				ON F4.F4_CODIGO					=			D1.D1_TES  " + CRLF
 	_cQry += "   			   AND F4.F4_TRANFIL				<>			'1'  " + CRLF
 	_cQry += "   			   AND F4.D_E_L_E_T_				=			' '  " + CRLF
-	_cQry += "   			 WHERE D1.D1_GRUPO					IN			('01','05','BOV')  " + CRLF
+	_cQry += "   			 WHERE D1.D1_GRUPO					IN			('01','05','BOV','BMS')  " + CRLF
 	_cQry += "   			   AND D1.D1_EMISSAO				BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   			   AND D1.D_E_L_E_T_				=			' '  " + CRLF
 	_cQry += "   			   AND D1.D1_TIPO					IN			('N','D')  " + CRLF
@@ -1923,7 +1923,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND B1.D_E_L_E_T_					=			' '    " + CRLF
 	_cQry += "   		 WHERE D1_DTDIGIT						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D1.D_E_L_E_T_					=			' '    " + CRLF
-	_cQry += "   		   AND D1.D1_GRUPO						IN			('01','05','BOV')   " + CRLF
+	_cQry += "   		   AND D1.D1_GRUPO						IN			('01','05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D1.D1_QUANT						>			0   " + CRLF
 	_cQry += "     GROUP BY D1.D1_FILIAL, B1.B1_DESC " + CRLF
 	_cQry += "   		UNION ALL   " + CRLF
@@ -1948,7 +1948,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND B1.D_E_L_E_T_					=			' '    " + CRLF
 	_cQry += "   		 WHERE D2_EMISSAO						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D2.D_E_L_E_T_					=			' '    " + CRLF
-	_cQry += "   		   AND D2.D2_GRUPO						IN			('01','05','BOV')   " + CRLF
+	_cQry += "   		   AND D2.D2_GRUPO						IN			('01','05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D2.D2_QUANT						>			0	   " + CRLF
 	_cQry += " 		   GROUP BY D2.D2_FILIAL, B1.B1_DESC " + CRLF
 	_cQry += " 		), " + CRLF
@@ -1969,7 +1969,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND F5.D_E_L_E_T_				=				' '    " + CRLF
 	_cQry += "   		 WHERE D3_EMISSAO					BETWEEN			'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D3_TM						NOT IN			('001','002','011','511','499','999')   " + CRLF
-	_cQry += "   		   AND D3_GRUPO						IN				('01',',05','BOV')   " + CRLF
+	_cQry += "   		   AND D3_GRUPO						IN				('01',',05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D3_QUANT						<>				0   " + CRLF
 	_cQry += "   		   AND D3.D_E_L_E_T_				=				' '    " + CRLF
 	_cQry += " 		   	   AND D3.D3_ESTORNO					<>				'S'  " + CRLF
@@ -2150,7 +2150,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   				ON F4.F4_CODIGO					=			D1.D1_TES  " + CRLF
 	_cQry += "   			   AND F4.F4_TRANFIL				<>			'1'  " + CRLF
 	_cQry += "   			   AND F4.D_E_L_E_T_				=			' '  " + CRLF
-	_cQry += "   			 WHERE D1.D1_GRUPO					IN			('01','05','BOV')  " + CRLF
+	_cQry += "   			 WHERE D1.D1_GRUPO					IN			('01','05','BOV','BMS')  " + CRLF
 	_cQry += "   			   AND D1.D1_EMISSAO				BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   			   AND D1.D_E_L_E_T_				=			' '  " + CRLF
 	_cQry += "   			   AND D1.D1_TIPO					IN			('N','D')  " + CRLF
@@ -2205,7 +2205,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND B1.D_E_L_E_T_					=			' '    " + CRLF
 	_cQry += "   		 WHERE D1_DTDIGIT						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D1.D_E_L_E_T_					=			' '    " + CRLF
-	_cQry += "   		   AND D1.D1_GRUPO						IN			('01','05','BOV')   " + CRLF
+	_cQry += "   		   AND D1.D1_GRUPO						IN			('01','05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D1.D1_QUANT						>			0   " + CRLF
 	_cQry += "     GROUP BY D1.D1_FILIAL, B1.B1_DESC " + CRLF
 	_cQry += "   		UNION ALL   " + CRLF
@@ -2230,7 +2230,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND B1.D_E_L_E_T_					=			' '    " + CRLF
 	_cQry += "   		 WHERE D2_EMISSAO						BETWEEN		'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D2.D_E_L_E_T_					=			' '    " + CRLF
-	_cQry += "   		   AND D2.D2_GRUPO						IN			('01','05','BOV')   " + CRLF
+	_cQry += "   		   AND D2.D2_GRUPO						IN			('01','05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D2.D2_QUANT						>			0	   " + CRLF
 	_cQry += " 		   GROUP BY D2.D2_FILIAL, B1.B1_DESC " + CRLF
 	_cQry += " 		), " + CRLF
@@ -2251,7 +2251,7 @@ cTitulo += " - Dt. Referência: " + DtoC(MV_PAR01) + " - " + DtoC(MV_PAR02)
 	_cQry += "   		   AND F5.D_E_L_E_T_				=				' '    " + CRLF
 	_cQry += "   		 WHERE D3_EMISSAO					BETWEEN			'"+dToS(MV_PAR01)+"' AND '"+dToS(MV_PAR02)+"'   " + CRLF
 	_cQry += "   		   AND D3_TM						NOT IN			('001','002','011','511','499','999')   " + CRLF
-	_cQry += "   		   AND D3_GRUPO						IN				('01',',05','BOV')   " + CRLF
+	_cQry += "   		   AND D3_GRUPO						IN				('01',',05','BOV','BMS')   " + CRLF
 	_cQry += "   		   AND D3_QUANT						<>				0   " + CRLF
 	_cQry += "   		   AND D3.D_E_L_E_T_				=				' '    " + CRLF
 	_cQry += " 		   	   AND D3.D3_ESTORNO					<>				'S' " + CRLF
@@ -2544,7 +2544,7 @@ _cQry += "	 join SYS_COMPANY SM0 on" +CRLF
 _cQry += "	      SM0.M0_CODIGO = '01'" +CRLF
 _cQry += "      and M0_CODFIL = B2_FILIAL" +CRLF
 _cQry += "	  and SM0.D_E_L_E_T_ = ' ' " +CRLF
-_cQry += "    where B1_GRUPO IN ('BOV','01','05') " +CRLF //_cQry += "	  AND SB2.B2_FILIAL IN ('01','02','03','05','12','13','20','21','22','23','24','25','26','27','28','29','30','31','32') " 
+_cQry += "    where B1_GRUPO IN ('BOV','BMS','01','05') " +CRLF //_cQry += "	  AND SB2.B2_FILIAL IN ('01','02','03','05','12','13','20','21','22','23','24','25','26','27','28','29','30','31','32') " 
 _cQry += "	  AND SB2.D_E_L_E_T_ = ' ' " +CRLF
 _cQry += "	  AND B2_BLOQUEI = ' '  " +CRLF
 _cQry += "	  AND B2_LOCAL <> ' '  " +CRLF
