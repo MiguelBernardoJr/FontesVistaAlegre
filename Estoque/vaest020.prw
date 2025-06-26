@@ -497,7 +497,7 @@ User function ProcZ02(aDados, cSequencia, cArmazem)
                             .T./* lConOut */,;
                             /* lAlert */ )
         
-            aAuxNumOp := FWMsgRun(, {|| ProcLote( aDados[i,04], Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,09], aDados[i,10] ) },;
+            FWMsgRun(, {|| aAuxNumOp := ProcLote( aDados[i,04], Upper(aDados[i,06]), Val(aDados[i,08]), aDados[i,09], aDados[i,10] ) },;
                                 "Processando [VAEST020: ProcZ02]",;
                                 "Processando dados ["+ StrZero(i,5) + " de " + StrZero(Len(aDados),5) + ": " + AllTrim(aDados[i,04]) +"]")
             AAdd( aNumOp , aAuxNumOp )

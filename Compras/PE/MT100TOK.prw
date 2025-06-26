@@ -106,6 +106,7 @@ Static Function Envmail()
 	Local nPosProd  := 0
 	Local nPosPed   := 0
 	Local oExecZCC  := nil 
+	Local cPara 	:= GETMV("MV_EVM103L",,"luana.santana@vistaalegre.agr.br,carlos.silva@vistaalegre.agr.br")
 
 	cMsg := '<table style="width: 100%; border-collapse: collapse; border: 1px solid #000;"> ' + CRLF 
 	cMsg +=	'	<thead> ' + CRLF
@@ -137,9 +138,9 @@ Static Function Envmail()
 	cQry += " ZCC_FILIAL = ZBC_FILIAL " + CRLF
 	cQry += " AND ZBC_CODIGO = ZCC_CODIGO " + CRLF
 	cQry += " AND ZCC.D_E_L_E_T_ = '' " + CRLF
-	cQry += " JOIN "+RetSqlNAme("SA3")+" SA3 ON ZCC_CODCOR = A3_COD " + CRLF
+	cQry += " LEFT  JOIN "+RetSqlNAme("SA3")+" SA3 ON ZCC_CODCOR = A3_COD " + CRLF
 	cQry += " AND SA3.D_E_L_E_T_ = '' " + CRLF
-	cQry += " JOIN SA2010 SA2 ON A2_COD = ZCC_CODFOR " + CRLF
+	cQry += " LEFT JOIN "+RetSqlNAme("SA2")+" SA2 ON A2_COD = ZCC_CODFOR " + CRLF
 	cQry += " AND A2_LOJA = ZCC_LOJFOR " + CRLF
 	cQry += " AND SA2.D_E_L_E_T_ = '' " + CRLF
 	cQry += " WHERE ZBC.D_E_L_E_T_ = '' " + CRLF
@@ -157,7 +158,7 @@ Static Function Envmail()
 		cMsgAux += '<tr style="font-family: Arial, sans-serif; font-size: 14px; text-align: left;"> ' + CRLF
 		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+(cAlias)->ZCC_CODIGO+'</td> ' + CRLF
 		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+ALLTRIM((cAlias)->A3_NOME)+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+aCols[nI][nPosDoc]+'</td> ' + CRLF
+		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cNFiscal + "-" +cSerie+'</td> ' + CRLF
 		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+ALLTRIM((cAlias)->A2_NOME)+'</td> ' + CRLF
 		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosPS] )+'</td> ' + CRLF
 		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosPC] )+'</td> ' + CRLF
@@ -167,7 +168,7 @@ Static Function Envmail()
 		
 		(cAlias)->(DbCloseArea())
 		
-		endif 
+		endif
 	Next nI
 	
 	if !Empty(cMsgAux)
@@ -175,12 +176,12 @@ Static Function Envmail()
 		cMsg += ' </tbody> ' + CRLF
 		cMsg += ' </table> ' + CRLF
 
-		Processa({ || u_EnvMail("igor.oliveira@vistaalegre.agr.br"	,;			//_cPara
-			"" 				,;		//_cCc
-			""					,;		//_cBCC
-			"TESTE ENVIO DE NF"			,;		//_cTitulo
-			nil				,;		//_aAnexo
-			cMsg				,;		//_cMsg
+		Processa({ || u_EnvMail(/* cPara */"igor.oliveira@vistaalegre.agr.br"	,;			//_cPara
+			"" 					,;	//_cCc
+			""					,;	//_cBCC
+			"Entrada de Gado - "+ Alltrim(Posicione("SA2",1,FWxFilial("SA2")+ca100For+cLoja,"A2_NOME"))+" - "+dToC(dDEmissao)+"",;		//_cTitulo
+			nil					,;	//_aAnexo
+			cMsg				,;	//_cMsg
 			.T.)},"Enviando e-mail...")	//_lAudit
 	endif
 

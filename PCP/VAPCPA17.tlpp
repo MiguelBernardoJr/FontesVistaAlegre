@@ -1,3 +1,5 @@
+
+
 #INCLUDE "TOTVS.CH"
 #INCLUDE "TLPP-CORE.TH"
 #INCLUDE "FWMVCDEF.CH"
@@ -1280,7 +1282,6 @@ Return nil
 //Validação dos campos Z06_TRATO Z06_DIETA Z06_KGMSTR
 User Function VAPCP05VALID()
 	Local lRet 		:= .T. as Logical
-
 
 	if FUNNAME() == "VAPCPA17"
 		lRet := U_VAPCP17VALID()

@@ -89,6 +89,7 @@ Endif
          	nPosDTES	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_DESCT"})
          	nPosICMS	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_VALICM"})
 			nPosPesoX 	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_PESO"})
+			nPosPeCH 	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_PESCH"})
 
            	aCols[val(cItem),nPosDesc] 		:= Posicione("SB1",1,xFilial("SB1") + aCols[val(cItem),nPosCod]  ,"B1_DESC")
            	aCols[val(cItem),nPosDCC] 		:= Posicione("CTT",1,xFilial("CTT") + aCols[val(cItem),nPosCC]   ,"CTT_DESC01")
@@ -96,7 +97,6 @@ Endif
            	aCols[val(cItem),nPosDCLVL] 	:= Posicione("CTH",1,xFilial("CTH") + aCols[val(cItem),nPosCLVL] ,"CTH_DESC01")
            	aCols[val(cItem),nPosDTES] 		:= Posicione("SF4",1,xFilial("SF4") + aCols[val(cItem),nPosTES] ,"F4_TEXTO")
 
-			
 			/* 
 				funcao: NGASX7OP(), no fonte: MNTUTIL.PRX
 					Iif(FindFunction("NGASX7OP"),NGASX7OP(),"")  
@@ -130,8 +130,22 @@ Endif
 			// 	// comentado no dia 30.03.2020. Calculo do imposto total ICMS errado.
 			// Endif
           	if SC7->C7_X_PESO  > 0
-	           	aCols[val(cItem),nPosPesoX] 	:= SC7->C7_X_PESO 
+	           	aCols[val(cItem),nPosPesoX] := SC7->C7_X_PESO
 			Endif
+
+			IF Alltrim(SB1->B1_GRUPO) $ '01|BOV'
+				cQry := " SELECT ZPB_PESOL " + CRLF
+				cQry += " FROM "+RetSqlNAme("ZPB")+" ZPB" + CRLF
+				cQry += " WHERE ZPB_CODFOR = '"+SC7->C7_FORNECE+"'" + CRLF
+				cQry += " AND ZPB_LOJFOR = '"+SC7->C7_LOJA+"'" + CRLF
+				cQry += " AND ZPB_NOTFIS LIKE '%"+cNFiscal+"%'" + CRLF
+				cQry += " AND ZPB.D_E_L_E_T_ = ''" + CRLF
+
+				IF (nPeso := MpSySExecScalar(cQry,"ZPB_PESOL")) > 0 
+					aCols[val(cItem),nPosPeCH] 	:= nPeso
+				endif
+			ENDIF
+
             cItem := SomaIt(cItem)
 		EndIf
 	Else
