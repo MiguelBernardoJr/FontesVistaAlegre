@@ -1,5 +1,3 @@
-
-
 #INCLUDE "TOTVS.CH"
 #INCLUDE "TLPP-CORE.TH"
 #INCLUDE "FWMVCDEF.CH"
@@ -10,7 +8,7 @@ namespace custom.VAPCPA17
 
 static aCpoMdRot  := { "Z0T_ROTA"	,"Z06_TRATO","Z06_KGMNT"}
 static aCpoMdZ06G := { "Z06_LOTE"	,"Z05_CURRAL","Z06_DIETA" ,"Z05_CABECA","Z05_DIASDI","Z05_PESOCO","Z05_TOTMSC","Z05_TOTMNC","Z05_RECNO","Z0T_ROTA"}
-static aCpoMdZ06D := { "Z06_TRATO"	,"Z06_LOTE"	,"Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
+static aCpoMdZ06D := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE"	,"Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
 static aCpoMdZ05G := { "Z05_DATA"	,"Z05_DIETA","Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
 static aCpoMdRt1  := { "Z0S_EQUIP"  ,"ZV0_DESC" ,"Z0T_ROTA", "Z06_LOTE","Z06_CURRAL"}
 
@@ -190,11 +188,11 @@ user function ModelDef() as object
     oModel:AddCalc('TOTAIS1', 'MdGridRotaG', 'MdGridZ06G' , 'Z05_CABECA', 'XX1_COUNT' 	, 'COUNT'	, , , "Qtd de lotes" )
     //oModel:AddCalc('TOTAIS1', 'MdFieldRota', 'MdGridRotaG', 'ZV0_DESC'	, 'XX1_DESC' 	, 'SUM'		, , , "Caminhão" )
     
-	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMSTR', 'XX2_KGMSTR', 'SUM', , , "KG Mat Seca"   	)
-	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMNTR', 'XX2_KGMNTR', 'SUM', , , "KG Mat Natur"   	)
-	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_MEGCAL', 'XX2_MEGCAL', 'SUM', , , "Mega Caloria"   	)
-	oModel:AddCalc('TOTAIS2', 'MdGridRotaG', 'MdGridZ06G', 'Z05_CABECA', 'XX2_CABECA', 'SUM', , , "Cabeças"   		)
-	oModel:AddCalc('TOTAIS2', 'MdGridRotaG', 'MdGridZ06G', 'Z05_TOTMSC' , 'XX2_TOTMSC', 'SUM', , , "KG Mat Calc Ant")
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMSTR', 'XX2_KGMSTR', 'SUM', , , "KG MS Inform"   	)
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06G', 'Z05_TOTMSC' , 'XX2_TOTMSC', 'SUM', , , "KG MS Calc Ant")
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06D', 'MdGridZ06D', 'Z06_KGMNTR', 'XX2_KGMNTR', 'SUM', , , "KG MMN"   	)
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06D', 'MdGridZ06D', 'Z06_MEGCAL', 'XX2_MEGCAL', 'SUM', , , "Mega Caloria"   	)
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06G', 'Z05_CABECA', 'XX2_CABECA', 'SUM', , , "Cabeças"   		)
 	
 	oModel:AddCalc('TOTAIS3', 'MdGridRotaG', 'MdGridRotaD', 'Z06_KGMNT' , 'XX3_KGMNT', 'SUM', , , "KG Mn Total" 	)
 	
@@ -259,27 +257,29 @@ user function ViewDef() as object
 		oView:CreateHorizontalBox("PROGR_CIMA"  , 80, "PROGR")
 		oView:CreateHorizontalBox("PROGR_BAIXO" , 20, "PROGR")
 		
-		oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  40, "PROGR_BAIXO")
-		oView:CreateVerticalBox("PROGR_BAIXO_DIR",  60, "PROGR_BAIXO")
+		oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  28, "PROGR_BAIXO")
+		oView:CreateVerticalBox("PROGR_BAIXO_DIR",  72, "PROGR_BAIXO")
 
-		oView:CreateHorizontalBox("ROTAS_CIMA" , 40, "ROTAS")
-		oView:CreateHorizontalBox("ROTAS_MEIO" , 40, "ROTAS")
-		oView:CreateHorizontalBox("ROTAS_BAIXO", 20, "ROTAS")
+		oView:CreateHorizontalBox("ROTAS_CIMA" , 65, "ROTAS")
+		//oView:CreateHorizontalBox("ROTAS_MEIO" , 40, "ROTAS")
+		//oView:CreateHorizontalBox("ROTAS_BAIXO", 35, "ROTAS")
 
-		oView:CreateHorizontalBox("LOTES_CIMA"  , 40, "LOTES")
-		oView:CreateHorizontalBox("LOTES_CENTER", 20, "LOTES")
-		oView:CreateHorizontalBox("LOTES_BAIXO" , 40, "LOTES")
+		oView:CreateHorizontalBox("LOTES_CIMA"  , 10, "LOTES")
+		oView:CreateHorizontalBox("LOTES_CENTER", 30, "LOTES")
+		oView:CreateHorizontalBox("LOTES_BAIXO" , 22, "LOTES")
+		oView:CreateHorizontalBox("ROTAS_MEIO"  ,28, "LOTES")
+		oView:CreateHorizontalBox("ROTAS_BAIXO", 10, "LOTES")
 		
 		oView:SetOwnerView("VwFieldRotas"  	, "CAB_ROTAS"	)
-		oView:SetOwnerView("VwGridROTG"  	, "ROTAS_CIMA"  )
-		oView:SetOwnerView("VwGridROTD"  	, "ROTAS_MEIO"  )
-		oView:SetOwnerView("VwKgTot3"  		, "ROTAS_BAIXO" )
-		oView:SetOwnerView("VwGridZ06G"  	, "PROGR_CIMA"  )
-		oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CIMA"  )
-		oView:SetOwnerView("VwKgTot2" 		, "LOTES_CENTER")
-		oView:SetOwnerView("VwGridZ05G" 	, "LOTES_BAIXO" )
-		oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO_ESQ"	)
-		oView:SetOwnerView("VwFieldPos"    	, "PROGR_BAIXO_DIR"	)
+		oView:SetOwnerView("VwGridROTG"  	, "ROTAS_CIMA"  ) //Rotas
+		oView:SetOwnerView("VwGridROTD"  	, "ROTAS_MEIO"  ) //Total por Rota e Trato
+		oView:SetOwnerView("VwKgTot3"  		, "ROTAS_BAIXO" ) // Total da Rota
+		oView:SetOwnerView("VwGridZ06G"  	, "PROGR_CIMA"  ) //Lista de Currais
+		oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CENTER") // Relação de Tratos
+		oView:SetOwnerView("VwKgTot2" 		, "LOTES_CIMA"  ) // Totais por Lote
+		oView:SetOwnerView("VwGridZ05G" 	, "LOTES_BAIXO" ) // Programação anterior
+		oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO_ESQ"	) //Totais por Rota
+		oView:SetOwnerView("VwFieldPos"    	, "PROGR_BAIXO_DIR"	) //Seleção atual
 	
 		oView:SetNoInsertLine("VwGridZ06G")
 		oView:SetNoDeleteLine("VwGridZ06G")
@@ -788,7 +788,7 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
 
 				if Alltrim(SX3->X3_CAMPO) == "Z06_DIETA"
 					nTamanho := 12
-				elseif Alltrim(SX3->X3_CAMPO) == "Z05_CURRAL"
+				elseif Alltrim(SX3->X3_CAMPO) == "Z05_CURRAL" .OR. Alltrim(SX3->X3_CAMPO) == "Z06_CURRAL"
 					nTamanho := 4
 				else
 					nTamanho := TamSX3(SX3->X3_CAMPO)[1]
@@ -826,10 +826,10 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 
 	if nOpc == 1
 		aCampos := aClone(aCpoMdZ06G)
-		aOrdem := {{"Z06_LOTE",1},{"Z05_CURRAL",2}, {"Z06_DIETA",3} , {"Z05_CABECA",4}, {"Z05_DIASDI",5}, {"Z05_PESOCO",6}, {"Z05_TOTMSC",7}, {"Z05_TOTMNC",8}}
+		aOrdem := {{"Z06_LOTE",1},{"Z05_CURRAL",2}, {"Z06_DIETA",3}, {"Z05_CABECA",4}, {"Z05_DIASDI",5}, {"Z05_PESOCO",6}, {"Z05_TOTMSC",7}, {"Z05_TOTMNC",8}}
 	else
 		aCampos := aClone(aCpoMdZ06D)
-		aOrdem := {{"Z06_TRATO",1},{"Z06_LOTE",2}, {"Z06_DIETA",3} , {"Z06_KGMSTR",4}, {"Z06_KGMNTR",5}, {"Z06_MEGCAL",6}, {"Z06_KGMNT",7}}
+		aOrdem := {{"Z06_TRATO",1},{"Z06_CURRAL",2}, {"Z06_LOTE",3}, {"Z06_DIETA",4}, {"Z06_KGMSTR",5}, {"Z06_KGMNTR",6}, {"Z06_MEGCAL",7}, {"Z06_KGMNT",8}}
 	endif
 
 	DbSelectArea("SX3")
@@ -907,6 +907,7 @@ static function LoadZ06D(oFormGrid, lCopia) as Array
 		AAdd(aRet, aClone(aTemplate))
 		aRet[Len(aRet)][1] := ++nReg
 		aRet[Len(aRet)][2] := {(cAlias)->Z06_TRATO;   // Z06_TRATO
+							, AllTrim((cAlias)->Z06_CURRAL); // Z05_CURRAL
 							, (cAlias)->Z06_LOTE;   // Z06_LOTE
 							, AllTrim((cAlias)->Z06_DIETA);   // Z06_DIETA
 							, (cAlias)->Z06_KGMSTR;  // Z06_KGMSTR
@@ -1253,6 +1254,7 @@ User Function PreparaQuerys()
 	oExecZ06G := FwExecStatement():New(cQry)
 
 	cQry := " select Z06.Z06_LOTE		" 		+ CRLF
+	cQry += 		", Z06.Z06_CURRAL	" + CRLF
 	cQry += 		", Z06.Z06_DIETA	" + CRLF
 	cQry += 		", Z06.Z06_TRATO	" + CRLF
 	cQry += 		", Z06.Z06_KGMSTR	" + CRLF

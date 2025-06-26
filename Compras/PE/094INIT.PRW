@@ -20,7 +20,7 @@ User Function z094INI(cCampo)
 
                 SA2->(DBCloseArea())
             else // CR_COMPRAD
-
+ 
                 cRet := UsrFullName(SC7->C7_USER)
 
             endif
