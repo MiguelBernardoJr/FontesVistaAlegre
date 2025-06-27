@@ -1,0 +1,325 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "TBICONN.CH"
+#INCLUDE "RWMAKE.CH"
+#INCLUDE "PONWORK.CH"
+
+/*/{Protheus.doc} PonScheduler
+Realiza a leitura e apontamento das marcações via Schedule
+@type User Function
+@author Cícero Alves
+@since 03/10/2023
+@version 12.1.2310
+@param aUserDefParam, Array, Array contendo os parâmetros do usuário
+@example
+	U_PONSCHEDULER("T1","D MG 01",, .T., .F., .F., .F., .F., "3", "2", , , 1)
+	u_PonScheduler(	"T1"		,;	//01 -> Codigo da Empresa
+					"D MG 01 "	,;	//02 -> Codigo da Filial
+					NIL			,;	//03 -> Compatibilidade
+					.T.			,;	//04 -> Limitar a Data Final do Apontamento a DataBase do Sistema
+					.T.			,;	//05 -> Efetuar o Apontamento por filial
+					.F.			,;	//06 -> Efetua Apontamento para Relógios não Lidos
+					.F.			,;	//07 -> Forçar o Reapontamento das Marcações
+					.F.			,;  //08 -> Processa apenas a filial passada como parâmetro
+					"3"			,;  //09 -> Se processa leitura, apontamento ou ambos ('1'->Leitura , '2'->Apontamento , '3'->Ambos)
+					"2"			,;  //10 -> Se efetua a leitura a partir do cadastro de funcionários ou relógios('1'-> Funcionário , '2'-> Relógio)
+					NIL			,;  //11 -> Compatibilidade
+					NIL			,;  //12 -> Compatibilidade
+					1			 ;  //13 -> Leitura/Apontamento de 1->Marcações, 2->Refeições, 3->Acesso, 4->Marc. e Refeic, 5->Todos
+					
+				)
+@see https://tdn.totvs.com/pages/releaseview.action?pageId=631321258 
+/*/
+User Function PonScheduler(aUserDefParam)
+	
+	Local aFiliais			:= {}
+	Local cEmp				:= ""
+	Local cFil				:= ""
+	Local lLimitaDataFim	:= .T.
+	Local lProcFilial		:= .T.
+	Local lApontaNaoLidas	:= .F.
+	Local lForceReaponta	:= .T.  
+	Local lSomentecFil		:= .F.
+	Local nUserParam		:= 0
+	Local nLenParam			:= 0
+	Local nFilial			:= 0
+	Local nPer 				:= 0
+	Local nProcessa			:= 3
+	Local nTipoRel			:= 2
+	Local nLeiApo			:= 1
+	Local aPeriodos			:= {}
+	Local lTodasFil			:= .F.
+	Local cFilProc			:= ""
+	
+	// Enviando Mensagens para o Console do Server
+	ConOut("")
+	ConOut(STR0001)	//"Iniciando U_PonScheduler()..."
+	ConOut("")
+	
+	// Verifica os Parâmetros passados
+	If !Empty(aUserDefParam) .And. ValType(aUserDefParam) == "A"
+		
+		nLenParam := Len(aUserDefParam)
+		For nUserParam := 1 To nLenParam
+			Do Case
+				Case nUserParam == 1
+					cEmp := If(ValType(aUserDefParam[nUserParam]) == "C", aUserDefParam[nUserParam], "" )
+				Case nUserParam == 2
+					cFil := If(ValType(aUserDefParam[nUserParam]) == "C", aUserDefParam[nUserParam], "" )
+				Case nUserParam == 4
+					lLimitaDataFim := If(ValType(aUserDefParam[nUserParam]) == "L", aUserDefParam[nUserParam], .T.)
+				Case nUserParam == 5
+					lProcFilial := If(ValType(aUserDefParam[nUserParam]) == "L", aUserDefParam[nUserParam], .T.)
+				Case nUserParam == 6
+					lApontaNaoLidas := If(ValType(aUserDefParam[nUserParam]) == "L", aUserDefParam[nUserParam], .F.)
+				Case nUserParam == 7
+					lForceReaponta := If(ValType(aUserDefParam[nUserParam]) == "L", aUserDefParam[nUserParam], .T.)
+				Case nUserParam == 8
+					lSomentecFil := If(ValType(aUserDefParam[nUserParam]) == "L", aUserDefParam[nUserParam], .F.)
+				Case nUserParam == 9
+					nProcessa := If(ValType(aUserDefParam[nUserParam]) == "C" .And. Val(aUserDefParam[nUserParam]) > 0, Val(aUserDefParam[nUserParam]), 3)
+				Case nUserParam == 10
+					nTipoRel := If(ValType(aUserDefParam[nUserParam]) == "C" .And. Val(aUserDefParam[nUserParam]) > 0, Val(aUserDefParam[nUserParam]), 2)
+				Case nUserParam == 13
+					nLeiApo := If(ValType( aUserDefParam[nUserParam]) == "N", aUserDefParam[nUserParam], 1)
+			End Case
+		Next nUserParam
+	EndIf
+	
+	// Verifica se Empresa/Filial foram Passados
+	If !Empty(cEmp) .And. !Empty(cFil)
+		
+		// Enviando Mensagens para o Console do Server
+		ConOut("")
+		ConOut(STR0002) //"Preparando Ambiente da Empresa. Aguarde... "
+		ConOut("")
+		
+		// Prepara Ambiente da Empresa
+		PREPARE ENVIRONMENT EMPRESA ( cEmp ) FILIAL ( cFil )
+		
+		// Redefine nModulo de forma a Garantir que o Modulo seja o SIGAPON
+		SetModulo("SIGAPON", "PON")
+		
+		If LockByName( "PONWORK" + cEmp, .T., .T., .T. )
+			
+			// Processando a Leitura/Apontamento
+			If lSomentecFil
+				// Processa somente a Filial passada como parâmetro
+				aFiliais := GetFilRecnos(cEmpAnt, cFil, cFil)
+				lProcFilial := .T.
+			ElseIf lProcFilial
+				// Processa todas as Filiais da Empresa
+				aFiliais := GetFilRecnos(cEmpAnt, Space(FWGETTAMFILIAL), Replicate("Z", FWGETTAMFILIAL))
+			Else
+				// Processa todas as filiais de uma única vez
+				aFiliais := {Replicate("Z", FWGETTAMFILIAL)}
+				lTodasFil := .T.
+			EndIf
+			
+			For nFilial := 1 To Len(aFiliais)
+				
+				If !lTodasFil
+					// Posiciona o SM0 na Filial a ser Processada
+					SM0->(dbGoto(aFiliais[nFilial, 02]))
+				EndIf
+				
+				// Enviando Mensagens para o Console do Server
+				ConOut("")
+				
+				//"Inicio da Leitura e/ou Apontamento em: "###" as "
+				If nProcessa == 1
+					ConOut(STR0010 + Dtoc(MsDate()) + STR0004 + Time() ) //"Inicio da Leitura em: "###" as "
+				ElseIf nProcessa == 2
+					ConOut(STR0012 + Dtoc(MsDate()) + STR0004 + Time() )//"Inicio do Apontamento em: "###" as "
+				Else
+					ConOut(STR0003 + Dtoc(MsDate()) + STR0004 + Time() )//"Inicio da Leitura/Apontamento em: "###" as "					
+				EndIf
+				ConOut("")
+				
+				//"Empresa: "
+				ConOut(STR0005 + SM0->(M0_CODIGO + " - " + AllTrim(M0_NOMECOM)))
+				ConOut("")
+				
+				//"Filial:  "
+				ConOut( STR0006 + SM0->(FWGETCODFILIAL + " - " + AllTrim(M0_FILIAL) + "/" + AllTrim(M0_NOME)))
+				ConOut("")
+				
+				If !lTodasFil
+					aPeriodos := Monta_Per(aFiliais[nFilial, 01])
+				Else
+					aPeriodos := Monta_Per()
+				EndIf
+				
+				For nPer := 1 To Len(aPeriodos)
+					
+					// Enviando Mensagens para o Console do Server
+					ConOut("")
+					ConOut(STR0014 + ": " + dToC(aPeriodos[nPer][1]) + " - " + dToC(aPeriodos[nPer][2])) // Período
+					
+					//Altera as perguntas da rotina
+					Pergunte("PNM010", .F.)
+					If !lTodasFil
+						SetMVValue("PNM010", "MV_PAR01", aFiliais[nFilial, 01], .T.	)		// Filial De
+						SetMVValue("PNM010", "MV_PAR02", aFiliais[nFilial, 01], .T. )		// Filial Até 
+					Else
+						SetMVValue("PNM010", "MV_PAR01", Space(FWGETTAMFILIAL)	)			// Filial De
+						SetMVValue("PNM010", "MV_PAR02", Replicate("Z", FWGETTAMFILIAL) )	// Filial Até 
+					EndIf
+					SetMVValue("PNM010", "MV_PAR03", Space(9))						// Centro de Custo De
+					SetMVValue("PNM010", "MV_PAR04", Replicate("Z", 9))		 		// Centro de Custo Até
+					SetMVValue("PNM010", "MV_PAR05", Space(3)) 						// Turno De
+					SetMVValue("PNM010", "MV_PAR06", Replicate("Z", 3)) 			// Turno Até
+					SetMVValue("PNM010", "MV_PAR07", Space(6)) 						// Matrícula De
+					SetMVValue("PNM010", "MV_PAR08", Replicate("Z", 6)) 			// Matrícula Até
+					SetMVValue("PNM010", "MV_PAR09", Space(40) )					// Nome De 
+					SetMVValue("PNM010", "MV_PAR10", Replicate("Z", 40))			// Nome Até
+					SetMVValue("PNM010", "MV_PAR11", Space(3) )						// Relógio De
+					SetMVValue("PNM010", "MV_PAR12", Replicate("Z", 3))				// Relógio Até
+					SetMVValue("PNM010", "MV_PAR13", aPeriodos[nPer][1])			// Período Inicial
+					SetMVValue("PNM010", "MV_PAR14", aPeriodos[nPer][2])			// Período Final
+					SetMVValue("PNM010", "MV_PAR15", Space(2)  )					// Regra Apont De
+					SetMVValue("PNM010", "MV_PAR16", Replicate("Z", 2))				// Regra Apont Até
+					SetMVValue("PNM010", "MV_PAR17", nProcessa)						// Processamento  
+					SetMVValue("PNM010", "MV_PAR18", nLeiApo)						// Leitura/Apontamentos	// 1-Marcações /2-Refeições /3-Acesso /4-Marc. e Refeic /5-Todos
+					SetMVValue("PNM010", "MV_PAR19", If(lForceReaponta, 1, 2))		// Reapontar
+					SetMVValue("PNM010", "MV_PAR20", nTipoRel)						// Ler a partir do 1-Cad.Funcionários / 2-Cad.Relógio 
+					SetMVValue("PNM010", "MV_PAR21", fCategoria(.F., .F.))			// Categorias - fCategoria retorna todas as categorias de acordo com a tabela 28 da SX5
+					SetMVValue("PNM010", "MV_PAR22", fSituacao(.F., .F.))			// Situações - fSituacao retorna todas as categorias de acordo com a tabela 31 da SX5
+					
+					dDataBase := If(lLimitaDataFim, Min(aPeriodos[nPer][2], Date()), aPeriodos[nPer][2])
+					cFilProc := If(!lTodasFil, aFiliais[nFilial, 01], cFilAnt)
+					// Chamada a Função de Leitura e Apontamento das Marcações
+					Ponm010(.T.							,;	//Define Que a Chamada Esta Sendo Efetuada Atraves do WorkFlow
+							.T.							,;	//Verifica Se Devera Considerar os Parametros Pre-Definidos Pelo Usuario
+							lLimitaDataFim				,;	//Verifica Se Devera Limitar a Data Fim a Menor Data entre a DataBase e o Periodo Final de Apontamento
+							cFilProc					,;	//Filial a ser processada
+							lProcFilial					,;	//Processo por Filial
+							lApontaNaoLidas				,;	//Se Aponta as Marcacoes para as Filiais nao Lidas
+							NIL							,;	
+							NIL							,;	
+							NIL							,;	
+							NIL							,;	
+							NIL					 		,;
+							NIL					 		,;
+							NIL							,;
+							NIL							,;
+							.T.							 ;
+						)
+					
+				Next nPer
+				
+				If !lTodasFil
+					// Garante o Posicionamento no SIGAMAT
+					SM0->(MsGoto(aFiliais[nFilial, 02]))
+				EndIf
+				
+				// Enviando Mensagens para o Console do Server
+				ConOut("")
+				// "Final da Leitura e/ou Apontamento em: "###" as "
+				If nProcessa == 1
+					ConOut(STR0011 + Dtoc(MsDate()) + STR0004 + Time())	// "Final da Leitura em: "###" as "
+				ElseIf nProcessa == 2
+					ConOut(STR0013 + Dtoc(MsDate()) + STR0004 + Time())	// "Final do Apontamento em: "###" as "
+				Else
+					ConOut(STR0007 + Dtoc(MsDate()) + STR0004 + Time())	// "Final da Leitura/Apontamento em: "###" as "
+				EndIf
+				ConOut("")
+				
+				//"Empresa: "
+				ConOut(STR0005 + SM0->(M0_CODIGO + " - " + AllTrim(M0_NOMECOM)))
+				ConOut("")
+				
+				//"Filial:  "
+				ConOut(STR0006 + FWGETCODFILIAL + " - " +  SM0->(AllTrim(M0_FILIAL) + "/" + AllTrim(M0_NOME)))
+				ConOut("")
+				
+			Next nFilial
+			
+			// Enviando Mensagens para o Console do Server
+			ConOut("")
+			ConOut(STR0008)	//"Encerrando Ambiente da Empresa. Aguarde... "
+			ConOut("")
+			UnLockByName("PONWORK" + cEmpAnt, .T., .T., .T.)
+			
+		Else
+			ConOut("")
+			ConOut("U_PonScheduler() em execução por outro processo...")
+			ConOut("")
+		EndIf
+		
+		// Finaliza o Ambiente da Empresa
+		RESET ENVIRONMENT
+		
+	Else
+		
+		// Enviando Mensagens para o Console do Server
+		ConOut("")
+		ConOut(STR0009)	//"Nao foi possivel concluir o processo. Empresa ou Filial Invalidas."
+		ConOut("")
+		
+	EndIf
+	
+	// Enviando Mensagens para o Console do Server
+	ConOut("")
+	ConOut("Finalizando U_PonScheduler()...")
+	ConOut("")
+	
+Return( NIL )
+
+/*
+ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿
+³Fun‡…o    ³StartJobPon  ³ Autor ³ Marinaldo de Jesus ³ Data ³21/11/2001³
+ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´
+³Descri‡…o ³Start do Processo de WorkFlow                               ³
+ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³Sintaxe   ³u_StartJobPon												³
+ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³Parametros³															³
+ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³Uso       ³PonWork                                                    	³
+ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³Observacao³Essa Funcao devera ser Incluida no .INI do Server          	³
+ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ*/
+User Function StartJobPon()
+
+Local aEmpFil := Array( 02 )
+
+aEmpFil[ 01 ] := "01"	//Codigo da Empresa confome SIGAMAT
+aEmpFil[ 02 ] := "01"	//Codigo da Filial  confome SIGAMAT
+
+Return( wfStart( aEmpFil ) )
+
+
+/*/{Protheus.doc} Monta_Per
+Define os períodos de apontamento que  serão processados
+@type  Static Function
+@author Cícero Alves
+@since 03/10/2023
+@param cFilAtu, Caractere, Filial atualmente em processamento
+@return aPeriodos, Array, Períodos de apontamento aPeriodos[n][1] = Data inicial; aPeriodos[n][2] = Data Final
+@example
+(examples)
+@see (links_or_references)
+/*/
+Static Function Monta_Per(cFilAtu)
+	
+	Local aPeriodos := {}
+	Local dPerIni	:= cToD("")
+	Local dPerFim	:= cToD("")
+	
+	Default cFilAtu := cFilAnt
+	
+	// Período Definido nos Parâmetros MV_PONMES e MV_PAPONTA
+	If GetPonMesDat( @dPerIni, @dPerFim, cFilAtu )
+		aAdd(aPeriodos, {dPerIni, dPerFim})
+		While dPerFim < Date()
+			If PerAponta( @dPerIni, @dPerFim, dPerFim + 1 , .F., cFilAtu,,,,.T.)
+				aAdd(aPeriodos, {dPerIni, dPerFim})
+			Else
+				EXIT
+			EndIf
+		EndDo
+	EndIf
+	
+	aSort(aPeriodos,,,{|x, y| x[1] < y[1]})
+	
+Return aPeriodos

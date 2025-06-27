@@ -8660,7 +8660,7 @@ if MsgYesNo("O curral " + AllTrim((cTrbBrowse)->Z08_CODIGO) + ", lote " + AllTri
     begin transaction 
 
         if TCSqlExec(" update " + RetSqlName("Z05") +;
-                        " set D_E_L_E_T_ = '*'" +;
+                        " set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_" +;
                       " where Z05_FILIAL = '" + FWxFilial("Z05") + "'" +;
                         " and Z05_DATA   = '" + DToS(Z0R->Z0R_DATA) + "'" +;
                         " and Z05_VERSAO = '" + Z0R->Z0R_VERSAO + "'" +;

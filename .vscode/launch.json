@@ -2,52 +2,30 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "totvs_language_web_debug",
-			"request": "launch",
-			"name": "Web Debug",
-			"program": "${command:AskForProgramName}",
-			"isMultiSession": true,
-			"enableMultiThread": true,
-			"enableTableSync": true
-		},
-		{
 			"type": "totvs_language_debug",
 			"request": "launch",
-			"name": "TOTVS Language Debug",
+			"name": "Depuração do idioma TOTVS",
 			"program": "${command:AskForProgramName}",
 			"cwb": "${workspaceFolder}",
-			"smartclientBin": "C:\\SMARTCLIENT/smartclient.exe",
-			"enableMultiThread": true,
+			"smartclientBin": "C:\\Totvs\\smartclient_teste_livio\\smartclient_teste\\smartclient.exe",
 			"isMultiSession": true,
-			"enableTableSync": true,
-			"extendFeatures": {
-				"charDetails": false
-			}
+			"enableTableSync": true
 		}
 	],
 	"lastPrograms": [
 		{
-			"label": "sigamdi"
+			"label": "SIGAMDI"
 		},
 		{
-			"label": "sigacfg"
+			"label": "MPSDU"
 		},
 		{
-			"label": "apsdu"
+			"label": "U_CXNFACI"
 		},
 		{
-			"label": "sigamid"
-		},
-		{
-			"label": "sigaest"
-		},
-		{
-			"label": "sigaCOM"
-		},
-		{
-			"label": "xxxx"
+			"label": "UPDBATCH"
 		}
 	],
-	"lastProgramExecuted": "sigamdi",
+	"lastProgramExecuted": "SIGAMDI",
 	"lastProgramArguments": []
 }
