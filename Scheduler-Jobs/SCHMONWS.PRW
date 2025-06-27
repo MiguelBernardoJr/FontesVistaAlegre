@@ -325,7 +325,7 @@ Static Function IntEmLote()
 
                             Z0I->Z0I_TOTPRE := QRYCUR->TOTAPR
                             Z0I->Z0I_TOTREA := QRYCUR->TOTREA
-                            Z0I->Z0I_DATLOG := DTOS(cToD( Left(oResult:DATA, 10) ))
+                            Z0I->Z0I_DATLOG := cToD( Left(oResult:DATA, 10) )
                             Z0I->Z0I_HORLOG := cHora
                             // Z0I->Z0I_NOTMAN := Space(6)
                             // se diferente de null, entao atualiza campo

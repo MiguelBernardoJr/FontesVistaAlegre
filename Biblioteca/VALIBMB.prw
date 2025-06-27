@@ -26,7 +26,7 @@ Default cTipoMov := ""
 	MB : 05.05.2020
 		# Limpar reserva na SX5 de lotes que nao possuem mais SALDO na SB8;
 */
-_cQry := " UPDATE " + RetSqlName("SX5")+ " SET D_E_L_E_T_='*' " + CRLF
+_cQry := " UPDATE " + RetSqlName("SX5")+ " SET D_E_L_E_T_='*', R_E_C_D_E_L_ = R_E_C_N_O_ " + CRLF
 _cQry += " WHERE	R_E_C_N_O_ IN ( " + CRLF
 _cQry += " 	SELECT  X5.R_E_C_N_O_ " + CRLF
 _cQry += " 	FROM	" + RetSqlName("SX5") + " X5 " + CRLF
@@ -277,7 +277,7 @@ EndIf
 	// 		 "	 AND X5_TABELA='Z8'" +;
 	//          "   AND rTrim(X5_DESCRI) = '"+AllTrim(cLote)+"'"
 	_cQry := " DELETE "+CRLF+;
-			 " 	FROM SX5010"+CRLF+;
+			 " 	FROM "+RetSqlName("SX5")+""+CRLF+;
 			 " WHERE X5_DESCRI IN ("+CRLF+;
 			 " 		SELECT	X5_DESCRI"+CRLF+;
 			 " 		FROM	" + RetSqlName("SX5")+ " A"+CRLF+;

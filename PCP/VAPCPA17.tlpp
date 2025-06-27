@@ -7,7 +7,7 @@
 namespace custom.VAPCPA17
 
 static aCpoMdRot  := { "Z0T_ROTA"	,"Z06_TRATO","Z06_KGMNT"}
-static aCpoMdZ06G := { "Z06_LOTE"	,"Z05_CURRAL","Z06_DIETA" ,"Z05_CABECA","Z05_DIASDI","Z05_PESOCO","Z05_TOTMSC","Z05_TOTMNC","Z05_RECNO","Z0T_ROTA"}
+static aCpoMdZ06G := { "Z05_CURRAL"	,"Z06_LOTE","Z05_CABECA","Z05_DIASDI","Z05_PESOCO","Z05_CMSPN","Z0I_NOTTAR","Z0I_NOTMAN","Z05_KGMSDI","Z05_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z0T_ROTA"}
 static aCpoMdZ06D := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE"	,"Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
 static aCpoMdZ05G := { "Z05_DATA"	,"Z05_DIETA","Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
 static aCpoMdRt1  := { "Z0S_EQUIP"  ,"ZV0_DESC" ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
@@ -189,7 +189,7 @@ user function ModelDef() as object
     //oModel:AddCalc('TOTAIS1', 'MdFieldRota', 'MdGridRotaG', 'ZV0_DESC'	, 'XX1_DESC' 	, 'SUM'		, , , "Caminhão" )
     
 	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMSTR', 'XX2_KGMSTR', 'SUM', , , "KG MS Inform"   	)
-	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06G', 'Z05_TOTMSC' , 'XX2_TOTMSC', 'SUM', , , "KG MS Calc Ant")
+	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06G', 'Z05_KGMSDI' , 'XX2_TOTMSC', 'SUM', , , "KG MS Calc Ant")
 	oModel:AddCalc('TOTAIS2', 'MdGridZ06D', 'MdGridZ06D', 'Z06_KGMNTR', 'XX2_KGMNTR', 'SUM', , , "KG MMN"   	)
 	oModel:AddCalc('TOTAIS2', 'MdGridZ06D', 'MdGridZ06D', 'Z06_MEGCAL', 'XX2_MEGCAL', 'SUM', , , "Mega Caloria"   	)
 	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06G', 'Z05_CABECA', 'XX2_CABECA', 'SUM', , , "Cabeças"   		)
@@ -250,12 +250,12 @@ user function ViewDef() as object
 		oView:CreateHorizontalBox("CAB_ROTAS"   , 0)
 		oView:CreateHorizontalBox("ITENS"       , 100)
 
-		oView:CreateVerticalBox("ROTAS",  15, "ITENS")
-		oView:CreateVerticalBox("PROGR",  45, "ITENS")
-		oView:CreateVerticalBox("LOTES",  40, "ITENS")
+		oView:CreateVerticalBox("ROTAS",  10, "ITENS")
+		oView:CreateVerticalBox("PROGR",  51, "ITENS")
+		oView:CreateVerticalBox("LOTES",  38, "ITENS")
 
-		oView:CreateHorizontalBox("PROGR_CIMA"  , 80, "PROGR")
-		oView:CreateHorizontalBox("PROGR_BAIXO" , 20, "PROGR")
+		oView:CreateHorizontalBox("PROGR_CIMA"  , 88, "PROGR")
+		oView:CreateHorizontalBox("PROGR_BAIXO" , 12, "PROGR")
 		
 		oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  35, "PROGR_BAIXO")
 		oView:CreateVerticalBox("PROGR_BAIXO_DIR",  65, "PROGR_BAIXO")
@@ -714,7 +714,12 @@ static function ROTGrdVStr(nOpc ) as Object
 	nLen := Len(aCampos)
 	for nI := 1 to nLen
 		SX3->(DbSetOrder(2))
-		IF SX3->(DbSeek(Padr(aCampos[nI], Len(SX3->X3_CAMPO))))
+		if SX3->(DbSeek(aCampos[nI]))
+			if Alltrim(SX3->X3_CAMPO) == "ZV0_DESC"
+				nTamanho := 10
+			else
+				nTamanho := TamSX3(SX3->X3_CAMPO)[1]
+			endif
 			oStruct:AddField(;
 				AllTrim(aCampos[nI]),;        // [01]  C   Nome do Campo
 				StrZero(nI,Len(SX3->X3_ORDEM)),; // [02]  C   Ordem
@@ -827,10 +832,12 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 	local oStruct := FWFormViewStruct():New() as Object
 	local nI, nLen as Numeric
 	Local aCampos := {}	as Array
+	local cTitTrt := "Prog Ms Ant"
 
 	if nOpc == 1
 		aCampos := aClone(aCpoMdZ06G)
-		aOrdem := {{"Z06_LOTE",1},{"Z05_CURRAL",2}, {"Z06_DIETA",3}, {"Z05_CABECA",4}, {"Z05_DIASDI",5}, {"Z05_PESOCO",6}, {"Z05_TOTMSC",7}, {"Z05_TOTMNC",8}}
+		aOrdem := {{"Z05_CURRAL","01"},{"Z06_LOTE","02"}, {"Z05_CABECA","03"}, {"Z05_DIASDI","04"}, {"Z05_PESOCO","05"}, {"Z05_CMSPN","06"}, {"Z0I_NOTTAR","07"}, {"Z0I_NOTMAN","08"},  {"Z05_KGMSDI","09"}, {"Z05_KGMSDI","10"}, {"Z06_DIETA","11"},{"Z05_NROTRA","12"}, {"Z05_TOTMNC","13"}}
+		//aOrdem := {{"Z06_LOTE",1},{"Z05_CURRAL",2}, {"Z06_DIETA",3}, {"Z05_CABECA",4}, {"Z05_DIASDI",5}, {"Z05_PESOCO",6}, {"Z05_CMSPN",7}, {"Z0I_NOTMAN",8}, {"Z0I_NOTTAR",9}, {"Z05_KGMSDI",10}, {"Z05_TOTMSC",11}, {"Z05_TOTMNC",12}}
 	else
 		aCampos := aClone(aCpoMdZ06D)
 		aOrdem := {{"Z06_TRATO",1},{"Z06_CURRAL",2}, {"Z06_LOTE",3}, {"Z06_DIETA",4}, {"Z06_KGMSTR",5}, {"Z06_KGMNTR",6}, {"Z06_MEGCAL",7}, {"Z06_KGMNT",8}}
@@ -868,7 +875,7 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 			oStruct:AddField(;
 				AllTrim(aCampos[nI]),;        // [01]  C   Nome do Campo
 				cValToChar(aOrdem[aScan(aOrdem,{|x| AllTrim(x[1]) == AllTrim(aCampos[nI])})][2]),; // [02]  C   Ordem
-				AllTrim(X3Titulo()),;           // [03]  C   Titulo do campo2
+			 	iif(Alltrim(SX3->X3_CAMPO) == "Z05_KGMSDI",cTitTrt,AllTrim(X3Titulo())),;
 				X3Descric(),;                   // [04]  C   Descricao do campo
 				{"Help"},;                      // [05]  A   Array com Help
 				TamSX3(SX3->X3_CAMPO)[3],;      // [06]  C   Tipo do campo
@@ -943,13 +950,18 @@ static function LoadZ06G(oFormGrid, lCopia) as Array
 	while !(cAlias)->(Eof())
 		AAdd(aRet, aClone(aTemplate))
 		aRet[Len(aRet)][1] := ++nReg
-		aRet[Len(aRet)][2] := { Alltrim((cAlias)->Z05_LOTE);   // Z06_LOTE
-							, AllTrim((cAlias)->Z05_CURRAL);   // Z05_CURRAL
-							, AllTrim((cAlias)->Z05_DIETA);   // Z06_DIETA
+		aRet[Len(aRet)][2] := { Alltrim((cAlias)->Z05_CURRAL);   // Z06_LOTE
+							, AllTrim((cAlias)->Z05_LOTE);   // Z05_CURRAL
 							, (cAlias)->Z05_CABECA;  // Z06_KGMSTR
 							, (cAlias)->Z05_DIASDI;  // Z06_KGMNTR
 							, (cAlias)->Z05_PESOCO;  // Z06_MEGCAL
-							, (cAlias)->Z05_TOTMSC;   // Z06_KGMNT
+							, (cAlias)->Z05_CMSPN;  // Z05_CMSPN
+							, (cAlias)->Z0I_NOTTAR;  // Z0I_NOTTAR
+							, (cAlias)->Z0I_NOTMAN;  // Z0I_NOTMAN
+							, (cAlias)->Z05_PROGANT;  // Z05_PROGANT
+							, (cAlias)->Z05_KGMSDI;   // Z06_KGMNT
+							, AllTrim((cAlias)->Z05_DIETA);   // Z06_DIETA
+							, (cAlias)->Z05_NROTRA;   // Z06_DIETA
 							, (cAlias)->Z05_TOTMNC;   // Z06_KGMNT
 							, (cAlias)->Z05_RECNO;   // Z05_RECNO
 							, Alltrim((cAlias)->Z0T_ROTA)}
@@ -1239,9 +1251,15 @@ User Function PreparaQuerys()
 	cQry += " , Z05.Z05_CABECA	" + CRLF
 	cQry += " , Z05.Z05_DIASDI	" + CRLF
 	cQry += " , Z05.Z05_PESOCO	" + CRLF
+	cQry += " , Z05.Z05_KGMSDI	" + CRLF
 	cQry += " , Z05.Z05_TOTMSC	" + CRLF
 	cQry += " , Z05.Z05_TOTMNC	" + CRLF
 	cQry += " , Z0T.Z0T_ROTA	" + CRLF
+	cQry += " , Z05.Z05_NROTRA " + CRLF
+	cQry += " , Z05_CMSPN " + CRLF
+	cQry += " , ISNULL((SELECT SUM(Z05D1.Z05_KGMSDI) FROM Z05010 Z05D1 WHERE Z05D1.Z05_FILIAL = Z05.Z05_FILIAL AND Z05D1.Z05_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z05D1.Z05_LOTE = Z05.Z05_LOTE AND Z05D1.D_E_L_E_T_ ='  ' ),0) Z05_PROGANT " + CRLF
+	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTMAN FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTMAN " + CRLF
+	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTTAR " + CRLF
 	cQry += " , Z05.R_E_C_N_O_ Z05_RECNO" + CRLF
 	cQry += "  from "+RetSqlName("Z05")+" Z05" + CRLF
 	cQry += "    JOIN "+RetSqlName("Z0T")+" Z0T ON " + CRLF
@@ -1255,6 +1273,30 @@ User Function PreparaQuerys()
 	cQry += "  and Z05.Z05_DATA   = '" + DToS(dDataBase) + "'" + CRLF
 	cQry += "  and Z05.D_E_L_E_T_ = ' '" + CRLF
 	cQry += "  order by Z05_CURRAL" + CRLF
+
+	//cQry := "select Z05.Z05_LOTE" + CRLF	
+	//cQry += " , Z05.Z05_DIETA	" + CRLF
+	//cQry += " , Z05.Z05_CURRAL	" + CRLF
+	//cQry += " , Z05.Z05_CABECA	" + CRLF
+	//cQry += " , Z05.Z05_DIASDI	" + CRLF
+	//cQry += " , Z05.Z05_PESOCO	" + CRLF
+	//cQry += " , Z05.Z05_TOTMSC	" + CRLF
+	//cQry += " , Z05.Z05_TOTMNC	" + CRLF
+	//cQry += " , Z0T.Z0T_ROTA	" + CRLF
+	//cQry += " , Z05.R_E_C_N_O_ Z05_RECNO" + CRLF
+	//cQry += "  from "+RetSqlName("Z05")+" Z05" + CRLF
+	//cQry += "    JOIN "+RetSqlName("Z0T")+" Z0T ON " + CRLF
+	//cQry += "         Z0T_FILIAL = Z05_FILIAL  " + CRLF
+	//cQry += "     AND Z0T_LOTE = Z05_LOTE  " + CRLF
+	//cQry += "     AND Z0T_DATA = Z05_DATA  " + CRLF
+	//cQry += "     AND Z0T_CURRAL = Z05_CURRAL  " + CRLF
+	//cQry += "     AND Z0T_ROTA = ?" + CRLF
+	//cQry += "     AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
+	//cQry += "  where Z05.Z05_FILIAL = '" + FWxFilial("Z06") + "'" + CRLF
+	//cQry += "  and Z05.Z05_DATA   = '" + DToS(dDataBase) + "'" + CRLF
+	//cQry += "  and Z05.D_E_L_E_T_ = ' '" + CRLF
+	//cQry += "  order by Z05_CURRAL" + CRLF
+
 
 	oExecZ06G := FwExecStatement():New(cQry)
 
