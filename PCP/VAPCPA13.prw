@@ -473,11 +473,8 @@ Return (Nil)
 		Importa automatico todos os arquivos;
 */
 User Function BTIMPALL()
-
-	//Local cOrigPath := "E:\TRATO\RESULTADO\"
-	//Local cDestPath := "E:\TRATO\IMPORTADO\"
-	Local cOrigPath := GetMV( "MB_PCPA13O",, "Z:\Vista Alegre\TRATO\RESULTADO\")
-	Local cDestPath := GetMV( "MB_PCPA13D",, "Z:\Vista Alegre\TRATO\IMPORTADO\")
+	Local cOrigPath := GetMV( "MB_PCPA13O",, "\\192.168.0.245\Usuários\Vista Alegre\TRATO\RESULTADO")
+	Local cDestPath := GetMV( "MB_PCPA13D",, "\\192.168.0.245\Usuários\Vista Alegre\TRATO\IMPORTADO")
 	Local aFiles    := {}
 	Local nI        := 0
 	Local aCopy 	:= {}
@@ -1933,15 +1930,15 @@ User Function ExpBatTrt( )
 			DbSelectArea("Z0R")
 			DbSetOrder(1) // Z0R_FILIAL + Z0R_DATA + Z0R_VERSAO
 
-			DbUseArea(.t., "TOPCONN", TCGenQry(,,;
-				_cSql := " select max(Z0R_VERSAO) Z0R_VERSAO" + _ENTER_ +;
-				" from " + RetSqlName("Z0R") + " Z0R" + _ENTER_ +;
-				" where Z0R.Z0R_FILIAL = '" + FWxFilial("Z0R") + "'" + _ENTER_ +;
-				" and Z0R.Z0R_DATA   = '" + DToS(aParRet[1]) + "'" + _ENTER_ +;
-				" and Z0R.D_E_L_E_T_ = ' '" ;
-				), "TMPZ0R", .f., .f.)
-			Z0R->(DbSeek(FWxFilial("Z0R")+DToS(aParRet[1])+TMPZ0R->Z0R_VERSAO))
-			TMPZ0R->(DbCloseArea())
+			cQry := " select max(Z0R_VERSAO) Z0R_VERSAO" + _ENTER_ +;
+					" from " + RetSqlName("Z0R") + " Z0R" + _ENTER_ +;
+					" where Z0R.Z0R_FILIAL = '" + FWxFilial("Z0R") + "'" + _ENTER_ +;
+					" and Z0R.Z0R_DATA   = '" + DToS(aParRet[1]) + "'" + _ENTER_ +;
+					" and Z0R.D_E_L_E_T_ = ' '" 
+			
+			cAlias := MpSysOpenQry(cQry)
+				Z0R->(DbSeek(FWxFilial("Z0R")+DToS(aParRet[1])+(cALias)->Z0R_VERSAO))
+			(cALias)->(DbCloseArea())
 
 			cQryExp := " SELECT Z06.Z06_DATA AS DATA, Z06.Z06_VERSAO AS VERSAO, Z06.Z06_CURRAL AS CURRAL, Z06.Z06_TRATO AS TRATO, Z06.Z06_LOTE AS LOTE " + _ENTER_
 			cQryExp += "      , Z0T.Z0T_ROTA AS ROTA, Z0S.Z0S_TOTTRT AS TOTTRT, ISNULL(Z0S.Z0S_EQUIP,'      ') AS EQUIP, ISNULL(Z0S.Z0S_OPERAD,' ') AS OPERAD, Z06.Z06_DIETA AS DIETA " + _ENTER_
@@ -3094,7 +3091,8 @@ If cPerg == "PCPA13IMP"
 	aAdd(aRegs, { cPerg, "01", "Tipo do Arquivo","","","mv_ch1","N",01,0,0,"C","","MV_PAR01","1=JSon","","","","","2=CSV","","","","","","","","","","","","","","","","","","","      ","N","","",""})
 ElseIf cPerg == "VAPCPA13I"
 	aAdd(aRegs, { cPerg, "01", "Arquivo ?"		,"","","mv_ch1","C",99,0,0,"F","","MV_PAR01","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
-	aAdd(aRegs, { cPerg, "02", "Tipo do Arquivo","","","mv_ch2","C",01,0,0,"C","","MV_PAR02","T=TRATO","","","","","K=KEMIN","","","","","P=PHIBRO","","","","","","","","","","","","","","      ","N","","",""})
+	aAdd(aRegs, { cPerg, "02", "Tipo do Arquivo","","","mv_ch2","C",01,0,0,"C","","MV_PAR02","T=TRATO","","","","","K=KEMIN","","","","","P=PHIBRO","","","","","I=INBRA","","","","","","","","","      ","N","","",""})
+	aAdd(aRegs, { cPerg, "03", "Tipo do Arquivo","","","mv_ch3","C",01,0,0,"C","","MV_PAR03","T=TRATO","","","","","K=KEMIN","","","","","P=PHIBRO","","","","","I=INBRA","","","","","","","","","      ","N","","",""})
 ElseIf cPerg == "IMPZ0WPCP1"
 	aAdd(aRegs, { cPerg, '01', 'Selecionar Motivos?', '', '', 'MV_CH1', 'C',					  02, 						0, 0, 'G', 'U_fMotivos()', 'MV_PAR01', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '   ', '' })
 	aAdd(aRegs, { cPerg, '02', 'Curral?            ', '', '', 'MV_CH2', 'C', TamSX3('Z0W_CURRAL')[1],                       0, 0, 'G', ''            , 'MV_PAR02', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '   ', '' })
@@ -4910,19 +4908,19 @@ Return nil
  '---------------------------------------------------------------------------------*/
 User Function ImpCSV(cFile)
 Local aArea 		:= GetArea()
-Local nHandle 		:= FT_FUse(cFile) // fOpen(cFile)
+Local nHandle 		:= FT_FUse(Alltrim(cFile)) // fOpen(cFile)
 Local cJsnImp  		:= ""
 Local nCntTrt		:= 0
 Local cOrdem		:= ""
 Local cHoraI 		:= ""
-// Local cHoraF 		:= ""
+// Local cHoraF		:= ""
 Local aAux			:= {}
 Local aHeaderCSV  	:= {}
 Local aDados		:= {}
 Local nI			:= 0
 Local nX			:= 0
 Local nJ			:= 0
-// Local cTrtBat  		:= ""
+// Local cTrtBat  	:= ""
 Local nPOrdemProd   := 0
 Local nPNumCarreg	:= 0
 Local nPOrdIngred   := 0
@@ -4940,6 +4938,7 @@ Local nPAdtP    	:= 0
 Local nPAdtR    	:= 0
 Local nPReceita    	:= 0
 Local nPLote    	:= 0
+Local nPInbDos		:= 0
 Local nPAgua    	:= 0
 Local nPSilo1    	:= 0
 Local nPSilo2    	:= 0
@@ -4962,7 +4961,7 @@ Local _cCond		:= ""
 Local nDifOpe 		:= 0 
 Local cReceita		:= ""
 Local aDSilo 		:= {}
-
+//C:\Users\igor.oliveira\Downloads\H0001.csv -- C:\Users\igor.oliveira\Downloads\DETALHADOADITIVO.CSV
 	If nHandle <= 0 // > -1
 		MsgInfo("Nao foi possivel abrir o arquivo '" + MV_PAR01 + "', verifique e tente novamente.")
 	
@@ -4975,6 +4974,7 @@ Local aDSilo 		:= {}
 	If !FT_FEOF()
 		If !Empty(cLine:=FT_FReadLn())
 			// .and. At('NUM_TRATO',UPPER(cLine))==0 .and. At('ORDEM_PRODUCAO',UPPER(cLine))==0
+
 			cTxt := Replace(cLine,'"','')
 			cTxt := Replace(cTxt ,' ','_')
 			cTxt := Replace(cTxt ,',',';')
@@ -4986,6 +4986,7 @@ Local aDSilo 		:= {}
 			nPOperacao  := aScan(aHeaderCSV, { |x| Upper(x) == 'OPERACAO'})		
 			nPNumCarreg	:= aScan(aHeaderCSV, { |x| Upper(x) == '16-BIT_SIGNED'})
 			nPSilo1		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_1'})
+			nPInbDos 	:= aScan(aHeaderCSV, { |x| Upper(x) == 'INBEFF_DOS'})
 
 			if nPOperacao > 0 
 				MV_PAR02 := 1
@@ -4993,6 +4994,8 @@ Local aDSilo 		:= {}
 				MV_PAR02 := 2
 			elseif nPSilo1 > 0
 				MV_PAR02 := 3
+			elseif nPInbDos > 0
+				MV_PAR02 := 4
 			endif
 
 			FT_FSKIP()
@@ -5001,9 +5004,44 @@ Local aDSilo 		:= {}
 
 	While !FT_FEOF()
 		If !Empty(cLine:=FT_FReadLn())
-			if MV_PAR02 != 1
+			if MV_PAR02 == 4				
+				nSubs := 0
+				//nPos := At('"',cLine)
+				nUlt := 1
+				nPosIni := At('"',cLine,nUlt)
+				nPosFim := 0
+				cBakLin := SubStr(cLine, nUlt, nPosIni - 1)
+				cLinePonto := ""
+				cLinNovo := ""
+
+				While nSubs < 3
+					nPosIni := At('"',cLine,nUlt)
+
+					if nPosIni == 0 
+						// Não encontrou mais aspas, sai do loop
+						Exit
+					endif
+
+					nPosFim := At('"',cLine,nPosIni+1)
+
+					If nPosFim == 0
+						ConOut("Erro ao encontrar o fim do campo entre aspas.")
+						Exit
+					EndIf
+
+					cValorPonto   := StrTran(SubStr(cLine, nPosIni + 1, nPosFim - nPosIni - 1),",", ".")
+					nSubs++
+					cLinePonto += cValorPonto + iif(nSubs<3,",",'')
+					nUlt := nPosFim + 1
+				EndDo
+
+				cLine := cBakLin + cLinePonto + SubStr(cLine, nUlt, Len(cLine) - nUlt + 1)
+
+				cLine := Replace(cLine ,' ','_')
 				cLine := Replace(cLine ,',',';')
-			else 
+			elseif MV_PAR02 == 2 .or. MV_PAR02 == 3
+				cLine := Replace(cLine ,',',';')
+			else
 				cLine := Replace(cLine ,',','.')
 			endif
 
@@ -5134,43 +5172,42 @@ Local aDSilo 		:= {}
 
 							MemoWrite( "C:\totvs_relatorios\VAPCPA13_UP.sql", _cQry )
 
-							MpSysOpenQuery(_cQry,"TMP")
+							cAlias := MpSysOpenQuery(_cQry)
 
-							IF !TMP->((Eof()))
-								TMP->(DBCloseArea())
+							IF !(cALias)->((Eof()))
+								(cALias)->(DBCloseArea())
 
+								_cQry := " WITH DADOS AS ( " + CRLF
+								_cQry += " select ( "+StrTran(aDados[nI, nPKGFornec],',','.')+" / SUM(Z0Y_QTDPRE) ) AJUSTE "+ CRLF
+								_cQry += " 	from "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
+								_cQry += " 	where Z0Y_FILIAL = '"+FWXFILIAL("Z0Y")+"' " + CRLF
+								_cQry += " 	AND Z0Y_ORDEM  = '"+aDados[nI, nPOrdemProd]+"' " + CRLF
+								_cQry += " 	AND lTrim(Z0Y_TRATO)  = '" + AllTrim(aDados[nI, nPNumCarreg]) + "' " + CRLF
+								_cQry += " 	AND Z0Y_RECEIT <> '"+aDados[nI, nPCodDieta]+"'" + CRLF
+								_cQry += " 	AND D_E_L_E_T_ =' '  " + CRLF
+								_cQry += " 	--ORDER BY Z0Y_ORDEM, Z0Y_TRATO, Z0Y_RECEIT	    " + CRLF
+								_cQry += " ) " + CRLF
+								_cQry += "  " + CRLF
+								_cQry += " 	SELECT Z0Y_FILIAL, Z0Y_ORDEM, Z0Y_RECEIT, Z0Y_COMP, Z0Y_TRATO, (SELECT AJUSTE FROM DADOS) AJUSTE--(Z0Y_QTDPRE * (SELECT AJUSTE FROM DADOS)) Z0Y_QTDREA " + CRLF
+								_cQry += " 	from "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
+								_cQry += " 	where Z0Y_FILIAL = '"+FWXFILIAL("Z0Y")+"'" + CRLF
+								_cQry += " 	AND Z0Y_ORDEM  = '"+aDados[nI, nPOrdemProd]+"'" + CRLF
+								_cQry += " 	AND lTrim(Z0Y_TRATO)  = '" + AllTrim(aDados[nI, nPNumCarreg]) + "'" + CRLF
+								_cQry += " 	AND Z0Y_RECEIT <> '"+aDados[nI, nPCodDieta]+"' " + CRLF
+								_cQry += " 	AND D_E_L_E_T_ =''  " + CRLF
 
-							_cQry := " WITH DADOS AS ( " + CRLF
-							_cQry += " select ( "+StrTran(aDados[nI, nPKGFornec],',','.')+" / SUM(Z0Y_QTDPRE) ) AJUSTE "+ CRLF
-							_cQry += " 	from "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
-							_cQry += " 	where Z0Y_FILIAL = '"+FWXFILIAL("Z0Y")+"' " + CRLF
-							_cQry += " 	AND Z0Y_ORDEM  = '"+aDados[nI, nPOrdemProd]+"' " + CRLF
-							_cQry += " 	AND lTrim(Z0Y_TRATO)  = '" + AllTrim(aDados[nI, nPNumCarreg]) + "' " + CRLF
-							_cQry += " 	AND Z0Y_RECEIT <> '"+aDados[nI, nPCodDieta]+"'" + CRLF
-							_cQry += " 	AND D_E_L_E_T_ =' '  " + CRLF
-							_cQry += " 	--ORDER BY Z0Y_ORDEM, Z0Y_TRATO, Z0Y_RECEIT	    " + CRLF
-							_cQry += " ) " + CRLF
-							_cQry += "  " + CRLF
-							_cQry += " 	SELECT Z0Y_FILIAL, Z0Y_ORDEM, Z0Y_RECEIT, Z0Y_COMP, Z0Y_TRATO, (SELECT AJUSTE FROM DADOS) AJUSTE--(Z0Y_QTDPRE * (SELECT AJUSTE FROM DADOS)) Z0Y_QTDREA " + CRLF
-							_cQry += " 	from "+RetSqlName("Z0Y")+" Z0Y  " + CRLF
-							_cQry += " 	where Z0Y_FILIAL = '"+FWXFILIAL("Z0Y")+"'" + CRLF
-							_cQry += " 	AND Z0Y_ORDEM  = '"+aDados[nI, nPOrdemProd]+"'" + CRLF
-							_cQry += " 	AND lTrim(Z0Y_TRATO)  = '" + AllTrim(aDados[nI, nPNumCarreg]) + "'" + CRLF
-							_cQry += " 	AND Z0Y_RECEIT <> '"+aDados[nI, nPCodDieta]+"' " + CRLF
-							_cQry += " 	AND D_E_L_E_T_ =''  " + CRLF
+								MemoWrite( "C:\totvs_relatorios\VAPCPA13_UP.sql", _cQry )
 
-							MemoWrite( "C:\totvs_relatorios\VAPCPA13_UP.sql", _cQry )
+								cALias := MpSysOpenQuery(_cQry)
 
-							MpSysOpenQuery(_cQry,"TMP")
-
-								IF !TMP->(EOF())
+								IF !(cALias)->(EOF())
 									_cQry := "UPDATE "+RetSqlName("Z0Y")+" "+ CRLF
-									_cQry += "SET Z0Y_QTDREA 	= ROUND("+LTRIM(STR(TMP->AJUSTE))+" * Z0Y_QTDPRE,3)"+ CRLF
+									_cQry += "SET Z0Y_QTDREA 	= ROUND("+LTRIM(STR((cALias)->AJUSTE))+" * Z0Y_QTDPRE,3)"+ CRLF
 									_cQry += "WHERE Z0Y_FILIAL 	= '"+FWXFILIAL("Z0Y")+"'"+ CRLF
-									_cQry += "AND Z0Y_ORDEM 	= '"+TMP->Z0Y_ORDEM+"'"+ CRLF
-									_cQry += "AND Z0Y_RECEIT 	= '"+TMP->Z0Y_RECEIT+"'"+ CRLF
-									_cQry += "--AND Z0Y_COMP 		= '"+TMP->Z0Y_COMP+"'"+ CRLF
-									_cQry += "AND LTRIM(Z0Y_TRATO) 	= '"+TMP->Z0Y_TRATO+"'"+ CRLF
+									_cQry += "AND Z0Y_ORDEM 	= '"+(cALias)->Z0Y_ORDEM+"'"+ CRLF
+									_cQry += "AND Z0Y_RECEIT 	= '"+(cALias)->Z0Y_RECEIT+"'"+ CRLF
+									_cQry += "--AND Z0Y_COMP 		= '"+(cALias)->Z0Y_COMP+"'"+ CRLF
+									_cQry += "AND LTRIM(Z0Y_TRATO) 	= '"+(cALias)->Z0Y_TRATO+"'"+ CRLF
 									_cQry += "AND D_E_L_E_T_    =''"+ CRLF
 									
 									If (TCSqlExec(_cQry) < 0)
@@ -5180,20 +5217,24 @@ Local aDSilo 		:= {}
 										Break
 									EndIf
 								ENDIF
-							TMP->(DBCLOSEAREA())
+								
+								(cALias)->(DBCLOSEAREA())
+							else
+								(cALias)->(DBCLOSEAREA())
 							ENDIF
 
 							// GUARDAR EM VETOR O CODEI
 							_cQry := "SELECT DISTINCT Z0Y_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0Y")+" " + _ENTER_
 							_cQry += _cCond
-							DbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .F., .F.)
-							While !ALIASTMP->(Eof())
-								If (aScan( aCODEI, {|x| x == ALIASTMP->Z0Y_CODEI}) < 1)
-									aAdd( aCODEI, ALIASTMP->Z0Y_CODEI )
+
+							cAlias := MpSysOpenQuery(_cQry)
+							While !(cALias)->(Eof())
+								If (aScan( aCODEI, {|x| x == (cALias)->Z0Y_CODEI}) < 1)
+									aAdd( aCODEI, (cALias)->Z0Y_CODEI )
 								EndIf
-								ALIASTMP->(DbSkip())
+								(cALias)->(DbSkip())
 							EndDo
-							ALIASTMP->(DBCloseArea())
+							(cALias)->(DBCloseArea())
 						
 				Next nI
 
@@ -5210,9 +5251,6 @@ Local aDSilo 		:= {}
 				nPKGInic 	:= aScan( aHeaderCSV, { |x| Upper(x) == 'KG_VAGAO_I'	    })
 				nPKGFim     := aScan( aHeaderCSV, { |x| Upper(x) == 'KG_VAGAO_F'	    })
 				nPOperForn  := aScan( aHeaderCSV, { |x| Upper(x) == 'OPERADOR'    	    })
-
-				// DBSelectArea("Z0W")
-				// Z0W->(DBSetOrder(1))
 
 				cOrdem := ""
 				// ORDENACAO
@@ -5265,8 +5303,9 @@ Local aDSilo 		:= {}
 						"    AND Z0W_RECEIT = '" + aDados[nI, nPCodDieta] + "'" + _ENTER_ +;
 						"    AND D_E_L_E_T_ = ' ' "
 					_cQry += _cCond
-					DbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .f., .f.)
-					if !ALIASTMP->(Eof())
+
+					cALias := MpSysOpenQuery(_cQry)
+					if !(cALias)->(Eof())
 
 						nDifOpe := NoRound( Abs(( Val(aDados[nI, nPKGMetaReca]) - Val(aDados[nI, nPKGFornec]) )  / Val(aDados[nI, nPKGMetaReca]) * 100),2)
 
@@ -5311,19 +5350,20 @@ Local aDSilo 		:= {}
 								nPKGFornec, nPData, nPHoraI, @cHoraI, nPVagao)
 						EndIf
 					EndIf
-					ALIASTMP->(DbCloseArea())
+					(cALias)->(DbCloseArea())
 
 					// GUARDAR EM VETOR O CODEI
 					_cQry := "SELECT DISTINCT Z0W_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0W")+" " + _ENTER_
 					_cQry += _cCond
-					DbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .F., .F.)
-					While !ALIASTMP->(Eof())
-						If (aScan( aCODEI, {|x| x == ALIASTMP->Z0W_CODEI}) < 1)
-							aAdd( aCODEI, ALIASTMP->Z0W_CODEI )
+
+					cALias := MpSysOpenQuery(_cQry)
+					While !(cALias)->(Eof())
+						If (aScan( aCODEI, {|x| x == (cALias)->Z0W_CODEI}) < 1)
+							aAdd( aCODEI, (cALias)->Z0W_CODEI )
 						EndIf
-						ALIASTMP->(DbSkip())
+						(cALias)->(DbSkip())
 					EndDo
-					ALIASTMP->(DBCloseArea())
+					(cALias)->(DBCloseArea())
 
 				Next nI
 
@@ -5402,14 +5442,15 @@ Local aDSilo 		:= {}
 
 				_cQry := "SELECT DISTINCT Z0Y_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0Y")+" " + _ENTER_
 				_cQry += _cCond
-				dbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .F., .F.)
-				while !ALIASTMP->(Eof())
-					If (aScan( aCODEI, {|x| x == ALIASTMP->Z0Y_CODEI}) < 1)
-						aAdd( aCODEI, ALIASTMP->Z0Y_CODEI )
+				
+				cALias := MpSysOpenQuery(_cQry)
+				while !(cALias)->(Eof())
+					If (aScan( aCODEI, {|x| x == (cALias)->Z0Y_CODEI}) < 1)
+						aAdd( aCODEI, (cALias)->Z0Y_CODEI )
 					EndIf
-					ALIASTMP->(DbSkip())
+					(cALias)->(DbSkip())
 				endDo
-				ALIASTMP->(DBCloseArea())
+				(cALias)->(DBCloseArea())
 
 			Next nI
 		ELSEIF MV_PAR02 == 3 // Importacao PHIBRO
@@ -5575,14 +5616,16 @@ Local aDSilo 		:= {}
 
 						_cQry := "SELECT DISTINCT Z0Y_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0Y")+" " + _ENTER_
 						_cQry += _cCond
-						dbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .F., .F.)
-						while !ALIASTMP->(Eof())
-							If (aScan( aCODEI, {|x| x == ALIASTMP->Z0Y_CODEI}) < 1)
-								aAdd( aCODEI, ALIASTMP->Z0Y_CODEI )
+						
+						cALias := MpSysOpenQuery(_cQry)
+
+						while !(cALias)->(Eof())
+							If (aScan( aCODEI, {|x| x == (cALias)->Z0Y_CODEI}) < 1)
+								aAdd( aCODEI, (cALias)->Z0Y_CODEI )
 							EndIf
-							ALIASTMP->(DbSkip())
+							(cALias)->(DbSkip())
 						endDo
-						ALIASTMP->(DBCloseArea())
+						(cALias)->(DBCloseArea())
 						
 						if lLast
 							nX++
@@ -5600,10 +5643,6 @@ Local aDSilo 		:= {}
 					if !Empty(cReceita) .and. nSPremix > 0
 						_cQry := " UPDATE "+RetSqlName("Z0Y")+" " + _ENTER_
 						_cQry += " 	SET  Z0Y_QTDREA =  " + cValToChar(nSPremix / 1000) + "" + _ENTER_
-						//_cQry += " 	   , Z0Y_DIFPES = " + StrTran(cValToChar(abs(Val(aDados[nI, nPAdtP]) - Val(aDados[nI, nPAdtR]) )),",",".") + _ENTER_
-						//If nPAdtP > 0
-						//	_cQry += " 	   , Z0Y_KGRECA =  " + StrTran(aDados[nI, nPAdtP],",",".") + "" + _ENTER_
-						//EndIf
 						_cQry += " 	   , Z0Y_DATINI = '" + dToS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
 						_cQry += " 	   , Z0Y_HORINI = '" + cHoraI+ "'" + _ENTER_
 						_cQry += " 	   , Z0Y_DATFIN = '" + dToS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
@@ -5628,15 +5667,130 @@ Local aDSilo 		:= {}
 
 						_cQry := "SELECT DISTINCT Z0Y_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0Y")+" " + _ENTER_
 						_cQry += _cCond
-						dbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "ALIASTMP", .F., .F.)
-						while !ALIASTMP->(Eof())
-							If (aScan( aCODEI, {|x| x == ALIASTMP->Z0Y_CODEI}) < 1)
-								aAdd( aCODEI, ALIASTMP->Z0Y_CODEI )
+
+						cAlias := MpSysOpenQuery(_cQry)
+						while !(cALias)->(Eof())
+							If (aScan( aCODEI, {|x| x == (cALias)->Z0Y_CODEI}) < 1)
+								aAdd( aCODEI, (cALias)->Z0Y_CODEI )
 							EndIf
-							ALIASTMP->(DbSkip())
+							(cALias)->(DbSkip())
 						endDo
-						ALIASTMP->(DBCloseArea())
+						(cALias)->(DBCloseArea())
 					endif
+				endif
+			Next nI
+
+		ELSEIF MV_PAR02 == 4
+			nPData 		:= aScan(aHeaderCSV, { |x| Upper(x) == 'DATE'})
+			nPTime 		:= aScan(aHeaderCSV, { |x| Upper(x) == 'TIME'})
+			nPCaminhao 	:= aScan(aHeaderCSV, { |x| Upper(x) == 'CAMINHAO'})
+			nPMs 		:= aScan(aHeaderCSV, { |x| Upper(x) == 'MS'})	
+			nPInbeff    := aScan(aHeaderCSV, { |x| Upper(x) == 'INBEFF_DOS'})
+			nPInbProg  	:= aScan(aHeaderCSV, { |x| Upper(x) == 'INBEFF_PROG'})
+			nPOrdemProd := aScan(aHeaderCSV, { |x| Upper(x) == 'ORDEM_PROD'})
+			nPNumCarreg := aScan(aHeaderCSV, { |x| Upper(x) == 'NUMERO'})
+			cInbeff 	:= GETMV("MV_PCPA13A",,"020190")
+
+			IF Empty(cInbeff)
+				lErro := .T.
+				MsgInfo("O parâmetro MV_PCPA13A não está configurado, por favor, verifique o parâmetro.")
+				DisarmTransaction()
+				Break
+			endif
+
+			cOrdem 	:= ""
+			nCarreg := ""
+
+			if nPData == 0 .or. nPCaminhao == 0 .or. nPInbeff == 0 .or. nPInbProg == 0 .or.;
+			   nPOrdemProd == 0 .or. nPNumCarreg == 0
+
+				lErro := .T.
+				MsgInfo("Não foi identificado o tipo de exportação." +_ENTER_+;
+					"Verifique o arquivo importado." +_ENTER_+;
+					"Esta operação será cancelada...")
+				DisarmTransaction()
+				Break
+			endif
+
+			aSort( aDados ,,, {|x,y| x[nPData]+x[nPOrdemProd]+x[nPNumCarreg] > y[nPData]+y[nPOrdemProd]+y[nPNumCarreg] } )
+
+			nPosArray := 0
+			For nI := 1 to Len(aDados)
+				if cToD(aDados[nI, nPData]) == dDatabase
+					nPosArray := nI
+					Exit
+				endif
+			Next nI
+			
+			if nPosArray  == 0
+				MsgStop("Arquivo PHIBRO: "+cFile+" Não será importado pois não há linhas no arquivo com a data atual igual a data base do sistema. ")
+				DisarmTransaction()
+				Break
+			endif
+
+			For nI := nPosArray to Len(aDados)
+				if cToD(aDados[nI, nPData]) != dDatabase
+					exit
+				else
+					If Len(aDados[1]) > Len(aDados[nI])
+
+						MsgInfo('Arquivo: ' + cFile + CRLF +;
+							'Erro na linha: ' + cValToChar(nI) +CRLF +;
+							'Total Colunas: ' + cValToChar(Len(aDados[1])) +CRLF +;
+							'Total Colunas na linha: ' + cValToChar(Len(aDados[nI])) +CRLF +;
+							'</br>' +CRLF+;
+							'Hora: ' + aDados[nI, nPHoraI] +CRLF+;
+							'Ordem Produção: ' + aDados[nI, nPOrdemProd] +CRLF+;
+							'Num Ordem: ' + aDados[nI, nPNumCarreg] )
+						Loop
+					EndIf
+
+					If (cOrdem == aDados[nI, nPOrdemProd] .and. nCarreg <> aDados[nI, nPNumCarreg] )
+						nCarreg := aDados[nI, nPNumCarreg]
+						cHoraI  := aDados[nI, nPTime]
+					ElseIf (cOrdem <> aDados[nI, nPOrdemProd] .and. nCarreg <> aDados[nI, nPNumCarreg] )
+						nCarreg := aDados[nI, nPNumCarreg]
+						cOrdem  := aDados[nI, nPOrdemProd]
+						cHoraI 	:= aDados[nI, nPTime]
+						nCntTrt += 1
+					EndIf
+
+					_cQry := " UPDATE "+RetSqlName("Z0Y")+" " + _ENTER_
+					_cQry += " 	SET  Z0Y_QTDREA = " + cValToChar(aDados[nI, nPInbeff]) + "" + _ENTER_
+					_cQry += " 	   , Z0Y_DIFPES = ROUND(ABS( Z0Y_QTDPRE - " + StrTran(cValToChar(Val(aDados[nI, nPInbeff])),",",".") + "),2)" + _ENTER_
+					_cQry += " 	   , Z0Y_DATINI = '" + dToS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
+					_cQry += " 	   , Z0Y_HORINI = '" + cHoraI+ "'" + _ENTER_
+					_cQry += " 	   , Z0Y_DATFIN = '" + dToS(cToD(aDados[nI, nPData]))+ "'" + _ENTER_
+					_cQry += " 	   , Z0Y_HORFIN = '" + cHoraI + "'" + _ENTER_
+
+					cOp := cValToChar(Ano(cToD(aDados[nI, nPData]))) + "-" + StrZero(Val(aDados[nI, nPOrdemProd]),5)
+
+					_cCond := " WHERE Z0Y_FILIAL = '" + FWxFilial('Z0Y') + "'" + _ENTER_ +;
+						"   AND lTrim(Z0Y_TRATO)  = '" + AllTrim(aDados[nI, nPNumCarreg]) + "'" + _ENTER_ +;
+						"   AND Z0Y_ORDEM  = '" + cOp + "'" + _ENTER_ +;
+						"   AND Z0Y_COMP = '"+cInbeff+"' " + _ENTER_ +;
+						"   AND Z0Y_ORIGEM = 'I' " + _ENTER_ +;
+						"   AND D_E_L_E_T_ = ' ' "
+					_cQry += _cCond
+
+					If (TCSqlExec(_cQry) < 0)
+						lErro := .T.
+						MsgInfo(TCSqlError())
+						DisarmTransaction()
+						Break
+					EndIf
+
+					_cQry := "SELECT DISTINCT Z0Y_CODEI " + _ENTER_ + "FROM "+RetSqlName("Z0Y")+" " + _ENTER_
+					_cQry += _cCond
+
+					cALias := MpSysOpenQry(_cQry)
+					while !(cALias)->(Eof())
+						If (aScan( aCODEI, {|x| x == (cALias)->Z0Y_CODEI}) < 1)
+							aAdd( aCODEI, (cALias)->Z0Y_CODEI )
+						EndIf
+						(cALias)->(DbSkip())
+					endDo
+					(cALias)->(DBCloseArea())
 				endif
 			Next nI
 
@@ -5650,8 +5804,10 @@ Local aDSilo 		:= {}
 				"   AND Z0Y.Z0Y_CODEI IN "   + FormatIn(ArrTokStr(aCODEI , ";"), ";") + _ENTER_ +; // cQryImp += "   AND Z0Y.Z0Y_CODEI = '" + Z0X->Z0X_CODIGO + "'" + _ENTER_ +;
 				"   AND Z0Y.Z0Y_QTDREA = 0 " + _ENTER_ +;
 				"   AND Z0Y.D_E_L_E_T_ = ' ' "
-			TCQUERY cQryImp NEW ALIAS "QRYIMP"
-			If (QRYIMP->(EOF()))
+			
+			cAlias := MpSysOpenQry(cQryImp)
+
+			If ((cALias)->(EOF()))
 				cSttImp := "I"
 			Else
 				cSttImp := "A"
@@ -5662,27 +5818,28 @@ Local aDSilo 		:= {}
 				cSttImp := "C"
 			ENDIF
 			
-			QRYIMP->(DBCloseArea())
+			(cALias)->(DBCloseArea())
 
 			cQry := " SELECT	R_E_C_N_O_ " + _ENTER_ +;
 				" FROM		"+RetSqlName("Z0X")+" " + _ENTER_ +;
 				" WHERE		Z0X_CODIGO IN " + FormatIn(ArrTokStr(aCODEI , ";"), ";") + _ENTER_ +;
 				" 		AND D_E_L_E_T_ = ' ' "
-			TCQUERY cQry NEW ALIAS "TEMP"
 			
-			While !(TEMP->(EOF()))
+			cAlias := MpSysOpenQry(cQry)
+			
+			While !((cALias)->(EOF()))
 
-				Z0X->(DbGoTo(TEMP->R_E_C_N_O_))
+				Z0X->(DbGoTo((cALias)->R_E_C_N_O_))
 
 				Reclock("Z0X", .F.)
-				Z0X->Z0X_CNTIMP := cSepJsn + cJsnImp
-				Z0X->Z0X_ARQIMP := aParRet[1]
-				Z0X->Z0X_DATIMP := Date()
-				Z0X->Z0X_USUIMP := __cUserId
-				Z0X->Z0X_STATUS := cSttImp
+					Z0X->Z0X_CNTIMP := cSepJsn + cJsnImp
+					Z0X->Z0X_ARQIMP := aParRet[1]
+					Z0X->Z0X_DATIMP := Date()
+					Z0X->Z0X_USUIMP := __cUserId
+					Z0X->Z0X_STATUS := cSttImp
 				Z0X->(MSUnlock())
 
-				TEMP->(DbSkip())
+				(cALias)->(DbSkip())
 			EndDo
 
 			_cQry := "SELECT * " + _ENTER_ +;
@@ -5691,9 +5848,10 @@ Local aDSilo 		:= {}
 				" AND Z0X_OPERAC = '1' "+ _ENTER_ +;
 				" AND Z0X_STATUS NOT IN ('P','I','K') "+ _ENTER_ +;
 				" AND D_E_L_E_T_ = ' ' "
-			TCQUERY cQry NEW ALIAS "QIMP"
+			
+			cAlias1 := MpSysOpenQry(_cQry)
 
-			If QIMP->(EoF())
+			If (cAlias1)->(EoF())
 				DBSelectArea("Z0R")
 				Z0R->(DBSetOrder(1))
 				If (Z0R->(DBSeek(FWxFilial("Z0R") + DTOS(Z0X->Z0X_DATA) + Z0X->Z0X_VERSAO)))
@@ -5702,8 +5860,8 @@ Local aDSilo 		:= {}
 					Z0R->(MSUnlock())
 				EndIf
 			EndIf
-			QIMP->(dbCloseArea())
-			TEMP->(DbCloseArea())
+			(cAlias1)->(dbCloseArea())
+			(cALias)->(DbCloseArea())
 		EndIf
 	End Transaction
 	RestArea(aArea)
@@ -6383,7 +6541,7 @@ Static Function fsVldCpo(cOpc,cProd)
 	
 	if SELECT("SB1")==0
 		DBSelectArea("SB1")
-	endif 
+	endif
 
 	SB1->(DBSetOrder(1))
 	

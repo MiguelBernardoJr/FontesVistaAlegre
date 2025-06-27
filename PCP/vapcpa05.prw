@@ -1448,7 +1448,7 @@ else
     /*
         28/05/2020 - Arthur Toshio
         Checar se tem algum produto / lote sem preenchimento de data de Início (B8_XDATACO)
-    */
+    */ 
 
         cQry := " with LOTES as (" +;
                 " select B8_PRODUTO, B8_LOTECTL, B8_X_CURRA" +;

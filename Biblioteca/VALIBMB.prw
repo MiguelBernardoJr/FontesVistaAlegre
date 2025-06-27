@@ -26,7 +26,7 @@ Default cTipoMov := ""
 	MB : 05.05.2020
 		# Limpar reserva na SX5 de lotes que nao possuem mais SALDO na SB8;
 */
-_cQry := " UPDATE SX5010 SET D_E_L_E_T_='*' " + CRLF
+_cQry := " UPDATE "+RetSqlName("SX5")+" SET D_E_L_E_T_='*', R_E_C_D_E_L = R_E_C_N_O_  " + CRLF
 _cQry += " WHERE	R_E_C_N_O_ IN ( " + CRLF
 _cQry += " 	SELECT  X5.R_E_C_N_O_ " + CRLF
 _cQry += " 	FROM	" + RetSqlName("SX5") + " X5 " + CRLF
@@ -175,7 +175,7 @@ quando chegar o servidor, vamos voltar, acho que é problema com a lentidao que e
 			SX5->X5_FILIAL 	:= ' '
 			SX5->X5_TABELA 	:= 'Z8'
 			SX5->X5_CHAVE  	:= SubS(cLote, 1, At("-", cLote)-1)
-			SX5->X5_DESCRI 	:= cLote
+			SX5->X5_DESCRI 	:= Alltrim(cLote)
 			SX5->X5_DESCSPA	:= cMovimento
 			SX5->X5_DESCENG	:= dToS(dDataBase)
 		SX5->(MsUnLock())
@@ -277,16 +277,16 @@ EndIf
 	// 		 "	 AND X5_TABELA='Z8'" +;
 	//          "   AND rTrim(X5_DESCRI) = '"+AllTrim(cLote)+"'"
 	_cQry := " DELETE "+CRLF+;
-			 " 	FROM SX5010"+CRLF+;
+			 " 	FROM "+RetSqlName("SX5")+""+CRLF+;
 			 " WHERE X5_DESCRI IN ("+CRLF+;
 			 " 		SELECT	X5_DESCRI"+CRLF+;
-			 " 		FROM	SX5010 A"+CRLF+;
+			 " 		FROM	"+RetSqlName("SX5")+" A"+CRLF+;
 			 " 		WHERE	X5_FILIAL=' '"+CRLF+;
 			 " 			AND X5_TABELA='Z8'"+CRLF+;
 			 " 			AND X5_DESCSPA='"+cMovimento+"'"+CRLF+;
 			 " 			AND NOT EXISTS ("+CRLF+;
 			 " 				SELECT	1"+CRLF+;
-			 " 				FROM	ZV2010 B"+CRLF+;
+			 " 				FROM	"+RetSqlName("ZV2")+" B"+CRLF+;
 			 " 				WHERE	ZV2_FILIAL<>' '"+CRLF+;
 			 " 					AND ZV2_MOVTO='"+cMovimento+"'"+CRLF+;
 			 " 					AND ZV2_LOTE=X5_DESCRI"+CRLF+;
@@ -294,14 +294,14 @@ EndIf
 			 " 			)"+CRLF+;
 			 " 			AND NOT EXISTS ("+CRLF+;
 			 " 				SELECT	1"+CRLF+;
-			 " 				FROM	SB8010 C"+CRLF+;
+			 " 				FROM	"+RetSqlName("SB8")+" C"+CRLF+;
 			 " 				WHERE	B8_FILIAL<>' '"+CRLF+;
 			 " 					AND B8_LOTECTL=X5_DESCRI"+CRLF+;
 			 " 					AND C.D_E_L_E_T_=' '"+CRLF+;
 			 " 			)"+CRLF+;
 			 " 			AND NOT EXISTS ("+CRLF+;
 			 " 				SELECT	1"+CRLF+;
-			 " 				FROM	Z0E010 D"+CRLF+;
+			 " 				FROM	"+RetSqlName("Z0E")+" D"+CRLF+;
 			 " 				WHERE	Z0E_FILIAL<>' '"+CRLF+;
 			 " 					AND Z0E_CODIGO='"+cMovimento+"'"+CRLF+;
 			 " 					AND Z0E_LOTE=X5_DESCRI"+CRLF+;
