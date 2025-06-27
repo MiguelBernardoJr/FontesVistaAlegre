@@ -2,3 +2,8 @@
 .codegpt
 telemetry.txt
 .DS_Store
+.vscode/launch.json
+.vscode/launch.json
+.vscode/settings.json
+.vscode/settings.json
+/.vscode
