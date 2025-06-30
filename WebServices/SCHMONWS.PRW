@@ -1,3 +1,11 @@
+MB : 30/06/2025
+
+** Verificacao realizada com Toshio:
+
+ -> utilizar a versao presente na pasta: SCHEDULER-JOBS
+    que é a versao compilada em producao
+
+
 #INCLUDE "TOTVS.CH"
 #INCLUDE "TryException.ch"
 #INCLUDE "FileIO.ch"
@@ -221,7 +229,7 @@ Static Function IntEmLote()
             /* 
                 Igor Oliveira - 2023-10-16
                 Ajuste solicitado pelo Toshio.
-                Se nota de cocho for de noite e hora > 21hrs pegar prxima data
+                Se nota de coclogho for de noite e hora > 21hrs pegar prxima data
             */
 
             cPeriodo := ""
