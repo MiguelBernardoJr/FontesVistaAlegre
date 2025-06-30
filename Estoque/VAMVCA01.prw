@@ -12,6 +12,9 @@ Necessá²©o criar consulta padrã¯ especï¿½ca para produtos bovinos e consulta pad
 ********************/
 
 //-------------------------------------------------------------------
+
+Static dLastClickTime := JurTime(.f., .T.) 
+
 User Function VAMVCA01()
 	Private oBrowse
 	Private	lInterProd := .F.
@@ -1303,6 +1306,19 @@ User Function NewLotes( __cCampo )
 	Local lContinua	 := .T.
 	Local lRet		 := .T.
 	Local cAux		 := ""
+	Local cCurrentTime := JurTime(.f., .T.)
+
+	// Se o tempo entre o último clique e o atual for muito pequeno, ignora`
+	if Val(SubStr(ltrim(dLastClickTime),1,2)) == Val(SubStr(ltrim(cCurrentTime),1,2))
+		if Val(SubStr(ltrim(dLastClickTime),4,2)) == Val(SubStr(ltrim(cCurrentTime),4,2))
+			If Abs(Val(SubStr(ltrim(dLastClickTime),7,2)) - Val(SubStr(ltrim(cCurrentTime),7,2))) < 1
+				if abs(Val(SubStr(ltrim(dLastClickTime),10,3)) - Val(SubStr(ltrim(cCurrentTime),10,3))) < 500
+					Return Nil // Ignora a segunda chamada muito rápida
+				EndIf
+			EndIf
+		EndIf
+	EndIf
+	dLastClickTime := cCurrentTime // Atualiza o tempo do último clique
 
 	If oModel:nOperation == 4 .and. FWFldGet("Z0C_TPMOV") <> '4'
 		
@@ -1374,7 +1390,7 @@ Return nil
 
 
 //-------------------------------------------------------------------
-Static Function MVCA01BUT( oPanel )
+Static Function MVCA01BUT( oPanel ) 	
 Local oModel := FWModelActive()
 Local oView  := FWViewActive()
 
@@ -4100,15 +4116,8 @@ Return nil
 
 /* ==================================================================================== */
 User Function aVldLin()
-	Local nI		:= 0
-	Local nJ		:= 0
-	Local lRet 		:= .T. 
-	Local cLote 	:= oGetDadRan:aCols[ oGetDadRan:nAt, 4/*Lote*/]
-	Local lDelete 	:= oGetDadRan:aCols[ oGetDadRan:nAt, 6]
+Return .T.
 
-	lRet 		:= .T. 
-
-Return lRet
 User Function aVldLot()
 	Local nI		:= 0
 	Local nJ		:= 0
@@ -4125,10 +4134,10 @@ User Function aVldLot()
 			MsgInfo("Linha não pode ser deletada, pois esse lote já está cadastrado na grid [Pesagens Realizadas] na Linha: "+AllTrim(Str(nI))+".",;
 					"Operação Cancelada")
 			Return .F.
-		endif 
+		endif
 	Next nI
 
-	if lDelete
+	if oGetDadRan:lDelete
 		MsgInfo("Operação não pode ser realizada, insira uma nova linha com as informações do lote!",;
 				"Operação Cancelada")
 		Return .F.
@@ -4136,13 +4145,13 @@ User Function aVldLot()
 		//cSql += " where ZV2_FILIAL='"+ FWxFilial("ZV2") +"'"+ CRLF
 		//cSql += " and ZV2_MOVTO = '" + Z0C->Z0C_CODIGO + "'" + CRLF
 		//cSql += " and ZV2_LOTE = '" + cLote + "'"
-//
+		//
 		//nStatus := TCSqlExec(cSql)
 		//If (nStatus < 0)
 		//	conout("TCSQLError() " + TCSQLError())
 		//	Return .F.
 		//EndIf
-//
+		//
 		//If (TCSqlExec("DELETE FROM SX5010 WHERE X5_TABELA='Z8' AND RTRIM(X5_DESCRI) = '" +;
 		//	AllTrim(cLote) + "'" ) < 0)
 		//	ConOut("Erro ao liberar lote: " + AllTrim(cLote) + CRLF + TCSQLError())
@@ -4167,7 +4176,7 @@ User Function aVldLot()
 				SX5->X5_DESCENG	:= dToS(dDataBase)
 			SX5->(MsUnLock())
 		EndIf
-	endif 
+	endif
 
 	oGetDadRan:Refresh()
 Return lRet

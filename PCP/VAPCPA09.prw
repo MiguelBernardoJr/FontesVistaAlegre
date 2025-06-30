@@ -76,12 +76,9 @@ Private nTotCSR            := 0
 Private aDadRotZao         := {}
 Private nContSelCur 	   := 0
 
-Private nAbaSel			   := 3 //ABA VISAO GERAL, ROTINA ABRE COM ELA SELECIONADA
+aDadSel := {"ROTA01", dDataBase, "0001", ""}
 
-aDadSel := {"ROTA01", dDataBase, "0001", "03"}
-
-U_PosSX1({{cPrgRot, "01", CtoD("24/06/2025")}})
-//U_PosSX1({{cPrgRot, "01", DTOS(dDataBase)}})
+U_PosSX1({{cPrgRot, "01", dDataBase}})
 
 While ((nOpcRotas > 0))
 
@@ -111,13 +108,13 @@ While ((nOpcRotas > 0))
 	(cAlias)->(DBCloseArea())
 	
 	if lConstroi
+		aDadSel[2] := aParRet[1]
+
 		VAPCPA09A(lShwZer, lShwGer)
 		lConstroi := .F. 
 	endif
 
 	If (Len(aParRet) > 0)
-		aDadSel[2] := aParRet[1]
-		
 		VAPCPA09B(lShwZer, lShwGer)
 	Else
 		nOpcRotas := 0
@@ -128,10 +125,23 @@ Return (Nil)
 
 Static Function VAPCPA09A(lPShwZer, lPShwGer)
 	Local nCrAux := 1
-	Local aInSQL := {"01","02","99"}
+	Local aInSQL := {}
 
-		 // ADICIONAR 99
+	cQry := " SELECT Z08_CONFNA FROM "+RetSqlName("Z08")+"   " + CRLF
+ 	cQry += "WHERE Z08_FILIAL = '"+FwXFilial("Z08")+"' " + CRLF
+ 	cQry += "AND D_E_L_E_T_ = ' '  " + CRLF
+ 	cQry += "AND Z08_CONFNA <> '' " + CRLF
+ 	cQry += "GROUP BY Z08_CONFNA  " + CRLF
 
+	cAlias := MpSysOpenQuery(cQry)
+	while !(cAlias)->(EOF())
+		AAdd(aInSQL, rTrim((cAlias)->Z08_CONFNA))
+		(cAlias)->(DBSkip())
+	Enddo
+	(cAlias)->(DbCloseArea())
+
+	//ADICIONAR 99
+	dbSelectArea("Z05")
 	Z05->(DBSetOrder(1))
 	If (!Z05->(DBSeek(xFilial("Z05") + DTOS(aDadSel[2]) + aDadSel[3])))
 		
@@ -232,7 +242,6 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 	Local cShwZer              := ""
 	Local aSize                := {}, aObjects := {}, aInfo := {}, aPObjs := {}
 	Local aTFldr               := {}
-
 	Local nLinLin              := 001
 	Local aScrCnf              := {}
 	Local aPnlCnf              := {}
@@ -253,20 +262,41 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 	Local oTSTotTr/*, oTSChgCur, oTSChgDie*/
 	Local oTCRot
 	Local aInSQL 				:= {}
-	Local tSplitter 			:= .T.
+	Local lSplitter 			:= .T.
 
 	aLinCnf := {}
 	aCurLin := {}
 	aLinCnf := {}
 
-	if nAbaSel == 1
-		aInSQL := {"01"}
-	elseif nAbaSel == 2
-		aInSQL := {"02"}
-	elseif nAbaSel == 3
-		aInSQL := {"01","02","99"} // ADICIONAR 99
-	elseif nAbaSel == 4
+	cQry := " SELECT Z08_CONFNA FROM "+RetSqlName("Z08")+"   " + CRLF
+ 	cQry += "WHERE Z08_FILIAL = '"+FwXFilial("Z08")+"' " + CRLF
+ 	cQry += "AND D_E_L_E_T_ = ' '  " + CRLF
+ 	cQry += "AND Z08_CONFNA <> '99' " + CRLF
+ 	cQry += "AND Z08_CONFNA <> '' " + CRLF
+ 	cQry += "GROUP BY Z08_CONFNA  " + CRLF
+
+	cAlias := MpSysOpenQuery(cQry)
+	while !(cAlias)->(EOF())
+		AAdd(aTFldr, "CONFINAMENTO " + rTrim((cAlias)->Z08_CONFNA))
+		AAdd(aInSQL, rTrim((cAlias)->Z08_CONFNA))
+		(cAlias)->(DBSkip())
+	Enddo
+	(cAlias)->(DbCloseArea())
+
+	AAdd(aTFldr, "VISAO GERAL")
+	AAdd(aTFldr, "PASTO")
+	AAdd(aTFldr, "RESUMO")
+
+	if Empty((aDadSel[4]))
+		aDadSel[4] := StrZero(Len(aTFldr) - 2,2)
+	endif
+
+	if Val(aDadSel[4]) == Len(aTFldr) - 2
+		aAdd(aInSQL,"99")
+	elseif Val(aDadSel[4]) == Len(aTFldr) - 1
 		aInSQL := {"99"}
+	else
+		aInSQL := {aDadSel[4]}
 	endif
 
 	aSize := MsAdvSize(.T.)
@@ -287,14 +317,13 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 	aDadTl := {}
 	aDdTlC := {}
 
+	//Verificar quantos paineis serão criados para calcular o tamanho das linhas.
+	nLenPanel := Len(aInSQL)
+
 	While !((cAlias)->(EOF()))
 		If (cChvCnf != (cAlias)->CONF)
 			
-			if (cAlias)->CONF == "99"
-				nChvFol := 4
-			else
-				nChvFol := Val((cAlias)->CONF)
-			endif
+			nChvFol := Val((cAlias)->CONF)
 			
 			aadd(aDadTl, {(cAlias)->CONF,++nChvCnf,nChvFol})
 			nLinCnf := Len(aDadTl)
@@ -310,7 +339,14 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 			
 			AAdd(aDadTl[nLinCnf][nLinCur], {(cAlias)->SEQ, ALLTRIM((cAlias)->LOTE), (cAlias)->QUANT, (cAlias)->PLANO, (cAlias)->DIAS, (cAlias)->DIETA, IIf((cAlias)->DIAS = 1, (cAlias)->KGMN, (cAlias)->KGMNDIA ), IIf((cAlias)->DIAS == 1, (cAlias)->KGMS, (cAlias)->KGMSDIA ), (cAlias)->ROTA, (cAlias)->CONF, (cAlias)->Z08_CODIGO, (cAlias)->DIEDSC})
 		Else
-			IF 70 * LEN(aDadTl[nLinCnf][nLinCur]) > (aPObjs[1][4]/2) - 20
+			//Verificar quantos paineis serão criados para calcular o tamanho das linhas.
+			if nLenPanel > 1
+				lQuebra := 35 * LEN(aDadTl[nLinCnf][nLinCur]) > ((aPObjs[1][4]/2) / nLenPanel )  - 20
+			else
+				lQuebra := 70 * LEN(aDadTl[nLinCnf][nLinCur]) > (aPObjs[1][4]/2) - 20
+			endif
+
+			IF lQuebra
 				AAdd(aDadTl[nLinCnf], {(cAlias)->LINHA})
 				nLinCur := Len(aDadTl[nLinCnf])
 				cChvLin := (cAlias)->LINHA
@@ -333,7 +369,6 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 			EndIf
 		EndIf
 		
-
 		If (!Empty((cAlias)->ROTA))
 			nTotCRt := nTotCRt + 1
 		EndIf
@@ -353,14 +388,12 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 			dDtRD1 := Z0S->Z0S_DATA
 			
 			While (Z0S->Z0S_DATA == dDtRD1 .AND. Z0S->Z0S_VERSAO == aDadSel[3])
-
 				While (!(cALias)->(EOF())) // ADICIOANR REGISTROS
 					AAdd(aRotD1, {(cALias)->ROTA, (cALias)->EQUIP, 0, (cALias)->DIETA, (cALias)->OPERAD})
 					(cALias)->(DBSkip())
 				EndDo
 				Z0S->(DbCloseArea())
 			EndDo
-			
 		Else
 			For nCntAll := 1 To Len(aRot)
 				AAdd(aRotD1, {aRot[nCntAll][1], Space(6), 0, Space(20), Space(30)})
@@ -446,66 +479,6 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 					Next nCntCur
 				Next nCntLin
 			Next nCntAll
-			
-			//For nCntAll := 1 To Len(aDdTlC)
-			//	For nCntLin := 2 To Len(aDdTlC[nCntAll])
-			//		
-			//		If (cChvLin != aDdTlC[nCntAll][nCntLin][01])
-			//			cChvLin := aDdTlC[nCntAll][nCntLin][01]
-			//		EndIf
-			//
-			//		For nCntCur := 2 To Len(aDdTlC[nCntAll][nCntLin])
-			//			lRotD1 := .T.
-			//			If ((nRtAux := aScan(aDadRD1, { |x| x[1] = aDdTlC[nCntAll][nCntLin][nCntCur][02]})) > 0)
-			//				
-			//				If (aDadRD1[nRtAux][05] != ALLTRIM(aDdTlC[nCntAll][nCntLin][nCntCur][12]))
-			//					If (!lParRotD1)
-			//						lRotD1 := .F.
-			//					EndIf
-			//				EndIf
-			//				
-			//				If (aDadRD1[nRtAux][06] != ALLTRIM(aDdTlC[nCntAll][nCntLin][nCntCur][07]))
-			//					If (!lParRotD1)
-			//						lRotD1 := .F. 
-			//					EndIf
-			//				EndIf
-			//				
-			//			EndIf
-			//			
-			//			If (nRtAux > 0)
-			//				If (lRotD1)
-			//					cRotAux := aDadRD1[nRtAux][07] 
-			//				Else
-			//					cRotAux := Space(6)
-			//				EndIf
-			//			Else
-			//				cRotAux := Space(6)
-			//			EndIf
-			//		
-			//			RecLock("Z0T", .T.)
-			//				Z0T->Z0T_FILIAL := xFilial("Z0T")
-			//				Z0T->Z0T_DATA   := aDadSel[2]
-			//				Z0T->Z0T_VERSAO := aDadSel[3]
-			//				Z0T->Z0T_ROTA   := cRotAux
-			//				Z0T->Z0T_CONF   := aDdTlC[nCntAll][nCntLin][nCntCur][10]
-			//				Z0T->Z0T_LINHA  := aDdTlC[nCntAll][nCntLin][01]
-			//				Z0T->Z0T_SEQUEN := aDdTlC[nCntAll][nCntLin][nCntCur][01]
-			//				Z0T->Z0T_CURRAL := aDdTlC[nCntAll][nCntLin][nCntCur][11]
-			//				Z0T->Z0T_LOTE   := aDdTlC[nCntAll][nCntLin][nCntCur][02]
-			//			Z0T->(MSUnlock())
-			//
-			//			If (lRotD1)
-			//				If (Z0S->(DBSeek(xFilial("Z0S") + DTOS(aDadSel[2]) + aDadSel[3] + cRotAux)))
-			//					RecLock("Z0S", .F.)
-			//						Z0S->Z0S_TOTTRT := Z0S->Z0S_TOTTRT + aDadRD1[nRtAux][08]
-			//					Z0S->(MSUnlock())
-			//				EndIf
-			//				
-			//				aDdTlC[nCntAll][nCntLin][nCntCur][10] := aDadRD1[nRtAux][07]
-			//			EndIf
-			//		Next nCntCur
-			//	Next nCntLin
-			//Next nCntAll
 		EndIf
 	ElseIf (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aDadSel[1])))
 		nTotTrt := Z0S->Z0S_TOTTRT
@@ -513,10 +486,6 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 		nTotTrt := 0
 	EndIf
 	(cALias)->(DbCloseArea())
-
-	//If (Len(aTFldr)==1)
-	//	aAdd(aTFldr, "CONFINAMENTO 02")
-	//EndIf
 
 	nTotCSR := nTotCur - nTotCRt
 	
@@ -537,12 +506,10 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 	oTFntLC := TFont():New('Courier new',,18,.T.,.T.)
 	oTFntPs := TFont():New('Courier new',,16,.T.,.T.)
 	oTFntSb := TFont():New('Courier new',,14,.T.,.T.,,,,,.T.)
-	
-	aadd(aTFldr, "CONFINAMENTO 01")
-	aadd(aTFldr, "CONFINAMENTO 02")
-	AAdd(aTFldr, "VISAO GERAL")
-	AAdd(aTFldr, "PASTO")
-	AAdd(aTFldr, "RESUMO")
+
+	if (nPos := aScan(aDadTl,{ |x| Alltrim(x[1]) == "99"})) > 0 
+		aDadTl[nPos][3] := Len(aTFldr) - 1
+	endif
 
 	nColLeg 	:= (aPObjs[1][4]/2) - 080 - 20 //nColLeg := aSize[6] - 460
 	aOperador 	:= StrTokArr(GetMV("MV_OPERADO") + ";",";")
@@ -633,28 +600,25 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 			nCurLin := 005
 			nCurCol := 005
 
-			if lPShwGer .and. nAbaSel == 3 .and. tSplitter
-				oSplitter := tSplitter():New( 005,;
-											((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10,;
-											oTFldr:aDialogs[Len(oTFldr:aDialogs) - 2],;
-											aInfo[3],;
-											aInfo[4]  )
-				tSplitter := .F.
-			endif
-
 			If (cChvCnf != aDadTl[nCntAll][01]) .OR. Empty(aPnlRot) //27-05-2022
-				
 				cChvCnf := aDadTl[nCntAll][01]
 				cChvLin := ""
 				nChvCnf := aDadTl[nCntAll][02]
 				nChvFol := aDadTl[nCntAll][03]
 
 				If (lPShwGer)
-					//AAdd(aScrCnf, TScrollArea():New(oTFldr:aDialogs[Len(oTFldr:aDialogs) - 2], 005, ((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10, (aPObjs[1][3]/2) - 150, (((aPObjs[1][4]/2)/Len(aDadTl))), .T., .T.))
+					if lSplitter
+						oSplitter := tSplitter():New( 005,;
+													((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10,;
+													oTFldr:aDialogs[Len(oTFldr:aDialogs) - 2],;
+													aInfo[3],;
+													aInfo[4] )
+						lSplitter := .F.
+					endif
 					AAdd(aScrCnf, TScrollArea():New(oSplitter, 005, ((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10, (aPObjs[1][3]/2) - 150, (((aPObjs[1][4]/2)/Len(aDadTl))), .T., .T.))
 					
 					oPanel := nil 
-					oPanel := TPanel():New(010, ((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10, aTFldr[nChvCnf], aScrCnf[nChvCnf], oTFntTC, .F.,, aCorTl[4], aCorTl[1], (((aPObjs[1][4]/2)/Len(aDadTl))), (065 * (Len(aDadTl[nCntAll]))) - 015)
+					oPanel := TPanel():New(010, ((((aPObjs[1][4]/2)/Len(aDadTl))) * Len(aPnlRot)) + 10, iif(cChvCnf == "99","RECEPÇÃO",aTFldr[nChvCnf]), aScrCnf[nChvCnf], oTFntTC, .F.,, aCorTl[4], aCorTl[1], (((aPObjs[1][4]/2)/Len(aDadTl))), (065 * (Len(aDadTl[nCntAll]))) - 015)
 					oPanel:SetCss("background-color: RGB(255, 255, 255);")
 					
 					AAdd(aPnlRot, oPanel)
@@ -678,57 +642,52 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 					
 					aScrCnf[nChvCnf]:SetFrame(aPnlCnf[nChvCnf])
 				EndIf
-				
 			EndIf
 			
 			For nCntLin := 4 To Len(aDadTl[nCntAll])
+			
+				cChvLin := aDadTl[nCntAll][nCntLin][01]
 				
-				If (cChvLin != aDadTl[nCntAll][nCntLin][01])
-				
-					cChvLin := aDadTl[nCntAll][nCntLin][01]
+				if Len(Alltrim(cChvLin)) > 1
+					nSpacePanel := 50
+				else
+					nSpacePanel := 10
+				endif
+
+				If (lPShwGer)
+					oPanel := nil
+					oPanel := TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlRot[nIndPRt], oTFntLC, .T.,, aCorTl[4], aCorTl[1], nSpacePanel, 040)
+					oPanel:SetCss("background-color: RGB(255, 255, 255);")
+
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel inicio da linha
 					
-					if Len(Alltrim(cChvLin)) > 1
-						nSpacePanel := 50
-					else
-						nSpacePanel := 10
-					endif 
+					aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])]:bLClicked := &("{|| (U_SelLin('" + cChvCnf + "', '" + STR(nCntLin - 3) + "'))}")
 
-					If (lPShwGer)
-						oPanel := nil
-						oPanel := TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlRot[nIndPRt], oTFntLC, .T.,, aCorTl[4], aCorTl[1], nSpacePanel, 040)
-						oPanel:SetCss("background-color: RGB(255, 255, 255);")
+					oPanel := nil
+					oPanel := TPanel():New(nLinLin, nSpacePanel+5,, aPnlRot[nIndPRt], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (030 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 001, 040)
+					oPanel:SetCss("background-color: rgb(054, 054, 054);")
 
-						AAdd(aLinCnf[nChvCnf], oPanel) //painel inicio da linha
-						
-						aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])]:bLClicked := &("{|| (U_SelLin('" + cChvCnf + "', '" + STR(nCntLin - 3) + "'))}")
+										//linha inicial, coluna inicial                                       //tamanho coluna, tamanho linha
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel da linha
+					AAdd(aCurLin[nChvCnf], {})
+				Else
+					oPanel := nil
+					oPanel := TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlCnf[nChvCnf], oTFntLC, .T.,, aCorTl[4], aCorTl[1], nSpacePanel, 090)
+					oPanel:SetCss("background-color: RGB(255, 255, 255);")
 
-						oPanel := nil
-						oPanel := TPanel():New(nLinLin, nSpacePanel+5,, aPnlRot[nIndPRt], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (030 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 001, 040)
-						oPanel:SetCss("background-color: rgb(054, 054, 054);")
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel inicio da linha
+					
+					aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])]:bLClicked := &("{|| (U_SelLin('" + cChvCnf + "', '" + STR(nCntLin - 3) + "'))}")
+					
+					oPanel := nil
+					oPanel := TPanel():New(nLinLin, nSpacePanel+5,, aPnlCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (065 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 005, 090)
+					oPanel:SetCss("background-color: rgb(054, 054, 054);")
 
 											//linha inicial, coluna inicial                                       //tamanho coluna, tamanho linha
-						AAdd(aLinCnf[nChvCnf], oPanel) //painel da linha
-						AAdd(aCurLin[nChvCnf], {})
-					Else
-						oPanel := nil
-						oPanel := TPanel():New(nLinLin, 005, ALLTRIM(cChvLin), aPnlCnf[nChvCnf], oTFntLC, .T.,, aCorTl[4], aCorTl[1], nSpacePanel, 090)
-						oPanel:SetCss("background-color: RGB(255, 255, 255);")
-
-						AAdd(aLinCnf[nChvCnf], oPanel) //painel inicio da linha
-						
-						aLinCnf[nChvCnf][Len(aLinCnf[nChvCnf])]:bLClicked := &("{|| (U_SelLin('" + cChvCnf + "', '" + STR(nCntLin - 3) + "'))}")
-						
-						oPanel := nil
-						oPanel := TPanel():New(nLinLin, nSpacePanel+5,, aPnlCnf[nChvCnf], oTFntGr, .T.,, aCorTl[4], aCorTl[2], (065 * (Len(aDadTl[nCntAll][nCntLin]) - 1)) + 005, 090)
-						oPanel:SetCss("background-color: rgb(054, 054, 054);")
-
-												//linha inicial, coluna inicial                                       //tamanho coluna, tamanho linha
-						AAdd(aLinCnf[nChvCnf], oPanel) //painel da linha
-						AAdd(aCurLin[nChvCnf], {})
-					EndIf
-					
+					AAdd(aLinCnf[nChvCnf], oPanel) //painel da linha
+					AAdd(aCurLin[nChvCnf], {})
 				EndIf
-				
+					
 				For nCntCur := 2 To Len(aDadTl[nCntAll][nCntLin])
 					
 					cLote  := aDadTl[nCntAll][nCntLin][nCntCur][02]
@@ -790,6 +749,7 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][01])
 							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, cDiCur )
 							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][02])
+							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][11])
 						EndIf
 					
 						nCurCol := nCurCol + 030
@@ -831,6 +791,7 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][01])
 							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, cDiCur)
 							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][02])
+							AAdd(aCurLin[nChvCnf][nCntLin - 3][nChvCur]:aControls, aDadTl[nCntAll][nCntLin][nCntCur][11])
 						
 							tButton():New(050, 001, "TRT", aCurLin[nChvCnf][nCntLin - 3][nChvCur], &("{|| U_VP05Form(aDadSel[2], aDadSel[3], '" + ALLTRIM(cChvLin) + ALLTRIM(aDadTl[nCntAll][nCntLin][nCntCur][01]) + "', '" + cLote + "')}"), 15, 15,,oTFntGr,, .T.)
 							tButton():New(050, 022, "KDX", aCurLin[nChvCnf][nCntLin - 3][nChvCur], &("{|| U_VAESTR16({{'" + cLote + "', '" + AllTrim(cChvLin) + aDadTl[nCntAll][nCntLin][nCntCur][01] + "'}}) }"), 15, 15,,oTFntGr,, .T.) 
@@ -988,54 +949,51 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 		lShwZer := !lShwZer
 	EndIf
 
-	If (nOpcRotas == 2)
-		lShwGer := !lShwGer
-	EndIf
-
 Return (Nil)
-
 /*
 	MB : 20.07.2021
 		-> Setar linha de acordo com a paleta de cor
 */
 Static Function SetClrResumo(oObj)
-Local nCor		:= RGB(254,254,254)
-Local aColsAux  := oObj:aCols
-Local nAt		:= oObj:nAt
-Local nPos	    := 0
-/*
-If (nPos:=aScan(aCrDie , { |x| AllTrim(x[1]) == AllTrim(aColsAux[ nAt, 2]) })) > 0
-	nCor := aCrDie[nPos, 2]
-EndIf
-*/
+	Local nCor		:= RGB(254,254,254)
+	/*
+	Local aColsAux  := oObj:aCols
+	Local nAt		:= oObj:nAt
+	Local nPos	    := 0
+	If (nPos:=aScan(aCrDie , { |x| AllTrim(x[1]) == AllTrim(aColsAux[ nAt, 2]) })) > 0
+		nCor := aCrDie[nPos, 2]
+	EndIf
+	*/
 Return nCor
 
 /* =================================================================================================================== */
-User Function SelLin(cChvCnf, cChvLin, lPasto)
+User Function SelLin(cChvCnf, cChvLin)
+	Local nIndCnf := VAL(cChvCnf)
+	Local nIndLin := VAL(cChvLin)
+	Local nCntCur := 1
+	Local lCnt    := .T.
+	Local cRot    := ""
+	Local cRotSub := ""
+	Local nVlrSub := 0
+	Local cChvTab := ""
+	Local cDiCur  := ""
+	Local nCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][2]
+	Local cCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][3]
 
-Local nIndCnf := VAL(cChvCnf)
-Local nIndLin := VAL(cChvLin)
-Local nCntCur := 1
-Local lCnt    := .T.
-Local cRot    := ""
-Local cRotSub := ""
-Local nVlrSub := 0
-Local cChvTab := ""
-Local cDiCur  := ""
-Local nCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][2]
-Local cCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][3]
+	if Len(aDadTl) == 1
+		nIndCnf := 1
+	endif
 
-Default lPasto := .F.
+	if cChvCnf == "99"
+		nIndCnf := Len(aDadTl)
+	endif
 
-DBSelectArea("Z0T")
-Z0T->(DBSetOrder(3))
- 
-If (!lPasto)
+	Z0T->(DBSetOrder(3))
 
 	For nCntCur := 1 To Len(aCurLin[nIndCnf][nIndLin])
 	
 		If (aCurLin[nIndCnf][nIndLin][nCntCur]:TagGroup == 1)
-		
+
 			cDiCur := aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[4]
 		
 			If (!Empty(Z0S->Z0S_DIETA))
@@ -1065,14 +1023,13 @@ If (!lPasto)
 					Z0T->Z0T_CONF   := cChvCnf
 					Z0T->Z0T_LINHA  := aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[2]
 					Z0T->Z0T_SEQUEN := aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[3]
-					Z0T->Z0T_CURRAL := ALLTRIM(aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[2]) + ALLTRIM(aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[3])
+					Z0T->Z0T_CURRAL := ALLTRIM(aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[6])
 					Z0T->Z0T_LOTE   := aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[5]
 				Z0T->(MSUnlock())
 				nTotCRt := nTotCRt - 1
 			EndIf
 			
 			If (lCnt)
-		
 				If ((aCurLin[nIndCnf][nIndLin][nCntCur]:nClrPane != nCrRot)) //aCorTl[4]
 					aCurLin[nIndCnf][nIndLin][nCntCur]:nClrPane := nCrRot
 					aCurLin[nIndCnf][nIndLin][nCntCur]:SetCss("background-color: RGB("+cCrRot+");")
@@ -1107,7 +1064,6 @@ If (!lPasto)
 							RecLock("Z0S", .F.)
 								Z0S->Z0S_EQUIP := ""
 								Z0S->Z0S_DIETA := ""
-								/*Toshio - Verificar seleção*/ 
 							Z0S->(MSUnlock())
 						EndIf
 						
@@ -1116,197 +1072,88 @@ If (!lPasto)
 						cRotSub := ""
 					EndIf
 				EndIf
-				
 			EndIf
-			
 		EndIf
 		
 	Next nCntCur
 
-Else
+	nTotCSR := nTotCur - nTotCRt
 
-	For nCntCur := 1 To Len(aCurPst[nIndCnf][nIndLin])
-	
-		If (aCurPst[nIndCnf][nIndLin][nCntCur]:TagGroup == 1)
-	
-			cDiCur := aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[4]
-	
-			If (!Empty(Z0S->Z0S_DIETA))
-				If (!(Z0S->Z0S_DIETA $ cDiCur))
-					MsgInfo("Dieta '" + ALLTRIM(POSICIONE("SB1", 1, xFilial("SB1") + cDiCur, "B1_DESC")) + "' nao e a mesma dos outros currais na " + aDadSel[1] + ". Curral nao selecionado")
-					Return (Nil)
-				EndIf
-			EndIf
-	
-			cChvTab := xFilial("Z0T") + DTOS(aDadSel[2]) + aDadSel[3] + "99" + aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[2] + aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[3]
-		    //Z0T_FILIAL+Z0T_DATA+Z0T_VERSAO+Z0T_CONF+Z0T_LINHA+Z0T_SEQUEN+Z0T_ROTA
-			If (Z0T->(DBSeek(cChvTab)))
-				If (!Empty(Z0T->Z0T_ROTA) .AND. Z0T->Z0T_ROTA != aDadSel[1])
-					If (MsgYesNo("O curral " + ALLTRIM(STR(nCntCur/2)) + " esta associado a Rota: '" + Z0T->Z0T_ROTA + "' . Deseja susbstituir pela '" + aDadSel[1] + "' ?", "Curral encontrado em outra Rota."))
-						cRotSub := Z0T->Z0T_ROTA
-						nTotCRt := nTotCRt - 1
-					Else
-						lCnt := .F.
-					EndIf
-				EndIf
-			Else
-				RecLock("Z0T", .T.)
-					Z0T->Z0T_FILIAL := xFilial("Z0T")
-					Z0T->Z0T_DATA   := aDadSel[2]
-					Z0T->Z0T_VERSAO := aDadSel[3]
-					Z0T->Z0T_ROTA   := aDadSel[1]
-					Z0T->Z0T_CONF   := "99"
-					Z0T->Z0T_LINHA  := aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[2]
-					Z0T->Z0T_SEQUEN := aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[3]
-					Z0T->Z0T_CURRAL := aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[6]
-					Z0T->Z0T_LOTE   := aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[5]
-				Z0T->(MSUnlock())
-				nTotCRt := nTotCRt - 1
-			EndIf
-			
-			If (lCnt)
-	
-				If ((aCurPst[nIndCnf][nIndLin][nCntCur]:nClrPane != nCrRot)) //aCorTl[4]
-					aCurPst[nIndCnf][nIndLin][nCntCur]:nClrPane := nCrRot
-					aCurPst[nIndCnf][nIndLin][nCntCur]:SetCss("background-color: RGB("+cCrRot+");")
-					nTotTrt += aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[1]
-					nVlrSub := aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[1]
-					cRot := aDadSel[1]
-					nTotCRt := nTotCRt + 1
-				elseIf ((aCurPst[nIndCnf][nIndLin][nCntCur]:nClrPane == nCrRot))
-					aCurPst[nIndCnf][nIndLin][nCntCur]:nClrPane := aCorTl[1] //aCorTl[4]
-					aCurPst[nIndCnf][nIndLin][nCntCur]:SetCss("background-color: RGB(255,255,255);")
-					nTotTrt -= aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[1]
-					cRot := Space(6)
-					nTotCRt := nTotCRt - 1
-				EndIf
-	
-				RecLock("Z0S", .F.)
-					Z0S->Z0S_DIETA  := cDiCur
-					Z0S->Z0S_TOTTRT := nTotTrt
-				Z0S->(MSUnlock())
-						
-				RecLock("Z0T", .F.)
-					Z0T->Z0T_ROTA := cRot
-					Z0T->Z0T_LOTE   := aCurPst[nIndCnf][nIndLin][nCntCur + 1]:aControls[5]
-				Z0T->(MSUnlock())
-			
-				If (!Empty(cRotSub))
-					If (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRotSub)))
-						RecLock("Z0S", .F.)
-							Z0S->Z0S_TOTTRT := Z0S->Z0S_TOTTRT - nVlrSub
-						Z0S->(MSUnlock())
-						
-						If (Z0S->Z0S_TOTTRT = 0)
-							RecLock("Z0S", .F.)
-								Z0S->Z0S_EQUIP := ""
-								Z0S->Z0S_DIETA := ""
-							Z0S->(MSUnlock())
-						EndIf
-						
-						Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRot))
+	If (nTotTrt == 0)
+		RecLock("Z0S", .F.)
+			Z0S->Z0S_DIETA := ""
+		Z0S->(MSUnlock())
+	EndIf
 
-						cRotSub := ""
-					EndIf
-				EndIf
-				
-			EndIf
-		EndIf
-	Next nCntCur
-EndIf
-
-nTotCSR := nTotCur - nTotCRt
-
-If (nTotTrt == 0)
-	RecLock("Z0S", .F.)
-		Z0S->Z0S_DIETA := ""
-		//Z0S->Z0S_EQUIP := ""
-		//Z0S->Z0S_OPERAD:= ""
-	Z0S->(MSUnlock())
-EndIf
-
-// MB : 27.11.2020
-_cCurral := fLoadCurrais(aParRet[1], aDadSel[1])
-
+	_cCurral := fLoadCurrais(aParRet[1], aDadSel[1])
 Return (Nil)
+User Function SelCur(cChvCnf, cChvLin, cChvCur )
 
+	Local nIndCnf := VAL(cChvCnf)
+	Local nIndLin := VAL(cChvLin)
+	Local nIndCur := VAL(cChvCur)
+	Local lCnt    := .T.
+	Local cRot    := ""
+	Local cRotSub := ""
+	Local nVlrSub := 0
+	Local cChvTab := ""
+	Local cDiCur  := ""
+	Local nCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][2]
+	Local cCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][3]
+	Local cCur    := ""
+	Local cLote   := ""
+	Local cCurrentTime := JurTime(.f., .T.)
 
-User Function SelCur(cChvCnf, cChvLin, cChvCur, lPasto )
-
-Local nIndCnf := VAL(cChvCnf)
-Local nIndLin := VAL(cChvLin)
-Local nIndCur := VAL(cChvCur)
-Local lCnt    := .T.
-Local cRot    := ""
-Local cRotSub := ""
-Local nVlrSub := 0
-Local cChvTab := ""
-Local cDiCur  := ""
-Local nCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][2]
-Local cCrRot  := aRot[aScan(aRot, {|x| x[1] = aDadSel[1]})][3]
-Local cCur    := ""
-Local cLote   := ""
-Local cCurrentTime := JurTime(.f., .T.)
-
-Default lPasto := .F.
-
-// Se o tempo entre o último clique e o atual for muito pequeno, ignora`
-if Val(SubStr(ltrim(dLastClickTime),1,2)) == Val(SubStr(ltrim(cCurrentTime),1,2))
-	if Val(SubStr(ltrim(dLastClickTime),4,2)) == Val(SubStr(ltrim(cCurrentTime),4,2))
-		If Abs(Val(SubStr(ltrim(dLastClickTime),7,2)) - Val(SubStr(ltrim(cCurrentTime),7,2))) < 1
-			if abs(Val(SubStr(ltrim(dLastClickTime),10,3)) - Val(SubStr(ltrim(cCurrentTime),10,3))) < 500
-				Return Nil // Ignora a segunda chamada muito rápida
+	// Se o tempo entre o último clique e o atual for muito pequeno, ignora`
+	if Val(SubStr(ltrim(dLastClickTime),1,2)) == Val(SubStr(ltrim(cCurrentTime),1,2))
+		if Val(SubStr(ltrim(dLastClickTime),4,2)) == Val(SubStr(ltrim(cCurrentTime),4,2))
+			If Abs(Val(SubStr(ltrim(dLastClickTime),7,2)) - Val(SubStr(ltrim(cCurrentTime),7,2))) < 1
+				if abs(Val(SubStr(ltrim(dLastClickTime),10,3)) - Val(SubStr(ltrim(cCurrentTime),10,3))) < 500
+					Return Nil // Ignora a segunda chamada muito rápida
+				EndIf
 			EndIf
 		EndIf
 	EndIf
-EndIf
-dLastClickTime := cCurrentTime // Atualiza o tempo do último clique
+	dLastClickTime := cCurrentTime // Atualiza o tempo do último clique
 
-ConOut("SelCur() - Inicio. Timestamp: " + DToC(Date()) + " " + Time() + " - Chamada: " + cValToChar(++nContSelCur) )
+	if Len(aDadTl) == 1
+		nIndCnf := 1
+	endif
 
-DBSelectArea("Z0S")
-Z0S->(DBSetOrder(1))
+	if cChvCnf == "99"
+		nIndCnf := Len(aDadTl)
+	endif
 
-If (!(Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aDadSel[1]))))
-	Return (Nil)
-EndIf
+	Z0S->(DBSetOrder(1))
 
-DBSelectArea("Z0T")
-Z0T->(DBSetOrder(3))
-
-If (!lPasto)
-	cDiCur := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[4]
-	cCur   := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[2] + aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[3]
-Else
-	cDiCur := aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[4]
-	cCur   := aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[2] + aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[3]
-EndIf
-
-If (!Empty(Z0S->Z0S_DIETA))
-	If !(Z0S->Z0S_DIETA $ cDiCur)
-		MsgInfo("Dieta '" + ALLTRIM(POSICIONE("SB1", 1, xFilial("SB1") + cDiCur, "B1_DESC")) + "' nao e a mesma dos outros currais na " + aDadSel[1] + ". Curral nao selecionado")
+	If (!(Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aDadSel[1]))))
 		Return (Nil)
 	EndIf
-EndIf
 
-//Z0T_FILIAL+Z0T_DATA+Z0T_VERSAO+Z0T_CONF+Z0T_LINHA+Z0T_SEQUEN+Z0T_ROTA
-If (!lPasto)
-	cChvTab := xFilial("Z0T") + DTOS(aDadSel[2]) + aDadSel[3] + cChvCnf + cCur //aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[2] + aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[3]
-Else
-	cChvTab := xFilial("Z0T") + DTOS(aDadSel[2]) + aDadSel[3] + "99" + cCur //aCurPst[nIndCur]:aControls[2] + aCurPst[nIndCur]:aControls[3]
-EndIf
+	Z0T->(DBSetOrder(3))
 
-If (Z0T->(DBSeek(cChvTab)))
-	If (!Empty(Z0T->Z0T_ROTA) .AND. Z0T->Z0T_ROTA != aDadSel[1])
-		If (MsgYesNo("O curral " + ALLTRIM(STR(nIndCur/2)) + If (!lPasto, " na linha " + ALLTRIM(aLinAlf[nIndLin]) + " do confinamento " + ALLTRIM(cChvCnf), " do Pasto ") + " esta associado a Rota: '" + Z0T->Z0T_ROTA + "' . Deseja susbstituir pela '" + aDadSel[1] + "' ?", "Curral encontrado em outra Rota."))
-			cRotSub := Z0T->Z0T_ROTA
-			nTotCRt := nTotCRt - 1
-		Else
-			lCnt := .F.
+	cDiCur := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[4]
+	cCur   := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[2] + aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[3]
+
+	If (!Empty(Z0S->Z0S_DIETA))
+		If !(Z0S->Z0S_DIETA $ cDiCur)
+			MsgInfo("Dieta '" + ALLTRIM(POSICIONE("SB1", 1, xFilial("SB1") + cDiCur, "B1_DESC")) + "' nao e a mesma dos outros currais na " + aDadSel[1] + ". Curral nao selecionado")
+			Return (Nil)
 		EndIf
 	EndIf
-Else
-	If (!lPasto)
+
+	cChvTab := xFilial("Z0T") + DTOS(aDadSel[2]) + aDadSel[3] + cChvCnf + cCur //aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[2] + aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[3]
+
+	If (Z0T->(DBSeek(cChvTab)))
+		If (!Empty(Z0T->Z0T_ROTA) .AND. Z0T->Z0T_ROTA != aDadSel[1])
+			If (MsgYesNo("O curral " + ALLTRIM(STR(nIndCur/2)) + " na linha " + ALLTRIM(aLinAlf[nIndLin]) + " do confinamento esta associado a Rota: '" + Z0T->Z0T_ROTA + "' . Deseja susbstituir pela '" + aDadSel[1] + "' ?", "Curral encontrado em outra Rota."))
+				cRotSub := Z0T->Z0T_ROTA
+				nTotCRt := nTotCRt - 1
+			Else
+				lCnt := .F.
+			EndIf
+		EndIf
+	Else
 		RecLock("Z0T", .T.)
 			Z0T->Z0T_FILIAL := xFilial("Z0T")
 			Z0T->Z0T_DATA   := aDadSel[2]
@@ -1315,27 +1162,14 @@ Else
 			Z0T->Z0T_CONF   := cChvCnf
 			Z0T->Z0T_LINHA  := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[2]
 			Z0T->Z0T_SEQUEN := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[3]
-			Z0T->Z0T_CURRAL := ALLTRIM(aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[2]) + ALLTRIM(aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[3])
+			Z0T->Z0T_CURRAL := ALLTRIM(aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[6])
 			Z0T->Z0T_LOTE   := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[5]
 		Z0T->(MSUnlock())
-	Else
-		RecLock("Z0T", .T.)
-			Z0T->Z0T_FILIAL := xFilial("Z0T")
-			Z0T->Z0T_DATA   := aDadSel[2]
-			Z0T->Z0T_VERSAO := aDadSel[3]
-			Z0T->Z0T_ROTA   := aDadSel[1]
-			Z0T->Z0T_CONF   := "99"
-			Z0T->Z0T_LINHA  := aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[2]
-			Z0T->Z0T_SEQUEN := aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[3]
-			Z0T->Z0T_CURRAL := ALLTRIM(aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[6])
-			Z0T->Z0T_LOTE   := aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[5]
-		Z0T->(MSUnlock())
+		
+		nTotCRt := nTotCRt - 1
 	EndIf
-	nTotCRt := nTotCRt - 1
-EndIf
 
-If lCnt
-	If (!lPasto)
+	If lCnt
 		cLote := aCurLin[nIndCnf][nIndLin][nIndCur]:aControls[5]
 	
 		If ((aCurLin[nIndCnf][nIndLin][nIndCur - 1]:nClrPane != nCrRot))
@@ -1353,58 +1187,36 @@ If lCnt
 			nTotCRt := nTotCRt - 1
 			nTotCRt := nTotCRt + 1
 		EndIf
-		
-	Else
-		cLote := aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[5]
-		
-		If (aCurPst[nIndCnf][nIndLin][nIndCur - 1]:nClrPane != nCrRot .AND. aCurPst[nIndCnf][nIndLin][nIndCur - 1]:TagGroup == 1) //aCorTl[4]
-			aCurPst[nIndCnf][nIndLin][nIndCur - 1]:nClrPane := nCrRot //aCorTl[4]
-			aCurPst[nIndCnf][nIndLin][nIndCur - 1]:SetCss("background-color: RGB("+cCrRot+");")
-			nTotTrt += aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[1]
-			cRot 	:= aDadSel[1]
-			nVlrSub := aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[1]
-			nTotCRt := nTotCRt + 1
-		elseIf ((aCurPst[nIndCnf][nIndLin][nIndCur - 1]:nClrPane == nCrRot) .AND. (aCurPst[nIndCnf][nIndLin][nIndCur - 1]:TagGroup == 1))
-			aCurPst[nIndCnf][nIndLin][nIndCur - 1]:nClrPane := aCorTl[1] //aCorTl[4]
-			aCurPst[nIndCnf][nIndLin][nIndCur - 1]:SetCss("background-color: RGB(255,255,255);")
-			nTotTrt -= aCurPst[nIndCnf][nIndLin][nIndCur]:aControls[1]
-			cRot 	:= Space(6)
-			nTotCRt := nTotCRt - 1
-		EndIf
-	
-	EndIf
-	//if(!lPasto)
-
-	RecLock("Z0S", .F.)
-		Z0S->Z0S_DIETA := cDiCur
-		Z0S->Z0S_TOTTRT := nTotTrt
-	Z0S->(MSUnlock())
-
-	RecLock("Z0T", .F.)
-		Z0T->Z0T_ROTA := cRot
-		Z0T->Z0T_LOTE := cLote
-	Z0T->(MSUnlock())
-	
-	If (!Empty(cRotSub))
-		If (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRotSub)))
-			RecLock("Z0S", .F.)
-				Z0S->Z0S_TOTTRT := Z0S->Z0S_TOTTRT - nVlrSub
-			Z0S->(MSUnlock())
 			
-			If (Z0S->Z0S_TOTTRT == 0)
+		RecLock("Z0S", .F.)
+			Z0S->Z0S_DIETA := cDiCur
+			Z0S->Z0S_TOTTRT := nTotTrt
+		Z0S->(MSUnlock())
+
+		RecLock("Z0T", .F.)
+			Z0T->Z0T_ROTA := cRot
+			Z0T->Z0T_LOTE := cLote
+		Z0T->(MSUnlock())
+		
+		If (!Empty(cRotSub))
+			If (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRotSub)))
 				RecLock("Z0S", .F.)
-					Z0S->Z0S_EQUIP := ""
-					Z0S->Z0S_DIETA := ""
+					Z0S->Z0S_TOTTRT := Z0S->Z0S_TOTTRT - nVlrSub
 				Z0S->(MSUnlock())
+				
+				If (Z0S->Z0S_TOTTRT == 0)
+					RecLock("Z0S", .F.)
+						Z0S->Z0S_EQUIP := ""
+						Z0S->Z0S_DIETA := ""
+					Z0S->(MSUnlock())
+				EndIf
+				
+				Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRot))
+				
 			EndIf
-			
-			Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRot))
-			
 		EndIf
 	EndIf
-EndIf
 
-	//Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+cRot))
 	nTotCSR := nTotCur - nTotCRt
 
 	If (nTotTrt == 0)
@@ -1415,12 +1227,7 @@ EndIf
 		Z0S->(MSUnlock())
 	EndIf
 
-	// MB : 27.11.2020
 	_cCurral := fLoadCurrais(aParRet[1], aDadSel[1])
-
-	//MsgAlert(cCur)
-
-	ConOut("SelCur() - Final. Timestamp: " + DToC(Date()) + " " + Time() + " - Chamada: " + Str(nContSelCur) )
 
 Return (Nil)
 
@@ -1432,407 +1239,388 @@ Return (nCrRt)
 
 /* ==================================================================================================================== */
 User Function CRRGABA(nAba)
-Local lRetCrA := .F.
+	Local lRetCrA := .F.
 
-If (aDadSel[4] != STRZERO(nAba, 2))
-	aDadSel[4] := STRZERO(nAba, 2)
-	lRetCrA := .T.
-	
-	nAbaSel := nAba
-
-	If (nAba == 3)
-		nOpcRotas := 2
-	Else
-		nOpcRotas := 3
-		lShwGer := .F.
+	If (aDadSel[4] != STRZERO(nAba, 2))
+		aDadSel[4] := STRZERO(nAba, 2)
+		lRetCrA := .T.
+		
+		If (nAba == Len(oTFldr:aDialogs)-2)
+			nOpcRotas := 2
+			lShwGer := .T.
+		Else
+			nOpcRotas := 3
+			lShwGer := .F.
+		EndIf
 	EndIf
-EndIf
-
 Return (lRetCrA)
 
 /* ==================================================================================================================== */
 User Function GRVVEI(cVeic)
+	Local lVldVei := .T.
 
-Local lVldVei := .T.
-
-If (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aCols[n][1])))
-	RecLock("Z0S", .F.)
-		Z0S->Z0S_EQUIP := cVeic
-		
-	Z0S->(MSUnlock())
-Else
-	lVldVei := .F.
-EndIf
-
+	If (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aCols[n][1])))
+		RecLock("Z0S", .F.)
+			Z0S->Z0S_EQUIP := cVeic
+			
+		Z0S->(MSUnlock())
+	Else
+		lVldVei := .F.
+	EndIf
 Return (lVldVei)
 
 /* ==================================================================================================================== */
 User Function GRVOPR(cOper)
+	Local lVldOpr := .T.
 
-Local lVldOpr := .T.
-
-If (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aCols[n][1])))
-	RecLock('Z0S', .F.)
-		Z0S->Z0S_OPERAD := cOper
-	Z0S->(MSUnlock())
-Else
-	lVldOpr := .F.
-EndIf
-
+	If (Z0S->(DBSeek(xFilial("Z0S")+DTOS(aDadSel[2])+aDadSel[3]+aCols[n][1])))
+		RecLock('Z0S', .F.)
+			Z0S->Z0S_OPERAD := cOper
+		Z0S->(MSUnlock())
+	Else
+		lVldOpr := .F.
+	EndIf
 Return (lVldOpr)
 
 /* ==================================================================================================================== */
 User Function ChgTrR(nLin)
+	Local lVldChg := .T.
+	Local cQry := ""
+	Local cAlias := ""
 
-Local lVldChg := .T.
-Local cQry := ""
-Local cAlias := ""
+	If (Len(aClsRes) > 0)
 
-If (Len(aClsRes) > 0)
-
-	cQry := " SELECT Z06.Z06_TRATO AS TRATO, SUM(Z06_KGMNT) TOTAL " + CRLF +;
-			   "  FROM " + RetSqlName("Z06") + " Z06  " + CRLF +;
-			   "  RIGHT JOIN " + RetSqlName("Z0T") + " Z0T ON Z0T.Z0T_DATA = Z06.Z06_DATA AND Z0T.Z0T_VERSAO = Z06.Z06_VERSAO AND Z0T.Z0T_FILIAL = '" + xFilial("Z0T") + "' AND Z0T.D_E_L_E_T_ <> '*' AND Z0T.Z0T_ROTA = '" + aClsRes[nLin][1] + "'  " + CRLF +;
-			   "  										  AND Z0T_CURRAL = Z06_CURRAL AND Z06_LOTE = Z0T_LOTE " + CRLF +;
-			   "  WHERE Z06.Z06_FILIAL = '" + xFilial("Z06") + "' AND Z06.D_E_L_E_T_ <> '*'  " + CRLF +;
-			   "    AND Z06.Z06_DATA = '" + dToS(aDadSel[2]) + "' " + CRLF +; // DATEADD(dd, -1, cast('" + DTOS(aDadSel[2]) + "' as datetime)) " + CRLF +;
-			   "    AND Z06.Z06_VERSAO = '" + aDadSel[3] + "' " + CRLF +;
-			   "    AND Z06.Z06_TRATO <> ''  " + CRLF +;
-			   "  GROUP BY Z06.Z06_TRATO  " + CRLF +;
-			   "  ORDER BY Z06.Z06_TRATO "
-	
-	cAlias := MpSysOpenQuery(cQry)
-	
-	aClsRTr := {}
-	
-	While (!((cAlias)->(EOF())))
-		AAdd(aClsRTr, {(cAlias)->TRATO, (cAlias)->TOTAL, .F.})
+		cQry := " SELECT Z06.Z06_TRATO AS TRATO, SUM(Z06_KGMNT) TOTAL " + CRLF +;
+				"  FROM " + RetSqlName("Z06") + " Z06  " + CRLF +;
+				"  RIGHT JOIN " + RetSqlName("Z0T") + " Z0T ON Z0T.Z0T_DATA = Z06.Z06_DATA AND Z0T.Z0T_VERSAO = Z06.Z06_VERSAO AND Z0T.Z0T_FILIAL = '" + xFilial("Z0T") + "' AND Z0T.D_E_L_E_T_ <> '*' AND Z0T.Z0T_ROTA = '" + aClsRes[nLin][1] + "'  " + CRLF +;
+				"  										  AND Z0T_CURRAL = Z06_CURRAL AND Z06_LOTE = Z0T_LOTE " + CRLF +;
+				"  WHERE Z06.Z06_FILIAL = '" + xFilial("Z06") + "' AND Z06.D_E_L_E_T_ <> '*'  " + CRLF +;
+				"    AND Z06.Z06_DATA = '" + dToS(aDadSel[2]) + "' " + CRLF +; // DATEADD(dd, -1, cast('" + DTOS(aDadSel[2]) + "' as datetime)) " + CRLF +;
+				"    AND Z06.Z06_VERSAO = '" + aDadSel[3] + "' " + CRLF +;
+				"    AND Z06.Z06_TRATO <> ''  " + CRLF +;
+				"  GROUP BY Z06.Z06_TRATO  " + CRLF +;
+				"  ORDER BY Z06.Z06_TRATO "
 		
-		(cAlias)->(DBSkip())
-	EndDo
-	
-	(cAlias)->(DBCloseArea())
-Else
-	AAdd(aClsRTr, {'', 0, .F.})
-EndIf
+		cAlias := MpSysOpenQuery(cQry)
+		
+		aClsRTr := {}
+		
+		While (!((cAlias)->(EOF())))
+			AAdd(aClsRTr, {(cAlias)->TRATO, (cAlias)->TOTAL, .F.})
+			
+			(cAlias)->(DBSkip())
+		EndDo
+		
+		(cAlias)->(DBCloseArea())
+	Else
+		AAdd(aClsRTr, {'', 0, .F.})
+	EndIf
 
-oGrdRTr:SetArray(aClsRTr)
-oGrdRTr:Refresh()
+	oGrdRTr:SetArray(aClsRTr)
+	oGrdRTr:Refresh()
 
 Return (lVldChg)
 
 /* ==================================================================================================================== */
 // Botão zerar trato
 Static Function ZerRot()
+	Local oDlgZRt
+	Local cQry := ""
+	Local aHdrRot := {}
+	Local aClsRot := {}
+	Local nCntRot := 0 
+	Local nOpcRot := 0
+	Local lVldZer := .T.
+	Local cAlias  := ""
 
-Local oDlgZRt
-Local cQry := ""
-Local aHdrRot := {}
-Local aClsRot := {}
-Local nCntRot := 0 
-Local nOpcRot := 0
-Local lVldZer := .T.
-Local cAlias  := ""
+	Private oGrdF3R
 
-Private oGrdF3R
+	AAdd(aHdrRot, {"Sel."    ,"Selecionado", "@BMP"         , 01, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrRot, {"Rota"    ,"Rota"       , ""             , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrRot, {"Total"   ,"Total"      , "@R 999,999.99", 10, 2, "", "", "N", "", "R", "", "", "", "V"})
+	AAdd(aHdrRot, {"Operador","Operador"   , ""             , 20, 0, "", "", "C", "", "R", "", "", "", "V"})
 
-AAdd(aHdrRot, {"Sel."    ,"Selecionado", "@BMP"         , 01, 0, "", "", "C", "", "R", "", "", "", "V"})
-AAdd(aHdrRot, {"Rota"    ,"Rota"       , ""             , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
-AAdd(aHdrRot, {"Total"   ,"Total"      , "@R 999,999.99", 10, 2, "", "", "N", "", "R", "", "", "", "V"})
-AAdd(aHdrRot, {"Operador","Operador"   , ""             , 20, 0, "", "", "C", "", "R", "", "", "", "V"})
+	cQry := " SELECT Z0S.Z0S_ROTA AS ROTA, Z0S.Z0S_TOTTRT AS TOTAL, Z0S.Z0S_OPERAD AS OPERAD" + CRLF
+	cQry += " FROM " + RetSqlName("Z0S") +  " Z0S " + CRLF
+	cQry += " WHERE Z0S.Z0S_FILIAL = '" + xFilial("Z0S") + "' " + CRLF
+	cQry += "   AND Z0S.Z0S_DATA = '" + DTOS(MV_PAR01) + "' " + CRLF
+	cQry += "   AND Z0S.D_E_L_E_T_ <> '*' " + CRLF
+	cQry += "   AND Z0S.Z0S_TOTTRT > 0 "
+	cQry += " ORDER BY Z0S.Z0S_ROTA "
 
-cQry := " SELECT Z0S.Z0S_ROTA AS ROTA, Z0S.Z0S_TOTTRT AS TOTAL, Z0S.Z0S_OPERAD AS OPERAD" + CRLF
-cQry += " FROM " + RetSqlName("Z0S") +  " Z0S " + CRLF
-cQry += " WHERE Z0S.Z0S_FILIAL = '" + xFilial("Z0S") + "' " + CRLF
-cQry += "   AND Z0S.Z0S_DATA = '" + DTOS(MV_PAR01) + "' " + CRLF
-cQry += "   AND Z0S.D_E_L_E_T_ <> '*' " + CRLF
-cQry += "   AND Z0S.Z0S_TOTTRT > 0 "
-cQry += " ORDER BY Z0S.Z0S_ROTA "
+	cALias := MpSysOpenQuery(cQry)
 
-cALias := MpSysOpenQuery(cQry)
+	While !((cAlias)->(EOF()))
 
-While !((cAlias)->(EOF()))
-
-	AAdd(aClsRot, {aTik[2], (cAlias)->ROTA, (cAlias)->TOTAL, POSICIONE("Z0U", 1, xFilial("Z0U") + (cAlias)->OPERAD, "Z0U_NOME"), .F.})
-	
-	(cAlias)->(DBSkip())
-
-EndDo
-
-(cAlias)->(DBCloseArea())
-
-DEFINE MSDIALOG oDlgZRt TITLE "Rotas para Exportar" FROM 000, 000 To 400, 500 PIXEL
-
-	oGrdF3R := MsNewGetDados():New(015, 005, 150, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgZRt, aHdrRot, aClsRot)
-	oGrdF3R:oBrowse:bLDblClick := {|| MarkRot(1), oGrdF3R:Refresh()}
-	
-	tButton():New(160, 010, "Desmarcar Todos" , oDlgZRt, {|| MarkRot(2)}    , 100, 15,,,, .T.)
-	tButton():New(180, 010, "Selecionar Todos", oDlgZRt, {|| MarkRot(3)}    , 100, 15,,,, .T.)
-	
-	tButton():New(180, 115, "Cancelar"        , oDlgZRt, {|| nOpcRot := 0, oDlgZRt:End()}, 060, 15,,,, .T.)
-	tButton():New(180, 180, "Confirmar"       , oDlgZRt, {|| nOpcRot := 1, oDlgZRt:End()}, 060, 15,,,, .T.)
-
-	oDlgZRt:lEscClose := .T.
-	
-ACTIVATE MSDIALOG oDlgZRt CENTERED
-
-cRotSel := ""
-
-If (nOpcRot = 1)
-
-	For nCntRot := 1 To Len(aClsRot)
-	
-		If (oGrdF3R:aCols[nCntRot, 1] = aTik[1])
-
-			cRotSel := oGrdF3R:aCols[nCntRot][2]
+		AAdd(aClsRot, {aTik[2], (cAlias)->ROTA, (cAlias)->TOTAL, POSICIONE("Z0U", 1, xFilial("Z0U") + (cAlias)->OPERAD, "Z0U_NOME"), .F.})
 		
-			cQryZer := " UPDATE " + RetSqlName("Z0S")
-			cQryZer += " SET Z0S_EQUIP = '' "
-			cQryZer += "   , Z0S_DIETA = '' "
-			cQryZer += "   , Z0S_OPERAD = '' "
-			cQryZer += "   , Z0S_TOTTRT = 0 "
-			cQryZer += " WHERE Z0S_FILIAL = '" + xFilial("Z0S") + "' "
-			cQryZer += "   AND Z0S_DATA = '" + DTOS(aDadSel[2]) + "' "
-			cQryZer += "   AND Z0S_VERSAO = '" + aDadSel[3] + "' "
-			cQryZer += "   AND Z0S_ROTA = '" + cRotSel + "' "
-			cQryZer += "   AND D_E_L_E_T_ <> '*' "
+		(cAlias)->(DBSkip())
+
+	EndDo
+
+	(cAlias)->(DBCloseArea())
+
+	DEFINE MSDIALOG oDlgZRt TITLE "Rotas para Exportar" FROM 000, 000 To 400, 500 PIXEL
+
+		oGrdF3R := MsNewGetDados():New(015, 005, 150, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgZRt, aHdrRot, aClsRot)
+		oGrdF3R:oBrowse:bLDblClick := {|| MarkRot(1), oGrdF3R:Refresh()}
+		
+		tButton():New(160, 010, "Desmarcar Todos" , oDlgZRt, {|| MarkRot(2)}    , 100, 15,,,, .T.)
+		tButton():New(180, 010, "Selecionar Todos", oDlgZRt, {|| MarkRot(3)}    , 100, 15,,,, .T.)
+		
+		tButton():New(180, 115, "Cancelar"        , oDlgZRt, {|| nOpcRot := 0, oDlgZRt:End()}, 060, 15,,,, .T.)
+		tButton():New(180, 180, "Confirmar"       , oDlgZRt, {|| nOpcRot := 1, oDlgZRt:End()}, 060, 15,,,, .T.)
+
+		oDlgZRt:lEscClose := .T.
+		
+	ACTIVATE MSDIALOG oDlgZRt CENTERED
+
+	cRotSel := ""
+
+	If (nOpcRot = 1)
+
+		For nCntRot := 1 To Len(aClsRot)
+		
+			If (oGrdF3R:aCols[nCntRot, 1] = aTik[1])
+
+				cRotSel := oGrdF3R:aCols[nCntRot][2]
 			
-			If (TCSqlExec(cQryZer) < 0)
-				MsgInfo(TCSqlError())
-		//		lVldZer := .F.
-			EndIf
-			
-			cQryZer := " UPDATE " + RetSqlName("Z0T")
-			cQryZer += " SET Z0T_ROTA = '' "
-			cQryZer += " WHERE Z0T_FILIAL = '" + xFilial("Z0T") + "' "
-			cQryZer += "   AND Z0T_DATA = '" + DTOS(aDadSel[2]) + "' "
-			cQryZer += "   AND Z0T_VERSAO = '" + aDadSel[3] + "' "
-			cQryZer += "   AND Z0T_ROTA = '" + cRotSel + "' "
-			cQryZer += "   AND D_E_L_E_T_ <> '*' "
-			
-			If (TCSqlExec(cQryZer) < 0)
-				MsgInfo(TCSqlError())
-		//		lVldZer := .F.
-			EndIf
-			
-		EndIf  
-	
-	Next nCntRot
-	
-EndIf
+				cQryZer := " UPDATE " + RetSqlName("Z0S")
+				cQryZer += " SET Z0S_EQUIP = '' "
+				cQryZer += "   , Z0S_DIETA = '' "
+				cQryZer += "   , Z0S_OPERAD = '' "
+				cQryZer += "   , Z0S_TOTTRT = 0 "
+				cQryZer += " WHERE Z0S_FILIAL = '" + xFilial("Z0S") + "' "
+				cQryZer += "   AND Z0S_DATA = '" + DTOS(aDadSel[2]) + "' "
+				cQryZer += "   AND Z0S_VERSAO = '" + aDadSel[3] + "' "
+				cQryZer += "   AND Z0S_ROTA = '" + cRotSel + "' "
+				cQryZer += "   AND D_E_L_E_T_ <> '*' "
+				
+				If (TCSqlExec(cQryZer) < 0)
+					MsgInfo(TCSqlError())
+				EndIf
+				
+				cQryZer := " UPDATE " + RetSqlName("Z0T")
+				cQryZer += " SET Z0T_ROTA = '' "
+				cQryZer += " WHERE Z0T_FILIAL = '" + xFilial("Z0T") + "' "
+				cQryZer += "   AND Z0T_DATA = '" + DTOS(aDadSel[2]) + "' "
+				cQryZer += "   AND Z0T_VERSAO = '" + aDadSel[3] + "' "
+				cQryZer += "   AND Z0T_ROTA = '" + cRotSel + "' "
+				cQryZer += "   AND D_E_L_E_T_ <> '*' "
+				
+				If (TCSqlExec(cQryZer) < 0)
+					MsgInfo(TCSqlError())
+				EndIf
+			EndIf  
+		
+		Next nCntRot
+		
+	EndIf
 
 Return (lVldZer)
 
 
 Static Function MarkRot(nTpOpr)
 
-Local lVldSRt := .T.
-Local nCntRot := 1
+	Local lVldSRt := .T.
+	Local nCntRot := 1
 
-If (nTpOpr = 1) //marcar unico
+	If (nTpOpr = 1) //marcar unico
 
-	If (oGrdF3R:aCols[oGrdF3R:nAt, 1] = aTik[1])
-		oGrdF3R:aCols[oGrdF3R:nAt, 1] := aTik[2]
-	Else
-		oGrdF3R:aCols[oGrdF3R:nAt, 1] := aTik[1]
+		If (oGrdF3R:aCols[oGrdF3R:nAt, 1] = aTik[1])
+			oGrdF3R:aCols[oGrdF3R:nAt, 1] := aTik[2]
+		Else
+			oGrdF3R:aCols[oGrdF3R:nAt, 1] := aTik[1]
+		EndIf
+		
+	ElseIf (nTpOpr = 2) //Desmarcar Todos
+
+		For nCntRot := 1 To Len(oGrdF3R:aCols)
+			oGrdF3R:aCols[nCntRot][1] := aTik[2]
+		Next nCntRot
+		
+	ElseIf (nTpOpr = 3) //Selecionar Todos
+
+		For nCntRot := 1 To Len(oGrdF3R:aCols)
+			oGrdF3R:aCols[nCntRot][1] := aTik[1]
+		Next nCntRot	
+		
 	EndIf
-	
-ElseIf (nTpOpr = 2) //Desmarcar Todos
 
-	For nCntRot := 1 To Len(oGrdF3R:aCols)
-		oGrdF3R:aCols[nCntRot][1] := aTik[2]
-	Next nCntRot
-	
-ElseIf (nTpOpr = 3) //Selecionar Todos
-
-	For nCntRot := 1 To Len(oGrdF3R:aCols)
-		oGrdF3R:aCols[nCntRot][1] := aTik[1]
-	Next nCntRot	
-	
-EndIf
-
-oGrdF3R:Refresh(.T.)
+	oGrdF3R:Refresh(.T.)
 	
 Return (lVldSRt)	
 
-
 Static Function ShwCur()
+	Local lVldSCR := .T.
+	Local oDlgSCR
+	Local oGrdSCR
+	Local cQry := ""
+	Local aHdrSCR := {}
+	Local aClsSCR := {}
+	Local cCntCur := "000"
+	Local nUniKMN := 0
+	Local nTotKMN := 0
+	Local nTotCab := 0
+	Local oTFntGr := TFont():New('Courier new',,16,.T.,.T.)
+	Local cALias  := ""
 
-Local lVldSCR := .T.
-Local oDlgSCR
-Local oGrdSCR
-Local cQry := ""
-Local aHdrSCR := {}
-Local aClsSCR := {}
-Local cCntCur := "000"
-Local nUniKMN := 0
-Local nTotKMN := 0
-Local nTotCab := 0
-Local oTFntGr := TFont():New('Courier new',,16,.T.,.T.)
-Local cALias  := ""
+	cQry := " SELECT Z0T.Z0T_CONF AS CONF, Z0T.Z0T_LINHA AS LINHA, Z0T.Z0T_SEQUEN AS SEQ, Z0T.Z0T_CURRAL AS CURRAL, Z05.Z05_CABECA AS QTDCAB, Z05.Z05_NROTRA AS NROTRT " + CRLF +;
+			"      , (SELECT Z05A.Z05_KGMNDI FROM " + RetSqlName("Z05") + " Z05A WHERE Z05A.Z05_DATA = DATEADD(DAY, -1, Z0T.Z0T_DATA) AND Z05A.Z05_VERSAO = Z0T.Z0T_VERSAO AND Z05A.Z05_LOTE = Z0T.Z0T_LOTE AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*') AS TOTKMN " + CRLF +;
+			"      , (SELECT Z05B.Z05_CABECA FROM " + RetSqlName("Z05") + " Z05B WHERE Z05B.Z05_DATA = DATEADD(DAY, -1, Z0T.Z0T_DATA) AND Z05B.Z05_VERSAO = Z0T.Z0T_VERSAO AND Z05B.Z05_LOTE = Z0T.Z0T_LOTE AND Z05B.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05B.D_E_L_E_T_ <> '*') AS TOTCAB " + CRLF +;
+			" FROM      " + RetSqlName("Z0T") + " Z0T " + CRLF +;
+			" LEFT JOIN " + RetSqlName("Z05") + " Z05 ON Z05.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05.Z05_DATA = Z0T.Z0T_DATA " + CRLF +;
+			"                                        AND Z05.Z05_VERSAO = Z0T.Z0T_VERSAO AND Z05.Z05_LOTE = Z0T.Z0T_LOTE " + CRLF +;
+			"                                        AND Z05.D_E_L_E_T_ <> '*' " + CRLF +;
+			" WHERE Z0T.Z0T_FILIAL = '" + xFilial("Z0T") + "' " + CRLF +;
+			"   AND Z0T.Z0T_DATA   = '" + DTOS(aDadSel[2]) + "' " + CRLF +;
+			"   AND Z0T.Z0T_VERSAO = '" + aDadSel[3] + "' " + CRLF +;
+			"   AND Z0T.Z0T_ROTA   = '" + aDadSel[1] + "' " + CRLF +;
+			"   AND Z0T.D_E_L_E_T_ = ' ' " + CRLF +;
+			" ORDER BY Z0T.Z0T_CURRAL "
 
-cQry := " SELECT Z0T.Z0T_CONF AS CONF, Z0T.Z0T_LINHA AS LINHA, Z0T.Z0T_SEQUEN AS SEQ, Z0T.Z0T_CURRAL AS CURRAL, Z05.Z05_CABECA AS QTDCAB, Z05.Z05_NROTRA AS NROTRT " + CRLF +;
-	       "      , (SELECT Z05A.Z05_KGMNDI FROM " + RetSqlName("Z05") + " Z05A WHERE Z05A.Z05_DATA = DATEADD(DAY, -1, Z0T.Z0T_DATA) AND Z05A.Z05_VERSAO = Z0T.Z0T_VERSAO AND Z05A.Z05_LOTE = Z0T.Z0T_LOTE AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*') AS TOTKMN " + CRLF +;
-	       "      , (SELECT Z05B.Z05_CABECA FROM " + RetSqlName("Z05") + " Z05B WHERE Z05B.Z05_DATA = DATEADD(DAY, -1, Z0T.Z0T_DATA) AND Z05B.Z05_VERSAO = Z0T.Z0T_VERSAO AND Z05B.Z05_LOTE = Z0T.Z0T_LOTE AND Z05B.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05B.D_E_L_E_T_ <> '*') AS TOTCAB " + CRLF +;
-	       " FROM      " + RetSqlName("Z0T") + " Z0T " + CRLF +;
-	       " LEFT JOIN " + RetSqlName("Z05") + " Z05 ON Z05.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05.Z05_DATA = Z0T.Z0T_DATA " + CRLF +;
-		   "                                        AND Z05.Z05_VERSAO = Z0T.Z0T_VERSAO AND Z05.Z05_LOTE = Z0T.Z0T_LOTE " + CRLF +;
-		   "                                        AND Z05.D_E_L_E_T_ <> '*' " + CRLF +;
-	       " WHERE Z0T.Z0T_FILIAL = '" + xFilial("Z0T") + "' " + CRLF +;
-	       "   AND Z0T.Z0T_DATA   = '" + DTOS(aDadSel[2]) + "' " + CRLF +;
-	       "   AND Z0T.Z0T_VERSAO = '" + aDadSel[3] + "' " + CRLF +;
-	       "   AND Z0T.Z0T_ROTA   = '" + aDadSel[1] + "' " + CRLF +;
-	       "   AND Z0T.D_E_L_E_T_ = ' ' " + CRLF +;
-	       " ORDER BY Z0T.Z0T_CURRAL "
+	MEMOWRITE("C:\TOTVS_RELATORIOS\vaPCPa09_CURROTA.SQL", cQry)
 
-MEMOWRITE("C:\TOTVS_RELATORIOS\vaPCPa09_CURROTA.SQL", cQry)
+	cAlias := MpSysOpenQuery(cQry)
 
-cAlias := MpSysOpenQuery(cQry)
+	While (!((cAlias)->(EOF())))
 
-While (!((cAlias)->(EOF())))
+		AAdd(aClsSCR, {(cAlias)->CONF, (cAlias)->CURRAL, (cAlias)->NROTRT, (cAlias)->TOTCAB, (cAlias)->TOTKMN, ((cAlias)->TOTCAB * (cAlias)->TOTKMN), .F.})
+		cCntCur := Soma1(cCntCur)
+		nTotCab += (cAlias)->TOTCAB
+		nUniKMN += (cAlias)->TOTKMN
+		nTotKMN += ((cAlias)->QTDCAB * (cAlias)->TOTKMN)
+		(cAlias)->(DBSkip())
 
-	AAdd(aClsSCR, {(cAlias)->CONF, (cAlias)->CURRAL, (cAlias)->NROTRT, (cAlias)->TOTCAB, (cAlias)->TOTKMN, ((cAlias)->TOTCAB * (cAlias)->TOTKMN), .F.})
-	cCntCur := Soma1(cCntCur)
-	nTotCab += (cAlias)->TOTCAB
-	nUniKMN += (cAlias)->TOTKMN
-	nTotKMN += ((cAlias)->QTDCAB * (cAlias)->TOTKMN)
-	(cAlias)->(DBSkip())
+	EndDo
 
-EndDo
+	(cAlias)->(DBCloseArea())
 
-(cAlias)->(DBCloseArea())
+	AAdd(aHdrSCR, {"Confinamento", "CONFNA" , ""              , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCR, {"Curral"      , "CURRAL" , ""              , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCR, {"Qtd. Trato"  , "NROTRT" , "@E 99"         , 02, 0, "", "", "N", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCR, {"Qtd. Cabeca" , "QTDCAB" , ""              , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCR, {"Unit. KG MN" , "TOTKMN" , "@E 999.999"    , 06, 3, "", "", "N", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCR, {"Total KG MN" , "TOTKMN" , "@E 999,999.999", 06, 3, "", "", "N", "", "R", "", "", "", "V"})
 
-AAdd(aHdrSCR, {"Confinamento", "CONFNA" , ""              , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
-AAdd(aHdrSCR, {"Curral"      , "CURRAL" , ""              , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
-AAdd(aHdrSCR, {"Qtd. Trato"  , "NROTRT" , "@E 99"         , 02, 0, "", "", "N", "", "R", "", "", "", "V"})
-AAdd(aHdrSCR, {"Qtd. Cabeca" , "QTDCAB" , ""              , 06, 0, "", "", "C", "", "R", "", "", "", "V"})
-AAdd(aHdrSCR, {"Unit. KG MN" , "TOTKMN" , "@E 999.999"    , 06, 3, "", "", "N", "", "R", "", "", "", "V"})
-AAdd(aHdrSCR, {"Total KG MN" , "TOTKMN" , "@E 999,999.999", 06, 3, "", "", "N", "", "R", "", "", "", "V"})
+	SetKey(VK_F2, {|| oDlgSCR:End()})
 
-SetKey(VK_F2, {|| oDlgSCR:End()})
+	DEFINE MSDIALOG oDlgSCR TITLE "Currais da Rota" FROM 000, 000 To 400, 500 PIXEL
 
-DEFINE MSDIALOG oDlgSCR TITLE "Currais da Rota" FROM 000, 000 To 400, 500 PIXEL
+		TSay():New(005, 005, {|| "Total Currais "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		TSay():New(015, 010, {|| cCntCur}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		
+		TSay():New(005, 070, {|| "Total Cabecas "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		TSay():New(015, 075, {|| ALLTRIM(TRANSFORM(nTotCab, "@E 999,999,999.999"))}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		
+		TSay():New(005, 135, {|| "Unit. KG MN: "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		TSay():New(015, 140, {|| ALLTRIM(TRANSFORM(nUniKMN, "@E 999,999,999.999"))}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		
+		TSay():New(005, 200, {|| "Total KG MN: "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		TSay():New(015, 205, {|| ALLTRIM(TRANSFORM(nTotKMN, "@E 999,999,999.999"))}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
+		
+		oGrdSCR := MsNewGetDados():New(030, 005, 200, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgSCR, aHdrSCR, aClsSCR)
+		oDlgSCR:lEscClose := .T.
+		
+	ACTIVATE MSDIALOG oDlgSCR CENTERED
 
-	TSay():New(005, 005, {|| "Total Currais "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	TSay():New(015, 010, {|| cCntCur}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	
-	TSay():New(005, 070, {|| "Total Cabecas "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	TSay():New(015, 075, {|| ALLTRIM(TRANSFORM(nTotCab, "@E 999,999,999.999"))}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	
-	TSay():New(005, 135, {|| "Unit. KG MN: "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	TSay():New(015, 140, {|| ALLTRIM(TRANSFORM(nUniKMN, "@E 999,999,999.999"))}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	
-	TSay():New(005, 200, {|| "Total KG MN: "}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	TSay():New(015, 205, {|| ALLTRIM(TRANSFORM(nTotKMN, "@E 999,999,999.999"))}, oDlgSCR,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 065, 20)
-	
-	oGrdSCR := MsNewGetDados():New(030, 005, 200, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgSCR, aHdrSCR, aClsSCR)
-	oDlgSCR:lEscClose := .T.
-	
-ACTIVATE MSDIALOG oDlgSCR CENTERED
-
-SetKey(VK_F2, {|| ShwCur()})
+	SetKey(VK_F2, {|| ShwCur()})
 
 Return (lVldSCR)
 
 
 Static Function ShwLeg()
+	Local lVldSLG := .T.
+	Local oDlgSLG
+	Local oTFntGr := TFont():New('Courier new',,16,.T.,.T.)
 
-Local lVldSLG := .T.
-Local oDlgSLG
-//Local oGrdSLG
-//Local cQrySLG := ""
-//Local aHdrSLG := {}
-//Local aClsSLG := {}
-Local oTFntGr := TFont():New('Courier new',,16,.T.,.T.)
+	SetKey(VK_F12, {|| oDlgSLG:End()})
 
-SetKey(VK_F12, {|| oDlgSLG:End()})
+	DEFINE MSDIALOG oDlgSLG TITLE "Legenda Curral" FROM 000, 000 To 400, 500 PIXEL
 
-DEFINE MSDIALOG oDlgSLG TITLE "Legenda Curral" FROM 000, 000 To 400, 500 PIXEL
+		TSay():New(005, 005, {|| "Curral Visão Geral"}, oDlgSLG,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
 
-	TSay():New(005, 005, {|| "Curral Visão Geral"}, oDlgSLG,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
-
-	TSay():New(110, 005, {|| "Curral Visão Detalhada"}, oDlgSLG,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
-	
+		TSay():New(110, 005, {|| "Curral Visão Detalhada"}, oDlgSLG,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
 		
-	oDlgSLG:lEscClose := .T.
-	
-ACTIVATE MSDIALOG oDlgSLG CENTERED
+			
+		oDlgSLG:lEscClose := .T.
+		
+	ACTIVATE MSDIALOG oDlgSLG CENTERED
 
-SetKey(VK_F12, {|| ShwLeg()})
+	SetKey(VK_F12, {|| ShwLeg()})
 
 Return (lVldSLG)
 
 
 Static Function ShwChg()
+	Local lVldSCH := .T.
+	Local oDlgSCH
+	Local oGrdSCHC
+	Local aHdrSCHC := {}
+	Local aClsSCHC := {}
+	Local oGrdSCHD
+	Local aHdrSCHD := {}
+	Local aClsSCHD := {}
+	Local oTFntGr := TFont():New('Courier new',,16,.T.,.T.)
+	Local cAlias := ""
+	Local cQry   := ""
 
-Local lVldSCH := .T.
-Local oDlgSCH
-Local oGrdSCHC
-Local aHdrSCHC := {}
-Local aClsSCHC := {}
-Local oGrdSCHD
-Local aHdrSCHD := {}
-Local aClsSCHD := {}
-Local oTFntGr := TFont():New('Courier new',,16,.T.,.T.)
-Local cAlias := ""
-Local cQry   := ""
 
+	cQry := " SELECT Z05.Z05_CURRAL AS CURRAL, Z05.Z05_LOTE AS LOTE " + CRLF 
+	cQry += " FROM " + RetSqlName("Z05") + " Z05 " + CRLF
+	cQry += " JOIN " + RetSqlName("Z05") + " Z05A ON Z05A.Z05_DATA = DATEADD(dd, -1, cast(Z05.Z05_DATA as datetime)) AND Z05A.Z05_VERSAO = Z05.Z05_VERSAO AND Z05A.Z05_LOTE = Z05.Z05_LOTE AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' " + CRLF
+	cQry += " WHERE Z05.Z05_FILIAL = '" + xFilial("Z05") + "' " + CRLF
+	cQry += "   AND Z05.D_E_L_E_T_ <> '*' " + CRLF
+	cQry += "   AND Z05.Z05_DATA = '" + DTOS(aParRet[1]) + "' " + CRLF
+	cQry += "   AND Z05.Z05_CURRAL <> Z05A.Z05_CURRAL " + CRLF
 
-cQry := " SELECT Z05.Z05_CURRAL AS CURRAL, Z05.Z05_LOTE AS LOTE " + CRLF 
-cQry += " FROM " + RetSqlName("Z05") + " Z05 " + CRLF
-cQry += " JOIN " + RetSqlName("Z05") + " Z05A ON Z05A.Z05_DATA = DATEADD(dd, -1, cast(Z05.Z05_DATA as datetime)) AND Z05A.Z05_VERSAO = Z05.Z05_VERSAO AND Z05A.Z05_LOTE = Z05.Z05_LOTE AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' " + CRLF
-cQry += " WHERE Z05.Z05_FILIAL = '" + xFilial("Z05") + "' " + CRLF
-cQry += "   AND Z05.D_E_L_E_T_ <> '*' " + CRLF
-cQry += "   AND Z05.Z05_DATA = '" + DTOS(aParRet[1]) + "' " + CRLF
-cQry += "   AND Z05.Z05_CURRAL <> Z05A.Z05_CURRAL " + CRLF
+	cAlias := MpSysOpenQuery(cQry)
 
-cAlias := MpSysOpenQuery(cQry)
+	While (!((cAlias)->(EOF())))
+		AAdd(aClsSCHC, {(cAlias)->LOTE, (cAlias)->CURRAL, .F.})
+		(cAlias)->(DBSkip())
+	EndDo
 
-While (!((cAlias)->(EOF())))
-	AAdd(aClsSCHC, {(cAlias)->LOTE, (cAlias)->CURRAL, .F.})
-	(cAlias)->(DBSkip())
-EndDo
+	(cAlias)->(DBCloseArea())
 
-(cAlias)->(DBCloseArea())
+	cQry := " SELECT Z05.Z05_CURRAL AS CURRAL, Z05.Z05_LOTE AS LOTE " + CRLF 
+	cQry += " FROM " + RetSqlName("Z05") + " Z05 " + CRLF
+	cQry += " JOIN " + RetSqlName("Z05") + " Z05A ON Z05A.Z05_DATA = DATEADD(dd, -1, cast(Z05.Z05_DATA as datetime)) AND Z05A.Z05_VERSAO = Z05.Z05_VERSAO AND Z05A.Z05_LOTE = Z05.Z05_LOTE AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' " + CRLF
+	cQry += " WHERE Z05.Z05_FILIAL = '" + xFilial("Z05") + "' " + CRLF
+	cQry += "   AND Z05.D_E_L_E_T_ <> '*' " + CRLF
+	cQry += "   AND Z05.Z05_DATA = '" + DTOS(aParRet[1]) + "' " + CRLF
+	cQry += "   AND Z05.Z05_DIETA <> Z05A.Z05_DIETA " + CRLF
 
-cQry := " SELECT Z05.Z05_CURRAL AS CURRAL, Z05.Z05_LOTE AS LOTE " + CRLF 
-cQry += " FROM " + RetSqlName("Z05") + " Z05 " + CRLF
-cQry += " JOIN " + RetSqlName("Z05") + " Z05A ON Z05A.Z05_DATA = DATEADD(dd, -1, cast(Z05.Z05_DATA as datetime)) AND Z05A.Z05_VERSAO = Z05.Z05_VERSAO AND Z05A.Z05_LOTE = Z05.Z05_LOTE AND Z05A.Z05_FILIAL = '" + xFilial("Z05") + "' AND Z05A.D_E_L_E_T_ <> '*' " + CRLF
-cQry += " WHERE Z05.Z05_FILIAL = '" + xFilial("Z05") + "' " + CRLF
-cQry += "   AND Z05.D_E_L_E_T_ <> '*' " + CRLF
-cQry += "   AND Z05.Z05_DATA = '" + DTOS(aParRet[1]) + "' " + CRLF
-cQry += "   AND Z05.Z05_DIETA <> Z05A.Z05_DIETA " + CRLF
+	cAlias := MpSysOpenQuery(cQry)
 
-cAlias := MpSysOpenQuery(cQry)
+	While (!((cAlias)->(EOF())))
+		AAdd(aClsSCHD, {(cAlias)->LOTE, (cAlias)->CURRAL, .F.})
+		(cAlias)->(DBSkip())
+	EndDo
 
-While (!((cAlias)->(EOF())))
-	AAdd(aClsSCHD, {(cAlias)->LOTE, (cAlias)->CURRAL, .F.})
-	(cAlias)->(DBSkip())
-EndDo
+	(cAlias)->(DBCloseArea())
 
-(cAlias)->(DBCloseArea())
+	AAdd(aHdrSCHC, {"Lote"        , "CNROTRT" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCHC, {"Curral"      , "CCURRAL" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
 
-AAdd(aHdrSCHC, {"Lote"        , "CNROTRT" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
-AAdd(aHdrSCHC, {"Curral"      , "CCURRAL" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCHD, {"Lote"        , "DNROTRT" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
+	AAdd(aHdrSCHD, {"Curral"      , "DCURRAL" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
 
-AAdd(aHdrSCHD, {"Lote"        , "DNROTRT" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
-AAdd(aHdrSCHD, {"Curral"      , "DCURRAL" , "", 10, 0, "", "", "C", "", "R", "", "", "", "V"})
+	SetKey(VK_F4, {|| oDlgSCH:End()})
 
-SetKey(VK_F4, {|| oDlgSCH:End()})
+	DEFINE MSDIALOG oDlgSCH TITLE "Lotes com Mudança" FROM 000, 000 To 400, 500 PIXEL
 
-DEFINE MSDIALOG oDlgSCH TITLE "Lotes com Mudança" FROM 000, 000 To 400, 500 PIXEL
+		TSay():New(005, 005, {|| "Transferência de Curral"}, oDlgSCH,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
+		oGrdSCHC := MsNewGetDados():New(015, 005, 090, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgSCH, aHdrSCHC, aClsSCHC)
 
-	TSay():New(005, 005, {|| "Transferência de Curral"}, oDlgSCH,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
-	oGrdSCHC := MsNewGetDados():New(015, 005, 090, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgSCH, aHdrSCHC, aClsSCHC)
+		TSay():New(110, 005, {|| "Mudança de Dieta"}, oDlgSCH,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
+		oGrdSCHD := MsNewGetDados():New(120, 005, 195, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgSCH, aHdrSCHD, aClsSCHD)
+		
+		oDlgSCH:lEscClose := .T.
+		
+	ACTIVATE MSDIALOG oDlgSCH CENTERED
 
-	TSay():New(110, 005, {|| "Mudança de Dieta"}, oDlgSCH,,oTFntGr,,,,.T., CLR_BLACK, CLR_WHITE, 100, 20)
-	oGrdSCHD := MsNewGetDados():New(120, 005, 195, 250,, "AllwaysTrue", "AllwaysTrue",,, 0, 999, "AllwaysTrue", "", "AllwaysTrue", oDlgSCH, aHdrSCHD, aClsSCHD)
-	
-	oDlgSCH:lEscClose := .T.
-	
-ACTIVATE MSDIALOG oDlgSCH CENTERED
-
-SetKey(VK_F4, {|| ShwChg()})
+	SetKey(VK_F4, {|| ShwChg()})
  
 Return (lVldSCH)
 
@@ -1851,167 +1639,161 @@ Return nil
 		# Criado para mostrar a barra de processamento;
 */
 Static Function ProcSugRotas()
-Local aArea      := GetArea()
-Local nRotaAtual := 1
-Local cProdAtual := 0
+	Local aArea      := GetArea()
+	Local nRotaAtual := 1
+	Local cProdAtual := 0
+	Local nI         := 0
+	Local aDados     := aDadRotZao
+	Local nComplet   := 0
+	Local nRegistros := Len(aDados)
+	Local lContinua  := .F.
 
-Local nI         := 0
-Local aDados     := aDadRotZao
-Local nComplet   := 0
-
-Local nRegistros := Len(aDados)
-
-// Local lCtrJump    := .T.
-Local lContinua  := .F.
-
-GeraSX1( "PCPA09ROTA" )
-If !Pergunte( "PCPA09ROTA", .T.)
-	Return 
-EndIf
-
-_cLinAnt  := Left(aDados[01, 01], 1) // qTMP->CURRAL
-cDietAnt  := aDados[ 01, 04] // qTMP->DIETA
-lContinua := .T.
-nI        := 0
-While nComplet < nRegistros
-	
-	nI += 1
-
-	If aDados[nI, 05]
-		loop
+	GeraSX1( "PCPA09ROTA" )
+	If !Pergunte( "PCPA09ROTA", .T.)
+		Return 
 	EndIf
 
-	// ATUAL
-	_cLinAtual      := Left(aDados[nI, 01], 1)
+	_cLinAnt  := Left(aDados[01, 01], 1) // qTMP->CURRAL
+	cDietAnt  := aDados[ 01, 04] // qTMP->DIETA
+	lContinua := .T.
+	nI        := 0
+	While nComplet < nRegistros
+		
+		nI += 1
 
-	If MV_PAR03 == 1
-		lContinua := .F.	
-
-		// MUDOU A RACAO
-		/* qTMP->DIETA */ // RACAO
-		If SubS(cDietAnt,3) <> SubS(aDados[nI, 04],3) // .AND. nTodosPreenchidos(aDados, cDietAnt )
-			nRet := nTodosPreenchidos(aDados, cDietAnt )
-			if nRet > 0
-				nI := nRet
-			EndIf
-			lContinua := .T.
-		Else
-			If _cLinAnt == _cLinAtual .OR.; // enquanto estiver na mesma racao
-				Asc(_cLinAtual)-Asc(_cLinAnt) >= 2 .OR.; // pular linha
-				Asc(_cLinAtual)-Asc(_cLinAnt) < 0		 // troca de confinamento ou retorno da matriz: aDados
-				lContinua := .T.
-			EndIf
+		If aDados[nI, 05]
+			loop
 		EndIf
-	EndIf
-	If lContinua
-		
-		_cQry := " SELECT R_E_C_N_O_ recno " + CRLF +;
-			     " FROM "+RetSqlName("Z0T")+" " + CRLF +;
-			     " WHERE Z0T_FILIAL = '"+FWxFilial("Z0T")+"' AND Z0T_DATA   = '" + dToS( __dDtPergunte ) + "'" + CRLF +;
-			     "   AND Z0T_CURRAL = '" +  aDados[nI, 01] /* qTMP->CURRAL */ + "'" + CRLF +;
-			     "   AND Z0T_LOTE   = '" +  aDados[nI, 02] /* qTMP->LOTE */   + "'" + CRLF +;
-			     "   AND D_E_L_E_T_ = ' '"
-		
-		cALias := MpSysOpenQuery(_cQry)
 
-		if (!(cAlias)->(Eof()))
-			Z0T->(DbGoTo( (cAlias)->recno ) )
-			If Z0T->(Recno()) == (cAlias)->recno
-				// =SE(E(I2+J1<=$R$1;F2=F1);I2+J1;I2)
-				If cProdAtual+aDados[nI, 03]/* qTMP->QTD_POR_TRATO */ <= (MV_PAR01+MV_PAR02) .AND.;
-						cDietAnt == aDados[nI, 04] /* qTMP->DIETA */ 
+		// ATUAL
+		_cLinAtual      := Left(aDados[nI, 01], 1)
 
-					cProdAtual += aDados[nI, 03] // qTMP->QTD_POR_TRATO
-				Else
-					nRotaAtual += 1
-					cProdAtual := aDados[nI, 03]
+		If MV_PAR03 == 1
+			lContinua := .F.	
+
+			// MUDOU A RACAO
+			If SubS(cDietAnt,3) <> SubS(aDados[nI, 04],3) // .AND. nTodosPreenchidos(aDados, cDietAnt )
+				nRet := nTodosPreenchidos(aDados, cDietAnt )
+				if nRet > 0
+					nI := nRet
 				EndIf
-				RecLock("Z0T", .F.)
-					Z0T->Z0T_ROTA := "ROTA" + StrZero(nRotaAtual,2)
-					Z0T->Z0T_LOTE := aDados[nI, 02]
-				Z0T->(MSUnlock())
-
-				nComplet += 1 // tesando aqui pois tem lote que nao esta recebendo ROTEIRO
-				aDados[nI, 05] := .T.
+				lContinua := .T.
+			Else
+				If _cLinAnt == _cLinAtual .OR.; // enquanto estiver na mesma racao
+					Asc(_cLinAtual)-Asc(_cLinAnt) >= 2 .OR.; // pular linha
+					Asc(_cLinAtual)-Asc(_cLinAnt) < 0		 // troca de confinamento ou retorno da matriz: aDados
+					lContinua := .T.
+				EndIf
 			EndIf
 		EndIf
-		(cAlias)->(DbCloseArea())
-	
-		//ANTERIOR
-		_cLinAnt := Left(aDados[nI, 01], 1)
-		cDietAnt := aDados[ nI, 04] // qTMP->DIETA
+		If lContinua
+			
+			_cQry := " SELECT R_E_C_N_O_ recno " + CRLF +;
+					" FROM "+RetSqlName("Z0T")+" " + CRLF +;
+					" WHERE Z0T_FILIAL = '"+FWxFilial("Z0T")+"' AND Z0T_DATA   = '" + dToS( __dDtPergunte ) + "'" + CRLF +;
+					"   AND Z0T_CURRAL = '" +  aDados[nI, 01] /* qTMP->CURRAL */ + "'" + CRLF +;
+					"   AND Z0T_LOTE   = '" +  aDados[nI, 02] /* qTMP->LOTE */   + "'" + CRLF +;
+					"   AND D_E_L_E_T_ = ' '"
+			
+			cALias := MpSysOpenQuery(_cQry)
+
+			if (!(cAlias)->(Eof()))
+				Z0T->(DbGoTo( (cAlias)->recno ) )
+				If Z0T->(Recno()) == (cAlias)->recno
+					// =SE(E(I2+J1<=$R$1;F2=F1);I2+J1;I2)
+					If cProdAtual+aDados[nI, 03]/* qTMP->QTD_POR_TRATO */ <= (MV_PAR01+MV_PAR02) .AND.;
+							cDietAnt == aDados[nI, 04] /* qTMP->DIETA */ 
+
+						cProdAtual += aDados[nI, 03] // qTMP->QTD_POR_TRATO
+					Else
+						nRotaAtual += 1
+						cProdAtual := aDados[nI, 03]
+					EndIf
+					RecLock("Z0T", .F.)
+						Z0T->Z0T_ROTA := "ROTA" + StrZero(nRotaAtual,2)
+						Z0T->Z0T_LOTE := aDados[nI, 02]
+					Z0T->(MSUnlock())
+
+					nComplet += 1 // tesando aqui pois tem lote que nao esta recebendo ROTEIRO
+					aDados[nI, 05] := .T.
+				EndIf
+			EndIf
+			(cAlias)->(DbCloseArea())
+		
+			//ANTERIOR
+			_cLinAnt := Left(aDados[nI, 01], 1)
+			cDietAnt := aDados[ nI, 04] // qTMP->DIETA
+		EndIf
+
+		If nI == Len(aDados)
+			nI := 0
+		EndIf
+	EndDo
+
+	/* versao do toshio */
+	_cQry := " WITH TRATO_DIA AS ( " + CRLF
+	_cQry += "		SELECT Z0T_FILIAL, Z0T_DATA, Z0T_VERSAO, Z0T_ROTA, Z0T_CURRAL, Z05_DIETA, Z05_KGMNDI, Z05_CABECA, Z05_KGMNDI*Z05_CABECA TOTAL, Z05_NROTRA " + CRLF
+	_cQry += "		  FROM " + RetSqlName("Z0T") + " Z0T" + CRLF
+	_cQry += "	 LEFT JOIN " + RetSqlName("Z05") + " Z05 ON " + CRLF
+	_cQry += "		       Z0T_FILIAL = Z05_FILIAL  " + CRLF
+	_cQry += "		   AND Z0T_DATA = Z05_DATA " + CRLF
+	_cQry += "		   AND Z0T_VERSAO = Z05_VERSAO " + CRLF
+	_cQry += "		   AND Z0T_CURRAL = Z05_CURRAL  " + CRLF
+	_cQry += "		   AND Z05.D_E_L_E_T_ = ' '  " + CRLF
+	_cQry += "	     WHERE Z0T_FILIAL = '"+FWxFilial("Z0T")+"' AND  Z0T_DATA = '" + dToS( __dDtPergunte ) + "'  " + CRLF
+	_cQry += "		   AND Z0T.D_E_L_E_T_ = ' '  " + CRLF
+	_cQry += "		   ) " + CRLF
+	_cQry += "		SELECT Z0S_DATA, Z0S_VERSAO, Z0S_ROTA, Z05_DIETA, SUM(TOTAL) TOTAL, Z0S.R_E_C_N_O_ RECNO" + CRLF
+	_cQry += "		  FROM " + RetSqlName("Z0S") + " Z0S " + CRLF
+	_cQry += "     LEFT JOIN TRATO_DIA Z0T " + CRLF
+	_cQry += "		    ON Z0T_FILIAL = Z0S_FILIAL " + CRLF
+	_cQry += "		   AND Z0T_DATA	= Z0S_DATA  " + CRLF
+	_cQry += "		   AND Z0T_VERSAO = Z0S_VERSAO " + CRLF
+	_cQry += "		   AND Z0T_ROTA = Z0S_ROTA " + CRLF
+	_cQry += "	     WHERE Z0S_DATA = '" + dToS( __dDtPergunte ) + "' " + CRLF
+	_cQry += "		   AND D_E_L_E_T_ = ' '  " + CRLF
+	_cQry += "	  GROUP BY Z0S_DATA, Z0S_VERSAO, Z0S_ROTA, Z05_DIETA, R_E_C_N_O_ " + CRLF
+	_cQry += "	  ORDER BY Z0S_ROTA  " + CRLF
+
+	MEMOWRITE("C:\TOTVS_RELATORIOS\vaPCPa09_Totaliza_rota.SQL", _cQry)
+
+	cAlias := MpSysOpenQuery(_cQry)
+
+	While (!(cAlias)->(Eof()))
+		If!Empty((cAlias)->Z05_DIETA)
+			Z0S->(DbGoTo( (cAlias)->RECNO ) )
+			RecLock("Z0S", .F.)
+				Z0S->Z0S_DIETA := (cAlias)->Z05_DIETA
+				Z0S->Z0S_TOTTRT := (cAlias)->TOTAL
+			Z0S->(MSUnlock())
+		EndIf
+		(cAlias)->(DBSkip())
+	EndDo
+	(cAlias)->(DbCloseArea())
+
+	// MB : 26.11.2020 -> Limpando rotas que nao foram utilizadas
+	nRotaAtual += 1
+	_cQryUpd := " UPDATE "+RetSqlName("Z0S")+" " + CRLF
+	_cQryUpd += " 	SET Z0S_EQUIP='' " + CRLF
+	_cQryUpd += " 	  , Z0S_TOTTRT=0 " + CRLF
+	_cQryUpd += " 	  , Z0S_DIETA='' " + CRLF
+	_cQryUpd += " 	  , Z0S_OPERAD='' " + CRLF
+	_cQryUpd += " -- SELECT * " + CRLF
+	_cQryUpd += " -- FROM "+RetSqlName("Z0S")+" " + CRLF
+	_cQryUpd += " WHERE Z0S_FILIAL = '"+FwXFilial("Z0S")+"' "  + CRLF
+	_cQryUpd += "   AND Z0S_DATA='" + dToS( __dDtPergunte ) + "'  " + CRLF
+	_cQryUpd += "   AND Z0S_ROTA >= '" + "ROTA" + StrZero(nRotaAtual,2) + "' " + CRLF
+	_cQryUpd += "   AND D_E_L_E_T_=' ' " + CRLF
+	_cQryUpd += " -- ORDER BY Z0S_ROTA " + CRLF
+
+	If (TCSQLExec(_cQryUpd) < 0)
+		Alert("Erro ao zerar as rotas nao utilizadas: " + TCSQLError())
+	Else
+		MEMOWRITE("C:\TOTVS_RELATORIOS\vaPCPa09_Update_Z0S.SQL", _cQryUpd)
 	EndIf
 
-	If nI == Len(aDados)
-		nI := 0
-	EndIf
-EndDo
-
-/* versao do toshio */
-_cQry := " WITH TRATO_DIA AS ( " + CRLF
-_cQry += "		SELECT Z0T_FILIAL, Z0T_DATA, Z0T_VERSAO, Z0T_ROTA, Z0T_CURRAL, Z05_DIETA, Z05_KGMNDI, Z05_CABECA, Z05_KGMNDI*Z05_CABECA TOTAL, Z05_NROTRA " + CRLF
-_cQry += "		  FROM " + RetSqlName("Z0T") + " Z0T" + CRLF
-_cQry += "	 LEFT JOIN " + RetSqlName("Z05") + " Z05 ON " + CRLF
-_cQry += "		       Z0T_FILIAL = Z05_FILIAL  " + CRLF
-_cQry += "		   AND Z0T_DATA = Z05_DATA " + CRLF
-_cQry += "		   AND Z0T_VERSAO = Z05_VERSAO " + CRLF
-_cQry += "		   AND Z0T_CURRAL = Z05_CURRAL  " + CRLF
-_cQry += "		   AND Z05.D_E_L_E_T_ = ' '  " + CRLF
-_cQry += "	     WHERE Z0T_FILIAL = '"+FWxFilial("Z0T")+"' AND  Z0T_DATA = '" + dToS( __dDtPergunte ) + "'  " + CRLF
-_cQry += "		   AND Z0T.D_E_L_E_T_ = ' '  " + CRLF
-_cQry += "		   ) " + CRLF
-_cQry += "		SELECT Z0S_DATA, Z0S_VERSAO, Z0S_ROTA, Z05_DIETA, SUM(TOTAL) TOTAL, Z0S.R_E_C_N_O_ RECNO" + CRLF
-_cQry += "		  FROM " + RetSqlName("Z0S") + " Z0S " + CRLF
-_cQry += "     LEFT JOIN TRATO_DIA Z0T " + CRLF
-_cQry += "		    ON Z0T_FILIAL = Z0S_FILIAL " + CRLF
-_cQry += "		   AND Z0T_DATA	= Z0S_DATA  " + CRLF
-_cQry += "		   AND Z0T_VERSAO = Z0S_VERSAO " + CRLF
-_cQry += "		   AND Z0T_ROTA = Z0S_ROTA " + CRLF
-_cQry += "	     WHERE Z0S_DATA = '" + dToS( __dDtPergunte ) + "' " + CRLF
-_cQry += "		   AND D_E_L_E_T_ = ' '  " + CRLF
-_cQry += "	  GROUP BY Z0S_DATA, Z0S_VERSAO, Z0S_ROTA, Z05_DIETA, R_E_C_N_O_ " + CRLF
-_cQry += "	  ORDER BY Z0S_ROTA  " + CRLF
-
-MEMOWRITE("C:\TOTVS_RELATORIOS\vaPCPa09_Totaliza_rota.SQL", _cQry)
-
-cAlias := MpSysOpenQuery(_cQry)
-
-While (!(cAlias)->(Eof()))
-	If!Empty((cAlias)->Z05_DIETA)
-		Z0S->(DbGoTo( (cAlias)->RECNO ) )
-		RecLock("Z0S", .F.)
-			Z0S->Z0S_DIETA := (cAlias)->Z05_DIETA
-			Z0S->Z0S_TOTTRT := (cAlias)->TOTAL
-		Z0S->(MSUnlock())
-	EndIf
-	(cAlias)->(DBSkip())
-EndDo
-(cAlias)->(DbCloseArea())
-
-// MB : 26.11.2020 -> Limpando rotas que nao foram utilizadas
-nRotaAtual += 1
-_cQryUpd := " UPDATE "+RetSqlName("Z0S")+" " + CRLF
-_cQryUpd += " 	SET Z0S_EQUIP='' " + CRLF
-_cQryUpd += " 	  , Z0S_TOTTRT=0 " + CRLF
-_cQryUpd += " 	  , Z0S_DIETA='' " + CRLF
-_cQryUpd += " 	  , Z0S_OPERAD='' " + CRLF
-_cQryUpd += " -- SELECT * " + CRLF
-_cQryUpd += " -- FROM "+RetSqlName("Z0S")+" " + CRLF
-_cQryUpd += " WHERE Z0S_FILIAL = '"+FwXFilial("Z0S")+"' "  + CRLF
-_cQryUpd += "   AND Z0S_DATA='" + dToS( __dDtPergunte ) + "'  " + CRLF
-_cQryUpd += "   AND Z0S_ROTA >= '" + "ROTA" + StrZero(nRotaAtual,2) + "' " + CRLF
-_cQryUpd += "   AND D_E_L_E_T_=' ' " + CRLF
-_cQryUpd += " -- ORDER BY Z0S_ROTA " + CRLF
-
-If (TCSQLExec(_cQryUpd) < 0)
-	Alert("Erro ao zerar as rotas nao utilizadas: " + TCSQLError())
-Else
-	MEMOWRITE("C:\TOTVS_RELATORIOS\vaPCPa09_Update_Z0S.SQL", _cQryUpd)
-EndIf
-
-RestArea(aArea)
+	RestArea(aArea)
 Return nil
-
 
 /* 
 	MB : 09.11.2020
@@ -2070,7 +1852,6 @@ Return
 */
 Static Function nTodosPreenchidos( __aDads, cDieta )
 Local nI := aScan( __aDads, { |x| x[4] == cDieta } )
-// Local lTodPreenchidos := .T.
 
 If nI>0
 	While nI <= Len(__aDads) // .and. lTodPreenchidos
@@ -2112,9 +1893,9 @@ Return cRet
 
 /* MB : 26.11.2020 */
 Static Function fQtdTrato(dData, cRota)
-Local nRet := 0
-Local cALias := ""
-Local _cQry  := ""
+	Local nRet := 0
+	Local cALias := ""
+	Local _cQry  := ""
 
 	_cQry := " SELECT DISTINCT Z0T_ROTA, Z05_NROTRA " + CRLF
 	_cQry += "  FROM " + RetSqlName("Z0T") + " Z0T" + CRLF
@@ -2359,4 +2140,3 @@ Static Function MontaQuery(lShwZer, lShwGer)
 	oProRot := FwExecStatement():New(cQry)
 
 Return
-
