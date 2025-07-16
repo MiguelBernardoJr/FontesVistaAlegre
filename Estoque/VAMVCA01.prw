@@ -1357,14 +1357,14 @@ User Function NewLotes( __cCampo )
 								CRLF +;
 								'Deseja liberar esse lote e substituir pelo lote:? ' + cLote)
 
-								If (TCSqlExec("DELETE FROM SX5010 WHERE X5_TABELA='Z8' AND RTRIM(X5_DESCRI) = '" +;
+								If (TCSqlExec("UPDATE SX5010 SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE X5_TABELA='Z8' AND RTRIM(X5_DESCRI) = '" +;
 									AllTrim(oGetDadRan:aCols[ oGetDadRan:oBrowse:nAt, aScan( aHeadRan, { |x| AllTrim(x[2]) == "ZV2_LOTE"})]) + "'" ) < 0)
 
 								ConOut("Erro ao liberar lote: " + AllTrim(oGetDadRan:aCols[ oGetDadRan:oBrowse:nAt, aScan( aHeadRan, { |x| AllTrim(x[2]) == "ZV2_LOTE"})]) + CRLF + TCSQLError())
 								EndIf
 
 						Else
-							If (TCSqlExec("DELETE FROM SX5010 WHERE X5_TABELA='Z8' AND RTRIM(X5_DESCRI) = '" +;
+							If (TCSqlExec("UPDATE SX5010 SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE X5_TABELA='Z8' AND RTRIM(X5_DESCRI) = '" +;
 									AllTrim(cLote) + "'" ) < 0)
 
 								ConOut("Erro ao liberar lote: " + cLote + CRLF + TCSQLError())

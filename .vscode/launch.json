@@ -46,6 +46,12 @@
 		},
 		{
 			"label": "xxxx"
+		},
+		{
+			"label": "U_CXNFACI"
+		},
+		{
+			"label": "UPDDISTR"
 		}
 	],
 	"lastProgramExecuted": "sigamdi",

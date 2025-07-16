@@ -7,3 +7,6 @@ telemetry.txt
 .vscode/settings.json
 .vscode/settings.json
 /.vscode
+.vscode/launch.json
+/.vscode
+.vscode/launch.json

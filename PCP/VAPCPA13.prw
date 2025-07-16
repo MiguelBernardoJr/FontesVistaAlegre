@@ -4985,7 +4985,7 @@ Local aDSilo 		:= {}
 			//Mudança por causa da função importar todos.
 			nPOperacao  := aScan(aHeaderCSV, { |x| Upper(x) == 'OPERACAO'})		
 			nPNumCarreg	:= aScan(aHeaderCSV, { |x| Upper(x) == '16-BIT_SIGNED'})
-			nPSilo1		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_1'})
+			nPSilo1		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_1_R'})
 			nPInbDos 	:= aScan(aHeaderCSV, { |x| Upper(x) == 'INBEFF_DOS'})
 
 			if nPOperacao > 0 
@@ -5472,12 +5472,12 @@ Local aDSilo 		:= {}
 			nPReceita	:= aScan(aHeaderCSV, { |x| Upper(x) == 'RECEITA'})
 			nPLote		:= aScan(aHeaderCSV, { |x| Upper(x) == 'LOTE'})
 			nPAgua		:= aScan(aHeaderCSV, { |x| Upper(x) == 'AGUA'})
-			nPSilo1		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_1'})
-			nPSilo2		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_2'})
-			nPSilo3		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_3'})
-			nPSilo4		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_4'})
-			nPSilo5		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_5'})
-			nPSilo6		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_6'})
+			nPSilo1		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_1_R'})
+			nPSilo2		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_2_R'})
+			nPSilo3		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_3_R'})
+			nPSilo4		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_4_R'})
+			nPSilo5		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_5_R'})
+			nPSilo6		:= aScan(aHeaderCSV, { |x| Upper(x) == 'SILO_6_R'})
 			nPOrdemProd := aScan(aHeaderCSV, { |x| Upper(x) == 'OP'})
 			nPNumCarreg := aScan(aHeaderCSV, { |x| Upper(x) == 'NCAR'})
 
