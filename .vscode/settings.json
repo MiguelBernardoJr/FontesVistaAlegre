@@ -1,4 +1,7 @@
 {
+    "totvsLanguageServer.editor.linter.includes": "E:\\.Protheus-VistaAlegre\\.includes",
     "totvsLanguageServer.welcomePage": false,
-    "totvsLanguageServer.editor.linter.includes": "E:\\.Protheus-Producao\\includes"
+    "advpl.debug_multiThread": true,
+    "totvsLanguageServer.askCompileResult": false,
+    "totvsLanguageServer.workspaceServerConfig": true
 }
