@@ -1,4 +1,4 @@
 {
     "totvsLanguageServer.welcomePage": false,
-    "totvsLanguageServer.editor.linter.includes": "E:\\.Protheus-Producao\\includes"
+    "totvsLanguageServer.workspaceServerConfig": false
 }

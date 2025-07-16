@@ -516,7 +516,7 @@ Local nPDTABAT   := 0
 Local nPDIARIA   := 0
 Local dB8XDATACO := SToD("")
 Local nB8SALDO   := 0
-
+local nCmsPrev   := GetMV("MV_CMSPREV",,2.2)
 DbUseArea(.t., "TOPCONN", TCGenQry(,,;
                             " SELECT *" +; 
                             " FROM " + RetSqlName("Z0O") + " Z0O" +; 
@@ -641,7 +641,7 @@ while !TMPZ0O->(Eof())
 
     If (nPCMSPRE:=aScan( oFormGrid:oFormModelStruct:aFields, { |x| x[3] == "Z0O_CMSPRE" } )) > 0;
         .AND. Empty( aDados[nPCMSPRE] )
-        aDados[nPCMSPRE] := 2.2
+        aDados[nPCMSPRE] := nCmsPrev // 2.2   -- MV_CMSPREV
     EndIf
 
     If (nPGORDUR:=aScan( oFormGrid:oFormModelStruct:aFields, { |x| x[3] == "Z0O_GORDUR" } )) > 0;
