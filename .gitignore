@@ -10,3 +10,6 @@ telemetry.txt
 .vscode/launch.json
 /.vscode
 .vscode/launch.json
+.vscode/.advpl/_binary_class.prw
+.vscode/.advpl/_binary_functions.prw
+.vscode/launch.json
