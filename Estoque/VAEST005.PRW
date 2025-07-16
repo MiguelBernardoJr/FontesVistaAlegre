@@ -119,7 +119,7 @@ Static Function ModelDef()
 	Local oStPai 		:= FWFormStruct(1, 'Z02')
 	Local oStFilho 		:= FWFormStruct(1, 'Z03')
 	Local aZ03Rel		:= {}
-	
+	 
 	oStFilho:SetProperty( 'Z03_BATIDA' , MODEL_FIELD_INIT, {|| Iif(lPTO,_cBatida,nil) })
 	oStFilho:SetProperty( 'Z03_OPERAD' , MODEL_FIELD_INIT, {|| Iif(lPTO,_cOperad,nil) })
 	oStFilho:SetProperty( 'Z03_DIETA', MODEL_FIELD_INIT, {|| Iif(lPTO,_cNomRec,nil) })
@@ -130,7 +130,7 @@ Static Function ModelDef()
 	oModel := MPFormModel():New('EST005')
 	
 	oModel:AddFields('Z02MASTER',/*cOwner*/,oStPai)
-	oModel:AddGrid('Z03DETAIL','Z02MASTER',oStFilho,/*bLinePre*/, /*bLinePost*/,/*bPre - Grid Inteiro*/,/*bPos - Grid Inteiro*/,/*bLoad - Carga do modelo manualmente*/)  //cOwner é para quem pertence
+	oModel:AddGrid('Z03DETAIL','Z02MASTER',oStFilho,bLinePre/*bLinePre*/, /*bLinePost*/,/*bPre - Grid Inteiro*/,/*bPos - Grid Inteiro*/,/*bLoad - Carga do modelo manualmente*/)  //cOwner é para quem pertence
 	
 	//Fazendo o relacionamento entre o Pai e Filho
 	aAdd(aZ03Rel, {'Z03_FILIAL', 'Z02_FILIAL' } )

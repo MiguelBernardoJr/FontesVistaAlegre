@@ -76,7 +76,7 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  		  , AVG(B8_XPESOCO) [PESO] " + _ENTER_ +;
         "  		  , ISNULL((CASE WHEN Z0O.Z0O_SEXO = 'M' THEN 'MACHO' " + _ENTER_ +;
         "  		                 WHEN Z0O.Z0O_SEXO = 'F' THEN 'FEMEA' " + _ENTER_ +;
-        "  						 WHEN Z0O.Z0O_SEXO = 'C' THEN 'CAP√O' " + _ENTER_ +;
+        "  						 WHEN Z0O.Z0O_SEXO = 'C' THEN 'CAPùO' " + _ENTER_ +;
         "  						 ELSE ' ' END),'') [SEXO] " + _ENTER_ +;
         "  		  , ISNULL((Z0O.Z0O_RACA),' ' ) [RACA] " + _ENTER_ +;
         "  	      , CASE WHEN Z0O_DINITR = ' ' THEN CONVERT(DATE,min(SB8.B8_XDATACO),103)  " + _ENTER_ +;
@@ -96,45 +96,45 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  		  , ISNULL(Z0O_GMD,1.7) [GMD_ESPERADO] " + _ENTER_ +;
         "  		   " + _ENTER_ +;
         "  		  /*, ISNULL((SELECT Z05.Z05_CMSPN  " + _ENTER_ +;
-        "  		              FROM Z05010 (nolock) Z05  " + _ENTER_ +;
+        "  		              FROM "+RetSqlName("Z05")+" (nolock) Z05  " + _ENTER_ +;
         "  					 WHERE Z05.Z05_FILIAL = B8_FILIAL  " + _ENTER_ +;
         "  					   AND Z05.Z05_LOTE = B8_LOTECTL  " + _ENTER_ +;
         "  					   AND Z05.D_E_L_E_T_ =' '   " + _ENTER_ +;
         "  					   AND Z05.Z05_DATA = (SELECT MAX(Z05D.Z05_DATA)  " + _ENTER_ +;
-        "  					                     FROM Z05010 (nolock) Z05D  " + _ENTER_ +;
+        "  					                     FROM "+RetSqlName("Z05")+" (nolock) Z05D  " + _ENTER_ +;
         "  										WHERE Z05D.Z05_FILIAL = Z05.Z05_FILIAL " + _ENTER_ +;
         "  										  AND Z05D.Z05_LOTE = Z05.Z05_LOTE " + _ENTER_ +;
         "  										  AND Z05D.D_E_L_E_T_ = ' ' )),0) [% CMS PV] " + _ENTER_ +;
         "  										  */ " + _ENTER_ +;
         "            , ISNULL((SELECT Z05.Z05_MEGCAL  " + _ENTER_ +;
-        "  		              FROM Z05010 (nolock) Z05  " + _ENTER_ +;
+        "  		              FROM "+RetSqlName("Z05")+" (nolock) Z05  " + _ENTER_ +;
         "  					 WHERE Z05.Z05_FILIAL = B8_FILIAL  " + _ENTER_ +;
         "  					   AND Z05.Z05_LOTE = B8_LOTECTL  " + _ENTER_ +;
         "  					   AND Z05.D_E_L_E_T_ =' '   " + _ENTER_ +;
         "  					   AND Z05.Z05_DATA = (SELECT MAX(Z05D.Z05_DATA)  " + _ENTER_ +;
-        "  					                     FROM Z05010 (nolock) Z05D  " + _ENTER_ +;
+        "  					                     FROM "+RetSqlName("Z05")+" (nolock) Z05D  " + _ENTER_ +;
         "  										WHERE Z05D.Z05_FILIAL = Z05.Z05_FILIAL " + _ENTER_ +;
         "  										  AND Z05D.Z05_LOTE = Z05.Z05_LOTE " + _ENTER_ +;
         "  										  AND Z05D.D_E_L_E_T_ = ' ' )),0) [MEGA_CAL_ATUAL] " + _ENTER_ +;
         "  		  , ROUND(ISNULL((SELECT MIN(SG1.G1_ENERG) " + _ENTER_ +;
-        "  			            FROM SG1010 (nolock) SG1  " + _ENTER_ +;
+        "  			            FROM "+RetSqlName("SG1")+" (nolock) SG1  " + _ENTER_ +;
         "  					   WHERE SG1.G1_FILIAL = SB8.B8_FILIAL " + _ENTER_ +;
         "  					     AND SG1.G1_COD = 'FINAL'  " + _ENTER_ +;
         "  						 AND SG1.D_E_L_E_T_ = ' ' " + _ENTER_ +;
         "  						 ),0)  " + _ENTER_ +;
         "  			  *  " + _ENTER_ +;
         "  		  ISNULL((SELECT Z0O.Z0O_PESO * (Z0O.Z0O_CMSPRE/100)  " + _ENTER_ +;
-        "  			 FROM Z0O010 (nolock) Z0O  " + _ENTER_ +;
+        "  			 FROM "+RetSqlName("Z0O")+" (nolock) Z0O  " + _ENTER_ +;
         "  			WHERE Z0O.Z0O_FILIAL = SB8.B8_FILIAL " + _ENTER_ +;
         "  			  AND Z0O.Z0O_LOTE = SB8.B8_LOTECTL " + _ENTER_ +;
         "  			  AND Z0O.Z0O_DATATR = ' ' AND Z0O.D_E_L_E_T_ = ' ' ),0),2) [MEGA_CAL_PROJETADO] " + _ENTER_ +;
-        "         from SB8010 (nolock) SB8 " + _ENTER_ +;
-        "    left join Z0O010 (nolock) Z0O ON  " + _ENTER_ +;
+        "         from "+RetSqlName("SB8")+" (nolock) SB8 " + _ENTER_ +;
+        "    left join "+RetSqlName("Z0O")+" (nolock) Z0O ON  " + _ENTER_ +;
         "              Z0O_FILIAL = B8_FILIAL " + _ENTER_ +;
         "  		and Z0O_LOTE = B8_LOTECTL  " + _ENTER_ +;
         "  		and (Z0O_DATATR = ' ' AND Z0O_DATATR < GETDATE()) " + _ENTER_ +;
         "  		and Z0O.D_E_L_E_T_ = ' '  " + _ENTER_ +;
-        "         join Z08010 (nolock) Z08 ON " + _ENTER_ +;
+        "         join "+RetSqlName("Z08")+" (nolock) Z08 ON " + _ENTER_ +;
         "  	        Z08_FILIAL = B8_FILIAL " + _ENTER_ +;
         "  		AND Z08_CODIGO = B8_X_CURRA " + _ENTER_ +;
         "  		AND Z08.D_E_L_E_T_ = ' '  " + _ENTER_ +;
@@ -176,19 +176,19 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         " 				     WHEN 'FINALS' THEN 'FINAL'" + _ENTER_ +;
         " 				     ELSE Z05_DIETA" + _ENTER_ +;
         " 				     END DIETA " + _ENTER_ +;
-        " 		          FROM Z05010 (nolock) Z05 WHERE Z05_FILIAL = Z0W_FILIAL AND Z05_LOTE = Z0W_LOTE AND Z05_DATA = Z0W_DATA AND Z05.D_E_L_E_T_ = ' ' ),'') DIETA" + _ENTER_ +;
+        " 		          FROM "+RetSqlName("Z05")+" (nolock) Z05 WHERE Z05_FILIAL = Z0W_FILIAL AND Z05_LOTE = Z0W_LOTE AND Z05_DATA = Z0W_DATA AND Z05.D_E_L_E_T_ = ' ' ),'') DIETA" + _ENTER_ +;
         "  	   , SUM(Z0W_QTDPRE) Z0W_QTDPRE " + _ENTER_ +;
-        " 	   , ISNULL((SELECT SUM(Z06_KGMSTR) FROM Z06010 (nolock) Z06 WHERE Z06_FILIAL = Z0W_FILIAL AND Z06_DATA = Z0W_DATA AND Z06_LOTE = Z0W_LOTE AND Z06.D_E_L_E_T_ = ' '),'') KG_MS " + _ENTER_ +;
+        " 	   , ISNULL((SELECT SUM(Z06_KGMSTR) FROM "+RetSqlName("Z06")+" (nolock) Z06 WHERE Z06_FILIAL = Z0W_FILIAL AND Z06_DATA = Z0W_DATA AND Z06_LOTE = Z0W_LOTE AND Z06.D_E_L_E_T_ = ' '),'') KG_MS " + _ENTER_ +;
         "  	   , ROUND(SUM(CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END),2) Z0W_QTDREA " + _ENTER_ +;
         "  	   , Z0I_NOTMAN " + _ENTER_ +;
         "  	   , Z0I_NOTTAR " + _ENTER_ +;
-        "      FROM Z0W010 (nolock) Z0W " + _ENTER_ +;
+        "      FROM "+RetSqlName("Z0W")+" (nolock) Z0W " + _ENTER_ +;
         "  	JOIN DADOS D ON  " + _ENTER_ +;
         "  	     D.FILIAL = Z0W_FILIAL " + _ENTER_ +;
         "  	 AND Z0W_LOTE = D.LOTE " + _ENTER_ +;
         "  	 AND Z0W_DATA >= DATEADD(D,-" + cValToChar(nDiasHist) + ",GETDATE()) " + _ENTER_ +;
         "  	 AND Z0W.D_E_L_E_T_ = ' '  " + _ENTER_ +;
-        "  	JOIN Z0I010 (nolock) Z0I ON  " + _ENTER_ +;
+        "  	JOIN "+RetSqlName("Z0I")+" (nolock) Z0I ON  " + _ENTER_ +;
         "  	     Z0I_FILIAL = Z0W_FILIAL " + _ENTER_ +;
         "  	 AND Z0I_LOTE = Z0W_LOTE " + _ENTER_ +;
         "  	 AND Z0I.Z0I_DATA = Z0W_DATA " + _ENTER_ +;
@@ -204,7 +204,8 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  ) " + _ENTER_ +;
         "   --SELECT DISTINCT DIETA FROM HISTORICO " + _ENTER_ +;
         "  SELECT D.* " + _ENTER_ +;
-        " 	  , isnull((SELECT TOP(1) Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I_FILIAL = FILIAL AND Z0I_LOTE = LOTE AND Z0I.D_E_L_E_T_ = ' ' AND Z0I_DATA = CONVERT(DATE,GETDATE(), 103) ),'') ULTIMANOITE " + _ENTER_ +;
+        " 	  , isnull((SELECT TOP(1) Z0I_NOTTAR FROM "+RetSqlName("Z0I")+" Z0I WHERE Z0I_FILIAL = FILIAL AND Z0I_LOTE = LOTE AND Z0I.D_E_L_E_T_ = ' ' AND Z0I_DATA = (SELECT MAX(Z0I_DATA) FROM "+RetSqlName("Z0I")+" WHERE Z0I_FILIAL = '0101001' AND D_E_L_E_T_ =' '  )),'') ULTIMANOITE " + _ENTER_ +;
+        " 	  --, isnull((SELECT TOP(1) Z0I_NOTTAR FROM "+RetSqlName("Z0I")+" Z0I WHERE Z0I_FILIAL = FILIAL AND Z0I_LOTE = LOTE AND Z0I.D_E_L_E_T_ = ' ' AND Z0I_DATA = CONVERT(DATE,GETDATE(), 103) ),'') ULTIMANOITE " + _ENTER_ +;
         " 	  , ROUND(ISNULL((SELECT TOP 1 HI.KG_MS FROM HISTORICO HI WHERE D.FILIAL = HI.Z0W_FILIAL AND D.LOTE = HI.Z0W_LOTE ORDER BY HI.Z0W_DATA DESC ),0) / (PESO + (DIAS_DE_COCHO * GMD_ESPERADO))*100,3) CMS" + _ENTER_ +;
         "     , H.DIETA[DIETA]" + _ENTER_ +;
         " 	  , H.KG_MS" + _ENTER_ +;
@@ -213,9 +214,10 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "       , H.Z0I_NOTMAN [NOTA_MANHA] " + _ENTER_ +;
         "  	 , H.Z0I_NOTTAR [NOTA_NOITE] " + _ENTER_ +;
         "  	 , H.Z0W_QTDPRE [KG_PREV] " + _ENTER_ +;
+        "  	 , (SELECT Z05_CABECA FROM "+RetSqlName("Z05")+" Z05 WHERE Z05_DATA = H.Z0W_DATA and Z05_LOTE = H.Z0W_LOTE AND Z05.D_E_L_E_T_ = '') [CABECAS] " + _ENTER_ +;
         "  	 , H.Z0W_QTDREA [KG_TOTAL] " + _ENTER_ +;
         "    FROM DADOS D " + _ENTER_ +;
-        "    JOIN HISTORICO H ON " + _ENTER_ +;
+        "    LEFT JOIN HISTORICO H ON " + _ENTER_ +;
         "         D.FILIAL = H.Z0W_FILIAL " + _ENTER_ +;
         "     AND D.LOTE = H.Z0W_LOTE " + _ENTER_ +;
         "  ORDER BY LOCALx, LINHA, LOTE, DATAx DESC"
@@ -262,6 +264,7 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
             aHistorico[len(aHistorico)]["KG_TOTAL"]   := (cAlias)->KG_TOTAL
             aHistorico[len(aHistorico)]["KG_MS"]      := (cAlias)->KG_MS
             aHistorico[len(aHistorico)]["DIETA"]      := AllTrim((cAlias)->DIETA)
+            aHistorico[len(aHistorico)]["CABECAS"]    := (cAlias)->CABECAS
 
             (cAlias)->( dbSkip() )
 
@@ -311,7 +314,7 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
 
             cQry := "SELECT MAX(ZWS_CODIGO) AS ZWS_CODIGO FROM "+RetSqlName("ZWS")+" (nolock) WHERE D_E_L_E_T_ = ' '"
             cCod := StrZero(Val(MpSySExecScalar( cQry , "ZWS_CODIGO")) + 1,TamSx3("ZWS_CODIGO")[1])
-            // GravaÁ„o dos dados
+            // Gravaùùo dos dados
             RecLock("ZWS", .T.)
                 ZWS->ZWS_CODIGO := cCod
                 ZWS->ZWS_TIPO   := "J"
@@ -323,11 +326,11 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
                 ZWS->ZWS_RESULT := (cResult := oResponse:toJson())
                 ZWS->(MsUnLock())
             ConfirmSX8()
-            // Fim da gravaÁ„o
+            // Fim da gravaùùo
 
             /* MB : 17.06.2024 
-                -> Confmando o procesorme sugest„o do Toshio, estarei chasamento do json recebido diretamente da
-                WS apÛs gravacao na tabela intermedi·ria. */
+                -> Confmando o procesorme sugestùo do Toshio, estarei chasamento do json recebido diretamente da
+                WS apùs gravacao na tabela intermediùria. */
             U_fIntegrar( 'U' )
         Else
             
@@ -374,7 +377,7 @@ WsMethod GET CadastroDasNotas WSSERVICE WSNotaCocho
             "      , Z0G_CODIGO [CODIGO_NOTA] " + _ENTER_ +;
             "      , Z0G_PERAJU [PERC_AJUSTE] " + _ENTER_ +;
             "      , Z0G_ZERTRT [ZERA_PRIM_TRATO] " + _ENTER_ +;
-            " FROM  Z0G010 (nolock) Z0G " + _ENTER_ +;
+            " FROM  "+RetSqlName("Z0G")+" (nolock) Z0G " + _ENTER_ +;
             " WHERE Z0G_MSBLQL <> 1 " + _ENTER_ +;
             "   AND Z0G.D_E_L_E_T_ =' ' "
 
@@ -408,4 +411,3 @@ WsMethod GET CadastroDasNotas WSSERVICE WSNotaCocho
     FreeObj( oHeaderJson )
 
 Return .T.
-

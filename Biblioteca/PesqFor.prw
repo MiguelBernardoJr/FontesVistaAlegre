@@ -263,7 +263,7 @@ Return aRetTxt
 
 
 Static Function IncluiFor() 
-Local aArea	:= GetArea()
-	AxInclui('SA2', 0, 3)
-RestArea(aArea)
+	Local aArea	:= GetArea()
+		AxInclui('SA2', 0, 3)
+	RestArea(aArea)
 Return
