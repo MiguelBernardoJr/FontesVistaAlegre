@@ -239,7 +239,8 @@ Static Function IntEmLote()
                 sDataQry := DTOS(DaySub(cToD( Left(oResult:DATA, 10) ), 1))                               
                 sDataRec := DTOS(cToD( Left(oResult:DATA, 10) ))
             else
-                if Val(SubStr(Time(),1,2)) >= 21 .and. cToD( Left(oResult:DATA, 10) ) == Date() // Se for a data de hoje e hora >= 21:00
+                if (Val(SubStr(Time(),1,2)) >= 21 .and. cToD( Left(oResult:DATA, 10) ) == Date()) .or.;
+                   (Val(SubStr(Time(),1,2)) <= 6  .and. DaySum(cToD( Left(oResult:DATA, 10) ), 1) == Date()) // Se for a data de hoje e hora >= 21:00
                     sDataQry  := DTOS(cToD( Left(oResult:DATA, 10) ))
                     sDataRec  := DTOS(DaySum(cToD( Left(oResult:DATA, 10) ),1))
                 else // Se for a data de hoje e hora < 21:00 // mantem o comportamento original

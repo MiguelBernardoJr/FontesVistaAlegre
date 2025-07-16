@@ -32,11 +32,11 @@ endIf
 	// Durante desenvolvimento, para nao precisar ficar selecionando .... apagar depoismbenrrado
 	// aLotes := { { "101-12    ", "H01                 " }, { "124-44    ", "H02                 " }, { "154-12    ", "H09                 " }, { "19-19     ", "H14                 " }, { "21-20     ", "H12                 " }, { "47-20     ", "H11                 " }, { "56-20     ", "H13                 " } }
 	
-	if (len(aLotes) > 0)
-		PrintRel()
-	else
-		msgInfo("Nenhum lote informado. Operação cancelada pelo usuário.")
-	EndIf
+	//if (len(aLotes) > 0)
+	//	PrintRel()
+	//else
+	//	msgInfo("Nenhum lote informado. Operação cancelada pelo usuário.")
+	//EndIf
 return
 
 Static function callParam(lFirst)
@@ -48,7 +48,6 @@ Static function callParam(lFirst)
 	Local bDialogInit := nil	
 	Local oBtnLtAtu   := nil
 	Local oBtnLtFin   := nil
-	
 	default lFirst 	  := .F.
 	
 	if lFirst
@@ -71,12 +70,10 @@ Static function callParam(lFirst)
 											,,,,.T.,,,,,,,,,'cCombo1')
 		*/
 		oBtnLtAtu  := TButton():New( 065, 005, "Lotes Atuais" 		, oDlgWnd, ;
-						{|| obj := TExFilter():New("SB8",{"B8_LOTECTL", "B8_X_CURRA"}, "Lotes", , .F.,"B8_SALDO > 0 and  B8_LOTECTL IN (SELECT Z0F_LOTE FROM "+RetSqlName("Z0F")+" Z0F WHERE Z0F_FILIAL = "+xFilial("Z0F")+" AND Z0F_LOTE = B8_LOTECTL AND Z0F.D_E_L_E_T_ = ' ' ) " ,aLotes), ;
-						aLotes := aClone(obj:aSelect) },60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
+						{|| aLotes := {} ,U_VABOVPESQ(1) },60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
 		
 		oBtnLtFin  := TButton():New( 065, 130, "Lotes Finalizados" 		, oDlgWnd, ;
-						{|| obj := TExFilter():New("SB8",{"B8_LOTECTL", "B8_X_CURRA"}, "Lotes", , .F.,"B8_SALDO = 0 and  B8_LOTECTL IN (SELECT Z0F_LOTE FROM "+RetSqlName("Z0F")+" Z0F WHERE Z0F_FILIAL = "+xFilial("Z0F")+" AND Z0F_LOTE = B8_LOTECTL AND Z0F.D_E_L_E_T_ = ' ' )" ,aLotes), ;
-						aLotes := aClone(obj:aSelect) },60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
+						{|| aLotes := {} ,U_VABOVPESQ(2)},60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
 		
 		oDlgWnd:lEscClose := .F.
 		bDialogInit := { || EnchoiceBar( oDlgWnd , ;
@@ -86,7 +83,7 @@ Static function callParam(lFirst)
 	
 return lConfirm
 
-Static Function PrintRel()
+User Function bovr01Print()
 
 Local cTimeIni	 	:= Time()
 Local lTemDados		:= .T.
@@ -141,15 +138,15 @@ else
 		
 		FClose(nHandle)
 
-		If ApOleClient("MSExcel")				//	 U_VARELM01()
-			oExcelApp := MsExcel():New()
-			oExcelApp:WorkBooks:Open( cArquivo )
-			oExcelApp:SetVisible(.T.)
-			oExcelApp:Destroy()	
-			// ou >  ShellExecute( "Open", cNameFile , '', '', 1 ) //Abre o arquivo na tela após salvar 
-		Else
-			MsgAlert("O Excel não foi encontrado. Arquivo " + cArquivo + " gerado em " + cPath + ".", "MsExcel não encontrado" )
-		EndIf
+		//If ApOleClient("MSExcel") // U_VARELM01()
+		//	oExcelApp := MsExcel():New()
+		//	oExcelApp:WorkBooks:Open( cArquivo )
+		//	oExcelApp:SetVisible(.T.)
+		//	oExcelApp:Destroy()
+		ShellExecute( "Open", cArquivo , '', '', 1 ) //Abre o arquivo na tela após salvar 
+		//Else
+		//	MsgAlert("O Excel não foi encontrado. Arquivo " + cArquivo + " gerado em " + cPath + ".", "MsExcel não encontrado" )
+		//EndIf
 		
 	Else
 		MsgAlert("Os parametros informados não retornou nenhuma informação do banco de dados." + CRLF + ;
@@ -981,3 +978,4 @@ static function FS_GetCell( xVar )
 	EndIf
 
 Return cRet
+

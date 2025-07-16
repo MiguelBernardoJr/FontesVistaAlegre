@@ -46,8 +46,14 @@
 		},
 		{
 			"label": "xxxx"
+		},
+		{
+			"label": "U_CXNFACI"
+		},
+		{
+			"label": "UPDDISTR"
 		}
 	],
-	"lastProgramExecuted": "sigaCOM",
+	"lastProgramExecuted": "sigamdi",
 	"lastProgramArguments": []
 }

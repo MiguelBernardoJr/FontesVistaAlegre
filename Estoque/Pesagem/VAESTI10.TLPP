@@ -39,55 +39,79 @@ Return aRot
 
 user function ModelDef() as object
 	local oModel    := nil as object
-	local oStrHide 	:= zStrMHide() as object
-	local oStrZPC   := FWFormStruct(1,'ZPC') as object
+	local oStrCab   := FWFormStruct(1,'ZPC', {|cCampo| AllTrim(cCampo) $ "ZPC_FILIAL|ZPC_CODIGO"}) as object
+	local oStrZPC   := FWFormStruct(1,'ZPC', {|cCampo| AllTrim(cCampo) $ "ZPC_FILIAL|ZPC_CODIGO|ZPC_ITEM|ZPC_DATA|ZPC_FORNEC|ZPC_LOJA|ZPC_NOME|ZPC_DOC|ZPC_SERIE|ZPC_EMISSA|ZPC_USER|ZPC_HORA"}) as object
 	local oStrZPD   := FWFormStruct(1,'ZPD') as object
 	local oStrZPF   := FWFormStruct(1,'ZPF') as object
 	Local bVldCom  	:= {|| custom.VAESTI10.u_zSaveZPC()  } as codeblock
-	Local bVldPos  	:= {|| custom.VAESTI10.u_ValidaVA10EST()}
+	Local bVldPos  	:= {|| custom.VAESTI10.u_ValidaVA10EST()} as codeblock
+	local bLPreZPC	:= {|| custom.VAESTI10.U_PreValidacaoGrid("ZPCDETAIL") } as codeblock
+	local bLPreZPD	:= {|| custom.VAESTI10.U_PreValidacaoGrid("ZPDDETAIL") } as codeblock
+	local bLPreZPF	:= {|| custom.VAESTI10.U_PreValidacaoGrid("ZPFDETAIL") } as codeblock
 	Local nI
 	Local aRel  	:= {}
 	Local aTrigger  := {}
-	local bLoadHide := {|oModel, lCopia| custom.VAESTI10.LoadHide(oModel, lCopia) } as codeblock
-	local bLoadZPC  := {|oModel, lCopia| custom.VAESTI10.LoadZPC(oModel, lCopia) } as codeblock
-	local bLoadZPD  := {|oModel, lCopia| custom.VAESTI10.LoadZPD(oModel, lCopia) } as codeblock
-	local bLoadZPF  := {|oModel, lCopia| custom.VAESTI10.LoadZPF(oModel, lCopia) } as codeblock
 
-	oStrZPC:SetProperty('ZPC_CODIGO', MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,custom.VAESTI10.u_InicializadorCodigoGrid(),ZPC->ZPC_CODIGO)" ) )
+	oStrCab:SetProperty('ZPC_CODIGO', MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,custom.VAESTI10.u_InicializadorCodigoHide(),ZPC->ZPC_CODIGO)" ) )
+
+	oStrZPC:SetProperty('ZPC_FORNEC', MODEL_FIELD_OBRIGAT, .T. )
+	oStrZPC:SetProperty('ZPC_LOJA'  , MODEL_FIELD_OBRIGAT, .T. )
+	oStrZPC:SetProperty('ZPC_DOC'   , MODEL_FIELD_OBRIGAT, .T. )
+	oStrZPC:SetProperty('ZPC_SERIE' , MODEL_FIELD_OBRIGAT, .T. )
+
+	oStrZPC:SetProperty('ZPC_DOC'  , MODEL_FIELD_VALID, FWBuildFeature( STRUCT_FEATURE_VALID, "custom.VAESTI10.U_ValidaNF()" ) )
 	oStrZPC:SetProperty('ZPC_SERIE', MODEL_FIELD_VALID, FWBuildFeature( STRUCT_FEATURE_VALID, "custom.VAESTI10.U_ValidaNF()" ) )
 	oStrZPC:SetProperty('ZPC_LOJA' , MODEL_FIELD_VALID, FWBuildFeature( STRUCT_FEATURE_VALID, "custom.VAESTI10.U_ValidaFornece()" ) )
 	
-	oStrZPD:SetProperty('ZPD_CODIGO', MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,custom.VAESTI10.u_InicializadorCodigoGrid(),ZPD->ZPD_CODIGO)" ) )
-	oStrZPF:SetProperty('ZPF_CODIGO', MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,custom.VAESTI10.u_InicializadorCodigoGrid(),ZPF->ZPF_CODIGO)" ) )
+	oStrZPD:SetProperty('ZPD_PESOE' , MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,0,POSICIONE('ZPB',1,FWXFILIAL('ZPB')+DTOS(ZPD->ZPD_DTPES)+ZPD->ZPD_CODZPB,'ZPB_PESOE' ))" ) )
+	oStrZPD:SetProperty('ZPD_PESOS' , MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,0,POSICIONE('ZPB',1,FWXFILIAL('ZPB')+DTOS(ZPD->ZPD_DTPES)+ZPD->ZPD_CODZPB,'ZPB_PESOS' ))" ) )
+	oStrZPD:SetProperty('ZPD_PESOL' , MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,0,POSICIONE('ZPB',1,FWXFILIAL('ZPB')+DTOS(ZPD->ZPD_DTPES)+ZPD->ZPD_CODZPB,'ZPB_PESOL' ))" ) )
+	oStrZPD:SetProperty('ZPD_NFISCA', MODEL_FIELD_INIT, FWBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,'',POSICIONE('ZPB',1,FWXFILIAL('ZPB')+DTOS(ZPD->ZPD_DTPES)+ZPD->ZPD_CODZPB,'ZPB_NOTFIS' ))" ) )
+	
+	oStrZPF:SetProperty('ZPF_RACA' , MODEL_FIELD_OBRIGAT, .T. )
+	oStrZPF:SetProperty('ZPF_SEXO' , MODEL_FIELD_OBRIGAT, .T. )
+	oStrZPF:SetProperty('ZPF_QUANT', MODEL_FIELD_OBRIGAT, .T. )
 	
 	aAdd(aTrigger, FwStruTrigger("ZPC_LOJA" ,"ZPC_NOME"   ,"SA2->A2_NOME"   ,.T.,"SA2",1,"FWxFilial('SA2') + M->ZPC_FORNEC + M->ZPC_LOJA" ,NIL,"01" )) 
-	aAdd(aTrigger, FwStruTrigger("ZPC_SERIE","ZPC_EMISSA" ,"SF1->F1_EMISSAO",.T.,"SF1",2,"FWxFilial('SD1') + M->ZPC_FORNEC + M->ZPC_LOJA + M->ZPC_DOC" ,NIL,"02" )) 
+	aAdd(aTrigger, FwStruTrigger("ZPC_SERIE","ZPC_EMISSA" ,"SF1->F1_EMISSAO",.T.,"SF1",2,"FWxFilial('SD1') + M->ZPC_FORNEC + M->ZPC_LOJA + M->ZPC_DOC" ,NIL,"01" )) 
 
 	For nI := 1 To Len(aTrigger)
 		oStrZPC:AddTrigger(aTrigger[nI,1], aTrigger[nI,2], aTrigger[nI,3], aTrigger[nI,4])
 	Next nI
 
+	aAdd(aTrigger, FwStruTrigger("ZPF_QUANT","ZPF_USER"   ,"cUserName",.F.,"",nil,"" ,NIL,"01" ))
+	aAdd(aTrigger, FwStruTrigger("ZPF_QUANT","ZPF_HORA"   ,"Time()"   ,.F.,"",nil,"" ,NIL,"02" ))
+	aAdd(aTrigger, FwStruTrigger("ZPF_QUANT","ZPF_DATA"   ,"Date()"   ,.F.,"",nil,"" ,NIL,"03" ))
+	aTrigger:= {}
+	
+	For nI := 1 To Len(aTrigger)
+		oStrZPF:AddTrigger(aTrigger[nI,1], aTrigger[nI,2], aTrigger[nI,3], aTrigger[nI,4])
+	Next nI
+
+
 	oModel := MPFormModel():New("custom.VAESTI10.VA10EST",,bVldPos,bVldCom)
 	oModel:SetDescription("Notas Fiscais de Pesagem")
 	
-    oModel:AddFields("HIDEMASTER","" , oStrHide,/*bPreValid*/		,/* bPosValid */, bLoadHide)
-    oModel:AddGrid("ZPCDETAIL"  ,"HIDEMASTER" , oStrZPC,,,,, bLoadZPC)
-    oModel:AddGrid("ZPDDETAIL"  ,"ZPCDETAIL"  , oStrZPD,,,,, bLoadZPD)
-    oModel:AddGrid("ZPFDETAIL"  ,"ZPDDETAIL"  , oStrZPF,,,,, bLoadZPF)
+    oModel:AddFields("HIDEMASTER","" , oStrCab, /*bPreValid*/		,/* bPosValid */, /* bLoadHide */)
+    oModel:AddGrid("ZPCDETAIL"  ,"HIDEMASTER" , oStrZPC,bLPreZPC,,,, /* bLoadZPC */)
+    oModel:AddGrid("ZPDDETAIL"  ,"ZPCDETAIL"  , oStrZPD,bLPreZPD,,,, /* bLoadZPD */)
+    oModel:AddGrid("ZPFDETAIL"  ,"ZPDDETAIL"  , oStrZPF,bLPreZPF,,,, /* bLoadZPF */)
 
-	aAdd(aRel, {'TMP_CODIGO', 'ZPC_CODIGO'} )
+	aAdd(aRel, {'ZPC_FILIAL', 'ZPC_FILIAL'} )
+	aAdd(aRel, {'ZPC_CODIGO', 'ZPC_CODIGO'} )
 	oModel:SetRelation('ZPCDETAIL', aRel, ZPC->(IndexKey(1)))
 	
 	aRel := {}
-	aAdd(aRel, {'ZPD_FILIAL', "FwXFilial('ZPD')"} )
-	aAdd(aRel, {'ZPD_CODIGO', 'ZPC->ZPC_CODIGO'} )
-	aAdd(aRel, {'ZPD_ITZPC' , 'ZPC->ZPC_ITEM'} )
+	aAdd(aRel, {'ZPD_FILIAL', "ZPC_FILIAL"} )
+	aAdd(aRel, {'ZPD_CODIGO', 'ZPC_CODIGO'} )
+	aAdd(aRel, {'ZPD_ITZPC' , 'ZPC_ITEM'} )
 	oModel:SetRelation('ZPDDETAIL', aRel, ZPD->(IndexKey(1)))
 	
 	aRel := {}	
-	aAdd(aRel, {'ZPF_FILIAL', "FwXFilial('ZPF')"} )
-	aAdd(aRel, {'ZPF_CODIGO', 'ZPD->ZPD_CODIGO'} )
-	aAdd(aRel, {'ZPF_ITZPD' , 'ZPD->ZPD_ITEM'} )
+	aAdd(aRel, {'ZPF_FILIAL', "ZPD_FILIAL"} )
+	aAdd(aRel, {'ZPF_CODIGO', 'ZPD_CODIGO'} )
+	aAdd(aRel, {'ZPF_ITZPC' , 'ZPD_ITZPC' } )
+	aAdd(aRel, {'ZPF_ITZPD' , 'ZPD_ITEM'  } )
 	oModel:SetRelation('ZPFDETAIL', aRel, ZPF->(IndexKey(1)))
 
 	oModel:SetPrimaryKey({"ZPC_FILIAL","ZPC_CODIGO","ZPC_ITEM"})
@@ -103,8 +127,8 @@ return oModel
 
 user Function ViewDef()
 	Local oModel    := FWLoadModel("custom.VAESTI10.VAESTI10") as Object
-	local oStrHide 	:= zStrVHide() as object
-	local oStrZPC   := FWFormStruct(2,'ZPC') as object
+	local oStrCab   := FWFormStruct(2,'ZPC', {|cCampo| AllTrim(cCampo) $ "ZPC_FILIAL|ZPC_CODIGO"}) as object
+	local oStrZPC   := FWFormStruct(2,'ZPC', {|cCampo| AllTrim(cCampo) $ "ZPC_FILIAL|ZPC_CODIGO|ZPC_ITEM|ZPC_DATA|ZPC_FORNEC|ZPC_LOJA|ZPC_NOME|ZPC_DOC|ZPC_SERIE|ZPC_EMISSA|ZPC_USER|ZPC_HORA"}) as object
 	local oStrZPD   := FWFormStruct(2,'ZPD') as object
 	local oStrZPF   := FWFormStruct(2,'ZPF') as object
 	Local oView     := NIL
@@ -112,7 +136,7 @@ user Function ViewDef()
 	oView := FWFormView():New()
 	oView:SetModel(oModel)
 
-	oView:AddField("VIEW_HIDE", oStrHide  , "HIDEMASTER")
+	oView:AddField("VIEW_HIDE", oStrCab  , "HIDEMASTER")
 	oView:AddGrid("VIEW_ZPC" , oStrZPC , "ZPCDETAIL")
 	oView:AddGrid("VIEW_ZPD" , oStrZPD , "ZPDDETAIL")
 	oView:AddGrid("VIEW_ZPF" , oStrZPF , "ZPFDETAIL")
@@ -145,57 +169,10 @@ user Function ViewDef()
 	
     oStrZPF:RemoveField('ZPF_CODIGO')
 	oStrZPF:RemoveField('ZPF_ITZPD')
+	oStrZPF:RemoveField('ZPF_ITZPC')
 	oStrZPF:RemoveField('ZPF_HORA')
 
 Return oView
-
-static function zStrMHide() AS Object
-    local aArea   		:= GetArea() 
-    local oStruct 		:= FWFormModelStruct():New() AS Object
-
-    oStruct:AddField(;
-                     "Código",;              		// [01]  C   Titulo do campo
-                     "",;              				// [02]  C   ToolTip do campo
-                     "TMP_CODIGO",;   				// [03]  C   Id do Field
-                     "C",; 							// [04]  C   Tipo do campo
-                     6,; 							// [05]  N   Tamanho do campo
-                     0,; 							// [06]  N   Decimal do campo
-                     /* {|| U_RefreshRotaVAPCPA17()} */ ,;// [07]  B   Code-block de validação do campo
-                     nil,;                      	// [08]  B   Code-block de validação When do campo
-                     {},;      						// [09]  A   Lista de valores permitido do campo
-                     .F.,;                      	// [10]  L   Indica se o campo tem preenchimento obrigatório
-                     FwBuildFeature(STRUCT_FEATURE_INIPAD,   "custom.VAESTI10.u_InicializadorCodigoHide()"  ),;// [11]  B   Code-block de inicializacao do campo
-                     .F.,;                      	// [12]  L   Indica se trata-se de um campo chave
-                     .F.,;                      	// [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
-                     .F.)                       	// [14]  L   Indica se o campo é virtual
-	
-	RestArea(aArea)
-Return oStruct
-static function zStrVHide() AS Object
-	local oStruct := FWFormViewStruct():New() as Object
-	
-	oStruct:AddField(;
-		"TMP_CODIGO",;        // [01]  C   Nome do Campo
-		"1",; 				// [02]  C   Ordem
-		"Código",;           // [03]  C   Titulo do campo
-		"",;                // [04]  C   Descricao do campo
-		{"Help"},;          // [05]  A   Array com Help
-		"C",;      			// [06]  C   Tipo do campo
-		"",;      			// [07]  C   Picture
-		nil,;               // [08]  B   Bloco de PictTre Var
-		,;                  // [09]  C   Consulta F3
-		.T.,;  				// [10]  L   Indica se o campo é alteravel
-		nil,;               // [11]  C   Pasta do campo
-		nil,;               // [12]  C   Agrupamento do campo
-		nil,;               // [13]  A   Lista de valores permitido do campo (Combo)
-		nil,;               // [14]  N   Tamanho máximo da maior opção do combo
-		nil,;               // [15]  C   Inicializador de Browse
-		.t.,;               // [16]  L   Indica se o campo é virtual
-		nil,;               // [17]  C   Picture Variável
-		nil;                // [18]  L   Indica pulo de linha após o campo
-	)
-
-Return oStruct
 
 User Function VA10EST()
 	Local aParam 		:= PARAMIXB
@@ -220,28 +197,7 @@ User Function VA10EST()
 		endif 
 		
 		if cIdPonto == "MODELVLDACTIVE"
-			//nOper := oModel:nOperation
-			////Se for inclusão, define o ini padrão
-			//if nOper == 3
-			//	oStruct := oModel:GetModel( 'HIDEMASTER' ):GetStruct()
-			//	oStruct:SetProperty( 'ZPC_PLACA' , MODEL_FIELD_WHEN , FwBuildFeature( STRUCT_FEATURE_WHEN, ".T." ))
-			//elseIf nOper != 3
-			//	oStruct := oModel:GetModel( 'HIDEMASTER' ):GetStruct()
-            //
-            //    ZPB->(DbSetOrder(1))
-            //    IF ZPB->(DBSEEK(FWXFilial('ZPB')+DtoS(ZPC->ZPC_DATA)+ZPC->ZPC_CODZPB))
-            //        oStruct:SetProperty( 'ZPC_PLACA' , MODEL_FIELD_WHEN , FwBuildFeature( STRUCT_FEATURE_WHEN, ".F." ))
-            //
-            //        oStruct:SetProperty( 'ZPC_CPFMOT', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_CPFMOT+"'" ) )
-            //        oStruct:SetProperty( 'ZPC_NOMMOT', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_NOMMOT+"'" ) )
-            //        oStruct:SetProperty( 'ZPC_FORNOM', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_NOMFOR+"'" ) )
-            //        oStruct:SetProperty( 'ZPC_NOTFIS', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "'"+ZPB->ZPB_NOTFIS+"'" ) )
-            //        oStruct:SetProperty( 'ZPC_PESOE' , MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, ""+cValToChar(ZPB->ZPB_PESOE)+"" ) )
-            //        oStruct:SetProperty( 'ZPC_PESOS' , MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, ""+cValToChar(ZPB->ZPB_PESOS)+"" ) )
-            //        oStruct:SetProperty( 'ZPC_PESOL' , MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, ""+cValToChar(ZPB->ZPB_PESOL)+"" ) )
-            //    ENDIF
-            //    ZPB->(DbCloseArea())
-			//endif
+		
 		endif
 	endif
 Return lRet 
@@ -250,6 +206,7 @@ User Function zSaveZPC()
     Local aArea      	:= GetArea()
 	Local lRet       	:= .T.
 	Local oModel	  	:= FWModelActive()
+	Local oMdCab 	    := oModel:GetModel('HIDEMASTER')
 	Local oMdZPC 	    := oModel:GetModel('ZPCDETAIL')
 	Local oMdZPD 	    := oModel:GetModel('ZPDDETAIL')
 	Local oMdZPF 	    := oModel:GetModel('ZPFDETAIL')
@@ -266,8 +223,6 @@ User Function zSaveZPC()
 	
 	ZPF->(DbSetOrder(1))
 	
-	custom.VAESTI10.U_SPCLASSM(oModel)
-	
 	//Se for Inclusão
 	If nOpc == 3 .OR. nOpc == 4
 
@@ -279,13 +234,13 @@ User Function zSaveZPC()
                                             oMdZPC:GetValue('ZPC_ITEM'))))
 
 					ZPC->ZPC_FILIAL		:= xFilial("ZPC")
+					ZPC->ZPC_CODIGO 	:= oMdCab:GetValue('ZPC_CODIGO')
+					ZPC->ZPC_ITEM   	:= oMdZPC:GetValue('ZPC_ITEM')
 					ZPC->ZPC_DATA  		:= oMdZPC:GetValue('ZPC_DATA') 
 					ZPC->ZPC_DOC    	:= oMdZPC:GetValue('ZPC_DOC') 
 					ZPC->ZPC_SERIE  	:= oMdZPC:GetValue('ZPC_SERIE') 
 					ZPC->ZPC_FORNEC 	:= oMdZPC:GetValue('ZPC_FORNEC') 
 					ZPC->ZPC_LOJA   	:= oMdZPC:GetValue('ZPC_LOJA') 
-					ZPC->ZPC_CODIGO 	:= oMdZPC:GetValue('ZPC_CODIGO') 
-					ZPC->ZPC_ITEM   	:= oMdZPC:GetValue('ZPC_ITEM') 
 					ZPC->ZPC_EMISSA 	:= oMdZPC:GetValue('ZPC_EMISSA') 
 					ZPC->ZPC_USER   	:= oMdZPC:GetValue('ZPC_USER')
 					ZPC->ZPC_HORA   	:= oMdZPC:GetValue('ZPC_HORA')
@@ -300,8 +255,8 @@ User Function zSaveZPC()
 												oMdZPD:GetValue('ZPD_ITEM'))))
 							
 							ZPD->ZPD_FILIAL		:= FWxFilial("ZPD")
-							ZPD->ZPD_CODIGO 	:= oMdZPD:GetValue('ZPD_CODIGO')
-							ZPD->ZPD_ITZPC 		:= oMdZPD:GetValue('ZPD_ITZPC')
+							ZPD->ZPD_CODIGO 	:= oMdCab:GetValue('ZPC_CODIGO')
+							ZPD->ZPD_ITZPC 		:= oMdZPC:GetValue('ZPC_ITEM')
 							ZPD->ZPD_ITEM   	:= oMdZPD:GetValue('ZPD_ITEM')
 							ZPD->ZPD_DTPES  	:= oMdZPD:GetValue('ZPD_DTPES')
 							ZPD->ZPD_PLACA   	:= oMdZPD:GetValue('ZPD_PLACA')
@@ -311,15 +266,20 @@ User Function zSaveZPC()
 
 						For nJ := 1 to oMdZPF:Length()
 							oMdZPF:GoLine(nJ)
-							if !oMdZPF:isDeleted()
+							if !oMdZPF:isDeleted() .and. oMdZPF:GetValue("ZPF_RACA") != "" .and. ;
+							   oMdZPF:GetValue("ZPF_SEXO") != "" .and. ;
+							   oMdZPF:GetValue("ZPF_QUANT") > 0
+
 								RecLock('ZPF', lRecLock := !ZPF->(DbSeek( FWxFilial("ZPF") +;
 												oMdZPF:GetValue('ZPF_CODIGO')+;
+												oMdZPF:GetValue('ZPF_ITZPC')+;
 												oMdZPF:GetValue('ZPF_ITZPD') +;
 												oMdZPF:GetValue('ZPF_ITEM'))))
 
 									ZPF->ZPF_FILIAL		:= FWxFilial("ZPD")
-									ZPF->ZPF_CODIGO 	:= oMdZPF:GetValue('ZPF_CODIGO')
-									ZPF->ZPF_ITZPD 		:= oMdZPF:GetValue('ZPF_ITZPD')
+									ZPF->ZPF_CODIGO 	:= oMdCab:GetValue('ZPC_CODIGO')
+									ZPF->ZPF_ITZPC 		:= oMdZPC:GetValue('ZPC_ITEM')
+									ZPF->ZPF_ITZPD 		:= oMdZPD:GetValue('ZPD_ITEM')
 									ZPF->ZPF_ITEM   	:= oMdZPF:GetValue('ZPF_ITEM')
 									ZPF->ZPF_RACA  		:= oMdZPF:GetValue('ZPF_RACA')
 									ZPF->ZPF_SEXO   	:= oMdZPF:GetValue('ZPF_SEXO')
@@ -331,6 +291,7 @@ User Function zSaveZPC()
 							else
 								If ZPF->(DbSeek( FWxFilial("ZPF") +;
 										oMdZPF:GetValue('ZPF_CODIGO') +;
+										oMdZPF:GetValue('ZPF_ITZPC') +;
 										oMdZPF:GetValue('ZPF_ITZPD') +;
 										oMdZPF:GetValue('ZPF_ITEM')))
 
@@ -355,7 +316,7 @@ User Function zSaveZPC()
 
             Else		
                 If ZPC->(DbSeek( xFilial("ZPC") +;
-						oMdZPC:GetValue('ZPC_CODIGO') +;
+						oMdCab:GetValue('ZPC_CODIGO') +;
 						oMdZPC:GetValue('ZPC_ITEM')))
 
                     RecLock('ZPC', .F.)
@@ -374,6 +335,7 @@ User Function zSaveZPC()
 					oMdZPF:GoLine(nJ)
 					If ZPF->(DbSeek( FWxFilial("ZPF") +;
 							oMdZPF:GetValue('ZPF_CODIGO') +;
+							oMdZPF:GetValue('ZPF_ITZPC') +;
 							oMdZPF:GetValue('ZPF_ITZPD') +;
 							oMdZPF:GetValue('ZPF_ITEM')))
 
@@ -395,7 +357,7 @@ User Function zSaveZPC()
 			Next nX 
 
 			If ZPC->(DbSeek( xFilial("ZPC") +;
-					oMdZPC:GetValue('ZPC_CODIGO') +;
+					oMdCab:GetValue('ZPC_CODIGO') +;
 					oMdZPC:GetValue('ZPC_ITEM')))
 
 				RecLock('ZPC', .F.)
@@ -592,177 +554,48 @@ User Function InicializadorCodigoHide()
 
 Return cRet
 
-User Function InicializadorCodigoGrid()
-	Local oModel := FWModelActive()
-	Local oMdHide := oModel:GetModel('HIDEMASTER')
-
-Return oMdHide:GetValue('TMP_CODIGO')
-
-User Function InicializadorItemZPD()
-	Local oModel := FWModelActive()
-	Local oMdZPC := oModel:GetModel('ZPCDETAIL')
-
-Return oMdZPC:GetValue('ZPC_ITEM')
-
-User Function InicializadorItemZPF()
-	Local oModel := FWModelActive()
-	Local oMdZPD := oModel:GetModel('ZPDDETAIL')
-
-Return oMdZPD:GetValue('ZPD_ITEM')
-
-Static Function LoadHide(oModel, lCopia)
-    Local aRet  := {} as Array
-
-	aAdd(aRet, {ZPC->ZPC_CODIGO})
-	aAdd(aRet, {1})
-Return aRet
-
-Static Function LoadZPC(oModel, lCopia)
-    Local aRet  := {} as Array
-	Local cQry	:= "" as Character
-	Local cAlias := "" as Character
-	local nReg 		:= 0 as numeric
-
-	custom.VAESTI10.U_SPCLASSM(oModel,'1')
-
-	cQry := " SELECT * FROM "+RetSqlName("ZPC")+" " + CRLF
-	cQry += " WHERE ZPC_CODIGO = '"+ZPC->ZPC_CODIGO+"' " + CRLF
-	cQry += " AND D_E_L_E_T_ = '' " + CRLF
-
-	cALias := MpSysOpenQuery(cQry)
-
-	While !(cALias)->(EOF())
-		aAdd(aRet ,{++nReg,{(cAlias)->ZPC_FILIAL,;		
-						(cAlias)->ZPC_CODIGO,;		
-						(cAlias)->ZPC_ITEM,;		
-						sToD((cAlias)->ZPC_DATA),;		
-						(cAlias)->ZPC_FORNEC,;		
-						(cAlias)->ZPC_LOJA,;		
-						AllTrim(Posicione("SA2",1,FWXFilial("SA2")+(cAlias)->ZPC_FORNEC+(cAlias)->ZPC_LOJA,"A2_NOME")),;		
-						(cAlias)->ZPC_DOC,;
-						(cAlias)->ZPC_SERIE,;		
-						sToD((cAlias)->ZPC_EMISSA),;		
-						(cAlias)->ZPC_USER,;		
-						(cAlias)->ZPC_HORA;
-						} })
-		(cALias)->(DbSkip())
-	enddo 
-	(cALias)->(DbCloseArea())
-	if Len(aRet) == 0
-        aAdd(aRet, {1,{"","","",cToD("//"),"","","","","",cToD("//"),"",""}})
-    endif
-Return aRet
-Static Function LoadZPD(oModel, lCopia)
-    Local aRet  	:= {} as Array
-	Local cQry		:= "" as Character
-	Local cAlias 	:= "" as Character
-	local cItem 	:= oModel:oFormModel:GetModel("ZPCDETAIL"):GetValue("ZPC_ITEM") as Character
-	local cCodigo 	:= oModel:oFormModel:GetModel("ZPCDETAIL"):GetValue("ZPC_CODIGO") as Character
-	local nReg 		:= 0 as numeric
-	local cNotFis 	:= "" as Character
-	local nPesoE 	:= 0 as numeric
-	local nPesoS 	:= 0 as numeric
-	local nPesoL 	:= 0 as numeric
-
-	custom.VAESTI10.U_SPCLASSM(oModel,'2')
-
-	cQry := " SELECT * FROM "+RetSqlName("ZPD")+" "+ CRLF
-	cQry += " WHERE ZPD_CODIGO = '"+cCodigo+"' "+ CRLF
-	cQry += " AND ZPD_ITZPC = '"+cItem+"' "+ CRLF
-	cQry += " AND D_E_L_E_T_ = '' "+ CRLF
-
-	cALias := MpSysOpenQuery(cQry)
-
-	ZPB->(DbSetOrder(1))
-	While !(cALias)->(EOF())
-		IF ZPB->(DbSeek(FwxFilial("ZPB") +;
-						(cAlias)->ZPD_DTPES +;
-						(cAlias)->ZPD_CODZPB ))
-			cNotFis := ZPB->ZPB_NOTFIS
-			nPesoE  := ZPB->ZPB_PESOE
-			nPesoS  := ZPB->ZPB_PESOS
-			nPesoL  := ZPB->ZPB_PESOL
-		ELSE
-			cNotFis := ""
-			nPesoE  := 0
-			nPesoS  := 0
-			nPesoL  := 0
-		ENDIF
-		aAdd(aRet ,{++nReg,{(cAlias)->ZPD_FILIAL,;		
-						(cAlias)->ZPD_CODIGO,;		
-						(cAlias)->ZPD_ITEM,;		
-						(cAlias)->ZPD_ITZPC,;		
-						(cAlias)->ZPD_PLACA,;		
-						(cAlias)->ZPD_CODZPB,;		
-						sToD((cAlias)->ZPD_DTPES),;
-						nPesoE,;
-						nPesoS,;
-						nPesoL,;
-						cNotFis;
-						 } })
-		(cALias)->(DbSkip())
-	enddo
-	(cALias)->(DbCloseArea())
-	if Len(aRet) == 0
-        aAdd(aRet, {1,{"","","","","","","",0,0,0,""}})
-    endif
-Return aRet
-Static Function LoadZPF(oModel, lCopia)
-    Local aRet  	:= {} as Array
-	Local cQry		:= "" as Character
-	Local cAlias 	:= "" as Character
-	local cItem 	:= oModel:oFormModel:GetModel("ZPDDETAIL"):GetValue("ZPD_ITEM") as Character
-	local cCodigo 	:= oModel:oFormModel:GetModel("ZPDDETAIL"):GetValue("ZPD_CODIGO") as Character
-	local nReg 		:= 0 as numeric
-
-	custom.VAESTI10.U_SPCLASSM(oModel,'3')
-
-	cQry := "SELECT * FROM "+RetSqlName("ZPF")+" " + CRLF
-	cQry += " WHERE ZPF_CODIGO = '"+cCodigo+"' " + CRLF
-	cQry += " AND ZPF_ITZPD = '"+cItem+"' " + CRLF
-	cQry += " AND D_E_L_E_T_ = '' " + CRLF
-
-	cALias := MpSysOpenQuery(cQry)
-
-	While !(cALias)->(EOF())
-		aAdd(aRet ,{++nReg,{(cAlias)->ZPF_FILIAL,;
-						(cAlias)->ZPF_CODIGO,;		
-						(cAlias)->ZPF_ITZPD,;		
-						(cAlias)->ZPF_ITEM,;		
-						(cAlias)->ZPF_RACA,;		
-						(cAlias)->ZPF_SEXO,;		
-						(cAlias)->ZPF_QUANT,;
-						(cAlias)->ZPF_USER,;
-						sToD((cAlias)->ZPF_DATA),;
-						(cAlias)->ZPF_HORA;
-						 } }) 	
-		(cALias)->(DbSkip())
-	enddo 
-	(cALias)->(DbCloseArea())
-	if Len(aRet) == 0
-        aAdd(aRet, {1,{"","","","","","",0,"",cToD("//"),""}})
-    endif
-Return aRet
-
 User Function ValidaNF()
 	Local aArea  	:= GetArea()
 	Local oView 	:= FWViewActive()
 	Local oModel 	:= FWModelActive()
 	Local oMdZPC 	:= oModel:GetModel('ZPCDETAIL')
 	local lRet 	 	:= .T.
+	local nLine 	:= oMdZPC:GetLine()
+	local nI 		:= 0
+	local cCampo 	:= ReadVar()
 	
-	if !Empty(oMdZPC:GetValue("ZPC_DOC"))
-		SF1->(DbSetOrder(2))
-		if SF1->(DbSeek(FWXFilial("SF1") + oMdZPC:GetValue("ZPC_FORNEC") + oMdZPC:GetValue("ZPC_LOJA") + oMdZPC:GetValue("ZPC_DOC")))
-			IF SF1->F1_SERIE != oMdZPC:GetValue("ZPC_SERIE")
-				oModel:SetErrorMessage("","","","","HELP", '', "Nota Fiscal não encontrada na série informada!")
-				lRet := .F.
-			ELSE
-				oMdZPC:SetValue("ZPC_USER", cUserName)
-			ENDIF
-		else
-			oModel:SetErrorMessage("","","","","HELP", 'Verifique Fornecedor e Loja', "Nota Fiscal não encontrada para esse fornecedor!")
-			lRet := .F.
+	IF "ZPC_DOC" $ cCampo 
+		oMdZPC:LoadValue("ZPC_SERIE", "")
+		oMdZPC:LoadValue("ZPC_EMISSA", cToD("//"))
+	else
+		if !Empty(oMdZPC:GetValue("ZPC_DOC"))
+			For nI := 1 to oMdZPC:Length()
+				oMdZPC:GoLine(nI)
+				if oMdZPC:GetValue("ZPC_DOC") == oMdZPC:GetValue("ZPC_DOC",nLine) .and. ;
+				oMdZPC:GetValue("ZPC_SERIE") == oMdZPC:GetValue("ZPC_SERIE",nLine) .and. ;
+				oMdZPC:GetValue("ZPC_FORNEC") == oMdZPC:GetValue("ZPC_FORNEC",nLine) .and. ;
+				oMdZPC:GetValue("ZPC_LOJA") == oMdZPC:GetValue("ZPC_LOJA",nLine) .and. ;
+				nI != nLine
+					oModel:SetErrorMessage("","","","","HELP", '', "Nota Fiscal já cadastrada!")
+					lRet := .F.
+					Exit
+				endif
+			Next nI
+			
+			IF lRet 
+				SF1->(DbSetOrder(2))
+				if SF1->(DbSeek(FWXFilial("SF1") + oMdZPC:GetValue("ZPC_FORNEC") + oMdZPC:GetValue("ZPC_LOJA") + oMdZPC:GetValue("ZPC_DOC")))
+					IF SF1->F1_SERIE != oMdZPC:GetValue("ZPC_SERIE")
+						oModel:SetErrorMessage("","","","","HELP", '', "Nota Fiscal não encontrada na série informada!")
+						lRet := .F.
+					ELSE
+						oMdZPC:SetValue("ZPC_USER", cUserName)
+					ENDIF
+				else
+					oModel:SetErrorMessage("","","","","HELP", 'Verifique Fornecedor e Loja', "Nota Fiscal não encontrada para esse fornecedor!")
+					lRet := .F.
+				endif
+			endif
 		endif
 	endif
 
@@ -799,42 +632,47 @@ User Function ValidaVA10EST()
 	Local oView		    := FWViewActive()
 	Local oMdHide 	    := oModel:GetModel('HIDEMASTER')
 	Local nOpc       	:= oModel:GetOperation()
-	local cCod 			:= oMdHide:GetValue('TMP_CODIGO')
+	local cCod 			:= oMdHide:GetValue('ZPC_CODIGO')
 
 	If nOpc == 3
-		oMdHide:LoadValue('TMP_CODIGO', "")
+		oMdHide:LoadValue('ZPC_CODIGO', "")
 		oView:Refresh()
-		oMdHide:LoadValue('TMP_CODIGO', cCod)
-
-		DbSelectArea('ZPC')
-		ZPC->(DbSetOrder(1)) //ZDM_FILIAL + ZDM_CODIGO + ZDM_CODIGO
-
-		//Se conseguir posicionar, tabela jÃ¡ existe
-		//If ZPC->(DbSeek( xFilial("ZPC") +;
-		//		oModel:GetValue('ZPCMASTER', 'ZPC_COD')))
-        //       // dToS(oModelDad:GetValue('ZPCMASTER', 'ZPC_DATA'))))
-		//	Aviso('Atenção', 'Esse código de tabela já existe!', {'OK'}, 02)
-		//	lRet := .F.
-		//EndIf
-
+		oMdHide:LoadValue('ZPC_CODIGO', cCod)
 	EndIf
 
 	RestArea(aArea)
 	oView:Refresh()
 Return lRet
 
-User Function SPCLASSM(oModel,cChamada)
+User Function PreValidacaoGrid(cGrid)
+	Local lRet 		:= .F. as logical
+	local aGrupos 	:= FWSFUsrGrps(__cUserID) as Array
+	local nI 		:= 0 as Numeric
+	local cPermiss  := "" as character
 
-local ni := 0
-aMethods := ClassMethArr(oModel, .T.)
-cMethods := PadR("METHOD", 30) + "|OWNER" + CRLF
- 
-//Concateno todas as informações
-For nI := 1 To Len(aMethods)
-    cMethods += PadR(AllTrim(aMethods[nI, 01]), 30) + "|" + AllTrim(aMethods[nI, 03]) + CRLF
-Next nI
- 
-//Salvo
-MemoWrite("C:\totvs_relatorios\oModelasda.txt", cMethods) //Salva resultado da ClassMethArr
- 
-Return .t.
+	if cGrid == "ZPCDETAIL"
+		cPermiss := GetMV("MV_EST10CD",,"000007")
+	elseif cGrid == "ZPDDETAIL"
+		cPermiss := GetMV("MV_EST10CD",,"000007")
+	elseif cGrid == "ZPFDETAIL"
+		cPermiss := GetMV("MV_EST10F",,"000023")
+	endif
+
+	if FWIsAdmin(__cUserID) // não é administrador
+		lRet := .T.
+	else
+		For nI := 1 To Len(aGrupos) 
+			If aGrupos[nI] $ cPermiss // tem permissão para VA10EST
+				lRet := .T.
+				Exit
+			EndIf
+		Next nI
+	endif
+
+	IF !lRet
+		oModel:SetErrorMessage("","","","","HELP", '', "Usuário não tem permissão para alterar " + IIF(cGrid == "ZPFDETAIL",;
+																									"a grid de Animais!",;
+																									"as grids de Notas fiscais e Pesagem!"))
+	endif
+
+Return lRet

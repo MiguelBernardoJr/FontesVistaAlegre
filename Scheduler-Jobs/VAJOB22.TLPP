@@ -1,0 +1,139 @@
+#Include "Totvs.ch"
+#INCLUDE "TLPP-CORE.TH"
+#include "TryException.ch"
+
+User Function VAJOB22() AS Logical
+
+    ConOut('VAJOB22(): ' + Time())
+	
+	If Type("oMainWnd") == "U"
+		U_RunFunc("U_JOB22VA()",'01',"01",3)
+	Else
+		ConOut('Else oMainWnd: ' + Time())
+		U_JOB22VA()
+	EndIf
+
+Return .T.
+
+User Function JOB22VA() // U_JOB22VA()
+	Local aArea 	:= GetArea() as array
+	Local cQry 		:= '' as character
+	Local cAlias 	:= '' as character
+	Local cAlias1 	:= '' as character
+	Local aDados 	:= {} as array
+	Local cSequen   := ""
+	Local cBakFil   := cFilAnt
+
+	Private __DATA  as Date
+	Private cFile as character
+
+	cQry := "SELECT * " + CRLF
+	cQry += "	FROM " + RetSqlName("ZVG") + " " + CRLF
+	cQry += "	WHERE D_E_L_E_T_ = '' " + CRLF
+	cQry += "	AND ZVG_STATUS = 'A' " + CRLF
+	cQry += "	AND ZVG_DATA = '"+dToS(dDataBase)+"' " + CRLF
+
+	cAlias := MpSysOpenQuery(cQry)
+
+	While !(cAlias)->(EOF())
+		ConOut('Processing: ZVG_CODIGO == ' + (cAlias)->ZVG_CODIGO )
+		
+		Z04->(DbSetOrder(1))// Z04_FILIAL+Z04_SEQUEN+Z04_LOTE
+		Z02->(DbSetOrder(1))// Z04_FILIAL+Z04_SEQUEN+Z04_LOTE
+		
+		cFilAnt :=  (cAlias)->ZVG_FILIAL
+		__DATA  := sToD((cAlias)->ZVG_DATA)
+
+		cQry := " SELECT MAX(Z02.Z02_SEQUEN) AS SEQ " + CRLF
+		cQry += " FROM " + RetSqlName("Z02") + " Z02 " + CRLF
+		cQry += " WHERE Z02.Z02_FILIAL = '" + fwxFilial("Z02") + "'" + CRLF
+		cQry += "   AND Z02.D_E_L_E_T_ = ' ' " + CRLF
+		
+		cAlias1 := mpSysOpenQuery(cQry)
+
+		cSequen :=  Soma1((cAlias1)->SEQ)
+		
+		(cAlias1)->(dbCloseArea())
+		/* ------------------------------------------------------------------------------------------ */
+		cQry := "select * from "+RetSqlName("ZVJ")+" " + CRLF
+		cQry += " WHERE ZVJ_CODIGO = '"+(cAlias)->ZVG_CODIGO+"' " + CRLF
+		cQry += " AND ZVJ_FILIAL = '"+(cAlias)->ZVG_FILIAL+"' "
+		cQry += " AND D_E_L_E_T_ = '' "
+
+		cAlias1 := mpSysOpenQuery(cQry)
+
+		if !(cAlias1)->(EOF())
+			RecLock("Z02", .T.)
+				Z02->Z02_FILIAL := FWxFilial("Z02")
+				Z02->Z02_SEQUEN := cSequen
+				Z02->Z02_ARQUIV := "VAESTI08 - CODIDO DA TABELA: " + (cAlias)->ZVG_CODIGO
+				Z02->Z02_DTIMP  := __DATA
+				Z02->Z02_DATA   := __DATA
+				Z02->Z02_VERSAO := "000001"
+				Z02->Z02_EQUIP  := ""
+			Z02->(MSUnlock())
+		endif
+
+		while !(cAlias1)->(EOF())
+
+			RecLock("Z04", .T.)
+				Z04->Z04_FILIAL := fwxFilial("Z04")
+				Z04->Z04_SEQUEN := cSequen
+				Z04->Z04_CURRAL := (cAlias1)->ZVJ_CURRAL
+				Z04->Z04_DIETA  := (cAlias1)->ZVJ_PROD
+				Z04->Z04_LOTE   := (cAlias1)->ZVJ_LOTE
+				Z04->Z04_DTIMP  := __DATA
+				Z04->Z04_HRIMP  := Substr(Time(), 1, 5)
+				Z04->Z04_NROCAB := (cAlias1)->ZVJ_SALDO
+				Z04->Z04_TOTREA := (cAlias1)->ZVJ_QTDE
+				Z04->Z04_TOTAPR := (cAlias1)->ZVJ_QTDE
+			Z04->(MSUnlock())
+
+			aAdd(aDados,{;
+						__DATA,;
+						Substr(Time(), 1, 5),;
+						(cAlias1)->ZVJ_CURRAL,;
+						(cAlias1)->ZVJ_LOTE,;
+						(cAlias1)->ZVJ_SALDO,;
+						(cAlias1)->ZVJ_PROD,;
+						STR((cAlias1)->ZVJ_QTDE),;
+						STR((cAlias1)->ZVJ_QTDE),;
+						(cAlias1)->ZVJ_B8LOC,;
+						(cAlias1)->ZVJ_B1LOC;
+						})
+
+			(cAlias1)->(DbSkip())
+		enddo
+
+		(cAlias1)->(dbCloseArea())
+		
+		RecLock('Z02',.f.)
+			Z02->Z02_CONTEU := U_AToS(aDados)
+			Z02->Z02_TPARQ  := '4'
+		Z02->(MsUnLock())
+
+		TryException
+			FWMsgRun(, {|| U_PROCZ02(aDados, cSequen) },;
+							"Processando [VAEST020]" + "[" + AllTrim((cAlias)->ZVG_CODIGO) + "]" ,;
+							"Processando os dados [" + cSequen + "-" + AllTrim((cAlias)->ZVG_CODIGO) + "]" )
+		
+		CatchException Using oException
+			u_ShowException(oException)
+			DisarmTransaction()
+		EndException
+
+		ZVG->(DbGoTo((cAlias)->R_E_C_N_O_))
+			RecLock("ZVG",.F.)
+				ZVG->ZVG_STATUS := "M"
+			ZVG->(MsUnLock())
+
+		(cAlias)->(DbSkip())
+
+	EndDo
+	
+	(cAlias)->(dbCloseArea())
+
+	cFilAnt := cBakFil
+
+	RestArea(aArea)
+Return nil
