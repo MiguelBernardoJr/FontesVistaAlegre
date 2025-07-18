@@ -76,16 +76,16 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  		  , AVG(B8_XPESOCO) [PESO] " + _ENTER_ +;
         "  		  , ISNULL((CASE WHEN Z0O.Z0O_SEXO = 'M' THEN 'MACHO' " + _ENTER_ +;
         "  		                 WHEN Z0O.Z0O_SEXO = 'F' THEN 'FEMEA' " + _ENTER_ +;
-        "  						 WHEN Z0O.Z0O_SEXO = 'C' THEN 'CAPùO' " + _ENTER_ +;
+        "  						 WHEN Z0O.Z0O_SEXO = 'C' THEN 'CAPAO' " + _ENTER_ +;
         "  						 ELSE ' ' END),'') [SEXO] " + _ENTER_ +;
         "  		  , ISNULL((Z0O.Z0O_RACA),' ' ) [RACA] " + _ENTER_ +;
-        "  	      , CASE WHEN Z0O_DINITR = ' ' THEN CONVERT(DATE,min(SB8.B8_XDATACO),103)  " + _ENTER_ +;
+        "  	      , CASE WHEN Z0O_DINITR = ' ' THEN CONVERT(DATE,max(SB8.B8_XDATACO),103)  " + _ENTER_ +;
         "                   WHEN Z0O_DINITR <> ' ' THEN CONVERT(DATE,Z0O_DINITR ,103) " + _ENTER_ +;
-        "  				 ELSE CONVERT(DATE,min(SB8.B8_XDATACO), 103) END [DATA_INICIO]  " + _ENTER_ +;
+        "  				 ELSE CONVERT(DATE,max(SB8.B8_XDATACO), 103) END [DATA_INICIO]  " + _ENTER_ +;
         "  		  , DATEDIFF(DAY,  " + _ENTER_ +;
-        "                   CASE WHEN Z0O_DINITR = ' ' THEN CONVERT(DATE,min(SB8.B8_XDATACO),103)  " + _ENTER_ +;
+        "                   CASE WHEN Z0O_DINITR = ' ' THEN CONVERT(DATE,max(SB8.B8_XDATACO),103)  " + _ENTER_ +;
         "                        WHEN Z0O_DINITR <> ' ' THEN CONVERT(DATE,Z0O_DINITR ,103) " + _ENTER_ +;
-        "  	            	  ELSE CONVERT(DATE,min(SB8.B8_XDATACO), 103)  " + _ENTER_ +;
+        "  	            	  ELSE CONVERT(DATE,max(SB8.B8_XDATACO), 103)  " + _ENTER_ +;
         "  				 END  " + _ENTER_ +;
         "  	    		 ,  " + _ENTER_ +;
         "     	    		 CONVERT(DATE, GETDATE(), 103) " + _ENTER_ +;
@@ -371,15 +371,26 @@ WsMethod GET CadastroDasNotas WSSERVICE WSNotaCocho
 
     If Len(self:aURLParms) > 0 .AND. "GET_" + Upper(self:aURLParms[1]) == ProcName()
 
-        cQry := " select Z0G_FILIAL [FILIAL] " + _ENTER_ +;
-            "      , Z0G_DIETA [DIETA] " + _ENTER_ +;
+        cQry := " WITH DADOS AS ( " + _ENTER_ +;
+                " select Z0G_FILIAL [FILIAL] " + _ENTER_ +;
+                       ", CASE Z0G_DIETA" + _ENTER_ +;
+				            "  WHEN 'FINAL' THEN 'FINAL'" + _ENTER_ +;
+				            "  WHEN 'FINALS' THEN 'FINAL'" + _ENTER_ +;
+				            "  WHEN 'ADAPTACAO03' THEN 'ADAPT3'" + _ENTER_ +;
+				            "  WHEN 'ADAPTACAO03S' THEN 'ADAPT3'" + _ENTER_ +;
+				            "  WHEN 'ADAPTACAO02' THEN 'ADAPT2'" + _ENTER_ +;
+				            "  WHEN 'ADAPTACAO02S' THEN 'ADAPT2'" + _ENTER_ +;
+				            "  WHEN 'ADAPTACAO01' THEN 'ADAPT1'" + _ENTER_ +;
+				            "  WHEN 'ADAPTACAO01S' THEN 'ADAPT1'" + _ENTER_ +;
+				            "  ELSE Z0G_DIETA END  [DIETA] " + _ENTER_ +;
             "      , Z0G_DESCRI [DESCRICAO] " + _ENTER_ +;
             "      , Z0G_CODIGO [CODIGO_NOTA] " + _ENTER_ +;
             "      , Z0G_PERAJU [PERC_AJUSTE] " + _ENTER_ +;
             "      , Z0G_ZERTRT [ZERA_PRIM_TRATO] " + _ENTER_ +;
-            " FROM  "+RetSqlName("Z0G")+" (nolock) Z0G " + _ENTER_ +;
-            " WHERE Z0G_MSBLQL <> 1 " + _ENTER_ +;
-            "   AND Z0G.D_E_L_E_T_ =' ' "
+            " FROM  Z0G010 (nolock) Z0G " + _ENTER_ +;
+            " WHERE Z0G_MSBLQL <> 1 AND Z0G_FILIAL = '0101001' " + _ENTER_ +;
+            "   AND Z0G.D_E_L_E_T_ =' ' " + _ENTER_ +;
+            "   ) SELECT DISTINCT * FROM DADOS "
 
         MPSysOpenQuery( cQry, cAlias )
 
