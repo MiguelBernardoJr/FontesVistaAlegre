@@ -22,34 +22,20 @@
 		{
 			"type": "totvs_language_web_debug",
 			"request": "launch",
-			"name": "V@: Web Debug",
+			"name": "V@: Web Debug DEV",
 			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.170:3030/WEBAPP/",
+			"smartclientUrl": "http://192.168.0.173:5040/WEBAPP/",
 			"isMultiSession": true,
 			"enableTableSync": true
 		},
 		{
-			"type": "totvs_language_debug",
+			"type": "totvs_language_web_debug",
 			"request": "launch",
-			"name": "Depuração do idioma TOTVS",
+			"name": "V@: Web Debug PROD",
 			"program": "${command:AskForProgramName}",
-			"cwb": "${workspaceFolder}",
-			"smartclientBin": "C:\\SMARTCLIENT\\smartclient.exe",
+			"smartclientUrl": "http://192.168.0.242:2023/WEBAPP/",
 			"isMultiSession": true,
-			"enableTableSync": true,
-			"enableMultiThread": true,
-			"extendFeatures": {
-				"charDetails": false
-			},
-			"programArguments": [],
-			"enableProfile": false,
-			"isAccessibilityMode": false,
-			"doNotShowSplash": false,
-			"openglMode": false,
-			"dpiMode": false,
-			"olddpiMode": false,
-			"language": "1",
-			"ignoreFiles": true
+			"enableTableSync": true
 		}
 	],
 	"lastPrograms": [

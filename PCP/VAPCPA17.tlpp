@@ -307,12 +307,14 @@ user function ViewDef() as object
 		oView:SetViewProperty("VwGridZ06G", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
 
 		if Inclui .or. Altera
-			oView:AddUserButton( "Atualizar (F11)" , 'OK', {|| AtualizaTela() } )
+			oView:AddUserButton( "Atualizar (F11)" 	, 'OK', {|| AtualizaTela() } )
 			SetKey(VK_F11, {|| AtualizaTela()})
-			oView:AddUserButton( "Nro Tratos (F8)", 'OK', {|| vap17tra() } )
+			oView:AddUserButton( "Nro Tratos (F8)"	, 'OK', {|| vap17tra() } )
 			SetKey(VK_F8, {|| vap17tra()})
-			oView:AddUserButton( "Dietas (F10) "	 , 'OK', {|| vap17trt() } )
+			oView:AddUserButton( "Dietas (F10) "	, 'OK', {|| vap17trt() } )
 			SetKey(VK_F10, {|| vap17trt()})
+			oView:AddUserButton( "Gerar Arquivos (F7)" , 'OK', {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")} )
+			SetKey(VK_F7, {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")})
 		endif
 	//else
     //	Help(/*Descontinuado*/,/*Descontinuado*/,"SEM LOTE",/**/,"Não existe lote vinculado ao curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível atribuir um trato ao curral selecionado."})
@@ -358,9 +360,9 @@ Static Function ValidGeral(oModel)
 Return .T.
 
 static function Rt1GrdMStr() AS Object
-    local aArea   		:= GetArea() 
+    local aArea   		:= GetArea()
     local oStruct 		:= FWFormModelStruct():New() AS Object
-	local nI 
+	local nI
 
 	SX3->(DbSetOrder(2))
 	

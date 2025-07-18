@@ -2203,7 +2203,7 @@ static function CriaZ05()
                             " and Z0G.Z0G_CODIGO = Z0I.Z0I_NOTMAN " +;
                             " and Z06.Z06_DIETA = Z0G.Z0G_DIETA " +;
                             " and Z0G.D_E_L_E_T_ = ' ' " +;
-                            " where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" +; 
+                        " where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" +; 
                             " and Z06.Z06_DATA   = '" + cDtTrAnt + "'" +;
                             " and Z06.Z06_VERSAO = '" + cVerTrAnt + "'" +;
                             " and Z06.Z06_LOTE   = '" + (cAliLotes)->B8_LOTECTL + "'" +;
@@ -2226,7 +2226,7 @@ static function CriaZ05()
                                 ", Z06.Z06_DATA" +;
                                 ", Z06.Z06_VERSAO" +;
                                 ", Z06.Z06_LOTE" +;
-                                ", Z06.Z06_TRATO " 
+                                ", Z06.Z06_TRATO "
 
                     cAliZ06 := MpSysOpenQuery(cQry)
                     
@@ -2648,7 +2648,7 @@ static function CriaZ05()
                         nQtdTrato := NoRound(((cAliZ0W)->Z05_KGMSDI+(((cAliZ0W)->Z05_KGMSDI*Z0G->Z0G_PERAJU)/100)),TamSX3("Z06_KGMSTR")[2])///TMPZ06->QTD, TamSX3("Z06_KGMSTR")[2])
                     ElseIf GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
                         //Z0I_FILIAL+Z0I_DATA+Z0I_CURRAL+Z0I_LOTE
-                        Z0I->(DbSeek(FWxFilial("Z0I")+DToS(Z0R->Z0R_DATA)+(cAliLotes)->B8_X_CURRA+(cAliLotes)->B8_LOTECTL))
+                        Z0I->(DbSeek(FWxFilial("Z0I")+DToS(Z0R->Z0R_DATA)+(cAliLotes)->Z08_CODIGO+(cAliLotes)->B8_LOTECTL))
                         IF Z0I->Z0I_AJUSTE != 0//!Empty(Z0I->Z0I_AJUSTE)  
                             nQtdTrato := NoRound(((cAliZ0W)->Z05_KGMSDI+(((cAliZ0W)->Z05_KGMSDI*Z0I->Z0I_AJUSTE)/100)),TamSX3("Z06_KGMSTR")[2])///TMPZ06->QTD, TamSX3("Z06_KGMSTR")[2])
                         ELSE
@@ -9027,7 +9027,7 @@ user function vap05arq()
 local i, nLen
 local cFilter   := ""
 local cALias    := ""
-local cQry      := ""
+local cQry      := "" 
 
     EnableKey(.F.)
     if !Empty(aSeekFiltr)
