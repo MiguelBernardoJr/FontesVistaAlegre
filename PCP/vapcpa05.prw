@@ -2195,7 +2195,7 @@ static function CriaZ05()
                             " from " + RetSqlName("Z06") + " Z06" +; 
                         " left join " + RetSqlName("Z0I") + " Z0I ON " +;  
                             "     Z0I.Z0I_FILIAL = Z06.Z06_FILIAL" +; 
-                            " AND Z0I.Z0I_DATA = Z06.Z06_DATA" +; 
+                            " AND Z0I.Z0I_DATA = DATEADD(D,1,Z06.Z06_DATA)" +; 
                             " AND Z0I.Z0I_LOTE = Z06.Z06_LOTE " +; 
                             " AND Z0I.D_E_L_E_T_ =' ' " +;
                         " left join " + RetSqlName("Z0G") + " Z0G ON " +;
@@ -2240,7 +2240,7 @@ static function CriaZ05()
                     ElseIf GetMV("VA_AJUDAN") == "P" // Se Ajuste for em Percentual (Z0G_PERAJU)
                         nQtdTrato := NoRound(((cAlias)->Z05_KGMSDI+(((cAlias)->Z05_KGMSDI*Z0G->Z0G_PERAJU)/100)),TamSX3("Z06_KGMSTR")[2])///(cAliZ06)->QTD, TamSX3("Z06_KGMSTR")[2])
                     ElseIf GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
-                        IF (cAliZ06)->Z0I_AJUSTE != 0
+                        IF (cAliZ06)->Z0I_AJUSTE != 0 //!Empty((cAliZ06)->Z0I_AJUSTE) 
                             nQtdTrato := NoRound(((cAlias)->Z05_KGMSDI+(((cAlias)->Z05_KGMSDI*(cAliZ06)->Z0I_AJUSTE)/100)),TamSX3("Z06_KGMSTR")[2])///(cAliZ06)->QTD, TamSX3("Z06_KGMSTR")[2])
                         ELSE
                             nQtdTrato := NoRound(((cAlias)->Z05_KGMSDI+(((cAlias)->Z05_KGMSDI*Z0G->Z0G_PERAJU)/100)),TamSX3("Z06_KGMSTR")[2])///(cAliZ06)->QTD, TamSX3("Z06_KGMSTR")[2])
@@ -2280,7 +2280,7 @@ static function CriaZ05()
                                     
                                     ElseIf Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
                                         nQtdRes := (cAlias)->Z05_KGMSDI / (nQtdAux-1)
-                                        IF (cAliZ06)->Z0I_AJUSTE != 0
+                                        IF (cAliZ06)->Z0I_AJUSTE != 0//!Empty((cAliZ06)->Z0I_AJUSTE)
                                             nQtdTrato := nQtdRes + ((nQtdRes * (cAliZ06)->Z0I_AJUSTE ) / 100)
                                         ELSE
                                             nQtdTrato := nQtdRes + ((nQtdRes * Z0G->Z0G_PERAJU ) / 100)
@@ -2293,7 +2293,7 @@ static function CriaZ05()
                                         nQtdTrato := ((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD
                                     
                                     ElseIf !Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A"
-                                        IF (cAliZ06)->Z0I_AJUSTE != 0
+                                        IF (cAliZ06)->Z0I_AJUSTE != 0//!Empty((cAliZ06)->Z0I_AJUSTE)
                                             nQtdTrato := ((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * (cAliZ06)->Z0I_AJUSTE ) / 100)) / (cAliZ06)->QTD
                                         ELSE
                                             nQtdTrato := ((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD
@@ -2649,7 +2649,7 @@ static function CriaZ05()
                     ElseIf GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
                         //Z0I_FILIAL+Z0I_DATA+Z0I_CURRAL+Z0I_LOTE
                         Z0I->(DbSeek(FWxFilial("Z0I")+DToS(Z0R->Z0R_DATA)+(cAliLotes)->B8_X_CURRA+(cAliLotes)->B8_LOTECTL))
-                        IF Z0I->Z0I_AJUSTE != 0 
+                        IF Z0I->Z0I_AJUSTE != 0//!Empty(Z0I->Z0I_AJUSTE)  
                             nQtdTrato := NoRound(((cAliZ0W)->Z05_KGMSDI+(((cAliZ0W)->Z05_KGMSDI*Z0I->Z0I_AJUSTE)/100)),TamSX3("Z06_KGMSTR")[2])///TMPZ06->QTD, TamSX3("Z06_KGMSTR")[2])
                         ELSE
                             nQtdTrato := NoRound(((cAliZ0W)->Z05_KGMSDI+(((cAliZ0W)->Z05_KGMSDI*Z0G->Z0G_PERAJU)/100)),TamSX3("Z06_KGMSTR")[2])///TMPZ06->QTD, TamSX3("Z06_KGMSTR")[2])
@@ -2685,7 +2685,7 @@ static function CriaZ05()
                                         nQtdTrato := nQtdRes + ((nQtdRes * Z0G->Z0G_PERAJU ) / 100)
                                     ElseIf Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
                                         nQtdRes := (cAliZ0W)->Z05_KGMSDI / (nQtdAux-1)
-                                        IF Z0I->Z0I_AJUSTE != 0 
+                                        IF !Empty(Z0I->Z0I_AJUSTE) != 0//!Empty(Z0I->Z0I_AJUSTE)
                                             nQtdTrato := nQtdRes + ((nQtdRes * Z0I->Z0I_AJUSTE ) / 100)
                                         ELSE
                                             nQtdTrato := nQtdRes + ((nQtdRes * Z0G->Z0G_PERAJU ) / 100)
@@ -2699,7 +2699,7 @@ static function CriaZ05()
                                         nQtdTrato := ((cAliZ0W)->Z05_KGMSDI +  (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ0W)->QTD
                                     
                                     ElseIf !Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
-                                        IF Z0I->Z0I_AJUSTE != 0 
+                                        IF Z0I->Z0I_AJUSTE != 0//!Empty(Z0I->Z0I_AJUSTE)  
                                             nQtdTrato := ((cAliZ0W)->Z05_KGMSDI +  (((cAliZ0W)->Z05_KGMSDI * Z0I->Z0I_AJUSTE ) / 100)) / (cAliZ0W)->QTD
                                         ELSE
                                             nQtdTrato := ((cAliZ0W)->Z05_KGMSDI +  (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ0W)->QTD
@@ -3027,7 +3027,7 @@ static function CriaZ05()
                         nQtdTrato := NoRound(((cAliZ0W)->Z0M_QUANT+(((cAliZ0W)->Z0M_QUANT*Z0G->Z0G_PERAJU)/100))/(cAliZ0W)->QTD, TamSX3("Z06_KGMSTR")[2])
                     ElseIf GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
                         Z0I->(DbSeek(FWxFilial("Z0I")+DToS(Z0R->Z0R_DATA)+(cAliLotes)->B8_X_CURRA+(cAliLotes)->B8_LOTECTL))
-                        IF Z0I->Z0I_AJUSTE != 0 
+                        IF Z0I->Z0I_AJUSTE != 0//!Empty(Z0I->Z0I_AJUSTE) 
                             nQtdTrato := NoRound(((cAliZ0W)->Z0M_QUANT+(((cAliZ0W)->Z0M_QUANT*Z0I->Z0I_AJUSTE)/100))/(cAliZ0W)->QTD, TamSX3("Z06_KGMSTR")[2])
                         ELSE
                             nQtdTrato := NoRound(((cAliZ0W)->Z0M_QUANT+(((cAliZ0W)->Z0M_QUANT*Z0G->Z0G_PERAJU)/100))/(cAliZ0W)->QTD, TamSX3("Z06_KGMSTR")[2])
@@ -3146,7 +3146,7 @@ static function CriaZ05()
                                 " from " + RetSqlName("Z06") + " Z06" + CRLF +;
                                 " left join " + RetSqlName("Z0I") + " Z0I ON " + CRLF +;
                                 "     Z0I.Z0I_FILIAL = Z06.Z06_FILIAL" + CRLF +;
-                                " AND Z0I.Z0I_DATA = Z06.Z06_DATA" + CRLF +;
+                                " AND Z0I.Z0I_DATA = DATEADD(D,1,Z06.Z06_DATA)" + CRLF +;
                                 " AND Z0I.Z0I_LOTE = Z06.Z06_LOTE " + CRLF +;
                                 " AND Z0I.D_E_L_E_T_ =' ' " + CRLF +;
                                 " left join " + RetSqlName("Z0G") + " Z0G ON " + CRLF +;
@@ -3193,7 +3193,7 @@ static function CriaZ05()
                     ElseIf GetMV("VA_AJUDAN") == "P" // Se Ajuste for em Percentual (Z0G_PERAJU)
                         nQtdTrato := NoRound(((cAliZ5T)->Z05_KGMSDI+(((cAliZ5T)->Z05_KGMSDI*Z0G->Z0G_PERAJU)/100)), TamSX3("Z06_KGMSTR")[2])//(cAliZ06)->QTD, TamSX3("Z06_KGMSTR")[2])
                     ElseIf GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
-                        IF (cAliZ06)->Z0I_AJUSTE != 0 
+                        IF (cAliZ06)->Z0I_AJUSTE != 0//!Empty((cAliZ06)->Z0I_AJUSTE) 
                             nQtdTrato := NoRound(((cAliZ5T)->Z05_KGMSDI+(((cAliZ5T)->Z05_KGMSDI*(cAliZ06)->Z0I_AJUSTE)/100)), TamSX3("Z06_KGMSTR")[2])//(cAliZ06)->QTD, TamSX3("Z06_KGMSTR")[2])
                         ELSE
                             nQtdTrato := NoRound(((cAliZ5T)->Z05_KGMSDI+(((cAliZ5T)->Z05_KGMSDI*Z0G->Z0G_PERAJU)/100)), TamSX3("Z06_KGMSTR")[2])
@@ -3242,7 +3242,7 @@ static function CriaZ05()
                                         // If GetMV("VA_AJUDAN") == "P" // Se Ajuste for em Percentual (Z0G_PERAJU)
                                         nQtdTrato := ((cAliZ5T)->Z05_KGMSDI +  (((cAliZ5T)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD
                                     ElseIf !Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A"
-                                        IF (cAliZ06)->Z0I_AJUSTE != 0
+                                        IF (cAliZ06)->Z0I_AJUSTE != 0//!Empty((cAliZ06)->Z0I_AJUSTE)
                                             nQtdTrato := ((cAliZ5T)->Z05_KGMSDI +  (((cAliZ5T)->Z05_KGMSDI * (cAliZ06)->Z0I_AJUSTE ) / 100)) / (cAliZ06)->QTD
                                         ELSE
                                             nQtdTrato := ((cAliZ5T)->Z05_KGMSDI +  (((cAliZ5T)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD
