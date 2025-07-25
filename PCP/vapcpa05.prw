@@ -2634,7 +2634,7 @@ static function CriaZ05()
                         " order by Z0M.Z0M_TRATO "
                     
                     cAliZ0W  := MpSysOpenQuery(cQry)
-                    // Z0G_FILIAL+Z0G_CODIGO+Z0G_DISPON                                                                                                                                
+                    // Z0G_FILIAL+Z0G_CODIGO+Z0G_DISPON
                     Z0G->(DbSeek(FWxFilial("Z0G")+(cAliZ0W)->Z0M_DIETA+(cAliLotes)->NOTA_MANHA))
 
                     nTotMS := 0

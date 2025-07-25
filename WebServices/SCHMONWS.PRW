@@ -1,11 +1,11 @@
-MB : 30/06/2025
+/* MB : 30/06/2025
 
 ** Verificacao realizada com Toshio:
 
  -> utilizar a versao presente na pasta: SCHEDULER-JOBS
     que é a versao compilada em producao
 
-
+ */
 #INCLUDE "TOTVS.CH"
 #INCLUDE "TryException.ch"
 #INCLUDE "FileIO.ch"
@@ -337,6 +337,7 @@ Static Function IntEmLote()
 
                             Z0I->Z0I_TOTPRE := QRYCUR->TOTAPR
                             Z0I->Z0I_TOTREA := QRYCUR->TOTREA
+                            Z0I->Z0I_ORIGEM := "VAMONWS"
 
                             // Z0I->Z0I_NOTMAN := Space(6)
                             // se diferente de null, entao atualiza campo

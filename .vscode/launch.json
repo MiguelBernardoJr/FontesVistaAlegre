@@ -66,6 +66,9 @@
 				"01"
 			],
 			"label": "u_UPD_IMP1"
+		},
+		{
+			"label": "upddistr"
 		}
 	],
 	"lastProgramExecuted": "SIGAMDI",
