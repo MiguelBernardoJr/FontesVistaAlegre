@@ -666,6 +666,7 @@ Return (Nil)
 User Function btnPrc()
 	Local aArea 		:= FwGetArea()
 	Local cTimeIni 		:= Time()
+	Local cLockByName   := GetMV("MV_BTNPRC",,"BTNPRC")
 	Private oZ02SEQ 	:= Nil
 	Private oZ0YQry 	:= Nil
 	Private oZ0YQry1 	:= Nil
@@ -678,11 +679,11 @@ User Function btnPrc()
 	MontaQuery(nAviso)
 	//memowrite("C:\TOTVS_RELATORIOS\LogTabela_antes.txt", U_zLogAlias(1))
 
-	If LockByName("BTNPRC1", .T., .T.) .and. nAviso == 1
+	If LockByName(cLockByName, .T., .T.) .and. nAviso == 1
 
 		U_fPrcLote()
 
-	ElseIf LockByName("BTNPRC1", .T., .T.) .and. nAviso == 2
+	ElseIf LockByName(cLockByName, .T., .T.) .and. nAviso == 2
 		aParRet := {}
 
 		AAdd(aParRet, Z0X->Z0X_DATA)
@@ -713,7 +714,7 @@ User Function btnPrc()
 
 	//memowrite("C:\TOTVS_RELATORIOS\LogTabela_depois.txt", U_zLogAlias(1))
 
-	UnlockByName("BTNPRC1")
+	UnlockByName(cLockByName)
 
 	If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin, administrador' .And. !nAviso == 3 
 		cMsg := 'Inicio: ' + cTimeINI + _ENTER_
@@ -1961,7 +1962,7 @@ User Function ExpBatTrt( )
 			if(!Empty(aParRet[3]))
 				cQryExp += "   AND ISNULL(Z0S.Z0S_EQUIP, '      ') = '" + aParRet[3] + "'" + _ENTER_
 				lAux := .F.
-			EndIf
+			EndIf 
 			If lAux .and. !(Empty(aParRet[3]) .and. Empty(aParRet[6]))
 				cQryExp += "   AND ISNULL(Z0S.Z0S_EQUIP, '      ')  = '" + aEqpJsn[nCntEqp] + "'" + _ENTER_
 			EndIf

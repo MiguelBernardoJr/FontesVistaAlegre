@@ -271,6 +271,7 @@ If (!(cAlias)->(DBSeek(xFilial(cAlias) + DTOS(aParRet[1]))))
 			Z0I->Z0I_NOTMAN := Space(6)
 			Z0I->Z0I_NOTTAR := Space(6)
 			Z0I->Z0I_NOTNOI := Space(6)
+			Z0I->Z0I_ORIGEM := "N"
 		
 		Z0I->(MsUnlock())
 		

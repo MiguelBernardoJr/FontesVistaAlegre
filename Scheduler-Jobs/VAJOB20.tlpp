@@ -33,6 +33,7 @@ User Function JOB20VA() // U_JOB20VA()
 	Local nI,nJ			:= 0 as Numeric
 	Local nRecno 		:= 0 as Numeric
 	Local aSemaforos 	:= {} as Array
+	Local dDataAtual 	:= dDataBase
 	Local oZ0XQry		:= Nil
 
 	_cQry := "WITH DADOS AS ( " + CRLF
@@ -43,7 +44,7 @@ User Function JOB20VA() // U_JOB20VA()
 	_cQry += "     WHERE (Z0Y_QTDREA > 0 OR Z0Y_PESDIG > 0)   " + CRLF
 	_cQry += "       AND Z0Y_DATPRC = ' '   " + CRLF
 	_cQry += "       AND Z0Y_CONFER = 'T'  " + CRLF
-	_cQry += "       AND Z0Y_DATA = '" +DTOS(dDataBase)+ "'  " + CRLF
+	_cQry += "       AND Z0Y_DATA = '" +DTOS(dDataAtual)+ "'  " + CRLF
 	_cQry += "       AND Z0Y.D_E_L_E_T_ = ' '   " + CRLF
 	_cQry += "    UNION   " + CRLF
 	_cQry += "    SELECT Z0W_CODEI, Z0W_ROTA AS ROTAS, Z0W_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
@@ -53,7 +54,7 @@ User Function JOB20VA() // U_JOB20VA()
 	_cQry += "     WHERE (Z0W_QTDREA > 0 OR Z0W_PESDIG > 0)   " + CRLF
 	_cQry += "       AND Z0W_DATPRC = ' '   " + CRLF
 	_cQry += "       AND Z0W_CONFER = 'T'  " + CRLF
-	_cQry += "       AND Z0W_DATA = '" +DTOS(dDataBase)+ "' " + CRLF
+	_cQry += "       AND Z0W_DATA = '" +DTOS(dDataAtual)+ "' " + CRLF
 	_cQry += "       AND Z0W.D_E_L_E_T_ = ' '   " + CRLF
 	_cQry += "), ENUMERADO AS ( " + CRLF
 	_cQry += "    SELECT  " + CRLF
@@ -86,6 +87,11 @@ User Function JOB20VA() // U_JOB20VA()
 		cDieta := ""
 		Z0X->(DbGoTo(nRecno))
 		
+		if dDataAtual != dDataBase
+			ConOut("Processamento encerrado pois a data do sistema é diferente da data do arquivo!")
+			exit
+		endif
+
 		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) < 2 .and. ;
 			   iif("ADAPTACAO03" $ Alltrim((cAlias)->RECEITA), !("FINAL" $ cDieta), IIF("FINAL" $ Alltrim((cAlias)->RECEITA), !("ADAPTACAO03" $ cDieta), .T.))
 
