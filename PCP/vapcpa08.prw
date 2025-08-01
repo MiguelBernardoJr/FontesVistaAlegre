@@ -746,10 +746,15 @@ if (Pergunte(cPrgExp, .t.))
     AAdd(aParRet, mv_par03)
     AAdd(aParRet, mv_par02)
     AAdd(aParRet, mv_par05)
-    IF mv_par06 == 0
-      mv_par06 := 1
-    EndIf 
-      AAdd(aParRet, mv_par06)
+    
+    //IF Type("mv_par06") == "U"
+    //    mv_par06 := 1
+    //else
+    //  IF mv_par06 == "0"
+    //    mv_par06 := "1"
+    //  EndIf 
+    //EndIf 
+      AAdd(aParRet, mv_par04)
     //FWMsgRun(, {|| U_ExpBatTrt()}, "Processando", "Gerando arquivo...")
     U_ExpBatTrt()
 endif

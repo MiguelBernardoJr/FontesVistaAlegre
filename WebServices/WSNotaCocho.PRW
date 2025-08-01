@@ -257,13 +257,22 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
             EndIf
 
             aAdd( aHistorico, JsonObject():New() )
-            aHistorico[len(aHistorico)]["DATA"]       := sToD( (cAlias)->DATAx )
+
+            if Empty((cAlias)->DATAx)
+                dData  := sToD( "19000101" )
+                cDieta := "ADAPT1"
+            else
+                dData  := sToD( (cAlias)->DATAx )
+                cDieta := AllTrim((cAlias)->DIETA)
+            endif
+
+            aHistorico[len(aHistorico)]["DATA"]       := dData
             aHistorico[len(aHistorico)]["NOTA_MANHA"] := AllTrim( (cAlias)->NOTA_MANHA )
             aHistorico[len(aHistorico)]["NOTA_NOITE"] := AllTrim( (cAlias)->NOTA_NOITE )
             aHistorico[len(aHistorico)]["KG_PREV"]    := (cAlias)->KG_PREV
             aHistorico[len(aHistorico)]["KG_TOTAL"]   := (cAlias)->KG_TOTAL
             aHistorico[len(aHistorico)]["KG_MS"]      := (cAlias)->KG_MS
-            aHistorico[len(aHistorico)]["DIETA"]      := AllTrim((cAlias)->DIETA)
+            aHistorico[len(aHistorico)]["DIETA"]      := cDieta
             aHistorico[len(aHistorico)]["CABECAS"]    := (cAlias)->CABECAS
 
             (cAlias)->( dbSkip() )
