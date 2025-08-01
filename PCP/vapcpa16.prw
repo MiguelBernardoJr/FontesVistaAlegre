@@ -891,7 +891,7 @@ DbUseArea(.t., "TOPCONN", TCGenQry(,,;
             Z0I->Z0I_SEQUEN := Z0ITMP->Z08_SEQUEN
             Z0I->Z0I_CURRAL := Z0ITMP->Z08_CODIGO
             Z0I->Z0I_LOTE   := Z0ITMP->B8_LOTECTL
-            Z0I->Z0I_ORIGEM := "VAPCPA16"
+            Z0I->Z0I_ORIGEM := "N"
         Z0I->(MsUnlock())
         Z0ITMP->(DbSkip())
     end

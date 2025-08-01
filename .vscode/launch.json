@@ -69,8 +69,11 @@
 		},
 		{
 			"label": "upddistr"
+		},
+		{
+			"label": "SIGACOM"
 		}
 	],
-	"lastProgramExecuted": "SIGAMDI",
+	"lastProgramExecuted": "<cancel>",
 	"lastProgramArguments": []
 }

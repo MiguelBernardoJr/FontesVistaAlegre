@@ -337,7 +337,7 @@ Static Function IntEmLote()
 
                             Z0I->Z0I_TOTPRE := QRYCUR->TOTAPR
                             Z0I->Z0I_TOTREA := QRYCUR->TOTREA
-                            Z0I->Z0I_ORIGEM := "VAMONWS"
+                            Z0I->Z0I_ORIGEM := "S"
 
                             // Z0I->Z0I_NOTMAN := Space(6)
                             // se diferente de null, entao atualiza campo
