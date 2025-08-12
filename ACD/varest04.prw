@@ -54,7 +54,6 @@ User Function ImpEtqACD(cNome, cCod, cFornec, cLoja, cEntr, nQtde, nUm, cUMed, c
 
 Return Nil
 
-
 //Etiqueta de Produtos e transferência VAREST01
 /*   _________________________________________
 --  |    DESCRICAO DO PRODUTO                 |
@@ -161,7 +160,7 @@ User Function ImpEtPdAv(aCntImp, cQtd, cPorta)
         MSCBSAY(005, 011, SubStr(aCntImp[1], 35),, "0", "40,30") //Codigo do produto
 
         MSCBSAY(005, 017, 'Localiz.: ' + aCntImp[3] + " Qtd.: " + AllTrim(cQtd) + " " + aCntImp[4],, "0", "40,30") //Localização do produto + Un. Medida
-        MSCBSAYBAR(015,023, AllTrim(aCntImp[2]),, "MB07", 10, .F.,.T.,.F.,,3,1)//CODBAR 
+        MSCBSAYBAR(015,023, AllTrim(aCntImp[2]),, "MB07", 10, .F.,.T.,.F.,,3,1)//CODBAR
 
     if __Debug
         if !existdir("C:\temp")
@@ -303,7 +302,7 @@ Return Nil
 static function PZebra(lAcao)
     local cPorta := "LPT1"
     local cIMp  := "S600"
-    local cFila  := GetMV("TO_IMPTER",,"ZD2301")
+    local cFila  := GetMV("TO_IMPTER",,"ZD230")
     local lSrv   := .F.
 
     Default lAcao := .T.
@@ -319,11 +318,11 @@ static function PZebra(lAcao)
     if __Debug
         if !existdir("C:\temp")
             makedir("C:\temp")
-        endif    
+        endif
         MemoWrite( "C:\temp\zebra.txt", MSCBEND() )
     endif
 
-    MSGINFO("Etiqueta Impressa.")
+    //MSGINFO("Etiqueta Impressa.")
 
 return Nil
 
@@ -343,6 +342,6 @@ U_ImpEtqACD("SEED MIX VHS 10T AUTOM.2D150L ", "1.0100.006.1", "29/06/2020", '10'
 //U_ImpEtqTER("TRANSPORTES PRASNISK","000063","SEED MIX VHS 10T AUTOM.2D150L ", "1.0100.006.1", "29/06/2020", '10', 'PC', "0000000001", "001", "101000061", "LPT2")
 
 
-MSGINFO("Etiqueta Impressa.")
+//MSGINFO("Etiqueta Impressa.")
 
 Return Nil
