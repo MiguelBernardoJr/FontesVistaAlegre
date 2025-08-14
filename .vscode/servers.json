@@ -22,7 +22,7 @@
 		],
 		"username": "admin",
 		"environment": "igor",
-		"token": "djM6MThwcmJ6ZzMxc3ltZDZlcjlsYWtndGFtbGh6aDRzOjE6MTkyLjE2OC4wLjE3Mzo1MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpYZ0g2Z1QxVXNpTG0yRm9UMnJhZVRmeCtSckRtTkpIRzVReFlta3NrWkc0PQ==|djI6MTc1NTAzMDAyNjowOjE6MQ==.qn1/lK+v+fFWwmhMNd3kLcxoa22GselCM75OdwfFxtnRaIhXXtO5d2yYgTlvdFi3Ebu3tEvQ7YF+UyaL/7rBZOFcpKFRhxSv1rVIeTiN5d8u7iEiE8Ty/2+4u8G3UQRRPD9OtAej7YUR8RffRbOFet8CAX3kbKmKe9i2Wp+l9LY+KmikV/qFG9PmNvvbEW2ZsSf+X1WsQmHzGDRHTPeXUvsmrSWaaTDCVank4p6ZdsiOgJM0MIPlZneKbhG7V/8VvsAzAphyGr+EbhjhFPeO0lKtQl+9oIXJOyQgnwTzPRz1v7htlyBIbBQGh8a/b2Opr2vg3Aebwr+tKLJ3aWx7Zg==",
+		"token": "djM6MThwcmJ6ZzMxc3ltZDZlcjlsYWtndGFtbGh6aDRzOjE6MTkyLjE2OC4wLjE3Mzo1MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpvdGlrZzZqdnJiN1VNaHJ4enVRZW1LZ2tXRFhKVWppeWJUcm5acnVPVmlBPQ==|djI6MTc1NTE3NzQ2NzowOjE6MQ==.IDigWctOzLRyVzzRrdIcgybViusptLxa+Zp8swN9MEJ7Ot5otcZufJi5Ehy4fjODEPB2RYQrrjvcs+IDkpMketPFklKkIh2OffuNnI1xMdyEGecHZCK853ZA3d1FvNRlhZDHb3EJaI6WkpDzApHzO3vqX/sS0ha2fV0fPcSB5Pziv4ZB6X5hC8Wn/sFZ9J0eQGGlmg+MgFME9yNPo1p2+zSim+zufKZUdkhvUTL9Jz2bonWyGajug7iEAcZl5gVohgC1QJm2P8jqcUwO18xsh35wWPLMM2QnnYpWVbGbMooH+cCaPQSVxI7VBBWVG7f6jno678RQUe5E4/xJ27E7JA==",
 		"informations": {
 			"permissions": [],
 			"errorMessage": "",
@@ -203,7 +203,7 @@
 			],
 			"username": "admin",
 			"environment": "igor",
-			"token": "djM6YWtobjk1eWgyYXNtZDZlcDZoODdtOHB4aHJqenJzOjE6MTkyLjE2OC4wLjI0MjoyMDIzOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjoxaWFHRnd0UXpoTzl2c3p5ekJJZDZia2NTaW14Wk5BbHRPVlBsNndEeDQ0PQ==|djI6MTc1NTAyMzYzNDowOjE6MQ==.XSjWzA/lFBBPo7k9MGjFQ1pREFbHvPTz2FX1mOW7H1nKWUrxTwePrYYWlqak0qm1Q0pnIupRA6d5li2cJPykgMt521BDaJn/428qv8a1D1w472Q88u1r76gTjPdcufNPCKSMxccVyX0AWA/Xgf/yn5kZrkV9zJXjKG6gB4npU75R1ydRv4c5u0HJn/c8Q3tFXnv3IC3tH+dONncjMp9i7pBPUB7bdamlDc5cPaE4yvRHkDbGQsDjBbQGEzdRmYeylbmwstubjOhl7J/bx9fm2RJ8y0XAfyy1llPKhL5UKgzLq8FbOCF89AJJrPmqLq9OyqIn2rWYP0AIZ/ibev3+9w==",
+			"token": "djM6YWtobjk1eWgyYXNtZDZlcDZoODdtOHB4aHJqenJzOjE6MTkyLjE2OC4wLjI0MjoyMDIzOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpqYnhrS1ZwM2d1OGxiOXUzMmZwdjlySDFyamtHK09xL1JQai9vY0w4azBnPQ==|djI6MTc1NTEwODAyNDowOjE6MQ==.V6gb/B/hqGk3Cc3KskG1a4/74eL7UUD3oBP4sBx3fKm0QIcTwd/uH5NIS/paLtCZ1o7YxyrrQXRE8+OZHpz8FJc5wuTn0LqWjopWRCJNq7lHDX098904C/d7PnNWJQ4ED7sqNrW+3v2EXT6N6MOBw/XjITodJMAujQReQY6fePWsIjx2y2uUEg5evqDG0EAt8U65pOAE2eXJuzuxssxytwbVmTRRIinGzemXj+kPSwk5nsEryMSt96Z+spnYTlIHSIIKKdUEvWjBAtuhq3PdJFxQ9lqFn+7pE0TpyV+j/ICsFeYbbUHElOVjRRkOi74OcK8bOTHKsXK7/i4Af2be2A==",
 			"informations": {
 				"permissions": [],
 				"errorMessage": "",
@@ -227,7 +227,31 @@
 			],
 			"username": "admin",
 			"environment": "igor",
-			"token": "djM6MThwcmJ6ZzMxc3ltZDZlcjlsYWtndGFtbGh6aDRzOjE6MTkyLjE2OC4wLjE3Mzo1MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpYZ0g2Z1QxVXNpTG0yRm9UMnJhZVRmeCtSckRtTkpIRzVReFlta3NrWkc0PQ==|djI6MTc1NTAzMDAyNjowOjE6MQ==.qn1/lK+v+fFWwmhMNd3kLcxoa22GselCM75OdwfFxtnRaIhXXtO5d2yYgTlvdFi3Ebu3tEvQ7YF+UyaL/7rBZOFcpKFRhxSv1rVIeTiN5d8u7iEiE8Ty/2+4u8G3UQRRPD9OtAej7YUR8RffRbOFet8CAX3kbKmKe9i2Wp+l9LY+KmikV/qFG9PmNvvbEW2ZsSf+X1WsQmHzGDRHTPeXUvsmrSWaaTDCVank4p6ZdsiOgJM0MIPlZneKbhG7V/8VvsAzAphyGr+EbhjhFPeO0lKtQl+9oIXJOyQgnwTzPRz1v7htlyBIbBQGh8a/b2Opr2vg3Aebwr+tKLJ3aWx7Zg==",
+			"token": "djM6MThwcmJ6ZzMxc3ltZDZlcjlsYWtndGFtbGh6aDRzOjE6MTkyLjE2OC4wLjE3Mzo1MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpvdGlrZzZqdnJiN1VNaHJ4enVRZW1LZ2tXRFhKVWppeWJUcm5acnVPVmlBPQ==|djI6MTc1NTE3NzQ2NzowOjE6MQ==.IDigWctOzLRyVzzRrdIcgybViusptLxa+Zp8swN9MEJ7Ot5otcZufJi5Ehy4fjODEPB2RYQrrjvcs+IDkpMketPFklKkIh2OffuNnI1xMdyEGecHZCK853ZA3d1FvNRlhZDHb3EJaI6WkpDzApHzO3vqX/sS0ha2fV0fPcSB5Pziv4ZB6X5hC8Wn/sFZ9J0eQGGlmg+MgFME9yNPo1p2+zSim+zufKZUdkhvUTL9Jz2bonWyGajug7iEAcZl5gVohgC1QJm2P8jqcUwO18xsh35wWPLMM2QnnYpWVbGbMooH+cCaPQSVxI7VBBWVG7f6jno678RQUe5E4/xJ27E7JA==",
+			"informations": {
+				"permissions": [],
+				"errorMessage": "",
+				"environmentDetectedType": "totvs_server_protheus",
+				"serverDetectedType": "totvs_server_protheus"
+			}
+		},
+		{
+			"id": "3ae307td04umea9cqna6vz4bzngnql",
+			"type": "totvs_server_protheus",
+			"name": "V@: Slave 01 Dev",
+			"port": 4040,
+			"address": "192.168.0.173",
+			"buildVersion": "7.00.240223P",
+			"secure": false,
+			"includes": [
+				"E:\\.Protheus\\includes"
+			],
+			"environments": [
+				"vistaalegre"
+			],
+			"username": "admin",
+			"environment": "vistaalegre",
+			"token": "djM6M2FlMzA3dGQwNHVtZWE5Y3FuYTZ2ejRiem5nbnFsOjE6MTkyLjE2OC4wLjE3Mzo0MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6dmlzdGFhbGVncmU6YWRtaW46bCsxMWtHZm5Bc1F6aVBSRkhIU1hhL2M0RCtXOXByS1ZLR09wQmg5a1FQUT0=|djI6MTc1NTEwNzM3MzowOjE6MQ==.C0CKsAH0tBpoWN+F6aQzWzUQTPFsyj0D5UZGSYeCRZx6Acd/bVuYlRUwQwreFs0KMbP7NFqxK1xlFBeOifvXPgS+be2PlOBSWJY0S5WvrkXJahnzPkDhFV080E02kkjaFDBO3ZpNElROsuVlCTTf6nqm8mZMLlpDf5fc8wVdPtfLxCpFpu7K/oer79PD992rhnW7OCMDIFJIvpDThkrh1AQ6zNw5W3j0L+WWVE9cNDQN7TuCSGBocglItmNcacjILUeHIXSaH6/DNHNOrp5aN+HoDQtuWeImvA+LrkJ8FGlohxtAZ/Cb5MWFDozNU7IaF7sQUsPYx2ZWYANgebF+aA==",
 			"informations": {
 				"permissions": [],
 				"errorMessage": "",
@@ -822,14 +846,21 @@
 			"18prbzg31symd6er9lakgtamlhzh4s:igor",
 			{
 				"id": "18prbzg31symd6er9lakgtamlhzh4s",
-				"token": "djM6MThwcmJ6ZzMxc3ltZDZlcjlsYWtndGFtbGh6aDRzOjE6MTkyLjE2OC4wLjE3Mzo1MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpYZ0g2Z1QxVXNpTG0yRm9UMnJhZVRmeCtSckRtTkpIRzVReFlta3NrWkc0PQ==|djI6MTc1NTAzMDAyNjowOjE6MQ==.qn1/lK+v+fFWwmhMNd3kLcxoa22GselCM75OdwfFxtnRaIhXXtO5d2yYgTlvdFi3Ebu3tEvQ7YF+UyaL/7rBZOFcpKFRhxSv1rVIeTiN5d8u7iEiE8Ty/2+4u8G3UQRRPD9OtAej7YUR8RffRbOFet8CAX3kbKmKe9i2Wp+l9LY+KmikV/qFG9PmNvvbEW2ZsSf+X1WsQmHzGDRHTPeXUvsmrSWaaTDCVank4p6ZdsiOgJM0MIPlZneKbhG7V/8VvsAzAphyGr+EbhjhFPeO0lKtQl+9oIXJOyQgnwTzPRz1v7htlyBIbBQGh8a/b2Opr2vg3Aebwr+tKLJ3aWx7Zg=="
+				"token": "djM6MThwcmJ6ZzMxc3ltZDZlcjlsYWtndGFtbGh6aDRzOjE6MTkyLjE2OC4wLjE3Mzo1MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpvdGlrZzZqdnJiN1VNaHJ4enVRZW1LZ2tXRFhKVWppeWJUcm5acnVPVmlBPQ==|djI6MTc1NTE3NzQ2NzowOjE6MQ==.IDigWctOzLRyVzzRrdIcgybViusptLxa+Zp8swN9MEJ7Ot5otcZufJi5Ehy4fjODEPB2RYQrrjvcs+IDkpMketPFklKkIh2OffuNnI1xMdyEGecHZCK853ZA3d1FvNRlhZDHb3EJaI6WkpDzApHzO3vqX/sS0ha2fV0fPcSB5Pziv4ZB6X5hC8Wn/sFZ9J0eQGGlmg+MgFME9yNPo1p2+zSim+zufKZUdkhvUTL9Jz2bonWyGajug7iEAcZl5gVohgC1QJm2P8jqcUwO18xsh35wWPLMM2QnnYpWVbGbMooH+cCaPQSVxI7VBBWVG7f6jno678RQUe5E4/xJ27E7JA=="
 			}
 		],
 		[
 			"akhn95yh2asmd6ep6h87m8pxhrjzrs:igor",
 			{
 				"id": "akhn95yh2asmd6ep6h87m8pxhrjzrs",
-				"token": "djM6YWtobjk1eWgyYXNtZDZlcDZoODdtOHB4aHJqenJzOjE6MTkyLjE2OC4wLjI0MjoyMDIzOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjoxaWFHRnd0UXpoTzl2c3p5ekJJZDZia2NTaW14Wk5BbHRPVlBsNndEeDQ0PQ==|djI6MTc1NTAyMzYzNDowOjE6MQ==.XSjWzA/lFBBPo7k9MGjFQ1pREFbHvPTz2FX1mOW7H1nKWUrxTwePrYYWlqak0qm1Q0pnIupRA6d5li2cJPykgMt521BDaJn/428qv8a1D1w472Q88u1r76gTjPdcufNPCKSMxccVyX0AWA/Xgf/yn5kZrkV9zJXjKG6gB4npU75R1ydRv4c5u0HJn/c8Q3tFXnv3IC3tH+dONncjMp9i7pBPUB7bdamlDc5cPaE4yvRHkDbGQsDjBbQGEzdRmYeylbmwstubjOhl7J/bx9fm2RJ8y0XAfyy1llPKhL5UKgzLq8FbOCF89AJJrPmqLq9OyqIn2rWYP0AIZ/ibev3+9w=="
+				"token": "djM6YWtobjk1eWgyYXNtZDZlcDZoODdtOHB4aHJqenJzOjE6MTkyLjE2OC4wLjI0MjoyMDIzOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjpqYnhrS1ZwM2d1OGxiOXUzMmZwdjlySDFyamtHK09xL1JQai9vY0w4azBnPQ==|djI6MTc1NTEwODAyNDowOjE6MQ==.V6gb/B/hqGk3Cc3KskG1a4/74eL7UUD3oBP4sBx3fKm0QIcTwd/uH5NIS/paLtCZ1o7YxyrrQXRE8+OZHpz8FJc5wuTn0LqWjopWRCJNq7lHDX098904C/d7PnNWJQ4ED7sqNrW+3v2EXT6N6MOBw/XjITodJMAujQReQY6fePWsIjx2y2uUEg5evqDG0EAt8U65pOAE2eXJuzuxssxytwbVmTRRIinGzemXj+kPSwk5nsEryMSt96Z+spnYTlIHSIIKKdUEvWjBAtuhq3PdJFxQ9lqFn+7pE0TpyV+j/ICsFeYbbUHElOVjRRkOi74OcK8bOTHKsXK7/i4Af2be2A=="
+			}
+		],
+		[
+			"3ae307td04umea9cqna6vz4bzngnql:vistaalegre",
+			{
+				"id": "3ae307td04umea9cqna6vz4bzngnql",
+				"token": "djM6M2FlMzA3dGQwNHVtZWE5Y3FuYTZ2ejRiem5nbnFsOjE6MTkyLjE2OC4wLjE3Mzo0MDQwOjA6Ny4wMC4yNDAyMjNQOjM=:djE6dmlzdGFhbGVncmU6YWRtaW46bCsxMWtHZm5Bc1F6aVBSRkhIU1hhL2M0RCtXOXByS1ZLR09wQmg5a1FQUT0=|djI6MTc1NTEwNzM3MzowOjE6MQ==.C0CKsAH0tBpoWN+F6aQzWzUQTPFsyj0D5UZGSYeCRZx6Acd/bVuYlRUwQwreFs0KMbP7NFqxK1xlFBeOifvXPgS+be2PlOBSWJY0S5WvrkXJahnzPkDhFV080E02kkjaFDBO3ZpNElROsuVlCTTf6nqm8mZMLlpDf5fc8wVdPtfLxCpFpu7K/oer79PD992rhnW7OCMDIFJIvpDThkrh1AQ6zNw5W3j0L+WWVE9cNDQN7TuCSGBocglItmNcacjILUeHIXSaH6/DNHNOrp5aN+HoDQtuWeImvA+LrkJ8FGlohxtAZ/Cb5MWFDozNU7IaF7sQUsPYx2ZWYANgebF+aA=="
 			}
 		]
 	],
