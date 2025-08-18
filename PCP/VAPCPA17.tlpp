@@ -7,7 +7,7 @@
 namespace custom.VAPCPA17
 
 static aCpoMdRot  := { "Z0T_ROTA"	,"Z06_TRATO" ,"Z06_KGMNT"}
-static aCpoGridZ06G := { "Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT"/* ,"Z05_CMSPN" */ ,"Z0I_NOTTAR","Z0I_NOTMAN","Z05_TOTMSC","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z0T_ROTA","XX5_PVATU"}
+static aCpoGridZ06G := { "Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT","Z0I_NOTTAR","Z0I_NOTMAN","Z05_PROGANT","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z05_TOTMSC","Z0T_ROTA","XX5_PVATU"}
 static aCpoMdZ06D := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE","Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
 static aCpoMdZ05G := { "Z05_DATA"	,"Z05_DIETA" ,"Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
 static aCpoMdRt1  := { "Z0S_EQUIP"  ,"ZV0_DESC"  ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
@@ -793,6 +793,22 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
                  .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                  .T.)                           // [14]  L   Indica se o campo é virtual
+        Elseif aCampos[nI]$"Z05_PROGANT" 
+            oStruct:AddField(;
+                 "Tot MS D-1",;               	// [01]  C   Titulo do campo
+                 "Tot MS D-1",;  				// [02]  C   ToolTip do campo
+                 aCampos[nI],;                  // [03]  C   Id do Field
+                 "N",;                          // [04]  C   Tipo do campo
+                 TamSx3("Z05_TOTMSC")[1],;		// [05]  N   Tamanho do campo
+                 TamSx3("Z05_TOTMSC")[2],;                           // [06]  N   Decimal do campo
+                 nil,;                          // [07]  B   Code-block de validação do campo
+                 nil,;                          // [08]  B   Code-block de validação When do campo
+                 nil,;                          // [09]  A   Lista de valores permitido do campo
+                 .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
+                 nil,;                          // [11]  B   Code-block de inicializacao do campo
+                 .F.,;                          // [12]  L   Indica se trata-se de um campo chave
+                 .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
+                 .T.)            
         elseif aCampos[nI]$"Z06_RECNO" .or. aCampos[nI]$"Z05_RECNO"
             oStruct:AddField(;
                  "Registro    ",;               // [01]  C   Titulo do campo
@@ -866,7 +882,7 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 	
 	if nOpc == 1
 		aCampos := aClone(aCpoGridZ06G)
-		aOrdem := {{"Z05_CURRAL","01"},{"Z06_LOTE","02"}, {"Z05_CABECA","03"}, {"Z05_DIASDI","04"}, {"Z05_PESMAT","05"}/* , {"Z05_CMSPN","06"} */, {"Z0I_NOTTAR","06"}, {"Z0I_NOTMAN","07"},  {"Z05_TOTMSC","08"}, {"XX5_KGMSDI","09"}, {"Z06_DIETA","11"},{"Z05_NROTRA","12"}, {"Z05_TOTMNC","13"}, {"XX5_PVATU","10"}}
+		aOrdem := {{"Z05_CURRAL","01"},{"Z06_LOTE","02"}, {"Z05_CABECA","03"}, {"Z05_DIASDI","04"}, {"Z05_PESMAT","05"}, {"Z0I_NOTTAR","06"}, {"Z0I_NOTMAN","07"},  {"Z05_PROGANT","08"}, {"XX5_KGMSDI","09"}, {"Z06_DIETA","11"},{"Z05_NROTRA","12"}, {"Z05_TOTMNC","13"}, {"Z05_TOTMSC","14"}, {"XX5_PVATU","10"}}
 	else
 		aCampos := aClone(aCpoMdZ06D)
 		aOrdem := {{"Z06_TRATO",1},{"Z06_CURRAL",2}, {"Z06_LOTE",3}, {"Z06_DIETA",4}, {"Z06_KGMSTR",5}, {"Z06_KGMNTR",6}, {"Z06_MEGCAL",7}, {"Z06_KGMNT",8}}
@@ -906,6 +922,27 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				cValToChar(aOrdem[nI,2]),; 		// [02]  C   Ordem
 				cTitTrt,;                		// [03]  C   Titulo do campo
 				"Programação anterior",;	    // [04]  C   Descricao do campo
+				{"Help"},;                      // [05]  A   Array com Help
+				"N",;                           // [06]  C   Tipo do campo
+				"",;                            // [07]  C   Picture
+				nil,;                           // [08]  B   Bloco de PictTre Var
+				nil,;                           // [09]  C   Consulta F3
+				.T.,;                           // [10]  L   Indica se o campo é alteravel
+				nil,;                           // [11]  C   Pasta do campo
+				nil,;                           // [12]  C   Agrupamento do campo
+				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
+				nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
+				nil,;                           // [15]  C   Inicializador de Browse
+				nil,;                           // [16]  L   Indica se o campo é virtual
+				nil,;                           // [17]  C   Picture Variável
+				nil;                            // [18]  L   Indica pulo de linha após o campo
+			)
+		elseif aOrdem[nI,1]$"Z05_PROGANT"
+			oStruct:AddField(;
+				aOrdem[nI,1],;                  // [01]  C   Nome do Campo
+				cValToChar(aOrdem[nI,2]),; 		// [02]  C   Ordem
+				"KG MS D-1",;                	// [03]  C   Titulo do campo
+				"KG MS D-1",;	    			// [04]  C   Descricao do campo
 				{"Help"},;                      // [05]  A   Array com Help
 				"N",;                           // [06]  C   Tipo do campo
 				"",;                            // [07]  C   Picture
@@ -1029,12 +1066,13 @@ static function LoadZ06G(oFormGrid, lCopia) as Array
 							;//, (cAlias)->Z05_CMSPN;  // Z05_CMSPN
 							, (cAlias)->Z0I_NOTTAR;  // Z0I_NOTTAR
 							, (cAlias)->Z0I_NOTMAN;  // Z0I_NOTMAN
-							, (cAlias)->Z05_TOTMSC;  // Z05_TOTMSC
+							, (cAlias)->Z05_PROGANT;  // Z05_PROGANT
 							, (cAlias)->Z05_KGMSDI;   // Z06_KGMNT
 							, AllTrim((cAlias)->Z05_DIETA);   // Z06_DIETA
 							, (cAlias)->Z05_NROTRA;   // Z06_DIETA
 							, (cAlias)->Z05_TOTMNC;   // Z06_KGMNT
 							, (cAlias)->Z05_RECNO;   // Z05_RECNO
+							, (cAlias)->Z05_TOTMSC;  // Z05_TOTMSC
 							, Alltrim((cAlias)->Z0T_ROTA);
 							, Round(((cAlias)->Z05_TOTMSC / (cAlias)->Z05_PESMAT) * 100,2)}
 		(cAlias)->(DbSkip())
@@ -1316,7 +1354,7 @@ User Function PreparaQuerys()
 	cQry += " , Z0T.Z0T_ROTA	" + CRLF
 	cQry += " , Z05.Z05_NROTRA " + CRLF
 	cQry += " , Z05_CMSPN " + CRLF
-	cQry += " --, ISNULL((SELECT SUM(Z05D1.Z05_KGMSDI) FROM Z05010 Z05D1 WHERE Z05D1.Z05_FILIAL = Z05.Z05_FILIAL AND Z05D1.Z05_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z05D1.Z05_LOTE = Z05.Z05_LOTE AND Z05D1.D_E_L_E_T_ ='  ' ),0) Z05_PROGANT " + CRLF
+	cQry += " , ISNULL((SELECT SUM(Z05D1.Z05_KGMSDI) FROM Z05010 Z05D1 WHERE Z05D1.Z05_FILIAL = Z05.Z05_FILIAL AND Z05D1.Z05_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z05D1.Z05_LOTE = Z05.Z05_LOTE AND Z05D1.D_E_L_E_T_ ='  ' ),0) Z05_PROGANT " + CRLF
 	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTMAN FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = '"+dToS(Z0R->Z0R_DATA)+"' AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTMAN " + CRLF
 	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = '"+dToS(Z0R->Z0R_DATA)+"' AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTTAR " + CRLF
 	cQry += " , Z05.R_E_C_N_O_ Z05_RECNO" + CRLF
@@ -2098,7 +2136,7 @@ Static Function vap17tra()
 		u_vap05rec()
 		AtualizaTela()
 	endif
-
+	AtualizaTela()
 	FWRestRows(aSaveLines)
 return nil
 /* 
