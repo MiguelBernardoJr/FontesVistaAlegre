@@ -6,30 +6,7 @@
 	"permissions": {
 		"authorizationtoken": ""
 	},
-	"connectedServer": {
-		"id": "akhn95yh2asmd6ep6h87m8pxhrjzrs",
-		"type": "totvs_server_protheus",
-		"name": "V@: Igor Prod",
-		"port": 2023,
-		"address": "192.168.0.242",
-		"buildVersion": "7.00.240223P",
-		"secure": false,
-		"includes": [
-			"E:\\.Protheus\\includes"
-		],
-		"environments": [
-			"igor"
-		],
-		"username": "admin",
-		"environment": "igor",
-		"token": "djM6YWtobjk1eWgyYXNtZDZlcDZoODdtOHB4aHJqenJzOjE6MTkyLjE2OC4wLjI0MjoyMDIzOjA6Ny4wMC4yNDAyMjNQOjM=:djE6aWdvcjphZG1pbjp6L0k2MUhxSkQzNXg3R3ZlUWYwWVR4aThzRHJMVWlpNmlRMlZBeGU4V1VnPQ==|djI6MTc1Mzk5NTcxODowOjE6MQ==.QLimlSvb4jv3OPha92+Gvvp+6gTRAD/v5z7HOQmzo+yFW4msSbIihbbaFHrIipalLOasgdy6BamAJwltaF2aKBPHtze/noB42F16qeR1UuuoXQGBnHkYSYfxDIduBNkSMVPhy3VhArSfXAanWZpiV1mAYhMsc9OWn09bHVxeOAzx24g8OUJt+lMUa56mmsoWWsqqBKE1dsySNm9T/nMmAengnotm4vd5Xd2i8KW49BhjuASaPZNT/zrVMKDrzpJZQfFCbxewEDov6m6miT5j8N060wTIThpTPDBHGqoC/YTbjjsYjT1LyBQ6IJI2LC/p0wB9B9a7B5GMdLc8eGe5UQ==",
-		"informations": {
-			"permissions": [],
-			"errorMessage": "",
-			"environmentDetectedType": "totvs_server_protheus",
-			"serverDetectedType": "totvs_server_protheus"
-		}
-	},
+	"connectedServer": {},
 	"configurations": [
 		{
 			"id": "kt1winda8z8m15a730u1kk8h36se7t",
@@ -68,30 +45,6 @@
 			}
 		},
 		{
-			"id": "ph3ipyaq8zmm7t2kmr4hrrsttxiqt5",
-			"type": "totvs_server_protheus",
-			"name": "BFC: Dev",
-			"port": 2060,
-			"address": "bfctecnologia146633.protheus.cloudtotvs.com.br",
-			"buildVersion": "7.00.210324P",
-			"secure": false,
-			"includes": [
-				"E:\\.Protheus\\includes"
-			],
-			"environments": [
-				"CQ85XA_DEV"
-			],
-			"username": "admin",
-			"environment": "CQ85XA_DEV",
-			"token": "djM6cGgzaXB5YXE4em1tN3Qya21yNGhycnN0dHhpcXQ1OjE6YmZjdGVjbm9sb2dpYTE0NjYzMy5wcm90aGV1cy5jbG91ZHRvdHZzLmNvbS5icjoyMDYwOjA6Ny4wMC4yMTAzMjRQOjM=:djE6Q1E4NVhBX0RFVjphZG1pbjpiYW4yYjdMWURRQWVpWUh1cFdzcXAyb2RmMlBkYU9kdFNHeWI5L3hqRFA4PQ==|djI6MTc0ODM1NjI4NTowOjE6MQ==.e7eVeF3sSXbf3tkAlqWDNrlmiT9KXRX9LxYPbS0yiZk82YfEDZHOqZhoL/Ny2syHlJs5qFbrl4Q0ALQI+q/sgnFlvjZHFEttLRPry16NF6bEGJqqWKzfXCtoImBvImLMUyQeaKOVy8eHpvZ6HNCy5WLmRr63D5Dh74nxQ1rueuVXMZZFJt8f0lvU28sncgbplpPrEWT+r4i3qAHhBxnGWhjhQMPPJ9wFVuZlxfCT78trvgt5FmsYkgL7a8p9kmjuz2Wkp4hObKsX3CPwPwoH+YO6kTixDed5+UuTRwDgskwqdu0ZMJZ27LDU3R9kg+fC91Pluns1c6LwgIAktDHLtA==",
-			"informations": {
-				"permissions": [],
-				"errorMessage": "Client is not running",
-				"environmentDetectedType": "totvs_server_protheus",
-				"serverDetectedType": "totvs_server_protheus"
-			}
-		},
-		{
 			"id": "m3c4wx3vh6m83q8k0ryjexon0e1pc",
 			"type": "totvs_server_protheus",
 			"name": "LV: DEV 2410",
@@ -108,30 +61,6 @@
 			"username": "atoshio",
 			"environment": "CIM14R_DEV_TRATO",
 			"token": "djM6bTNjNHd4M3ZoNm04M3E4azByeWpleG9uMGUxcGM6MTpsaXZpb2pvc2UxMjU2NTIucHJvdGhldXMuY2xvdWR0b3R2cy5jb20uYnI6NjMwMDowOjcuMDAuMjQwMjIzUDoz:djE6Q0lNMTRSX0RFVl9UUkFUTzphdG9zaGlvOkxZTVFad3grbDk3Snd2a3BBSTd5TTdIR0gvdTNUajIvd3VFd3lQRWxNNUE9|djI6MTc1MTI4MzI4MDowOjE6MQ==.AcwL4VYHsDLzN3ssjoZJZarm0w/cqgHo3kLIgoOTKqvxKoGzXQYXKfBnDrrdRWIxXHgWGEOQfz3Chx6r3+e3oIAfqmKxH+hHTrgv7lzAF1NRxrnD7UG6zRqcx3tfxmnVDK65UyfTc0D5daFJogv8Fwbngxh+Qi9Zb6s9QX8U7Yn2xxL6frRJSxmqM/6fUVbxURKeZ8yGfItATh9pgL/GnU7z/0l48NjnXEcLafIjKGO4y7v98G5Iyozu2ZwUMXO6og4epbfv5ukd2ynReSD/qSIVewHXvpkA3jRTu3mp9YmI7U0mV5TmavK2vUYzXsLxCmNkOFhfUBPWdpIvNTVRMQ==",
-			"informations": {
-				"permissions": [],
-				"errorMessage": "",
-				"environmentDetectedType": "totvs_server_protheus",
-				"serverDetectedType": "totvs_server_protheus"
-			}
-		},
-		{
-			"id": "rzzuqd4575qm8wzncnbmyyn4jc3js",
-			"type": "totvs_server_protheus",
-			"name": "LG: Matheus",
-			"port": 6000,
-			"address": "sanchezcano187915.protheus.cloudtotvs.com.br",
-			"buildVersion": "7.00.210324P",
-			"secure": true,
-			"includes": [
-				"E:\\.Protheus\\includes"
-			],
-			"environments": [
-				"MATHEUS"
-			],
-			"username": "matheus.lima",
-			"environment": "MATHEUS",
-			"token": "djM6cnp6dXFkNDU3NXFtOHd6bmNuYm15eW40amMzanM6MTpzYW5jaGV6Y2FubzE4NzkxNS5wcm90aGV1cy5jbG91ZHRvdHZzLmNvbS5icjo2MDAwOjE6Ny4wMC4yMTAzMjRQOjM=:djE6TUFUSEVVUzptYXRoZXVzLmxpbWE6bFpWdy9yRFZqZExFL3FLME96UG9LRWJsNlNzdzJ0WHByckVKWGN6Ukw4Yz0=|djI6MTc0NDIyNDk5MTowOjE6MQ==.DD2ovehyAP6R1g3yGuxld8RsYx/CKPpjtpD/qXKQCYSwi+rc/kXuGSyKfto9+Ds1VUe1nqFob1htHEN5n8gmbTrSBa0q08/lwl7mTrXtyfPnkWfUVXBB9Rt6cT8NXxfSdGh4OsXDtOJcc5TWTUuwbJbDWZVndzf4T1Uxr6P2Ng6RjMdJa3T049fm6v70DgqFKD4n1oXQ6I7RNzv+qjlFsb0M6na9c87LEMEKr80F4Sy0m1rHv7lcPegIxzYbb2ZZep3pyY74aG1gNjC10jzAhgkRJfxmojsji5QpHny1WjZGCytXuVZ49INRJTSUEJLe7bovnBJQ3Odrdw2+Fu6c/A==",
 			"informations": {
 				"permissions": [],
 				"errorMessage": "",
@@ -234,6 +163,16 @@
 				"environmentDetectedType": "totvs_server_protheus",
 				"serverDetectedType": "totvs_server_protheus"
 			}
+		},
+		{
+			"id": "3sdgcruwojomdsy7vno0jxvcv48jf9c",
+			"type": "totvs_server_protheus",
+			"name": "PROD TOSHIO",
+			"port": 2025,
+			"address": "192.168.0.242",
+			"buildVersion": "",
+			"secure": 0,
+			"includes": []
 		}
 	],
 	"savedTokens": [
