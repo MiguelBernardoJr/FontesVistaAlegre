@@ -28,7 +28,7 @@ User Function ImpEtqACD(cNome, cCod, cFornec, cLoja, cEntr, nQtde, nUm, cUMed, c
     if !SB5->(DbSeek(FWxFilial("SB5")+cCod)) .or. SB5->B5_IMPETI != 'N'
 
         
-        PZebra(.T.)
+        PZebra(.T.,cPorta)
     
         //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
     
@@ -49,7 +49,7 @@ User Function ImpEtqACD(cNome, cCod, cFornec, cLoja, cEntr, nQtde, nUm, cUMed, c
         
         MSCBEND()
 
-        PZebra(.F.)
+        PZebra(.f.,cPorta)
     endif
 
 Return Nil
@@ -64,7 +64,7 @@ Return Nil
 */
 User Function ImpEtqPdt(aCntImp, cPorta, cLocaliz)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -97,7 +97,7 @@ User Function ImpEtqPdt(aCntImp, cPorta, cLocaliz)
         MSCBEND()
     Endif
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -112,7 +112,7 @@ Return Nil
 */
 User Function ImpEtPdtc(aCntImp, cPorta)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -133,7 +133,7 @@ User Function ImpEtPdtc(aCntImp, cPorta)
         MSCBEND()
     endif
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -150,7 +150,7 @@ Return Nil
 
 User Function ImpEtPdAv(aCntImp, cQtd, cPorta)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
     MSCBBEGIN(1,4)
@@ -171,7 +171,7 @@ User Function ImpEtPdAv(aCntImp, cQtd, cPorta)
         MSCBEND()
     endif
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -188,7 +188,7 @@ Return Nil
 */
 User Function ImpEtqEnd(aCntImp, cPorta)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -205,7 +205,7 @@ User Function ImpEtqEnd(aCntImp, cPorta)
 
     MSCBEND()
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -238,7 +238,7 @@ User Function ImpEtqCx(cTipo, cCodigo, cSeq, cEndereco, cPorta)
 
     cCodBar := nOpera + AllTrim(aCntImp[2]) + AllTrim(aCntImp[3])
 
-    PZebra(.T.) 
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -255,7 +255,7 @@ User Function ImpEtqCx(cTipo, cCodigo, cSeq, cEndereco, cPorta)
 
     MSCBEND()
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -276,7 +276,7 @@ User Function ImpEtqTER(cTipo, cNomeCli, cCodCli, cCodLoja, cNomeProd, cCodProd,
     SB5->(DbSetOrder(1)) // B5_FILIAL+B5_COD
     if !SB5->(DbSeek(FWxFilial("SB5")+cCodProd)) .or. SB5->B5_IMPETI != 'N'
     
-        PZebra(.T.) 
+        PZebra(.T.,cPorta)
     
         //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
     
@@ -294,19 +294,24 @@ User Function ImpEtqTER(cTipo, cNomeCli, cCodCli, cCodLoja, cNomeProd, cCodProd,
 
         MSCBEND()
     
-        PZebra(.F.)
+        PZebra(.f.,cPorta)
     endif
 
 Return Nil
 
-static function PZebra(lAcao)
-    local cPorta := "LPT1"
+static function PZebra(lAcao, cPorta)
     local cIMp  := "S600"
     local cFila  := GetMV("TO_IMPTER",,"ZD230")
     local lSrv   := .F.
 
+    Default cPorta := "LPT1"
     Default lAcao := .T.
 
+    IF cPorta == "LPT1"
+        cFila := "ZD230"
+    else
+        cFila := "ZD230-A"
+    endif
 
     if (lAcao)
         MSCBPRINTER(cIMp,cPorta,,,lSrv,,,,,cFila,)

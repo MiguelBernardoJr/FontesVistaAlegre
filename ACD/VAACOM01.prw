@@ -287,7 +287,7 @@ local i, j, nLen
                                     ZA0->ZA0_DOC,;
                                     ZA0->ZA0_SERIE,;
                                     AllTrim(Posicione('SB1', 1, FWxFilial('SB1') + oGridModel:GetValue("ZA0_COD", i), 'B1_CODBAR')),; 
-                                    IIF(!Empty(MV_PAR01), "LPT"+AllTrim(Str(MV_PAR01)), "LPT1");
+                                    IIF(!Empty(MV_PAR01), MV_PAR01, "LPT1");
                         )
                     else         
                         u_ImpEtqTER(ZA0->ZA0_TIPO,;
@@ -302,7 +302,7 @@ local i, j, nLen
                                     ZA0->ZA0_DOC,;
                                     ZA0->ZA0_SERIE,;
                                     AllTrim(Posicione('SB1', 1, FWxFilial('SB1') + oGridModel:GetValue("ZA0_COD", i), 'B1_CODBAR')),; 
-                                    IIF(!Empty(MV_PAR01), "LPT"+AllTrim(Str(MV_PAR01)), "LPT1");
+                                    IIF(!Empty(MV_PAR01), MV_PAR01, "LPT1");
                         )
                     endif
                 next
@@ -316,7 +316,7 @@ local i, j, nLen
                                 oGridModel:GetValue("ZA0_COD", i),;
                                 oGridModel:GetValue("ZA0_FORNEC", i),;
                                 oGridModel:GetValue("ZA0_LOJA", i),;
-                                DToC(SF1->F1_DTDIGIT),; 
+                                DToC(SF1->F1_DTDIGIT),;
                                 oGridModel:GetValue("ZA0_SUQTET", i),; // Qtd por etq na Seg UM  
                                 "2", ;  
                                 oGridModel:GetValue("ZA0_SEGUM", i),;
@@ -324,7 +324,7 @@ local i, j, nLen
                                 ZA0->ZA0_DOC,;
                                 ZA0->ZA0_SERIE,;
                                 AllTrim(Posicione('SB1', 1, FWxFilial('SB1') + oGridModel:GetValue("ZA0_COD", i), 'B1_CODBAR')),;
-                                IIF(!Empty(MV_PAR01), "LPT"+AllTrim(Str(MV_PAR01)), "LPT1");
+                                IIF(!Empty(MV_PAR01), MV_PAR01, "LPT1");
                     )
                 else
                     u_ImpEtqTER(ZA0->ZA0_TIPO,;
@@ -339,7 +339,7 @@ local i, j, nLen
                                 ZA0->ZA0_DOC,;
                                 ZA0->ZA0_SERIE,;
                                 AllTrim(Posicione('SB1', 1, FWxFilial('SB1') + oGridModel:GetValue("ZA0_COD", i), 'B1_CODBAR')),; 
-                                IIF(!Empty(MV_PAR01), "LPT"+AllTrim(Str(MV_PAR01)), "LPT1");
+                                IIF(!Empty(MV_PAR01), MV_PAR01, "LPT1");
                     )
                 endif
                 next

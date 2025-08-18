@@ -73,7 +73,7 @@ Static Function ModelDef()
 	Local oModel   	:= Nil
 	Local oStr1   	:= FWFormStruct(1, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_FILIAL|ZPB_PLACA|ZPB_CODIGO|ZPB_STATUS" }) 
 	Local oStr2   	:= FWFormStruct(1, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_CPFMOT|ZPB_CODMOT|ZPB_NOMMOT|ZPB_CLIFOR|ZPB_CODFOR|ZPB_LOJFOR|ZPB_NOMFOR" }) 
-	Local oStr3   	:= FWFormStruct(1, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_NOTAFI|ZPB_NOTFIS|ZPB_PRODUT|ZPB_DESC|ZPB_BAIA|ZPB_LOCAL|ZPB_OBSERV|ZPB_NROGTA|ZPB_QTANIM|ZPB_UMID|ZPB_IMPUR|ZPB_AVARIA|ZPB_TEMP|ZPB_SILO" }) 
+	Local oStr3   	:= FWFormStruct(1, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_NOTAFI|ZPB_NOTFIS|ZPB_PRODUT|ZPB_DESC|ZPB_BAIA|ZPB_LOCAL|ZPB_OBSERV|ZPB_NROGTA|ZPB_QTANIM|ZPB_UMID|ZPB_IMPUR|ZPB_AVARIA|ZPB_TEMP|ZPB_SILO|ZPB_FUMID|ZPB_FTEMP|ZPB_FIMPUR|ZPB_FAVARI" }) 
 	Local oStr4   	:= FWFormStruct(1, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_OPESOE|ZPB_PESOE|ZPB_DATA|ZPB_HORA|ZPB_PEMAN1|ZPB_USRP1"})
 	Local oStr5   	:= FWFormStruct(1, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_OPESOS|ZPB_PESOS|ZPB_DATAF|ZPB_HORAF|ZPB_PEMAN2|ZPB_USRP2|ZPB_PESOL" })
 	Local bVldCom  	:= {|| u_zSaveZPB()	}
@@ -103,7 +103,7 @@ Static Function ViewDef()
 	Local oModel     	:= FWLoadModel("VAESTPES")
 	Local oStr1   		:= FWFormStruct(2, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_FILIAL|ZPB_PLACA|ZPB_CODIGO|ZPB_STATUS" }) 
 	Local oStr2   		:= FWFormStruct(2, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_CPFMOT|ZPB_CODMOT|ZPB_NOMMOT|ZPB_CLIFOR|ZPB_CODFOR|ZPB_LOJFOR|ZPB_NOMFOR" }) 
-	Local oStr3   		:= FWFormStruct(2, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_NOTAFI|ZPB_NOTFIS|ZPB_PRODUT|ZPB_DESC|ZPB_BAIA|ZPB_LOCAL|ZPB_OBSERV|ZPB_NROGTA|ZPB_QTANIM|ZPB_UMID|ZPB_IMPUR|ZPB_AVARIA|ZPB_TEMP|ZPB_SILO" }) 
+	Local oStr3   		:= FWFormStruct(2, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_NOTAFI|ZPB_NOTFIS|ZPB_PRODUT|ZPB_DESC|ZPB_BAIA|ZPB_LOCAL|ZPB_OBSERV|ZPB_NROGTA|ZPB_QTANIM|ZPB_UMID|ZPB_IMPUR|ZPB_AVARIA|ZPB_TEMP|ZPB_SILO|ZPB_FUMID|ZPB_FTEMP|ZPB_FIMPUR|ZPB_FAVARI" }) 
 	Local oStr4   		:= FWFormStruct(2, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_OPESOE|ZPB_PESOE|ZPB_DATA|ZPB_HORA|ZPB_PEMAN1|ZPB_USRP1"}) 
 	Local oStr5   		:= FWFormStruct(2, 'ZPB',{|cCampo| AllTrim(cCampo) $ "ZPB_OPESOS|ZPB_PESOS|ZPB_DATAF|ZPB_HORAF|ZPB_PEMAN2|ZPB_USRP2|ZPB_PESOL" }) 
 	Local nI 		
@@ -228,6 +228,10 @@ User Function zSaveZPB()
 			ZPB->ZPB_AVARIA := oMdl3:GetValue("ZPB_AVARIA")
 			ZPB->ZPB_TEMP 	:= oMdl3:GetValue("ZPB_TEMP")
 			ZPB->ZPB_SILO 	:= oMdl3:GetValue("ZPB_SILO")
+			ZPB->ZPB_FUMID 	:= oMdl3:GetValue("ZPB_FUMID")
+			ZPB->ZPB_FIMPUR := oMdl3:GetValue("ZPB_FIMPUR")
+			ZPB->ZPB_FAVARI := oMdl3:GetValue("ZPB_FAVARI")
+			ZPB->ZPB_FTEMP 	:= oMdl3:GetValue("ZPB_FTEMP")
 
 			IF ZPB->ZPB_OPESOE != oMdl4:GetValue("ZPB_PESOE")
 				ZPB->ZPB_OPESOE	:= oMdl4:GetValue("ZPB_PESOE")
@@ -375,7 +379,21 @@ User Function ESTPESV()
 				EndIf
 
 				if lRet .and. AllTrim(oMdl3:GetValue("ZPB_PRODUT")) == '020017'
-					if oMdl5:GetValue("ZPB_PESOS") > 0
+					if nOper == 3 .and. oMdl2:GetValue("ZPB_CLIFOR") == "F" .and. !Empty(oMdl2:GetValue("ZPB_CODFOR")) .and. SA2->A2_INFMED == "S"
+						if Empty(oMdl3:GetValue("ZPB_FUMID") )
+							oModel:SetErrorMessage("","","","","HELP", 'Campo Obrigatório', "Para o produto e fornecedor selecionado é preciso informar o campo Umidade do Fornecedor.  [ABA 03] ")
+							lRet := .F.
+						elseif Empty(oMdl3:GetValue("ZPB_FIMPUR"))
+							oModel:SetErrorMessage("","","","","HELP", 'Campo Obrigatório', "Para o produto e fornecedor selecionado é preciso informar o campo Impureza do Fornecedor.  [ABA 03] ")
+							lRet := .F.
+						elseif Empty(oMdl3:GetValue("ZPB_FAVARI"))
+							oModel:SetErrorMessage("","","","","HELP", 'Campo Obrigatório', "Para o produto e fornecedor selecionado é preciso informar o campo Avaria do Fornecedor.  [ABA 03] ")
+							lRet := .F.
+						elseif Empty(oMdl3:GetValue("ZPB_FTEMP"))
+							oModel:SetErrorMessage("","","","","HELP", 'Campo Obrigatório', "Para o produto e fornecedor selecionado é preciso informar o campo Temperatura do Fornecedor.  [ABA 03] ")
+							lRet := .F.
+						endif
+					elseif oMdl5:GetValue("ZPB_PESOS") > 0
 						if Empty(oMdl3:GetValue("ZPB_UMID") )
 							oModel:SetErrorMessage("","","","","HELP", 'Campo Obrigatório', "Para o produto selecionado é preciso informar o campo Umidade.  [ABA 03] ")
 							lRet := .F.
@@ -392,7 +410,7 @@ User Function ESTPESV()
 							oModel:SetErrorMessage("","","","","HELP", 'Campo Obrigatório', "Para o produto selecionado é preciso informar o campo Silo.  [ABA 03] ")
 							lRet := .F.
 						endif
-					endif 
+					endif
 				endif 
 			endif 			
 		endif 			
@@ -435,7 +453,7 @@ User Function PegaPeso( lGravPeso, nBalanca )
 									oMdl1:GetValue('ZPB_CODIGO')+;
 									dToS(oMdl4:GetValue('ZPB_DATA')))))
 						MsgAlert("É necessário informar as medições do milho antes de informar o peso de saída!" + CRLF +;
-									"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.")
+									"Por favor entrar em contato com o responsável pelo silo para que as medições sejam informadas.", "Atenção")
 						lGravPeso := .F.
 					else
 						oMdl3:LoadValue("ZPB_UMID"  , ZPA->ZPA_UMID)
@@ -1731,19 +1749,31 @@ User Function GNotFis()
 		Next nI 
 	else
 		cRet := AllTrim(cValue) + iIf( Empty(oMdl3:GetValue("ZPB_NOTFIS")), "", ";" + AllTrim(oMdl3:GetValue("ZPB_NOTFIS")) )
-	ENDIF 
+	ENDIF
 
 Return cRet 
 //WHEN DOS CAMPOS: ZPB_UMID / ZPB_IMPUR / ZPB_AVARIA
 User Function zWhenMl()
 	Local oModel	  	:= FWModelActive()
+	Local oMdl2			:= oModel:GetModel('ZPB_2')
 	Local oMdl3 		:= oModel:GetModel('ZPB_3')
 	Local oMdl5 		:= oModel:GetModel('ZPB_5')
-
+	Local cCampo 		:= SubStr(ReadVar(),At(">",ReadVar())+1,Len(ReadVar()))
+	Local nOpc 			:= oModel:GetOperation()
+	Local lRet 			:= .F.
+	
 	if oMdl3:GetValue("ZPB_PRODUT") != '020017' // MILHO EM GRÃOS
-		Return .F.
+		lRet := .F.
 	elseif oMdl5:GetValue("ZPB_PESOS") == 0
-		Return .F.
+		if nOpc == 3 .and. cCampo $ "ZPB_FUMID|ZPB_FTEMP|ZPB_FIMPUR|ZPB_FAVARI"
+			if oMdl2:GetValue("ZPB_CLIFOR") == "F" .and. !Empty(oMdl2:GetValue("ZPB_CODFOR")) .and. SA2->A2_INFMED == "S"
+				lRet := .T.
+			else
+				lRet := .F.
+			endif 
+		else
+			lRet := .F.
+		endif
 	endif
 
-Return .F.
+Return lRet
