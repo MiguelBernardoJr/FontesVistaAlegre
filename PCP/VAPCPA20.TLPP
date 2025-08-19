@@ -1,0 +1,67 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TLPP-CORE.TH"
+#INCLUDE "FWMVCDEF.CH"
+
+namespace custom.VAPCPA20
+
+USER FUNCTION VAPCPA20()
+	Private oBrowse as object
+
+	oBrowse := FWLoadBrw("custom.VAPCPA20.VAPCPA20")
+	oBrowse:Activate()
+	oBrowse:DeActivate()
+	oBrowse:Destroy()
+	FreeObj(oBrowse)
+	oBrowse := nil
+
+Return
+
+user function BrowseDef() as object
+	local oBrowse as object
+
+	oBrowse := FWMBrowse():New()
+	oBrowse:SetAlias("ZAF")
+	oBrowse:SetDescription("Cadastro de Currais de Enfermaria")
+
+return oBrowse
+
+user function ModelDef() as object
+	local oModel   := nil as object
+	local oStruct  := FWFormStruct( 1, 'ZAF' ) as object
+	
+	oModel := MPFormModel():New( "A20VAPCP", /*bPre*/ , /*bPos*/, /*bCommit*/, /* Fechatela()  */)
+	oModel:SetDescription("Plano de Trato")
+	
+    oModel:AddFields("ZAFMASTER" ,"", oStruct,/*bPreValid*/		,/* bPosValid */, /* bLoadHide */)
+
+    oModel:GetModel("ZAFMASTER"):SetDescription("Currais de Enfermaria")
+
+	oModel:SetPrimaryKey({"ZAF_FILIAL","ZAF_LOTE","ZAF_CURRAL"})
+
+return oModel
+
+user function ViewDef() as object
+	local oView as object
+	local oStruct := FWFormStruct( 2, 'ZAF' ) as object
+    local oModel  := FwLoadModel("custom.VAPCPA20.VAPCPA20") as object
+
+    oView 	:= FwFormView():New()
+    oView:SetModel(oModel)
+    
+    oView:AddField("ViewMaster"	, oStruct 	, "ZAFMASTER"	)
+
+    oView:CreateHorizontalBox("PRINCIPAL"   , 100)
+    
+    oView:SetOwnerView("ViewMaster"  	, "PRINCIPAL"	)
+
+    oView:EnableTitleView('ViewMaster', "" )
+
+return oView
+
+User Function MenuDef()
+	Local aRot := {} as Array
+	ADD OPTION aRot TITLE 'Visualizar' 		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
+	ADD OPTION aRot TITLE 'Incluir'    		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
+	ADD OPTION aRot TITLE 'Alterar'    		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
+	ADD OPTION aRot TITLE 'Excluir'    		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
+Return aRot

@@ -754,6 +754,7 @@ User Function TgLotZ0E() // trigger
 	Local cAlias		:= GetNextAlias()
 	Local cAlias1		:= ""
 	Local cQry 			:= ""
+	Local cDataCo		:= ""
 
 	oGridZ0E:LoadValue('Z0E_PROD'  , U_ProxProd() )
 	cAux := Left(POSICIONE('SB1', 1, FWxFilial('SB1')+FwFldGet('Z0E_PROD'), 'B1_DESC'), TamSX3('Z0E_DESC')[1])
@@ -784,8 +785,8 @@ User Function TgLotZ0E() // trigger
 		oGridZ0E:LoadValue('Z0E_PESTOT', (cAlias)->B8_XPESTOT       )
 		oGridZ0E:LoadValue('Z0E_DATACO', sToD((cAlias)->B8_XDATACO) )
 		oGridZ0E:LoadValue('Z0E_GMD'   , (cAlias)->B8_GMD           )
-		oGridZ0E:LoadValue('Z0E_DIASCO', (cAlias)->B8_DIASCO 	   )
-		oGridZ0E:LoadValue('Z0E_RENESP', (cAlias)->B8_XRENESP 	   )
+		oGridZ0E:LoadValue('Z0E_DIASCO', (cAlias)->B8_DIASCO 	    )
+		oGridZ0E:LoadValue('Z0E_RENESP', (cAlias)->B8_XRENESP 	    )
 		oGridZ0E:LoadValue('Z0E_PESO'  , (cAlias)->B8_XPESOCO       )
 		
 		// MB : 30.03.2021 => pega lote de origem para gatilhar os campos no destino
@@ -793,15 +794,15 @@ User Function TgLotZ0E() // trigger
 			cLote        := FwFldGet('Z0D_LOTE')
 			
 			cQry := " SELECT B8_LOTECTL, B8_X_CURRA, B8_XDATACO, B8_XPESOCO, B8_GMD, B8_DIASCO, B8_XRENESP " + CRLF 
-			cQry += "		, AVG(B8_XPESTOT) B8_XPESTOT " + CRLF 
-			cQry += "		, COUNT(*) QTD " + CRLF 
-			cQry += "		, SUM(B8_SALDO) SALDO " + CRLF 
+			cQry += "		, AVG(B8_XPESTOT) B8_XPESTOT " + CRLF
+			cQry += "		, COUNT(*) QTD " + CRLF
+			cQry += "		, SUM(B8_SALDO) SALDO " + CRLF
 			cQry += "	FROM   "+RetSQLName("SB8")+" SB8 " + CRLF
 			cQry += "	WHERE B8_FILIAL = '"+FwxFilial("SB8")+"' " + CRLF
 			cQry += "	AND B8_LOTECTL  = '"+cLote+"' " + CRLF
-			cQry += "	AND B8_SALDO > 0  " + CRLF 
-			cQry += "	AND B8_XDATACO<>' ' " + CRLF 
-			cQry += "	AND SB8.D_E_L_E_T_= ' ' " + CRLF 
+			cQry += "	AND B8_SALDO > 0  " + CRLF
+			cQry += "	AND B8_XDATACO<>' ' " + CRLF
+			cQry += "	AND SB8.D_E_L_E_T_= ' ' " + CRLF
 			cQry += "	GROUP BY B8_LOTECTL, B8_X_CURRA, B8_XDATACO, B8_XPESOCO, B8_GMD, B8_DIASCO, B8_XRENESP " + CRLF 
 			
 			cAlias1 := GetNextAlias()
@@ -816,7 +817,18 @@ User Function TgLotZ0E() // trigger
 		EndIf
 		
 	ElseIf nRegistros>1
-		msgAlert('O lote: '+AllTrim(clote)+' possui animais com data de entrada diferentes, informe os campos manualmente: PESO APARTAÇÃO, DATA DE INICIO.')
+		if Z0C->Z0C_TPMOV == '4'
+			cQry := "SELECT TOP 1 D3_EMISSAO FROM "+RetSqlName("SD3")+" (NOLOCK) WHERE D3_LOTECTL = '"+cLote+"' and D3_FILIAL = '"+FwxFilial("SD3")+"' ORDER BY D3_EMISSAO"
+
+			cDataCo := MPSysExecScalar(cQry,"D3_EMISSAO")
+
+			if !Empty(cDataCo)
+				oGridZ0E:LoadValue('Z0E_DATACO', sToD(cDataCo) )
+			endif
+
+		else
+			msgAlert('O lote: '+AllTrim(clote)+' possui animais com data de entrada diferentes, informe os campos manualmente: PESO APARTAÇÃO, DATA DE INICIO.')
+		endif
 	EndIf
 	(cAlias)->(dbCloseArea())
 
@@ -978,7 +990,7 @@ Static Function ModelDef()
 	oStruZ0E:SetProperty('Z0E_CURRAL', MODEL_FIELD_WHEN, bVldAUX)
 	
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
-		"iif(FwFldGet('Z0C_TPMOV') == '1',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
+		"iif(FwFldGet('Z0C_TPMOV') == '4',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
 	oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
 	
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
@@ -991,7 +1003,7 @@ Static Function ModelDef()
 // MB : 05.08.2019
 	oStruZ0E:SetProperty('Z0E_LOTE', MODEL_FIELD_VALID,;
 							FWBuildFeature( STRUCT_FEATURE_VALID,;
-									"U_libVldLote( AllTrim(&(ReadVar())), .T., 'M->Z0E_LOTE-VALID' )" ))
+									"U_libVldLote( AllTrim(&(ReadVar())), .T., 'M->Z0E_LOTE-VALID' ) .and. U_VdLtA01()" ))
 
 // MB : 08.08.2019
 	cVldMB3 := "U_CurPastoOuBaia( AllTrim(&(ReadVar())) )" // 1=Baia;4=Pasto;
@@ -5669,3 +5681,24 @@ User Function mbEXISTCPO( __Alias, __cChave )
 
 	RestArea(aArea)
 Return lRet
+
+User Function VdLtA01()
+	Local aArea := FwGetArea()
+	Local lRet 	:= .T.
+	Local cQry	:= ""
+	Local cVar  := &(ReadVar())
+	Local cLote := ""
+
+	cQry := "SELECT Z0F_LOTE FROM "+RetSqlName("Z0F")+"" + CRLF
+	cQry += "WHERE Z0F_LOTE = '"+cVar+"'" + CRLF
+	cQry += "AND D_E_L_E_T_ = ''" + CRLF
+
+	cLote := MPSysExecScalar(cQry,"Z0F_LOTE")
+
+	if !Empty(cLote)
+		MsgStop("Lote não pode ser incluido em movimentações com tipo 4-Enfermaria!")
+		lRet := .F.
+	endif
+	
+	FwRestArea(aArea)
+Return lRet 
