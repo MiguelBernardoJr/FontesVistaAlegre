@@ -2153,6 +2153,7 @@ static function CriaZ05()
     local cAliZ05   := ""
     local cAliZ0W   := ""
     local nResto    := 0
+    local lSomaSobra := .T.
 
     // Verifica se não existe plano de trato associado ao lote 
     if Empty((cAliLotes)->Z0O_CODPLA)
@@ -2515,10 +2516,22 @@ static function CriaZ05()
                                         EndIf
                                     EndIf
                                     If nQtdTrato > 0
-                                        nQtdTrato := ((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))
+                                        nDividendo  := ((cAlias)->Z05_KGMSDI -  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100))
+                                        nDivisor    := (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))
+                                        IF lSomaSobra //.and. NoRound(((cAlias)->Z05_KGMSDI -  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux) > 0
+
+                                            if (nResto := nDividendo % nDivisor) > 0 .and. ((nDec := nResto - (NoRound(nResto / nDivisor,TamSX3('Z06_KGMSTR')[2]) * nDivisor)) > 0)
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2]) + nDec
+                                                lSomaSobra := .F.
+                                            else
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                            endif
+                                        else
+                                            nQtdTrato :=  NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                        endif
                                     EndIf
                                 EndIf
-                            EndIf 
+                            EndIf
                             // FIM MB : 23.02.2023  
 
                             cSeq := U_GetSeq((cAliZ06)->Z06_DIETA)
@@ -2687,7 +2700,6 @@ static function CriaZ05()
 
                     cDieta := ""
                     cNroTrato := ""
-
                     while !(cAliZ0W)->(Eof())
                         nQtdAux       := (cAliZ0W)->QTD        
                         nDif          := 0
@@ -2941,7 +2953,19 @@ static function CriaZ05()
                                     EndIf
 
                                     If nQtdTrato > 0
-                                        nQtdTrato := ((cAliZ0W)->Z05_KGMSDI +  (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (iif((cAliZ0W)->QTD==nDif, 1,(cAliZ0W)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))
+                                        nDividendo  := (cAliZ0W)->Z05_KGMSDI +  (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)
+                                        nDivisor    := iif((cAliZ0W)->QTD==nDif, 1,(cAliZ0W)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)
+                                        iF lSomaSobra //.and. (( (cAliZ0W)->Z05_KGMSDI -  NoRound(((cAliZ0W)->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
+
+                                            if (nResto := nDividendo % nDivisor) > 0 .and. ((nDec := nResto - (NoRound(nResto / nDivisor,TamSX3('Z06_KGMSTR')[2]) * nDivisor)) > 0)
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2]) + nDec
+                                                lSomaSobra  := .F.
+                                            else
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                            endif
+                                        Else
+                                            nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                        EndIf
                                     EndIf
                                 EndIf
                             EndIf 
@@ -8251,7 +8275,7 @@ Local nQtdAux       := 0
 Local lMaior        := .T.
 Local lSobra        := .T.
 Local nBKPnTrtTotal := 0
-
+Local lSomaSobra    := .T.
 
     DbSelectArea("Z05")
     DbsetOrder(1) // Z05_FILIAL+DToS(Z05_DATA)+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
@@ -8560,14 +8584,21 @@ Local nBKPnTrtTotal := 0
 
                                     EndIf
                                     If nQuantTrato > 0
+                                        nDividendo  := Z05->Z05_KGMSDI
+                                        nDivisor    := iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)
 
-                                            //nQuantTrato := NoRound(Z05->Z05_KGMSDI  / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)),TamSX3('Z06_KGMNT')[2])
-                                            
-                                            iF i == 2 .and.(( Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
-                                                nQuantTrato := (Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) + NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),,TamSX3('Z06_KGMSTR')[2])
-                                            Else 
-                                                nQuantTrato := NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2])
-                                            EndIf
+                                        iF lSomaSobra //.and.(( Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
+
+                                            if (nResto := nDividendo % nDivisor) > 0 .and. ((nDec := nResto - (NoRound(nResto / nDivisor,TamSX3('Z06_KGMSTR')[2]) * nDivisor)) > 0)
+                                                nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2]) + nDec
+                                                lSomaSobra := .F.
+                                            else
+                                                nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                            endif
+
+                                        Else
+                                            nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                        EndIf
                                     EndIf
                                 EndIf
                             EndIf 

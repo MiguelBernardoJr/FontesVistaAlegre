@@ -90,7 +90,7 @@ user function ModelDef() as object
 	local oStrRotD := RotGrdMStr(1) as object
 	local oStrRotG := RotGrdMStr(2) as object
     local oStrHide := HidGrdMStr()	as object
-    local oStrRt1  := Rt1GrdMStr()	as object
+    //local oStrRt1  := Rt1GrdMStr()	as object
 
 	local bLoadRt1    := {|oModel, lCopia| LoadRt1(oModel, lCopia) } as codeblock
 	local bLoadRotD   := {|oModel, lCopia| LoadRotD(oModel, lCopia) } as codeblock
@@ -125,12 +125,12 @@ user function ModelDef() as object
     oModel:AddGrid("MdGridZ06G"    ,"MdGridRotaG", oStrZ06G,/* {|| ValidZ06g(1)} *//* bZ06LinePr */,/* {|| ValidZ06g(2)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06G)
     oModel:AddGrid("MdGridZ06D"    ,"MdGridZ06G" , oStrZ06D,/* {|| ValidZ06g(3)} *//* bZ06LinePr */	,/* {|| ValidZ06g(4)} */ /* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06D)
     oModel:AddGrid("MdGridZ05G"    ,"MdGridZ06G" , oStrZ05G,/* {|| ValidZ06g(7)} *//* bZ06LinePr */	,/* {|| ValidZ06g(8)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ05G)
-    oModel:AddGrid("MdFieldRt1"    ,"MdGridZ06G" , oStrRt1,/* {|| ValidZ06g(7)} *//* bZ06LinePr */	,/* {|| ValidZ06g(8)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadRt1)
+    //oModel:AddGrid("MdFieldRt1"    ,"MdGridZ06G" , oStrRt1,/* {|| ValidZ06g(7)} *//* bZ06LinePr */	,/* {|| ValidZ06g(8)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadRt1)
     //oModel:AddGrid("MdFieldRt1"  ,"MdGridZ06G" , oStrRt1 ,/*bPreValid*/		,/* bPosValid */, bLoadRt1)
 
-	aRelacao := {}
-	aAdd(aRelacao, {'Z06_LOTE', 'Z06_LOTE'} )
-	oModel:SetRelation('MdFieldRt1', aRelacao/* , Z0T->(IndexKey(1)) */)
+	//aRelacao := {}
+	//aAdd(aRelacao, {'Z06_LOTE', 'Z06_LOTE'} )
+	//oModel:SetRelation('MdFieldRt1', aRelacao/* , Z0T->(IndexKey(1)) */)
 
 	aRelacao := {}
 	aAdd(aRelacao, {'XX1_EQUIP', 'Z0S_EQUIP'} )
@@ -152,7 +152,7 @@ user function ModelDef() as object
 	aAdd(aRelacao, {'Z06_LOTE'  , 'Z05_LOTE'} )
 	oModel:SetRelation('MdGridZ05G', aRelacao/* , Z05->(IndexKey(1)) */)
 
-    oModel:GetModel("MdFieldRt1"):SetDescription("Seleção atual")
+    //oModel:GetModel("MdFieldRt1"):SetDescription("Seleção atual")
 	oModel:GetModel("MdGridZ06G"):SetDescription("Lista de Currais")
 	oModel:GetModel("MdGridZ06D"):SetDescription("Relação de Tratos")
     oModel:GetModel("MdGridRotaD"):SetDescription("Total por Rota e Trato")
@@ -162,7 +162,7 @@ user function ModelDef() as object
 
 	oModel:SetPrimaryKey({})
 
-    oModel:GetModel('MdFieldRt1' ):SetOnlyView(.T.)
+    //oModel:GetModel('MdFieldRt1' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridRotaG' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridRotaD' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridZ05G' ):SetOnlyView(.T.)
@@ -196,7 +196,7 @@ user function ModelDef() as object
 	
 	oModel:AddCalc('TOTAIS3', 'MdGridRotaG', 'MdGridRotaD', 'Z06_KGMNT' , 'XX3_KGMNT', 'SUM', , , "KG Mn Total" 	)
 	
-	oModel:SetOptional("MdFieldRt1" , .T.)
+	//oModel:SetOptional("MdFieldRt1" , .T.)
 	oModel:SetOptional("MdGridZ05G"	, .T.)
 	oModel:SetOptional("MdGridZ06G"	, .T.)
 	oModel:SetOptional("MdGridZ06D"	, .T.)
@@ -208,7 +208,7 @@ return oModel
 user function ViewDef() as object
 	local oView 	as object
 
-	local oStrRt1   := nil as object
+	//local oStrRt1   := nil as object
 	local oStrZ05G  := nil as object
     local oStrZ06G 	:= nil as object
     local oStrZ06D 	:= nil as object
@@ -228,7 +228,7 @@ user function ViewDef() as object
 		oStrHide 	:= HidGrdVStr()
     	oStrZ06G    := Z06GrdVStr(1)
     	oStrZ06D    := Z06GrdVStr(2)
-    	oStrRt1     := Rt1GrdVStr()
+    	//oStrRt1     := Rt1GrdVStr()
 		oStrTot1 	:= FWCalcStruct(oModel:GetModel('TOTAIS1' ))
 		oStrTot2 	:= FWCalcStruct(oModel:GetModel('TOTAIS2' ))
 		oStrTot3 	:= FWCalcStruct(oModel:GetModel('TOTAIS3' ))
@@ -237,7 +237,7 @@ user function ViewDef() as object
 		oView:SetModel(oModel)
 		
 		oView:AddField("VwFieldRotas"	, oStrHide 	, "MdFieldRota"	)
-		oView:AddGrid("VwFieldPos" 	, oStrRt1   , "MdFieldRt1"  )
+		//oView:AddGrid("VwFieldPos" 	, oStrRt1   , "MdFieldRt1"  )
 		oView:AddGrid("VwGridZ05G" 	, oStrZ05G 	, "MdGridZ05G"	)
 		oView:AddGrid("VwGridZ06G" 	, oStrZ06G 	, "MdGridZ06G"	)
 		oView:AddGrid("VwGridZ06D" 	, oStrZ06D 	, "MdGridZ06D"	)
@@ -257,8 +257,8 @@ user function ViewDef() as object
 		oView:CreateHorizontalBox("PROGR_CIMA"  , 88, "PROGR")
 		oView:CreateHorizontalBox("PROGR_BAIXO" , 12, "PROGR")
 		
-		oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  35, "PROGR_BAIXO")
-		oView:CreateVerticalBox("PROGR_BAIXO_DIR",  65, "PROGR_BAIXO")
+		//oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  35, "PROGR_BAIXO")
+		//oView:CreateVerticalBox("PROGR_BAIXO_DIR",  65, "PROGR_BAIXO")
 
 		oView:CreateHorizontalBox("ROTAS_CIMA" , 65, "ROTAS")
 
@@ -276,8 +276,8 @@ user function ViewDef() as object
 		oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CENTER") // Relação de Tratos
 		oView:SetOwnerView("VwKgTot2" 		, "LOTES_CIMA"  ) // Totais por Lote
 		oView:SetOwnerView("VwGridZ05G" 	, "LOTES_BAIXO" ) // Programação anterior
-		oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO_ESQ"	) //Totais por Rota
-		oView:SetOwnerView("VwFieldPos"    	, "PROGR_BAIXO_DIR"	) //Seleção atual
+		oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO"	) //Totais por Rota
+		//oView:SetOwnerView("VwFieldPos"    	, "PROGR_BAIXO_DIR"	) //Seleção atual
 	
 		oView:SetNoInsertLine("VwGridZ06G")
 		oView:SetNoDeleteLine("VwGridZ06G")
@@ -300,11 +300,11 @@ user function ViewDef() as object
 		oView:EnableTitleView('VwKgTot2'	, "Totais por Lote"			)
 		oView:EnableTitleView('VwGridZ05G'	, "Programação anterior"	)
 		oView:EnableTitleView('VwKgTot1'   	, "Totais por Rota"			)
-		oView:EnableTitleView('VwFieldPos'  , "Seleção atual"			)
+		//oView:EnableTitleView('VwFieldPos'  , "Seleção atual"			)
 
-		oView:SetViewProperty("VwGridROTG", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
-		oView:SetViewProperty("VwGridROTD", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
-		oView:SetViewProperty("VwGridZ06G", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
+		//oView:SetViewProperty("VwGridROTG", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
+		//oView:SetViewProperty("VwGridROTD", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
+		//oView:SetViewProperty("VwGridZ06G", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
 
 		if Inclui .or. Altera
 			oView:AddUserButton( "Atualizar (F11)" 	, 'OK', {|| AtualizaTela() } )
@@ -318,6 +318,8 @@ user function ViewDef() as object
 			oView:AddUserButton( "Dietas (F10) "	, 'OK', {|| vap17trt() } )
 			SetKey(VK_F10, {|| vap17trt()})
 		endif
+		
+		oView:SetAfterViewActivate({|oView| xAtivar(oView)})
 	//else
     //	Help(/*Descontinuado*/,/*Descontinuado*/,"SEM LOTE",/**/,"Não existe lote vinculado ao curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível atribuir um trato ao curral selecionado."})
 	//endif
@@ -329,6 +331,14 @@ user function MenuDef() as array
 	Add Option aRotina Title "Alterar" Action "ViewDef.custom.VAPCPA17.VAPCPA17" Operation MODEL_OPERATION_UPDATE Access 0
 
 return aRotina
+
+Static Function xAtivar(oView)
+	oView:AVIEWS[2][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridZ05G
+	oView:AVIEWS[3][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridZ06G
+	oView:AVIEWS[4][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridZ06D
+	oView:AVIEWS[5][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridROTG
+	oView:AVIEWS[6][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridROTD
+Return nil
 
 User Function A17VAPCP()
     Local aParam   := PARAMIXB // PARÂMETROS PASSADOS PARA O PONTO
