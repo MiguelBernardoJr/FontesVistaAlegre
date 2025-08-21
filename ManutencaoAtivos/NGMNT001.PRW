@@ -24,17 +24,25 @@ User Function NGMNT001()
 // Local cSeqRela  := aChaveSTL[7]
 // Local cSeqTare  := aChaveSTL[8]
 
-Local cQuery    := ""
-Local nCntFor   := 0
-Local nPOSNRABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_NRABAS"})
-Local nPOSVUABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VUNABA"})
-Local nPOSTTABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VTTABA"})
-Local nPOSFORT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_FORST9"})
-Local nPOSLOJT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_LOJST9"})
-Local nPOSCOABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_COBABA"})
-Local nRecSavSTL := STL->(Recno())
+Local cQuery     := ""
+Local nCntFor    := 0
+Local nPOSNRABA  := 0
+Local nPOSVUABA  := 0
+Local nPOSTTABA  := 0
+Local nPOSFORT9  := 0
+Local nPOSLOJT9  := 0
+Local nPOSCOABA  := 0
+Local nRecSavSTL := 0
 
 If FunName() == "MNTA656" .and. nLanca == "Produto"
+
+	nPOSNRABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_NRABAS"})
+	nPOSVUABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VUNABA"})
+	nPOSTTABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VTTABA"})
+	nPOSFORT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_FORST9"})
+	nPOSLOJT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_LOJST9"})
+	nPOSCOABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_COBABA"})
+	nRecSavSTL := STL->(Recno())
 
 	For nCntFor := 1 to Len(acols)
 
