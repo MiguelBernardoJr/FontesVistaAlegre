@@ -983,12 +983,12 @@ Static Function ModelDef()
 	bVld1 := FWBuildFeature( STRUCT_FEATURE_VALID, cVld1 )
 	oStruZ0D:SetProperty('Z0D_QUANT', MODEL_FIELD_VALID,bVld1)
 
-//Adiciona validação da quantidade do produto de destino
+	//Adiciona validação da quantidade do produto de destino
 	cVld2 := "Positivo() .and. u_vlSdDest() .and. FwFldGet('Z0C_STATUS')$'14' .and. empty(FwFldGet('Z0E_SEQEFE')) "
 	bVld2 := FWBuildFeature( STRUCT_FEATURE_VALID, cVld2 )
 	oStruZ0E:SetProperty('Z0E_QUANT', MODEL_FIELD_VALID,bVld2)
 	
-// MB : 04.01.2017
+	// MB : 04.01.2017
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
 		"iif(FwFldGet('Z0C_TPMOV') $'12346',.T.,.f.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
 	oStruZ0E:SetProperty('Z0E_PESTOT', MODEL_FIELD_WHEN, bVldAUX)
@@ -1000,7 +1000,7 @@ Static Function ModelDef()
 	oStruZ0E:SetProperty('Z0E_CURRAL', MODEL_FIELD_WHEN, bVldAUX)
 	
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
-		"iif(FwFldGet('Z0C_TPMOV') == '4',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
+		"iif(FwFldGet('Z0C_TPMOV') $ '14',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
 	oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
 	
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;

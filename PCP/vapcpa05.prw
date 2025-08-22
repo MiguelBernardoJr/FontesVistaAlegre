@@ -112,6 +112,7 @@ local nTrato       := 0
 private oTmpZ06    := nil
 private cTrbBrowse := CriaTrab(,.F.)
 private oBrowse    := nil
+Private oLoadTrt   := nil
 
 EnableKey(.T.)
 
@@ -3856,9 +3857,9 @@ User function LoadTrat(dDtTrato)
             cKgMnTot  +=  ", ((isnull(MN" + StrZero(i, 1) + ", 0) *  isnull(B8_SALDO,0))" 
         EndIf
     next
-    cInsertCab += ", Z05_MNTOT" 
+    cInsertCab += ", Z05_MNTOT"
 
-    cKgMnTot += ") AS Z05_MNTOT"    
+    cKgMnTot += ") AS Z05_MNTOT"
     cSelectCab += cKgMnTot
     DbSelectArea("Z0R")
     DbSetOrder(1) // Z0R_FILIAL+DTOS(Z0R_DATA)
@@ -9709,7 +9710,6 @@ DbSetOrder(1)
     Z05->(RestArea(aAreaZ05))
 Return
 
-
 Static Function fsVldCpo()
     _cDescri := Space(30)
     If !Empty(&(ReadVar()))
@@ -9722,3 +9722,54 @@ Static Function fsVldCpo()
         EndIf
     EndIf
 Return .T.
+
+Static Function MontaQuery()
+    Local cQry := ""
+    local cInsertCab := ""
+    local cSelectCab := ""
+    local cKgMnTot   := ""
+
+    cInsertCab := " Z08_CODIGO" +;              // COCHO
+            ", Z0T_ROTA" +;                // ROTA
+            ", Z0S_EQUIP" +;               // CAMINHAO 
+            ", ZV0_DESC" +;                // DESCRIÇÃO DO CAMINHAO
+            ", B8_LOTECTL" +;              // LOTE
+            ", Z05_PESMAT" +;              // PESO MED AUAL
+            ", CMS_PV" +;                  // Consumo de materia seca por peso
+            ", Z05_MEGCAL" +;              // Mega Caloria
+            ", B8_SALDO" +;                // SALDO
+            ", Z05_DIASDI" +;              // Dias de Cocho
+            ", NOTA_MANHA" +;              // NOTAS DE COCHO
+            ", NOTA_MADRU" +;              // NOTAS DE COCHO
+            ", NOTA_NOITE" +;              // NOTAS DE COCHO
+            ", PROGANTMS" +;               // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça       
+            ", PROG_MS" +;                 // PROGRAMAÇÃO DE TRATO - KG de MS / Cabeça
+            ", NR_TRATOS" +;               // Qtde Tratos
+            ", PROGANTMN" +;               // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça       
+            ", PROG_MN" +;                 // PROGRAMAÇÃO DE TRATO - KG de MN / Cabeça
+            ", QTDTRATO"
+
+    cSelectCab := " CURRAIS.Z08_CODIGO CODIGO" +;                                                 // COCHO
+                  ", isnull(ROTAS.Z0T_ROTA, '" + Space(TamSX3("Z0T_ROTA")[1]) + "') Z0T_ROTA" +;   // ROTA
+                  ", isnull(ROTAS.Z0S_EQUIP, '" + Space(TamSX3("Z0S_EQUIP")[1]) + "') Z0S_EQUIP" +; // Caminhão 
+                  ", isnull(ROTAS.ZV0_DESC, '" + Space(TamSX3("ZV0_DESC")[1]) + "') ZV0_DESC" +; // Descrição do Caminhão
+                  ", isnull(Z05.Z05_LOTE, isnull(CURRAIS.B8_LOTECTL,'" + Space(TamSX3("B8_LOTECTL")[1]) + "')) LOTE" +;  // LOTE
+                  ", isnull(Z05.Z05_PESMAT, (CURRAIS.B8_XPESOCO)+(isnull(Z0O_GMD, 0)* (DATEDIFF(D,CURRAIS.B8_XDATACO,'" + DtoS(dDtTrato) + "')+1))) Z05_PESMAT" +; // Peso Médio Atual
+                  ", isnull(Z05.Z05_KGMSDI, 0)/case isnull(CURRAIS.B8_XPESOCO, 0) + isnull(Z05.Z05_DIASDI,0) * isnull(Z0O_GMD, 0) when 0 then 1 else isnull(CURRAIS.B8_XPESOCO, 0) + isnull(Z05.Z05_DIASDI,0) * isnull(Z0O_GMD, 0) end * 100 CMS_PV " +; // Consumo de materia seca por peso
+                  ", isnull(Z05.Z05_MEGCAL, 0) Z05_MEGCAL" +;
+                  ", isnull(CURRAIS.B8_SALDO,0) SALDO" +;                                          // SALDO
+                  ", isnull(Z05.Z05_DIASDI, DATEDIFF(D,CURRAIS.B8_XDATACO,'" + DtoS(dDtTrato) + "')+1) DIA_COCHO" +; // Dias de Cocho
+                  ", isnull(NOTA_MANHA.Z0I_NOTMAN,'" + Space(TamSX3("Z0I_NOTMAN")[1]) + "') NOTA_MANHA" +; // NOTAS DE COCHO
+                  ", isnull(NOTA_MANHA.Z0I_NOTNOI,'" + Space(TamSX3("Z0I_NOTNOI")[1]) + "') NOTA_MADRU" +; // NOTAS DE COCHO
+                  ", isnull(NOTA_MANHA.Z0I_NOTTAR,'" + Space(TamSX3("Z0I_NOTTAR")[1]) + "') NOTA_NOITE" +; // NOTAS DE COCHO
+                  ", isnull(Z05ANT.Z05_KGMSDI,0) MS_D1" +; // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça 
+                  ", isnull(Z05.Z05_KGMSDI,0) MS" +; // PROGRAMAÇÃO DE TRATO - KG de MS / Cabeça
+                  ", isnull(TRATOS.QTDE_TRATOS,0) QTDE_TRATOS" +; // Qtde Tratos
+                  ", isnull(Z05ANT.Z05_KGMNDI,0) MN_D1" +; // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça 
+                  ", isnull(Z05.Z05_KGMNDI,0) MN" +; // PROGRAMAÇÃO DE TRATO - KG de MN / Cabeça
+                  ", isnull(REPETE.QTDTRATO, 0) QTDTRATO"
+                
+	MEMOWRITE("C:\TOTVS_RELATORIOS\VAPCPA05_LOADTRAT.SQL", cQry)
+	oLoadTrt := FwExecStatement():New(cQry)
+
+Return
