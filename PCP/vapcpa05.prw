@@ -2272,7 +2272,7 @@ static function CriaZ05()
                                 // --nQtdAux
                             Else
 
-                                If lMaior // (nTrtTotal / nQtdAux) > MIN_TRATO     
+                                If lMaior // (nTrtTotal / nQtdAux) > MIN_TRATO
 
                                     If GetMV("VA_AJUDAN") == "K"
                                         nQtdTrato := (cAlias)->Z05_KGMSDI + Z0G->Z0G_AJSTKG - nTotTrtClc
@@ -2302,7 +2302,7 @@ static function CriaZ05()
                                                 nQtdTrato := nQtdTrato - (NoRound(((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD, TamSX3("Z05_KGMSDI")[2]) * (cAliZ06)->QTD) + NoRound(((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD, TamSX3("Z05_KGMSDI")[2])
                                             Else 
                                                 nQtdTrato := NoRound(((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD, TamSX3("Z05_KGMSDI")[2])
-                                            EndIf 
+                                            EndIf
                                         EndIf
                                     ElseIf !Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A"
                                         IF RTRIM((cAliZ06)->Z0I_ORIGEM) $ "S"//!Empty((cAliZ06)->Z0I_AJUSTE)
@@ -2517,7 +2517,7 @@ static function CriaZ05()
                                         EndIf
                                     EndIf
                                     If nQtdTrato > 0
-                                        nDividendo  := ((cAlias)->Z05_KGMSDI -  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100))
+                                        nDividendo  := ((cAlias)->Z05_KGMSDI + ((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU / 100))
                                         nDivisor    := (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))
                                         IF lSomaSobra //.and. NoRound(((cAlias)->Z05_KGMSDI -  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux) > 0
 
@@ -2954,7 +2954,7 @@ static function CriaZ05()
                                     EndIf
 
                                     If nQtdTrato > 0
-                                        nDividendo  := (cAliZ0W)->Z05_KGMSDI +  (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)
+                                        nDividendo  := (cAliZ0W)->Z05_KGMSDI + (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)
                                         nDivisor    := iif((cAliZ0W)->QTD==nDif, 1,(cAliZ0W)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)
                                         iF lSomaSobra //.and. (( (cAliZ0W)->Z05_KGMSDI -  NoRound(((cAliZ0W)->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
 
@@ -3588,7 +3588,7 @@ static function CriaZ05()
                                         EndIf
                                     EndIf
                                 EndIf
-                            EndIf 
+                            EndIf
                             // FIM MB : 23.02.2023  
 
                             cSeq      := U_GetSeq((cAliZ06)->Z06_DIETA)
