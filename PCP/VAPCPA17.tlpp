@@ -1,8 +1,9 @@
+#INCLUDE "PROTHEUS.CH"
 #INCLUDE "TOTVS.CH"
-#INCLUDE "TLPP-CORE.TH"
 #INCLUDE "FWMVCDEF.CH"
 #INCLUDE 'FWEDITPANEL.CH'
 #INCLUDE "POSCSS.CH"
+#INCLUDE "TLPP-CORE.TH"
 
 namespace custom.VAPCPA17
 
@@ -225,7 +226,7 @@ user function ViewDef() as object
 	oView:AddField("VwFieldRotas"	, oStrHide 	, "MdFieldRota"	)
 	oView:AddGrid("VwGridZ05G" 	, oStrZ05G 	, "MdGridZ05G"	)
 	oView:AddGrid("VwGridZ06G" 	, oStrZ06G 	, "MdGridZ06G"	)
-	oView:AddGrid("VwGridZ06D" 	, oStrZ06D 	, "MdGridZ06D"	)
+	oView:AddGrid("VwGridZ06D" 	, oStrZ06D 	, "MdGridZ06D"  )
 	oView:AddGrid("VwGridROTG" 	, oStrRotG  , "MdGridRotaG"	)
 	oView:AddGrid("VwGridROTD" 	, oStrRotD  , "MdGridRotaD"	)
 	oView:AddField("VwKgTot1" 	, oStrTot1  , "TOTAIS1" )
@@ -237,7 +238,7 @@ user function ViewDef() as object
 
 	oView:CreateVerticalBox("ROTAS",  10, "ITENS")
 	oView:CreateVerticalBox("PROGR",  51, "ITENS")
-	oView:CreateVerticalBox("LOTES",  38, "ITENS")
+	oView:CreateVerticalBox("LOTES",  39, "ITENS")
 
 	oView:CreateHorizontalBox("PROGR_CIMA"  , 88, "PROGR")
 	oView:CreateHorizontalBox("PROGR_BAIXO" , 12, "PROGR")
@@ -283,18 +284,19 @@ user function ViewDef() as object
 	oView:EnableTitleView('VwKgTot1'   	, "Totais por Rota"			)
 
 	if Inclui .or. Altera
-		oView:AddUserButton( "Atualizar (F11)" 	, 'OK', {|| AtualizaTela() } )
-		SetKey(VK_F11, {|| AtualizaTela()})
-		oView:AddUserButton( "Gerar Arquivos (F7)" , 'OK', {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")} )
-		SetKey(VK_F7, {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")})
-		oView:AddUserButton( "Nro Tratos (F8)"	, 'OK', {|| vap17tra() } )
-		SetKey(VK_F8, {|| vap17tra()})
-		oView:AddUserButton( "Matéria Seca (F9) "	, 'OK', {|| vap17msc() } )
-		SetKey(VK_F9, {|| vap17msc()})
-		oView:AddUserButton( "Dietas (F10) "	, 'OK', {|| vap17trt() } )
+		oView:AddUserButton( "Gerar Arquivos (F7)" 	, 'OK', {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")} )
+		oView:AddUserButton( "Nro Tratos (F8)"		, 'OK', {|| vap17tra() } )
+		oView:AddUserButton( "Matéria Seca (F9)"	, 'OK', {|| vap17msc() } )
+		oView:AddUserButton( "Dietas (F10)"			, 'OK', {|| vap17trt() } )
+		oView:AddUserButton( "Atualizar (F11)" 		, 'OK', {|| AtualizaTela() } )
+		oView:AddUserButton( "Alt Cabeca Lote"		, 'OK', {|| AltQtdCab() } )
+		oView:AddUserButton( "Transf. Curral"		, 'OK', {|| vap17tcu() } )
+
+		SetKey(VK_F7 , {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")})
+		SetKey(VK_F8 , {|| vap17tra()})
+		SetKey(VK_F9 , {|| vap17msc()})
 		SetKey(VK_F10, {|| vap17trt()})
-		oView:AddUserButton( "Alt Cabeca Lote"	, 'OK', {|| AltQtdCab() } )
-		oView:AddUserButton( "Transf. Curral"	, 'OK', {|| vap17tcu() } )
+		SetKey(VK_F11, {|| AtualizaTela()})
 	endif
 	
 	oView:SetAfterViewActivate({|oView| xAtivar(oView)})
@@ -1618,7 +1620,6 @@ User Function VAPCP17VALID() as Logical
 	endif
 
 	RestArea(aArea)
-
 	FWRestRows(aSaveLines)
 Return lRet
 /*/{Protheus.doc} AjuMateria
@@ -1632,8 +1633,6 @@ Atualiza as quantidade de materia seca e natural na tabela Z05
 /*/
 static function AjuMateria(oModel)
 	local aArea      := GetArea() AS Array
-	//local oFormModel := oModel:GetModel("MdFieldZ05C") as Object
-	Local oView 	 := FWViewActive()
 	local oGridZ06D  := oModel:GetModel("MdGridZ06D") as Object 
 	local oGridZ06G  := oModel:GetModel("MdGridZ06G") as Object 
 	local oGridRota  := oModel:GetModel("MdGridRotaD") as Object 
@@ -1703,8 +1702,6 @@ static function AjuMateria(oModel)
 		EndIf
 	Next nI
 	
-	oGridRota:GoLine(1)
-	oView:Refresh()
 	RestArea(aArea)
 return nil
 
@@ -2118,9 +2115,9 @@ Static Function vap17tra()
 	local aParam      := {mv_par01, mv_par02, mv_par03} as Array
 	local cFillPerg   := "VAP17TRA" as character
 	Local nMaxTrato   := u_GetNroTrato() as numeric
-	local aPosSX1     := {{ cFillPerg, "01", 3},;
-                       	  { cFillPerg, "02", "A01"/* Replicate(" ", TamSX3("Z08_CODIGO")[1]) */},;
-                       	  { cFillPerg, "03", "A01"/* Replicate("Z", TamSX3("Z08_CODIGO")[1]) */ }} as Array
+	local aPosSX1     := {{ cFillPerg, "01", 0},;
+                       	  { cFillPerg, "02",Replicate(" ", TamSX3("Z08_CODIGO")[1])},;
+                       	  { cFillPerg, "03",Replicate("Z", TamSX3("Z08_CODIGO")[1])}} as Array
 	
 	private cCodDieta := "" as character
 	private aTratos   := {} as Array
