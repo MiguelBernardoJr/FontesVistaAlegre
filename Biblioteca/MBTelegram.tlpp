@@ -1,0 +1,251 @@
+#INCLUDE 'Totvs.ch'
+#INCLUDE "JSON.CH"
+#INCLUDE "SHASH.CH"
+
+/*
+    MB : 14.09.2025
+        https://github.com/lucasbrustolin/ProtheusTelegram
+*/
+Class Telegram From FwRest
+
+    Data cUrl       As character // String
+    Data cToken     As character
+
+    Data aHeadOut   As Array
+    Data cPath      As character
+    Data cEndPoint  As character
+    Data cChatId    As character
+
+    Public Method New() Constructor
+    Public Method SetChat()
+    Public Method GetChat()
+    Public Method SendMessage()
+    Public Method SendDocument()
+    Public Method SendPhoto()
+    Public Method GetUpdates()
+    Public Method GetMe()
+
+EndClass
+
+
+Method New ( cToken, cID ) Class Telegram
+
+    Local cUrl	 := SuperGetMv("MB_TLGURL",,"https://api.telegram.org")// Endereùo base para integraùùo
+
+    _Super:New(cUrl) // Inicializa metodo da classe pai
+
+    ::cURL      := cUrl
+    ::cToken    := cToken
+    ::cPath     := "/bot" + ::cToken
+    ::cChatId   := cID
+    ::aHeadOut  := {}
+    ::cEndPoint := ""
+
+Return( Self )
+
+
+Method SetChat( cChatId ) Class Telegram
+    ::cChatId := cChatId
+Return( ::cChatId  )
+
+
+Method GetChat() Class Telegram
+Return( ::cChatId  )
+
+// ------------------------------------------------------------------------------------------------------------+
+//  Se precisarmos do chat_id de uma pessoa que envia uma mensagem para o nosso bot, use o mùtodo getUpdates . |
+// ------------------------------------------------------------------------------------------------------------+
+Method GetUpdates() Class Telegram
+
+    Local cRet := ""
+
+    ::cEndPoint := ::cPath + "/getUpdates"
+
+    _Super:SetPath( ::cEndPoint )
+
+    If _Super:Get()
+        cRet := _Super:GetResult()
+    EndIf
+
+Return( cRet )
+
+// -------------------------------------------------------------------------------+
+//  informaùùes bùsicas sobre o bot recùm criado, precisamos usar o mùtodo getMe  |
+// -------------------------------------------------------------------------------+
+Method GetMe() Class Telegram
+
+    Local cRet := ""
+
+    ::cEndPoint := ::cPath  + "/getMe"
+
+    _Super:SetPath( ::cEndPoint )
+
+    If _Super:Get()
+        cRet := _Super:GetResult()
+    EndIf
+
+Return( cRet )
+
+// ---------------------------------------------------------------------+
+// Faz o envio de mensagens para determinad chat id - markdown ou  HTML |
+// ---------------------------------------------------------------------+
+Method SendMessage( cMessage, lHtml ) Class Telegram
+    Local cParseMode := ""
+    Local cEndpoint  := ""
+    Local cUrl       := ""
+    Local lRet       := .F.
+
+    Default cMessage := ""
+    Default lHtml    := .F.
+
+    If !Empty(cMessage)
+        // 1) Define o modo de parse
+        cParseMode       := IIF( lHtml, "html", "markdown" )
+
+        ::cPath          := "/bot" + ::cToken
+
+        // 2) Monta o endpoint (sempre partir de cPath original, que n„o sofre alteraÁ„o)
+        cEndpoint        := ::cPath + "/sendMessage"
+
+        // 3) Monta a query string (faÁa URL?encode do texto se tiver espaÁos/sÌmbolos)
+        cUrl             := "?parse_mode=" + cParseMode
+        // cUrl             += "&use_aliases=true"
+        cUrl             += "&chat_id=" + ::cChatId
+        cUrl             += "&text=" + ConvAsc( cMessage ) // ou HttpUrlEncode
+
+        // 4) Combina e dispara
+        ::cEndPoint      := cEndpoint + cUrl // opcional, se quiser gravar no atributo
+        _Super:SetPath( ::cEndPoint )
+        lRet := _Super:Get()
+    EndIf
+
+Return( lRet )
+
+User Function MBTelegram() // U_MBTelegram()
+
+    Local xRet      := Nil
+    Local oTelegram := Nil
+    Local _cMsg     := ""
+
+    Local lRet      := .T.
+    /*
+        ** DESENVOLVIMENTO
+        @ProtheusMiguelBot
+    */
+
+       oTelegram := Telegram():New(;
+            SuperGetMv("MB_TLGTKTI",,"8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI"),;
+            SuperGetMv("MB_TLGIDTI" ,,"-4909361835");
+            )
+        If ValType(oTelegram) == "O"
+
+            // xRet := oTelegram:SetChat( oTelegram:GetChat( ) /* ChatId */  )
+
+            _cMsg := '1o. bot - V@ Protheus x Telegram'
+            oTelegram:SendMessage( _cMsg, .F. /* lHtml */ )
+
+            _cMsg := '<b>bold</b>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := '<strong>bold</strong>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := '<i>italic</i>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := '<em>italic</em>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := '<u>sublinhado</u>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := '<s>traÁado</s>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := '<a href="URL">https://telegram-bot-sdk.readme.io/reference/sendmessage</a>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := '<code>inline fixed-width code</code>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+
+            _cMsg := 'Nota Fiscal: <pre>000001</pre> - Serie: <pre>1</pre>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+          
+        EndIf
+        oTelegram := Nil
+
+
+
+
+Return()
+
+/*
+
+1. Primeiro passo È ter um Telegram Bot.
+
+    1.1 -   Para cri·-lo, abra seu app do Telegram, busque por:
+                @BotFather e clique sobre ele.
+
+                @valegreBot
+
+                Here is the token for bot V@ Protheus x Telegram @valegreBot:
+
+                7414420557:AAHwN2Xk1QJ2sZKC0R2MhHBruBFNW3_ebYg
+                https://api.telegram.org/bot7414420557:AAHwN2Xk1QJ2sZKC0R2MhHBruBFNW3_ebYg/getUpdates
+                https://api.telegram.org/bot7414420557:AAHwN2Xk1QJ2sZKC0R2MhHBruBFNW3_ebYg/sendMessage?html&use_aliases=true&chat_id=-1002815947178&text=Teste envio mensagem 15/08/2025 - 10:14 - 01
+
+
+                Almoxarifado:
+                t.me/vaAlmoxarifadoBot
+                7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo
+                https://api.telegram.org/bot7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo/getUpdates
+                https://api.telegram.org/bot7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo/sendMessage?html&use_aliases=true&chat_id=-4974016224&text=Teste envio mensagem 15/08/2025 - 10:14 - 01
+
+
+                Fiscal: 8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo
+                https://api.telegram.org/bot8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo/getUpdates
+                https://api.telegram.org/bot8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo/sendMessage?markdown&use_aliases=true&chat_id=-4920396972&text=Teste envio mensagem 15/08/2025 - 10:14 - 01
+
+
+
+    1.2 -   Envie o comando: /newbot.
+    1.3 -   Insira um nome para o seu bot. (Exemplo: Bot Teste)
+
+    1.4 -   Insira um username. O username obrigatoriamente tem que terminar com
+            a palavra bot. Ex: MultErpbot, MeuRobo_bot.
+
+    1.5 -   Feito isso, vocÍ receber· um Token. Ele ser· usado para a integraÁ„o
+            com a Protheus ent„o copie ou salve em algum documento.
+
+    1.6 -   Para enviar mensagens para um determinado chat ser· preciso obter
+            o ID do bate-papo, neste caso faÁa o seguinte, inclua-o em grupo
+            por exemplo.
+
+    1.7 -   ApÛs adiciona-lo ao grupo abra o browse e cole o seguinte endereÁo:
+
+            https://api.telegram.org/bot<YourBOTToken>/getUpdates
+
+            Ex: Substitua o <YourBOTToken>  pelo seu Token.
+
+            Caso tenha ocorrido tudo certo ser· exibido um JSON com os dados do chat. Procure o objeto "chat" e guarde o numero correspondente pois ele tambÈm ser· utilizado na integraÁ„o.
+
+            {"update_id": 8393, "message": {"message_id": 3, "de": {"id": 7474, "first_name": "AAA"}, "chat": {"id":803967136, "tÌtulo ":" "}," date ": 25497," new_chat_participant ": {" id ": 71," first_name ":" NAME "," username ":" YOUR_BOT_NAME "}}}
+
+    1.8 - Para mais detalhes acesse a p·gina oficial do Telegram: https://core.telegram.org/bots#6-botfather
+
+
+2. FaÁa o ajuste do fonte Telegram.prw substituindo o Token e o Chat Id que foi gerado pelo bot.
+3. Agora È sÛ compilar e executar !
+
+
+** DESENVOLVIMENTO
+@ProtheusMiguelBot
+8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI
+
+https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/getUpdates
+
+chat_id: -4909361835
+https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/sendMessage?markdown&use_aliases=true&chat_id=-4909361835&text=Teste envio mensagem 19/08/2025 - 14:12
+
+https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/sendDocument?chat_id=-4909361835&caption=Meu PDF de teste&document=@/Users/miguelbernardo/Downloads/teste_telegram.pdf
+*/
