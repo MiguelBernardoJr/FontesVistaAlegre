@@ -39,8 +39,10 @@ user Function MenuDef()
 Return aRot
 
 user function ModelDef() as object
-	local oModel   := nil as object
-	local oStruct  := FWFormStruct(1,'ZPA') as object
+	local oModel    := nil as object
+	local oStruct   := FWFormStruct(1,'ZPA') as object
+	Local aGatilhos := {} as array
+	Local nI 		:= 0
 
     oStruct:SetProperty("ZPA_PLACA" , MODEL_FIELD_OBRIGAT, .T.)
     oStruct:SetProperty("ZPA_DATA"  , MODEL_FIELD_OBRIGAT, .T.)
@@ -49,6 +51,18 @@ user function ModelDef() as object
     oStruct:SetProperty("ZPA_IMPUR" , MODEL_FIELD_OBRIGAT, .T.)
     oStruct:SetProperty("ZPA_AVARIA", MODEL_FIELD_OBRIGAT, .T.)
     oStruct:SetProperty("ZPA_SILO"  , MODEL_FIELD_OBRIGAT, .T.)
+
+	aAdd(aGatilhos, FWStruTrigger( "ZPA_UMID"  , "ZPA_MUMID"   ,"custom.VAESTI09.U_GatZpa('ZPA_FUMID')" ,.F.,"",,"",NIL,"","01"))
+	aAdd(aGatilhos, FWStruTrigger( "ZPA_TEMP"  , "ZPA_MTEMP"   ,"custom.VAESTI09.U_GatZpa('ZPA_FTEMP')" ,.F.,"",,"",NIL,"","01"))
+	aAdd(aGatilhos, FWStruTrigger( "ZPA_IMPUR" , "ZPA_MIMPUR"  ,"custom.VAESTI09.U_GatZpa('ZPA_FIMPUR')",.F.,"",,"",NIL,"","01"))
+	aAdd(aGatilhos, FWStruTrigger( "ZPA_AVARIA", "ZPA_MAVARI"  ,"custom.VAESTI09.U_GatZpa('ZPA_FAVARI')",.F.,"",,"",NIL,"","01"))
+
+	For nI := 1 To Len(aGatilhos)
+		oStruct:AddTrigger(  aGatilhos[nI][01],; //Campo Origem
+						     aGatilhos[nI][02],; //Campo Destino
+						     aGatilhos[nI][03],; //Bloco de código na validação da execução do gatilho
+						     aGatilhos[nI][04])  //Bloco de código de execução do gatilho
+	Next
 
 	oModel := MPFormModel():New("custom.VAESTI09.VA09EST")
 	oModel:SetDescription("Medições de Milho")
@@ -166,7 +180,6 @@ User Function EST09ZPB()
 	_cQry += "		AND ZPB_DATA  = '"+DtoS(Date())+"' " + CRLF 
 	_cQry += "		AND ZPB_PRODUT IN ('020017')" + CRLF // CREME DE LEVEDURA
 	_cQry += "		AND ZPB_PESOE > 0" + CRLF
-	//_cQry += "		AND ZPB_PESOS > 0" + CRLF
 	_cQry += "				AND ZPB_FILIAL + ZPB_DATA + ZPB_CODIGO NOT IN (SELECT ZPA_FILIAL + ZPA_DATA + ZPA_CODZPB  " + CRLF
 	_cQry += "															FROM "+RetSqlName("ZPA")+" ZPA" + CRLF
 	_cQry += "															JOIN "+RetSqlName("ZPB")+" ZPB ON ZPA_FILIAL = ZPB_FILIAL" + CRLF
@@ -286,6 +299,10 @@ User Function EST09ZPB()
                 oStCab:SetValue("ZPA_FORNEC"  , ZPB->ZPB_CODFOR)
                 oStCab:SetValue("ZPA_LOJA"    , ZPB->ZPB_LOJFOR)
                 oStCab:SetValue("ZPA_FORNOM"  , ZPB->ZPB_NOMFOR)
+                oStCab:SetValue("ZPA_FUMID"   , ZPB->ZPB_FUMID)
+                oStCab:SetValue("ZPA_FTEMP"   , ZPB->ZPB_FTEMP)
+                oStCab:SetValue("ZPA_FIMPUR"  , ZPB->ZPB_FIMPUR)
+                oStCab:SetValue("ZPA_FAVARI"  , ZPB->ZPB_FAVARI)
             ENDIF
 
             ZPB->(DbCloseArea())
@@ -320,7 +337,6 @@ User Function VA09VISUALIZAZPB()
 Return 
 
 User Function VA09IMPRIMEZPB()
-	Local aArea := FwGetArea()
 	Local aPeso  := {}
 	Local lMilho := .F. 
 	
@@ -403,8 +419,25 @@ User Function VA09IMPRIMEZPB()
 			FWMsgRun(, {|| mbPesoPrint(aPeso,lMilho) },;
 						'Por Favor Aguarde...',; 
 						'Imprimindo ticket')
-		endif 
+		endif
 	ELSE
 		MsgAlert("Placa não encontrada! Verifique se a pesagem foi realizada corretamente.", "Atenção")
-	ENDIF 	
+	ENDIF
 Return
+
+User Function GatZpa(cCampoSoma)
+	Local oModel  	    := FWModelActive()
+	Local oStCab        := oModel:GetModel('ZPAMASTER')
+	Local cCampo 		:= SubStr(ReadVar(),At(">",ReadVar())+1,Len(ReadVar()))
+	Local nRet 			:= 0
+
+	SA2->(DbSetOrder(1))
+	SA2->(DbSeek(FwxFilial("SA2") + oStCab:GetValue("ZPA_FORNEC") + oStCab:GetValue("ZPA_LOJA"))) 
+	
+	If SA2->A2_INFMED == "S"
+		nRet := (oStCab:GetValue(cCampo) + oStCab:GetValue(cCampoSoma)) / 2
+	Else
+		nRet := oStCab:GetValue(cCampo)
+	EndIf
+
+Return nRet

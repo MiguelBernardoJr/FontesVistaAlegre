@@ -54,14 +54,15 @@ If Alltrim(cEmpAnt)<>'01' // Efetua Validacao apenas para empresa 01 - fazendas
 	Return lRet 
 Endif
 */
-	If AllTrim(ProcName(2)) == "A103PROCPC"
+	If AllTrim(ProcName(2)) == "A103PROCPC" .and. !IsInCallStack("MATA140")
  		lRet := .f.
    		nSldPed := SC7->C7_QUANT-SC7->C7_QUJE-SC7->C7_QTDACLA
    		
    		cC7Obs		:= 	u_SC7OBS(SC7->C7_FILIAL, SC7->C7_NUM)
+		
 		If !(Alltrim(cC7Obs)$cObsMT103)
 			If Empty(Alltrim(cObsMT103))
-				cObsMT103 := Alltrim(cC7Obs)			
+				cObsMT103 := Alltrim(cC7Obs)		
 			Else
 				cObsMT103 := Alltrim(cObsMT103) + ' || ' + Alltrim(cC7Obs) 
 				//			cObsMT103 += cObsMT103 + ' || ' + cC7Obs 
@@ -70,12 +71,12 @@ Endif
 		Endif
 
      	If (nSldPed > 0 .And. Empty(SC7->C7_RESIDUO) )
-      		NfePC2Acol(SC7->(RecNo()),,nSlDPed,cItem,/* lPreNota */,/*aRateio */,@aAuxHdSDE,@aAuxColSDE)
+      		NfePC2Acol(SC7->(RecNo()),,nSlDPed,cItem,/* lprenota */,/* aRateio */,@aAuxHdSDE,@aAuxColSDE)
         	nPosProd	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_COD"})
          	nPosDesc	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_DESC"})
           	
 			nPosOP		:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_OP"})
-			nPosOS		:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_ORDEM"})   
+			nPosOS		:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_ORDEM"})
           	
           	nPosCod   	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_COD"})
          	nPosNProd	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_DESC"})
@@ -173,7 +174,7 @@ Local nPosDCLVL
 Local nPosTES
 Local nPosDTES
 Local i         := 0
-Local   i := 0
+Local i := 0
 
 If !('MATA'$ alltrim(funname()))
 	RestArea(aArea)

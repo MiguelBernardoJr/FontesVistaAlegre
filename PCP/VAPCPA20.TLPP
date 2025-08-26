@@ -1,0 +1,143 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TLPP-CORE.TH"
+#INCLUDE "FWMVCDEF.CH"
+#Include "TopConn.ch"
+ 
+//Legendas
+namespace custom.VAPCPA20
+
+USER FUNCTION VAPCPA20()
+	Private oBrowse as object
+	Private _cRet := CriaVar("B8_LOTECTL",.F.)
+	
+	oBrowse := FWLoadBrw("custom.VAPCPA20.VAPCPA20")
+	oBrowse:Activate()
+	oBrowse:DeActivate()
+	oBrowse:Destroy()
+	FreeObj(oBrowse)
+	oBrowse := nil
+
+Return
+
+user function BrowseDef() as object
+	local oBrowse as object
+
+	oBrowse := FWMBrowse():New()
+	oBrowse:SetAlias("ZAF")
+	oBrowse:SetDescription("Cadastro de Currais de Enfermaria")
+
+return oBrowse
+
+user function ModelDef() as object
+	local oModel   := nil as object
+	local oStruct  := FWFormStruct( 1, 'ZAF' ) as object
+	
+	oModel := MPFormModel():New( "A20VAPCP", /*bPre*/ , /*bPos*/, /*bCommit*/, /* Fechatela()  */)
+	oModel:SetDescription("Plano de Trato")
+	
+    oModel:AddFields("ZAFMASTER" ,"", oStruct,/*bPreValid*/		,/* bPosValid */, /* bLoadHide */)
+
+    oModel:GetModel("ZAFMASTER"):SetDescription("Currais de Enfermaria")
+
+	oModel:SetPrimaryKey({"ZAF_FILIAL","ZAF_LOTE","ZAF_CURRAL"})
+
+return oModel
+
+user function ViewDef() as object
+	local oView as object
+	local oStruct := FWFormStruct( 2, 'ZAF' ) as object
+    local oModel  := FwLoadModel("custom.VAPCPA20.VAPCPA20") as object
+
+	oStruct:SetProperty('ZAF_LOTE'  , MVC_VIEW_LOOKUP 	 , "PCPA20")
+
+    oView 	:= FwFormView():New()
+    oView:SetModel(oModel)
+    
+    oView:AddField("ViewMaster"	, oStruct 	, "ZAFMASTER"	)
+
+    oView:CreateHorizontalBox("PRINCIPAL"   , 100)
+    
+    oView:SetOwnerView("ViewMaster"  	, "PRINCIPAL"	)
+
+    oView:EnableTitleView('ViewMaster', "" )
+
+return oView
+
+User Function MenuDef()
+	Local aRot := {} as Array
+	ADD OPTION aRot TITLE 'Visualizar' 		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
+	ADD OPTION aRot TITLE 'Incluir'    		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
+	ADD OPTION aRot TITLE 'Alterar'    		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
+	ADD OPTION aRot TITLE 'Excluir'    		ACTION 'VIEWDEF.custom.VAPCPA20.VAPCPA20' OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
+Return aRot
+
+User Function PesquisaLote()
+    Local aArea			:= GetArea()
+	Local oDlg, oLbx
+    Local aCpos  		:= {}
+    Local aRet   		:= {}
+    Local cQry  		:= ""
+    Local cAlias 		:= ""
+    Local lRet   		:= .F.
+	Local oView		 	:= FWViewActive()
+	Local oModel  	    := FWModelActive()
+	Local oMdZAF 	    := oModel:GetModel('ZAFMASTER') 
+
+	cQry := "SELECT B8_LOTECTL, B8_X_CURRA, SUM(B8_SALDO) AS B8_SALDO " + CRLF
+	cQry += " FROM "+RetSqlName("SB8")+" SB8 " + CRLF
+	cQry += " WHERE B8_FILIAL = '"+FwXFilial("SB8")+"' " + CRLF
+	cQry += " AND B8_PRODUTO LIKE 'BOV%' " + CRLF
+	cQry += " AND B8_SALDO > 0 " + CRLF
+	cQry += " AND B8_X_CURRA != '' " + CRLF
+	cQry += " AND B8_LOTECTL NOT IN (SELECT DISTINCT Z0F_LOTE FROM "+RetSqlName("Z0F")+" WHERE D_E_L_E_T_ = '') " + CRLF
+	cQry += " AND SB8.D_E_L_E_T_ = '' " + CRLF
+	cQry += " GROUP BY B8_LOTECTL, B8_X_CURRA" + CRLF
+
+	cAlias := MpSysOpenQuery(cQry)
+
+	if !(cALias)->(EOF())
+		While !(cAlias)->(EOF())
+			aAdd(aCpos,{(cAlias)->B8_LOTECTL,;
+						(cAlias)->B8_X_CURRA,;
+						(cAlias)->B8_SALDO})
+			(cAlias)->(dbSkip())
+		End
+    else
+		FwMsgAlert("Não foi encontrado lotes sem apartação")
+	endif
+	(cAlias)->(DbCloseArea())
+
+	If Len(aCpos) < 1
+        aAdd(aCpos,{" "," "," "})
+    EndIf
+
+	DEFINE MSDIALOG oDlg TITLE /*STR0083*/ "Currais de Enfermaria" FROM 0,0 TO 325,1000 PIXEL
+
+	@ 0,0 LISTBOX oLbx FIELDS HEADER 'Lote',;
+									 'Curral',;
+									 'Saldo' SIZE 500,150 OF oDlg PIXEL
+
+	oLbx:SetArray( aCpos )
+    oLbx:bLine     := {|| { aCpos[oLbx:nAt,1],;
+                            aCpos[oLbx:nAt,2],;
+                            aCpos[oLbx:nAt,3]}}
+
+	oLbx:bLDblClick := {|| {oDlg:End(), lRet:=.T., aRet := {oLbx:aArray[oLbx:nAt,1],;
+                            								oLbx:aArray[oLbx:nAt,2],;
+                            								oLbx:aArray[oLbx:nAt,3]}}}
+	DEFINE SBUTTON FROM 150,474 TYPE 1 ACTION (oDlg:End(), lRet:=.T.,;
+        aRet := {oLbx:aArray[oLbx:nAt,1],;
+                 oLbx:aArray[oLbx:nAt,2],;
+                 oLbx:aArray[oLbx:nAt,3]}) ENABLE OF oDlg
+    ACTIVATE MSDIALOG oDlg CENTER
+
+	If Len(aRet) > 0 .And. lRet
+		_cRet := aRet[1]
+		oMdZAF:SetValue("ZAF_CURRAL",   aRet[2])
+		lRet := .T.
+    EndIf
+
+	oView:Refresh()
+	RestArea(aArea)
+
+RETURN lRet

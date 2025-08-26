@@ -112,6 +112,7 @@ local nTrato       := 0
 private oTmpZ06    := nil
 private cTrbBrowse := CriaTrab(,.F.)
 private oBrowse    := nil
+Private oLoadTrt   := nil
 
 EnableKey(.T.)
 
@@ -2153,6 +2154,7 @@ static function CriaZ05()
     local cAliZ05   := ""
     local cAliZ0W   := ""
     local nResto    := 0
+    local lSomaSobra := .T.
 
     // Verifica se não existe plano de trato associado ao lote 
     if Empty((cAliLotes)->Z0O_CODPLA)
@@ -2270,7 +2272,7 @@ static function CriaZ05()
                                 // --nQtdAux
                             Else
 
-                                If lMaior // (nTrtTotal / nQtdAux) > MIN_TRATO     
+                                If lMaior // (nTrtTotal / nQtdAux) > MIN_TRATO
 
                                     If GetMV("VA_AJUDAN") == "K"
                                         nQtdTrato := (cAlias)->Z05_KGMSDI + Z0G->Z0G_AJSTKG - nTotTrtClc
@@ -2300,7 +2302,7 @@ static function CriaZ05()
                                                 nQtdTrato := nQtdTrato - (NoRound(((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD, TamSX3("Z05_KGMSDI")[2]) * (cAliZ06)->QTD) + NoRound(((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD, TamSX3("Z05_KGMSDI")[2])
                                             Else 
                                                 nQtdTrato := NoRound(((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (cAliZ06)->QTD, TamSX3("Z05_KGMSDI")[2])
-                                            EndIf 
+                                            EndIf
                                         EndIf
                                     ElseIf !Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A"
                                         IF RTRIM((cAliZ06)->Z0I_ORIGEM) $ "S"//!Empty((cAliZ06)->Z0I_AJUSTE)
@@ -2515,10 +2517,22 @@ static function CriaZ05()
                                         EndIf
                                     EndIf
                                     If nQtdTrato > 0
-                                        nQtdTrato := ((cAlias)->Z05_KGMSDI +  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))
+                                        nDividendo  := ((cAlias)->Z05_KGMSDI + ((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU / 100))
+                                        nDivisor    := (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))
+                                        IF lSomaSobra //.and. NoRound(((cAlias)->Z05_KGMSDI -  (((cAlias)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (iif((cAliZ06)->QTD==nDif, 1,(cAliZ06)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux) > 0
+
+                                            if (nResto := nDividendo % nDivisor) > 0 .and. ((nDec := nResto - (NoRound(nResto / nDivisor,TamSX3('Z06_KGMSTR')[2]) * nDivisor)) > 0)
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2]) + nDec
+                                                lSomaSobra := .F.
+                                            else
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                            endif
+                                        else
+                                            nQtdTrato :=  NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                        endif
                                     EndIf
                                 EndIf
-                            EndIf 
+                            EndIf
                             // FIM MB : 23.02.2023  
 
                             cSeq := U_GetSeq((cAliZ06)->Z06_DIETA)
@@ -2687,7 +2701,6 @@ static function CriaZ05()
 
                     cDieta := ""
                     cNroTrato := ""
-
                     while !(cAliZ0W)->(Eof())
                         nQtdAux       := (cAliZ0W)->QTD        
                         nDif          := 0
@@ -2941,7 +2954,19 @@ static function CriaZ05()
                                     EndIf
 
                                     If nQtdTrato > 0
-                                        nQtdTrato := ((cAliZ0W)->Z05_KGMSDI +  (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)) / (iif((cAliZ0W)->QTD==nDif, 1,(cAliZ0W)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))
+                                        nDividendo  := (cAliZ0W)->Z05_KGMSDI + (((cAliZ0W)->Z05_KGMSDI * Z0G->Z0G_PERAJU ) / 100)
+                                        nDivisor    := iif((cAliZ0W)->QTD==nDif, 1,(cAliZ0W)->QTD-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)
+                                        iF lSomaSobra //.and. (( (cAliZ0W)->Z05_KGMSDI -  NoRound(((cAliZ0W)->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
+
+                                            if (nResto := nDividendo % nDivisor) > 0 .and. ((nDec := nResto - (NoRound(nResto / nDivisor,TamSX3('Z06_KGMSTR')[2]) * nDivisor)) > 0)
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2]) + nDec
+                                                lSomaSobra  := .F.
+                                            else
+                                                nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                            endif
+                                        Else
+                                            nQtdTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                        EndIf
                                     EndIf
                                 EndIf
                             EndIf 
@@ -3563,7 +3588,7 @@ static function CriaZ05()
                                         EndIf
                                     EndIf
                                 EndIf
-                            EndIf 
+                            EndIf
                             // FIM MB : 23.02.2023  
 
                             cSeq      := U_GetSeq((cAliZ06)->Z06_DIETA)
@@ -3832,9 +3857,9 @@ User function LoadTrat(dDtTrato)
             cKgMnTot  +=  ", ((isnull(MN" + StrZero(i, 1) + ", 0) *  isnull(B8_SALDO,0))" 
         EndIf
     next
-    cInsertCab += ", Z05_MNTOT" 
+    cInsertCab += ", Z05_MNTOT"
 
-    cKgMnTot += ") AS Z05_MNTOT"    
+    cKgMnTot += ") AS Z05_MNTOT"
     cSelectCab += cKgMnTot
     DbSelectArea("Z0R")
     DbSetOrder(1) // Z0R_FILIAL+DTOS(Z0R_DATA)
@@ -8251,7 +8276,7 @@ Local nQtdAux       := 0
 Local lMaior        := .T.
 Local lSobra        := .T.
 Local nBKPnTrtTotal := 0
-
+Local lSomaSobra    := .T.
 
     DbSelectArea("Z05")
     DbsetOrder(1) // Z05_FILIAL+DToS(Z05_DATA)+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
@@ -8560,14 +8585,21 @@ Local nBKPnTrtTotal := 0
 
                                     EndIf
                                     If nQuantTrato > 0
+                                        nDividendo  := Z05->Z05_KGMSDI
+                                        nDivisor    := iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)
 
-                                            //nQuantTrato := NoRound(Z05->Z05_KGMSDI  / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)),TamSX3('Z06_KGMNT')[2])
-                                            
-                                            iF i == 2 .and.(( Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
-                                                nQuantTrato := (Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) + NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),,TamSX3('Z06_KGMSTR')[2])
-                                            Else 
-                                                nQuantTrato := NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2])
-                                            EndIf
+                                        iF lSomaSobra //.and.(( Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
+
+                                            if (nResto := nDividendo % nDivisor) > 0 .and. ((nDec := nResto - (NoRound(nResto / nDivisor,TamSX3('Z06_KGMSTR')[2]) * nDivisor)) > 0)
+                                                nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2]) + nDec
+                                                lSomaSobra := .F.
+                                            else
+                                                nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                            endif
+
+                                        Else
+                                            nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+                                        EndIf
                                     EndIf
                                 EndIf
                             EndIf 
@@ -9678,7 +9710,6 @@ DbSetOrder(1)
     Z05->(RestArea(aAreaZ05))
 Return
 
-
 Static Function fsVldCpo()
     _cDescri := Space(30)
     If !Empty(&(ReadVar()))
@@ -9691,3 +9722,54 @@ Static Function fsVldCpo()
         EndIf
     EndIf
 Return .T.
+
+Static Function MontaQuery()
+    Local cQry := ""
+    local cInsertCab := ""
+    local cSelectCab := ""
+    local cKgMnTot   := ""
+
+    cInsertCab := " Z08_CODIGO" +;              // COCHO
+            ", Z0T_ROTA" +;                // ROTA
+            ", Z0S_EQUIP" +;               // CAMINHAO 
+            ", ZV0_DESC" +;                // DESCRIÇÃO DO CAMINHAO
+            ", B8_LOTECTL" +;              // LOTE
+            ", Z05_PESMAT" +;              // PESO MED AUAL
+            ", CMS_PV" +;                  // Consumo de materia seca por peso
+            ", Z05_MEGCAL" +;              // Mega Caloria
+            ", B8_SALDO" +;                // SALDO
+            ", Z05_DIASDI" +;              // Dias de Cocho
+            ", NOTA_MANHA" +;              // NOTAS DE COCHO
+            ", NOTA_MADRU" +;              // NOTAS DE COCHO
+            ", NOTA_NOITE" +;              // NOTAS DE COCHO
+            ", PROGANTMS" +;               // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça       
+            ", PROG_MS" +;                 // PROGRAMAÇÃO DE TRATO - KG de MS / Cabeça
+            ", NR_TRATOS" +;               // Qtde Tratos
+            ", PROGANTMN" +;               // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça       
+            ", PROG_MN" +;                 // PROGRAMAÇÃO DE TRATO - KG de MN / Cabeça
+            ", QTDTRATO"
+
+    cSelectCab := " CURRAIS.Z08_CODIGO CODIGO" +;                                                 // COCHO
+                  ", isnull(ROTAS.Z0T_ROTA, '" + Space(TamSX3("Z0T_ROTA")[1]) + "') Z0T_ROTA" +;   // ROTA
+                  ", isnull(ROTAS.Z0S_EQUIP, '" + Space(TamSX3("Z0S_EQUIP")[1]) + "') Z0S_EQUIP" +; // Caminhão 
+                  ", isnull(ROTAS.ZV0_DESC, '" + Space(TamSX3("ZV0_DESC")[1]) + "') ZV0_DESC" +; // Descrição do Caminhão
+                  ", isnull(Z05.Z05_LOTE, isnull(CURRAIS.B8_LOTECTL,'" + Space(TamSX3("B8_LOTECTL")[1]) + "')) LOTE" +;  // LOTE
+                  ", isnull(Z05.Z05_PESMAT, (CURRAIS.B8_XPESOCO)+(isnull(Z0O_GMD, 0)* (DATEDIFF(D,CURRAIS.B8_XDATACO,'" + DtoS(dDtTrato) + "')+1))) Z05_PESMAT" +; // Peso Médio Atual
+                  ", isnull(Z05.Z05_KGMSDI, 0)/case isnull(CURRAIS.B8_XPESOCO, 0) + isnull(Z05.Z05_DIASDI,0) * isnull(Z0O_GMD, 0) when 0 then 1 else isnull(CURRAIS.B8_XPESOCO, 0) + isnull(Z05.Z05_DIASDI,0) * isnull(Z0O_GMD, 0) end * 100 CMS_PV " +; // Consumo de materia seca por peso
+                  ", isnull(Z05.Z05_MEGCAL, 0) Z05_MEGCAL" +;
+                  ", isnull(CURRAIS.B8_SALDO,0) SALDO" +;                                          // SALDO
+                  ", isnull(Z05.Z05_DIASDI, DATEDIFF(D,CURRAIS.B8_XDATACO,'" + DtoS(dDtTrato) + "')+1) DIA_COCHO" +; // Dias de Cocho
+                  ", isnull(NOTA_MANHA.Z0I_NOTMAN,'" + Space(TamSX3("Z0I_NOTMAN")[1]) + "') NOTA_MANHA" +; // NOTAS DE COCHO
+                  ", isnull(NOTA_MANHA.Z0I_NOTNOI,'" + Space(TamSX3("Z0I_NOTNOI")[1]) + "') NOTA_MADRU" +; // NOTAS DE COCHO
+                  ", isnull(NOTA_MANHA.Z0I_NOTTAR,'" + Space(TamSX3("Z0I_NOTTAR")[1]) + "') NOTA_NOITE" +; // NOTAS DE COCHO
+                  ", isnull(Z05ANT.Z05_KGMSDI,0) MS_D1" +; // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça 
+                  ", isnull(Z05.Z05_KGMSDI,0) MS" +; // PROGRAMAÇÃO DE TRATO - KG de MS / Cabeça
+                  ", isnull(TRATOS.QTDE_TRATOS,0) QTDE_TRATOS" +; // Qtde Tratos
+                  ", isnull(Z05ANT.Z05_KGMNDI,0) MN_D1" +; // PROGRAMAÇÃO ANTERIOR - KG de MS / Cabeça 
+                  ", isnull(Z05.Z05_KGMNDI,0) MN" +; // PROGRAMAÇÃO DE TRATO - KG de MN / Cabeça
+                  ", isnull(REPETE.QTDTRATO, 0) QTDTRATO"
+                
+	MEMOWRITE("C:\TOTVS_RELATORIOS\VAPCPA05_LOADTRAT.SQL", cQry)
+	oLoadTrt := FwExecStatement():New(cQry)
+
+Return

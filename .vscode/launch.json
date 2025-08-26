@@ -33,7 +33,7 @@
 			"request": "launch",
 			"name": "V@: Web Debug PROD",
 			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.242:2025/WEBAPP/",
+			"smartclientUrl": "http://192.168.0.242:8195/WEBAPP/",
 			"isMultiSession": true,
 			"enableTableSync": true
 		}
