@@ -13,7 +13,7 @@ User Function MT110ROT()
 //    5 - Remove o registro corrente do Banco de Dados         
 //    6 - Altera determinados campos sem incluir novos Regs     
     AAdd( aRotina, { 'Bloqueio de solicitações', 'U_IG110BL()', 0, 2 } )
-Return aRotina 
+Return aRotina
 
 User Function IG110BL()
     Local aPergs    := {}

@@ -24,7 +24,7 @@ User Function VAESTI08()
 	
     SetFunName(cFunBkp)
 	RestArea(aArea)
-Return NIL  
+Return NIL
 Static Function MenuDef()
 	Local aRot := {}
 
@@ -56,7 +56,7 @@ Static Function ModelDef()
 						    aGatilhos[nI][02],; //Campo Destino
 						    aGatilhos[nI][03],; //Bloco de código na validação da execução do gatilho
 						    aGatilhos[nI][04])  //Bloco de código de execução do gatilho
-    Next 
+    Next
 	
 	aGatilhos := {}
     aAdd(aGatilhos, FWStruTriggger( "ZVJ_PROD ", "ZVJ_DESC" ,"SB1->B1_DESC"		,.t.,"SB1",1,"FwxFilial('SB1')+M->ZVJ_PROD"                              				,NIL,"01"))
@@ -66,7 +66,7 @@ Static Function ModelDef()
 						    aGatilhos[nI][02],; //Campo Destino
 						    aGatilhos[nI][03],; //Bloco de código na validação da execução do gatilho
 						    aGatilhos[nI][04])  //Bloco de código de execução do gatilho
-    Next 
+    Next
 
     oStZVH:SetProperty( 'ZVH_QTAPOS', MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,0,ZVH->ZVH_B2QATU - ZVH->ZVH_QUANT)") )
     oStZVH:SetProperty( 'ZVH_DESC'	, MODEL_FIELD_INIT, FwBuildFeature( STRUCT_FEATURE_INIPAD, "IIF(INCLUI,'',Posicione('SB1',1,FwXfilial('SB1')+ZVH->ZVH_PROD,'B1_DESC'))") )

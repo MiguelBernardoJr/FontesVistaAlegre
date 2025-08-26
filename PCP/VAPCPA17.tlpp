@@ -7,10 +7,12 @@
 namespace custom.VAPCPA17
 
 static aCpoMdRot  := { "Z0T_ROTA"	,"Z06_TRATO" ,"Z06_KGMNT"}
-static aCpoMdZ06G := { "Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT"/* ,"Z05_CMSPN" */ ,"Z0I_NOTTAR","Z0I_NOTMAN","Z05_TOTMSC","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z0T_ROTA","XX5_PVATU"}
+static aCpoGridZ06G := { "Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT","Z0I_NOTTAR","Z0I_NOTMAN","Z05_PROGANT","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z05_TOTMSC","Z0T_ROTA","XX5_PVATU","Z05_NROTRA"}
 static aCpoMdZ06D := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE","Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
 static aCpoMdZ05G := { "Z05_DATA"	,"Z05_DIETA" ,"Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
 static aCpoMdRt1  := { "Z0S_EQUIP"  ,"ZV0_DESC"  ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
+
+Static MIN_TRATO  := GETMV( 'MB_MINTRAT' ,, 300)
 
 /*/{Protheus.doc} VAPCPA17
 Rotina será usada na chamada <F4> da rotina VAPCPA05
@@ -90,9 +92,7 @@ user function ModelDef() as object
 	local oStrRotD := RotGrdMStr(1) as object
 	local oStrRotG := RotGrdMStr(2) as object
     local oStrHide := HidGrdMStr()	as object
-    local oStrRt1  := Rt1GrdMStr()	as object
 
-	local bLoadRt1    := {|oModel, lCopia| LoadRt1(oModel, lCopia) } as codeblock
 	local bLoadRotD   := {|oModel, lCopia| LoadRotD(oModel, lCopia) } as codeblock
 	local bLoadRotG   := {|oModel, lCopia| LoadRotG(oModel, lCopia) } as codeblock
 	local bLoadHide   := {|oModel, lCopia| LoadHide(oModel, lCopia) } as codeblock
@@ -125,12 +125,6 @@ user function ModelDef() as object
     oModel:AddGrid("MdGridZ06G"    ,"MdGridRotaG", oStrZ06G,/* {|| ValidZ06g(1)} *//* bZ06LinePr */,/* {|| ValidZ06g(2)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06G)
     oModel:AddGrid("MdGridZ06D"    ,"MdGridZ06G" , oStrZ06D,/* {|| ValidZ06g(3)} *//* bZ06LinePr */	,/* {|| ValidZ06g(4)} */ /* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ06D)
     oModel:AddGrid("MdGridZ05G"    ,"MdGridZ06G" , oStrZ05G,/* {|| ValidZ06g(7)} *//* bZ06LinePr */	,/* {|| ValidZ06g(8)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadZ05G)
-    oModel:AddGrid("MdFieldRt1"    ,"MdGridZ06G" , oStrRt1,/* {|| ValidZ06g(7)} *//* bZ06LinePr */	,/* {|| ValidZ06g(8)} *//* bZ06LinePo */,/* bZ06PreD */,/*bPost*/, bLoadRt1)
-    //oModel:AddGrid("MdFieldRt1"  ,"MdGridZ06G" , oStrRt1 ,/*bPreValid*/		,/* bPosValid */, bLoadRt1)
-
-	aRelacao := {}
-	aAdd(aRelacao, {'Z06_LOTE', 'Z06_LOTE'} )
-	oModel:SetRelation('MdFieldRt1', aRelacao/* , Z0T->(IndexKey(1)) */)
 
 	aRelacao := {}
 	aAdd(aRelacao, {'XX1_EQUIP', 'Z0S_EQUIP'} )
@@ -152,7 +146,6 @@ user function ModelDef() as object
 	aAdd(aRelacao, {'Z06_LOTE'  , 'Z05_LOTE'} )
 	oModel:SetRelation('MdGridZ05G', aRelacao/* , Z05->(IndexKey(1)) */)
 
-    oModel:GetModel("MdFieldRt1"):SetDescription("Seleção atual")
 	oModel:GetModel("MdGridZ06G"):SetDescription("Lista de Currais")
 	oModel:GetModel("MdGridZ06D"):SetDescription("Relação de Tratos")
     oModel:GetModel("MdGridRotaD"):SetDescription("Total por Rota e Trato")
@@ -162,7 +155,6 @@ user function ModelDef() as object
 
 	oModel:SetPrimaryKey({})
 
-    oModel:GetModel('MdFieldRt1' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridRotaG' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridRotaD' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridZ05G' ):SetOnlyView(.T.)
@@ -178,15 +170,14 @@ user function ModelDef() as object
 	oModel:getModel("MdGridZ06G"):SetNoInsertLine(.T.)
     oModel:getModel("MdGridZ06G"):SetNoDeleteLine(.T.)
 
-	oModel:getModel("MdGridZ06D"):SetNoInsertLine(.T.)
-	oModel:getModel("MdGridZ06D"):SetNoInsertLine(.T.)
+	//oModel:getModel("MdGridZ06D"):SetNoInsertLine(.T.)
+	//oModel:getModel("MdGridZ06D"):SetNoDeleteLine(.T.)
     
 	oModel:getModel("MdGridZ05G"):SetNoInsertLine(.T.)
 	oModel:getModel("MdGridZ05G"):SetNoDeleteLine(.T.)
 
     oModel:AddCalc('TOTAIS1', 'MdGridRotaG', 'MdGridZ06G' , 'Z05_CABECA', 'XX1_CABECA' 	, 'SUM'		, , , "Cabeças" )
     oModel:AddCalc('TOTAIS1', 'MdGridRotaG', 'MdGridZ06G' , 'Z05_CABECA', 'XX1_COUNT' 	, 'COUNT'	, , , "Qtd de lotes" )
-    //oModel:AddCalc('TOTAIS1', 'MdFieldRota', 'MdGridRotaG', 'ZV0_DESC'	, 'XX1_DESC' 	, 'SUM'		, , , "Caminhão" )
     
 	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06D', 'Z06_KGMSTR', 'XX2_KGMSTR', 'SUM', , , "KG MS Inform"   	)
 	oModel:AddCalc('TOTAIS2', 'MdGridZ06G', 'MdGridZ06G', 'Z05_TOTMSC', 'XX2_TOTMSC', 'SUM', , , "KG MS Calc Ant")
@@ -196,7 +187,6 @@ user function ModelDef() as object
 	
 	oModel:AddCalc('TOTAIS3', 'MdGridRotaG', 'MdGridRotaD', 'Z06_KGMNT' , 'XX3_KGMNT', 'SUM', , , "KG Mn Total" 	)
 	
-	oModel:SetOptional("MdFieldRt1" , .T.)
 	oModel:SetOptional("MdGridZ05G"	, .T.)
 	oModel:SetOptional("MdGridZ06G"	, .T.)
 	oModel:SetOptional("MdGridZ06D"	, .T.)
@@ -207,8 +197,7 @@ return oModel
 
 user function ViewDef() as object
 	local oView 	as object
-
-	local oStrRt1   := nil as object
+	local oModel 	as object
 	local oStrZ05G  := nil as object
     local oStrZ06G 	:= nil as object
     local oStrZ06D 	:= nil as object
@@ -218,105 +207,97 @@ user function ViewDef() as object
 	local oStrTot1  := nil as object
 	local oStrTot2  := nil as object
 
-	//if IsInCallStack("U_VAPCPA05") .or. !Empty((cTrbBrowse)->B8_LOTECTL)
-		
-		oModel 	:= FwLoadModel("custom.VAPCPA17.VAPCPA17")
+	oModel 	:= FwLoadModel("custom.VAPCPA17.VAPCPA17")
 
-		oStrZ05G   	:= Z05GrdVStr()
-		oStrRotD 	:= ROTGrdVStr(1)
-		oStrRotG 	:= ROTGrdVStr(2)
-		oStrHide 	:= HidGrdVStr()
-    	oStrZ06G    := Z06GrdVStr(1)
-    	oStrZ06D    := Z06GrdVStr(2)
-    	oStrRt1     := Rt1GrdVStr()
-		oStrTot1 	:= FWCalcStruct(oModel:GetModel('TOTAIS1' ))
-		oStrTot2 	:= FWCalcStruct(oModel:GetModel('TOTAIS2' ))
-		oStrTot3 	:= FWCalcStruct(oModel:GetModel('TOTAIS3' ))
+	oStrZ05G   	:= Z05GrdVStr()
+	oStrRotD 	:= ROTGrdVStr(1)
+	oStrRotG 	:= ROTGrdVStr(2)
+	oStrHide 	:= HidGrdVStr()
+	oStrZ06G    := Z06GrdVStr(1)
+	oStrZ06D    := Z06GrdVStr(2)
+	oStrTot1 	:= FWCalcStruct(oModel:GetModel('TOTAIS1' ))
+	oStrTot2 	:= FWCalcStruct(oModel:GetModel('TOTAIS2' ))
+	oStrTot3 	:= FWCalcStruct(oModel:GetModel('TOTAIS3' ))
 
-		oView 	:= FwFormView():New()
-		oView:SetModel(oModel)
-		
-		oView:AddField("VwFieldRotas"	, oStrHide 	, "MdFieldRota"	)
-		oView:AddGrid("VwFieldPos" 	, oStrRt1   , "MdFieldRt1"  )
-		oView:AddGrid("VwGridZ05G" 	, oStrZ05G 	, "MdGridZ05G"	)
-		oView:AddGrid("VwGridZ06G" 	, oStrZ06G 	, "MdGridZ06G"	)
-		oView:AddGrid("VwGridZ06D" 	, oStrZ06D 	, "MdGridZ06D"	)
-		oView:AddGrid("VwGridROTG" 	, oStrRotG  , "MdGridRotaG"	)
-		oView:AddGrid("VwGridROTD" 	, oStrRotD  , "MdGridRotaD"	)
-		oView:AddField("VwKgTot1" 	, oStrTot1  , "TOTAIS1" )
-		oView:AddField("VwKgTot2" 	, oStrTot2  , "TOTAIS2" )
-		oView:AddField("VwKgTot3" 	, oStrTot3  , "TOTAIS3" )
-
-		oView:CreateHorizontalBox("CAB_ROTAS"   , 0)
-		oView:CreateHorizontalBox("ITENS"       , 100)
-
-		oView:CreateVerticalBox("ROTAS",  10, "ITENS")
-		oView:CreateVerticalBox("PROGR",  51, "ITENS")
-		oView:CreateVerticalBox("LOTES",  38, "ITENS")
-
-		oView:CreateHorizontalBox("PROGR_CIMA"  , 88, "PROGR")
-		oView:CreateHorizontalBox("PROGR_BAIXO" , 12, "PROGR")
-		
-		oView:CreateVerticalBox("PROGR_BAIXO_ESQ",  35, "PROGR_BAIXO")
-		oView:CreateVerticalBox("PROGR_BAIXO_DIR",  65, "PROGR_BAIXO")
-
-		oView:CreateHorizontalBox("ROTAS_CIMA" , 65, "ROTAS")
-
-		oView:CreateHorizontalBox("LOTES_CIMA"  , 10, "LOTES")
-		oView:CreateHorizontalBox("LOTES_CENTER", 30, "LOTES")
-		oView:CreateHorizontalBox("LOTES_BAIXO" , 20, "LOTES")
-		oView:CreateHorizontalBox("ROTAS_MEIO"  ,30, "LOTES")
-		oView:CreateHorizontalBox("ROTAS_BAIXO", 10, "LOTES")
-		
-		oView:SetOwnerView("VwFieldRotas"  	, "CAB_ROTAS"	)
-		oView:SetOwnerView("VwGridROTG"  	, "ROTAS_CIMA"  ) //Rotas
-		oView:SetOwnerView("VwGridROTD"  	, "ROTAS_MEIO"  ) //Total por Rota e Trato
-		oView:SetOwnerView("VwKgTot3"  		, "ROTAS_BAIXO" ) // Total da Rota
-		oView:SetOwnerView("VwGridZ06G"  	, "PROGR_CIMA"  ) //Lista de Currais
-		oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CENTER") // Relação de Tratos
-		oView:SetOwnerView("VwKgTot2" 		, "LOTES_CIMA"  ) // Totais por Lote
-		oView:SetOwnerView("VwGridZ05G" 	, "LOTES_BAIXO" ) // Programação anterior
-		oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO_ESQ"	) //Totais por Rota
-		oView:SetOwnerView("VwFieldPos"    	, "PROGR_BAIXO_DIR"	) //Seleção atual
+	oView 	:= FwFormView():New()
+	oView:SetModel(oModel)
 	
-		oView:SetNoInsertLine("VwGridZ06G")
-		oView:SetNoDeleteLine("VwGridZ06G")
+	oView:AddField("VwFieldRotas"	, oStrHide 	, "MdFieldRota"	)
+	oView:AddGrid("VwGridZ05G" 	, oStrZ05G 	, "MdGridZ05G"	)
+	oView:AddGrid("VwGridZ06G" 	, oStrZ06G 	, "MdGridZ06G"	)
+	oView:AddGrid("VwGridZ06D" 	, oStrZ06D 	, "MdGridZ06D"	)
+	oView:AddGrid("VwGridROTG" 	, oStrRotG  , "MdGridRotaG"	)
+	oView:AddGrid("VwGridROTD" 	, oStrRotD  , "MdGridRotaD"	)
+	oView:AddField("VwKgTot1" 	, oStrTot1  , "TOTAIS1" )
+	oView:AddField("VwKgTot2" 	, oStrTot2  , "TOTAIS2" )
+	oView:AddField("VwKgTot3" 	, oStrTot3  , "TOTAIS3" )
 
-		oView:SetNoInsertLine("VwGridZ06D")
-		oView:SetNoDeleteLine("VwGridZ06D")
+	oView:CreateHorizontalBox("CAB_ROTAS"   , 0)
+	oView:CreateHorizontalBox("ITENS"       , 100)
 
-		oView:SetNoInsertLine("VwGridROTD")
-		oView:SetNoDeleteLine("VwGridROTD")
+	oView:CreateVerticalBox("ROTAS",  10, "ITENS")
+	oView:CreateVerticalBox("PROGR",  51, "ITENS")
+	oView:CreateVerticalBox("LOTES",  38, "ITENS")
 
-		oView:SetNoInsertLine("VwGridROTG")
-		oView:SetNoDeleteLine("VwGridROTG")
+	oView:CreateHorizontalBox("PROGR_CIMA"  , 88, "PROGR")
+	oView:CreateHorizontalBox("PROGR_BAIXO" , 12, "PROGR")
 
-		oView:EnableTitleView('VwGridROTD' 	, "Total por Rota e Trato"	)
-		oView:EnableTitleView('VwGridROTG' 	, "Rotas"					)
-		oView:EnableTitleView('VwGridZ06G'	, "Lista de Currais"		)
-		oView:EnableTitleView('VwGridZ06D'	, "Relação de Tratos"		)
-		oView:EnableTitleView('VwFieldRotas', "Seleção de Rotas"		)
-		oView:EnableTitleView('VwKgTot3'	, "Total da rota"			)
-		oView:EnableTitleView('VwKgTot2'	, "Totais por Lote"			)
-		oView:EnableTitleView('VwGridZ05G'	, "Programação anterior"	)
-		oView:EnableTitleView('VwKgTot1'   	, "Totais por Rota"			)
-		oView:EnableTitleView('VwFieldPos'  , "Seleção atual"			)
+	oView:CreateHorizontalBox("ROTAS_CIMA" , 65, "ROTAS")
 
-		oView:SetViewProperty("VwGridROTG", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
-		oView:SetViewProperty("VwGridROTD", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
-		oView:SetViewProperty("VwGridZ06G", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; }"} )
+	oView:CreateHorizontalBox("LOTES_CIMA"  , 10, "LOTES")
+	oView:CreateHorizontalBox("LOTES_CENTER", 30, "LOTES")
+	oView:CreateHorizontalBox("LOTES_BAIXO" , 20, "LOTES")
+	oView:CreateHorizontalBox("ROTAS_MEIO"  ,30, "LOTES")
+	oView:CreateHorizontalBox("ROTAS_BAIXO", 10, "LOTES")
+	
+	oView:SetOwnerView("VwFieldRotas"  	, "CAB_ROTAS"	)
+	oView:SetOwnerView("VwGridROTG"  	, "ROTAS_CIMA"  ) //Rotas
+	oView:SetOwnerView("VwGridROTD"  	, "ROTAS_MEIO"  ) //Total por Rota e Trato
+	oView:SetOwnerView("VwKgTot3"  		, "ROTAS_BAIXO" ) // Total da Rota
+	oView:SetOwnerView("VwGridZ06G"  	, "PROGR_CIMA"  ) //Lista de Currais
+	oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CENTER") // Relação de Tratos
+	oView:SetOwnerView("VwKgTot2" 		, "LOTES_CIMA"  ) // Totais por Lote
+	oView:SetOwnerView("VwGridZ05G" 	, "LOTES_BAIXO" ) // Programação anterior
+	oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO"	) //Totais por Rota
 
-		if Inclui .or. Altera
-			oView:AddUserButton( "Atualizar (F11)" , 'OK', {|| AtualizaTela() } )
-			SetKey(VK_F11, {|| AtualizaTela()})
-			oView:AddUserButton( "Nro Tratos (F8)", 'OK', {|| vap17tra() } )
-			SetKey(VK_F8, {|| vap17tra()})
-			oView:AddUserButton( "Dietas (F10) "	 , 'OK', {|| vap17trt() } )
-			SetKey(VK_F10, {|| vap17trt()})
-		endif
-	//else
-    //	Help(/*Descontinuado*/,/*Descontinuado*/,"SEM LOTE",/**/,"Não existe lote vinculado ao curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível atribuir um trato ao curral selecionado."})
-	//endif
+	oView:SetNoInsertLine("VwGridZ06G")
+	oView:SetNoDeleteLine("VwGridZ06G")
+
+	oView:SetNoInsertLine("VwGridZ06D")
+	oView:SetNoDeleteLine("VwGridZ06D")
+
+	oView:SetNoInsertLine("VwGridROTD")
+	oView:SetNoDeleteLine("VwGridROTD")
+
+	oView:SetNoInsertLine("VwGridROTG")
+	oView:SetNoDeleteLine("VwGridROTG")
+
+	oView:EnableTitleView('VwGridROTD' 	, "Total por Rota e Trato"	)
+	oView:EnableTitleView('VwGridROTG' 	, "Rotas"					)
+	oView:EnableTitleView('VwGridZ06G'	, "Lista de Currais"		)
+	oView:EnableTitleView('VwGridZ06D'	, "Relação de Tratos"		)
+	oView:EnableTitleView('VwFieldRotas', "Seleção de Rotas"		)
+	oView:EnableTitleView('VwKgTot3'	, "Total da rota"			)
+	oView:EnableTitleView('VwKgTot2'	, "Totais por Lote"			)
+	oView:EnableTitleView('VwGridZ05G'	, "Programação anterior"	)
+	oView:EnableTitleView('VwKgTot1'   	, "Totais por Rota"			)
+
+	if Inclui .or. Altera
+		oView:AddUserButton( "Atualizar (F11)" 	, 'OK', {|| AtualizaTela() } )
+		SetKey(VK_F11, {|| AtualizaTela()})
+		oView:AddUserButton( "Gerar Arquivos (F7)" , 'OK', {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")} )
+		SetKey(VK_F7, {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")})
+		oView:AddUserButton( "Nro Tratos (F8)"	, 'OK', {|| vap17tra() } )
+		SetKey(VK_F8, {|| vap17tra()})
+		oView:AddUserButton( "Matéria Seca (F9) "	, 'OK', {|| vap17msc() } )
+		SetKey(VK_F9, {|| vap17msc()})
+		oView:AddUserButton( "Dietas (F10) "	, 'OK', {|| vap17trt() } )
+		SetKey(VK_F10, {|| vap17trt()})
+		oView:AddUserButton( "Alt Cabeca Lote"	, 'OK', {|| AltQtdCab() } )
+		oView:AddUserButton( "Transf. Curral"	, 'OK', {|| vap17tcu() } )
+	endif
+	
+	oView:SetAfterViewActivate({|oView| xAtivar(oView)})
 
 return oView
 user function MenuDef() as array
@@ -325,6 +306,14 @@ user function MenuDef() as array
 	Add Option aRotina Title "Alterar" Action "ViewDef.custom.VAPCPA17.VAPCPA17" Operation MODEL_OPERATION_UPDATE Access 0
 
 return aRotina
+
+Static Function xAtivar(oView)
+	//oView:AVIEWS[2][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridZ05G
+	oView:AVIEWS[3][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridZ06G
+	oView:AVIEWS[4][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridZ06D
+	oView:AVIEWS[5][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridROTG
+	//oView:AVIEWS[6][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) //VwGridROTD
+Return nil
 
 User Function A17VAPCP()
     Local aParam   := PARAMIXB // PARÂMETROS PASSADOS PARA O PONTO
@@ -358,9 +347,9 @@ Static Function ValidGeral(oModel)
 Return .T.
 
 static function Rt1GrdMStr() AS Object
-    local aArea   		:= GetArea() 
+    local aArea   		:= GetArea()
     local oStruct 		:= FWFormModelStruct():New() AS Object
-	local nI 
+	local nI
 
 	SX3->(DbSetOrder(2))
 	
@@ -749,7 +738,7 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
 	Local aCampos := { } as array
 	local nTamanho as Numeric
 	if nOpc == 1
-		aCampos := aClone(aCpoMdZ06G)
+		aCampos := aClone(aCpoGridZ06G)
 	else
 		aCampos := aClone(aCpoMdZ06D)
 	endif
@@ -789,6 +778,22 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
                  .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                  .T.)                           // [14]  L   Indica se o campo é virtual
+        Elseif aCampos[nI]$"Z05_PROGANT" 
+            oStruct:AddField(;
+                 "Tot MS D-1",;               	// [01]  C   Titulo do campo
+                 "Tot MS D-1",;  				// [02]  C   ToolTip do campo
+                 aCampos[nI],;                  // [03]  C   Id do Field
+                 "N",;                          // [04]  C   Tipo do campo
+                 TamSx3("Z05_TOTMSC")[1],;		// [05]  N   Tamanho do campo
+                 TamSx3("Z05_TOTMSC")[2],;                           // [06]  N   Decimal do campo
+                 nil,;                          // [07]  B   Code-block de validação do campo
+                 nil,;                          // [08]  B   Code-block de validação When do campo
+                 nil,;                          // [09]  A   Lista de valores permitido do campo
+                 .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
+                 nil,;                          // [11]  B   Code-block de inicializacao do campo
+                 .F.,;                          // [12]  L   Indica se trata-se de um campo chave
+                 .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
+                 .T.)            
         elseif aCampos[nI]$"Z06_RECNO" .or. aCampos[nI]$"Z05_RECNO"
             oStruct:AddField(;
                  "Registro    ",;               // [01]  C   Titulo do campo
@@ -861,8 +866,8 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 	local cTitTrt := "Tot Ms Infor"
 	
 	if nOpc == 1
-		aCampos := aClone(aCpoMdZ06G)
-		aOrdem := {{"Z05_CURRAL","01"},{"Z06_LOTE","02"}, {"Z05_CABECA","03"}, {"Z05_DIASDI","04"}, {"Z05_PESMAT","05"}/* , {"Z05_CMSPN","06"} */, {"Z0I_NOTTAR","06"}, {"Z0I_NOTMAN","07"},  {"Z05_TOTMSC","08"}, {"XX5_KGMSDI","09"}, {"Z06_DIETA","11"},{"Z05_NROTRA","12"}, {"Z05_TOTMNC","13"}, {"XX5_PVATU","10"}}
+		aCampos := aClone(aCpoGridZ06G)
+		aOrdem := {{"Z05_CURRAL","01"},{"Z06_LOTE","02"}, {"Z05_CABECA","03"}, {"Z05_DIASDI","04"}, {"Z05_PESMAT","05"}, {"Z0I_NOTTAR","06"}, {"Z0I_NOTMAN","07"},  {"Z05_PROGANT","08"}, {"XX5_KGMSDI","09"}, {"Z06_DIETA","11"},{"Z05_NROTRA","12"}, {"Z05_TOTMNC","13"}, {"Z05_TOTMSC","14"}, {"XX5_PVATU","10"}}
 	else
 		aCampos := aClone(aCpoMdZ06D)
 		aOrdem := {{"Z06_TRATO",1},{"Z06_CURRAL",2}, {"Z06_LOTE",3}, {"Z06_DIETA",4}, {"Z06_KGMSTR",5}, {"Z06_KGMNTR",6}, {"Z06_MEGCAL",7}, {"Z06_KGMNT",8}}
@@ -871,7 +876,7 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 	DbSelectArea("SX3")
 	DbSetOrder(2)//X3_CAMPO
 
-	// aCpoMdZ06G := { "Z06_TRATO",  "Z06_DIETA",  "Z06_KGMSTR", "Z06_KGMNTR", "Z06_RECNO" }
+	// aCpoGridZ06G := { "Z06_TRATO",  "Z06_DIETA",  "Z06_KGMSTR", "Z06_KGMNTR", "Z06_RECNO" }
 	nLen := Len(aOrdem)
 	for nI := 1 to nLen
 		SX3->(DbSetOrder(2))
@@ -902,6 +907,27 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				cValToChar(aOrdem[nI,2]),; 		// [02]  C   Ordem
 				cTitTrt,;                		// [03]  C   Titulo do campo
 				"Programação anterior",;	    // [04]  C   Descricao do campo
+				{"Help"},;                      // [05]  A   Array com Help
+				"N",;                           // [06]  C   Tipo do campo
+				"",;                            // [07]  C   Picture
+				nil,;                           // [08]  B   Bloco de PictTre Var
+				nil,;                           // [09]  C   Consulta F3
+				.T.,;                           // [10]  L   Indica se o campo é alteravel
+				nil,;                           // [11]  C   Pasta do campo
+				nil,;                           // [12]  C   Agrupamento do campo
+				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
+				nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
+				nil,;                           // [15]  C   Inicializador de Browse
+				nil,;                           // [16]  L   Indica se o campo é virtual
+				nil,;                           // [17]  C   Picture Variável
+				nil;                            // [18]  L   Indica pulo de linha após o campo
+			)
+		elseif aOrdem[nI,1]$"Z05_PROGANT"
+			oStruct:AddField(;
+				aOrdem[nI,1],;                  // [01]  C   Nome do Campo
+				cValToChar(aOrdem[nI,2]),; 		// [02]  C   Ordem
+				"KG MS D-1",;                	// [03]  C   Titulo do campo
+				"KG MS D-1",;	    			// [04]  C   Descricao do campo
 				{"Help"},;                      // [05]  A   Array com Help
 				"N",;                           // [06]  C   Tipo do campo
 				"",;                            // [07]  C   Picture
@@ -1025,14 +1051,16 @@ static function LoadZ06G(oFormGrid, lCopia) as Array
 							;//, (cAlias)->Z05_CMSPN;  // Z05_CMSPN
 							, (cAlias)->Z0I_NOTTAR;  // Z0I_NOTTAR
 							, (cAlias)->Z0I_NOTMAN;  // Z0I_NOTMAN
-							, (cAlias)->Z05_TOTMSC;  // Z05_TOTMSC
+							, (cAlias)->Z05_PROGANT;  // Z05_PROGANT
 							, (cAlias)->Z05_KGMSDI;   // Z06_KGMNT
 							, AllTrim((cAlias)->Z05_DIETA);   // Z06_DIETA
 							, (cAlias)->Z05_NROTRA;   // Z06_DIETA
 							, (cAlias)->Z05_TOTMNC;   // Z06_KGMNT
 							, (cAlias)->Z05_RECNO;   // Z05_RECNO
+							, (cAlias)->Z05_TOTMSC;  // Z05_TOTMSC
 							, Alltrim((cAlias)->Z0T_ROTA);
-							, Round(((cAlias)->Z05_TOTMSC / (cAlias)->Z05_PESMAT) * 100,2)}
+							, Round(((cAlias)->Z05_TOTMSC / (cAlias)->Z05_PESMAT) * 100,2);
+							, (cAlias)->Z05_NROTRA}
 		(cAlias)->(DbSkip())
 	end
 
@@ -1312,7 +1340,8 @@ User Function PreparaQuerys()
 	cQry += " , Z0T.Z0T_ROTA	" + CRLF
 	cQry += " , Z05.Z05_NROTRA " + CRLF
 	cQry += " , Z05_CMSPN " + CRLF
-	cQry += " --, ISNULL((SELECT SUM(Z05D1.Z05_KGMSDI) FROM Z05010 Z05D1 WHERE Z05D1.Z05_FILIAL = Z05.Z05_FILIAL AND Z05D1.Z05_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z05D1.Z05_LOTE = Z05.Z05_LOTE AND Z05D1.D_E_L_E_T_ ='  ' ),0) Z05_PROGANT " + CRLF
+	cQry += " , Z05_NROTRA " + CRLF
+	cQry += " , ISNULL((SELECT SUM(Z05D1.Z05_KGMSDI) FROM Z05010 Z05D1 WHERE Z05D1.Z05_FILIAL = Z05.Z05_FILIAL AND Z05D1.Z05_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z05D1.Z05_LOTE = Z05.Z05_LOTE AND Z05D1.D_E_L_E_T_ ='  ' ),0) Z05_PROGANT " + CRLF
 	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTMAN FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = '"+dToS(Z0R->Z0R_DATA)+"' AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTMAN " + CRLF
 	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = '"+dToS(Z0R->Z0R_DATA)+"' AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTTAR " + CRLF
 	cQry += " , Z05.R_E_C_N_O_ Z05_RECNO" + CRLF
@@ -1615,7 +1644,7 @@ static function AjuMateria(oModel)
 	local nKgMnt     := 0 as Numeric
 	local nCmsPn     := 0 as Numeric
 	local nI, nLen 		  as Numeric
-	local cQry := "" as Character
+	local cQry 		 := "" as Character
 
     nLen := oGridZ06D:Length()
     for nI := 1 to nLen
@@ -2086,24 +2115,458 @@ Chamada da rotina de ajuste de tratos U_vap05tra
 */
 Static Function vap17tra()
 	Local aSaveLines := FWSaveRows() as Array
-	private aTratos 	:= {} as Array
+	local aParam      := {mv_par01, mv_par02, mv_par03} as Array
+	local cFillPerg   := "VAP17TRA" as character
+	Local nMaxTrato   := u_GetNroTrato() as numeric
+	local aPosSX1     := {{ cFillPerg, "01", 3},;
+                       	  { cFillPerg, "02", "A01"/* Replicate(" ", TamSX3("Z08_CODIGO")[1]) */},;
+                       	  { cFillPerg, "03", "A01"/* Replicate("Z", TamSX3("Z08_CODIGO")[1]) */ }} as Array
+	
+	private cCodDieta := "" as character
+	private aTratos   := {} as Array
+	
+	GeraX1(cFillPerg)
 
-	FWMsgRun(, { || U_vap05tra()}, "Nro de Tratos")
-
-	if Len(aTratos) > 0
-		u_vap05rec()
-		AtualizaTela()
-	endif
+	if Z0R->Z0R_LOCK <= '1'
+        AtuSX1(@cFillPerg)
+        U_PosSX1(aPosSX1)
+        if Pergunte(cFillPerg)
+            if mv_par01 <= 0
+                Help(/*Descontinuado*/,/*Descontinuado*/,"QTDE TRATO INVALIDA",/**/,"A quantidade de tratos deve ser maior que 0.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, digite uma quatidade de tratos válida." })
+            elseif mv_par01 > nMaxTrato
+                Help(/*Descontinuado*/,/*Descontinuado*/,"QTDE TRATO INVALIDA",/**/,"A quantidade de tratos deve ser menor que " + AllTrim(Str(nMaxTrato)) +".", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, digite uma quatidade de tratos válida." })
+            else
+				FWMsgRun(, { || ProcTrato()}, "Nro de Tratos", "Ajustando numero de tratos para " + AllTrim(Str(mv_par01))+ "...")
+            endif
+        endif
+        mv_par01 := aParam[1]; mv_par02 := aParam[2]; mv_par03 := aParam[3]
+    elseif Z0R->Z0R_LOCK = '2' 
+        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
+    elseif Z0R->Z0R_LOCK = '3' 
+        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
+    endif
 
 	FWRestRows(aSaveLines)
 return nil
-/* 
+
+Static function ProcTrato()
+    Local aArea 		:= FwGetArea() as Array
+	Local oModel	  	:= FWModelActive() as Object
+	Local oGridRota   	:= oModel:GetModel("MdGridRotaG")  as Object
+	Local oGridZ06G   	:= oModel:GetModel("MdGridZ06G")  as Object
+	Local nLines 		:= oGridZ06G:Length() as numeric
+	Local nI 			:= 0  as numeric
+	Local cMsg			:= "" as character
+
+	Z05->(DbsetOrder(1)) // Z05_FILIAL+DToS(Z0 5_DATA)+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
+
+	begin transaction
+		For nI := 1 to nLines
+			oGridZ06G:GoLine(nI)
+			if oGridZ06G:GetValue("Z05_CURRAL") >= Alltrim(MV_PAR02) .AND. oGridZ06G:GetValue("Z05_CURRAL") <= Alltrim(MV_PAR03)
+				if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+;
+								PADR(oGridZ06G:GetValue("Z05_CURRAL"), TamSx3("Z05_CURRAL")[1])+;
+								PADR(oGridZ06G:GetValue("Z06_LOTE"), TamSx3("Z06_LOTE")[1]))) 
+					if !AjuNroTrat(mv_par01)
+						Help(,, "CANUSEZ05.",, "Curral " + AllTrim(oGridZ06G:GetValue("Z05_CURRAL")) + " - Lote " + (oGridZ06G:GetValue("Z06_LOTE")) + "  em uso.", 1, 0,,,,,, {"A operação será cancelada."})
+						aTratos := {}
+						DisarmTransaction()
+						break
+					else
+						if Empty(cMsg)
+							cMsg += oGridZ06G:GetValue("Z05_CURRAL")
+						else
+							cMsg += ", " + oGridZ06G:GetValue("Z05_CURRAL")
+						endif
+					endif
+				else
+					Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral " + oGridZ06G:GetValue("Z05_CURRAL") + ". É necessário criar o trato manualmente para ele.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"O trato não foi alterado."})
+				endif
+			endif
+		Next nI
+
+	end transaction
+
+	if !Empty(cMsg)
+		AtualizaTela()
+		FwAlertInfo("<font color = 'red'><strong>" +oGridRota:GetValue("Z0T_ROTA") +"</strong></font><br>"+;
+					"Currais processados: <font color = 'red'>[ " +cMsg+ " ]</font>")
+	endif
+
+	FwRestArea(aArea)
+return nil
+
+/*/{Protheus.doc} AjuNroTrat
+Altera a quantidade tratos no lote posicionado
+@author jr.andre
+@since 30/08/2019
+@version 1.0
+@return logical, informa que a operação ocorreu com sucesso.
+@param nQtdTrato, numeric, novo numero de tratos
+@type function
+/*/
+static function AjuNroTrat(nQtdTrato)
+	local aArea   := GetArea()
+	local lRet    := .T.
+	local i       := 0
+	local cSeq    := ""
+	local nMegCal := 0
+	local nQuantTrato   := 0
+	local nTotTrtClc    := 0
+	Local nDif          := 0
+	Local nQtdAux       := 0
+	Local lMaior        := .T.
+	Local lSobra        := .T.
+	Local nBKPnTrtTotal := 0
+	Local lSomaSobra    := .T.
+	Local oModel	  	:= FWModelActive() as Object
+	Local oGridZ06G   	:= oModel:GetModel("MdGridZ06G")  as Object
+
+    if (lRet := U_CanUseZ05())
+
+        cQry := " select count(*) QTDREG" +;
+                                    " from (" +;
+                                          " select distinct Z06_DIETA" +;
+                                            " from " + RetSqlName("Z06") + " Z06" +;
+                                           " where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" +;
+                                             " and Z06.Z06_DATA   = '" + DToS(Z0R->Z0R_DATA)+ "'" +;
+                                             " and Z06.Z06_VERSAO = '" + Z0R->Z0R_VERSAO + "'" +;
+                                             " and Z06.Z06_CURRAL = '" + oGridZ06G:GetValue("Z05_CURRAL") + "'" +;
+                                             " and Z06.Z06_LOTE   = '" + oGridZ06G:GetValue("Z06_LOTE") + "'" +;
+                                             " and Z06.D_E_L_E_T_ = ' '"  +;
+                                         " ) Z06"
+
+        nQtdReg := MPSysExecScalar(cQry,"QTDREG")
+        
+        if nQtdReg > 1
+            Help(/*Descontinuado*/,/*Descontinuado*/,"MULTIPLOS TRATOS",/**/,"Existe mais de um trato no filtro aplicado.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível alterar a quantidade de tratos em lotes com mais de um tipo de trato." })
+            lRet := .F.
+        endif
+
+        if lRet
+            cQry := " select distinct Z06_DIETA" +;
+                    " from " + RetSqlName("Z06") + " Z06" +;
+                    " where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" +;
+                        " and Z06.Z06_DATA   = '" + DToS(Z0R->Z0R_DATA) + "'" +;
+                        " and Z06.Z06_VERSAO = '" + Z0R->Z0R_VERSAO + "'" +;
+                        " and Z06.Z06_CURRAL = '" + oGridZ06G:GetValue("Z05_CURRAL") + "'" +;
+                        " and Z06.Z06_LOTE   = '" + oGridZ06G:GetValue("Z06_LOTE") + "'" +;
+                        " and Z06.D_E_L_E_T_ = ' '"
+            
+            cAliZ06 := MpSysOpenQuery(cQry)
+
+                if Empty(cCodDieta)
+                    cCodDieta := (cAliZ06)->Z06_DIETA
+                elseif cCodDieta <> (cAliZ06)->Z06_DIETA
+                    Help(/*Descontinuado*/,/*Descontinuado*/,"MULTIPLOS TRATOS",/**/,"Existe mais de um trato no filtro aplicado.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível alterar a quantidade de tratos para o filtro aplicado." })
+                    lRet := .F.
+                endif
+            (cAliZ06)->(DbCloseArea())
+        endif
+
+        if lRet
+            if TCSqlExec(" update " + RetSqlName("Z06") +;
+                            " set D_E_L_E_T_ = '*'" +;
+                          " where Z06_FILIAL = '" + FWxFilial("Z06") + "'" +;
+                            " and Z06_DATA   = '" + DToS(Z0R->Z0R_DATA) + "'" +;
+                            " and Z06_VERSAO = '" + Z0R->Z0R_VERSAO + "'" +;
+                            " and Z06_CURRAL = '" + oGridZ06G:GetValue("Z05_CURRAL") + "'" +;
+                            " and Z06_LOTE   = '" + oGridZ06G:GetValue("Z06_LOTE") + "'" +;
+                            " and D_E_L_E_T_ = ' '") < 0
+                Help(/*Descontinuado*/,/*Descontinuado*/,"RECRIAÇÃO DO TRATO",/**/,"Ocorreu um problema durante a recriação do trato:" + CRLF + TCSQLError(), 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, entrem em contato com o TI e mostre o erro apresentado. O sistema retornará ao status anterior para garantir a integridade dos dados." })
+                lRet := .F.
+            endif
+
+            if lRet
+
+                Z0G->(DBSETORDER( 2 ))
+                Z0G->(DbSeek(FWxFilial("Z0G")+PadR(AllTrim(Iif(','$Z05->Z05_DIETA,SubStr(Z05->Z05_DIETA,RAt(',', Z05->Z05_DIETA)+1),Z05->Z05_DIETA)),TamSX3("B1_COD")[1]) + (cTrbBrowse)->NOTA_MANHA /* (cAliLotes)->NOTA_MANHA */ ))
+
+                //aKgMS := DivTrato(Z05->Z05_KGMSDI, nQtdTrato)
+                for i  := 1 to nQtdTrato
+
+					nTrtTotal := u_CalcQtMN( cCodDieta, Z05->Z05_KGMSDI) * (cTrbBrowse)->B8_SALDO/* (cAliLotes)->B8_SALDO */
+
+					nQuantTrato := nQtdAux       := nQtdTrato
+					nDif          := 0
+					lMaior        := (nTrtTotal / nQtdAux) > MIN_TRATO
+					lSobra        := Z0G->Z0G_ZERTRT == "S"
+					nBKPnTrtTotal := Round(nTrtTotal, TamSX3('Z06_KGMNT')[2])
+
+					If ( lSobra .and. cValtoChar(i) == "1" ) .OR. nBKPnTrtTotal <= 0
+						nQuantTrato := 0
+					Else
+
+						If lMaior 
+
+							If GetMV("VA_AJUDAN") == "K"
+								nQuantTrato := Z05->Z05_KGMSDI + Z0G->Z0G_AJSTKG - nTotTrtClc
+
+							ElseIf Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "P" // Se Ajuste for em Percentual (Z0G_PERAJU)
+								// Dividir trato do dia anterior pelos tratos restantes (sem considerar ) o primeiro
+								
+								nQuantTrato := Z05->Z05_KGMSDI / (nQtdAux-1)
+							ElseIf Z0G->Z0G_ZERTRT == "S" .AND. GetMV("VA_AJUDAN") == "A" // Se Ajuste for em Percentual (Z0G_PERAJU)
+								iF i == 2 .and.(( Z05->Z05_KGMSDI -  Round((Z05->Z05_KGMSDI / (nQtdAux-1)),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) <> 0)
+									nQuantTrato := (Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (nQtdAux-1)),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) + NoRound((Z05->Z05_KGMSDI / (nQtdAux-1)),,TamSX3('Z06_KGMNT')[2])
+								Else 
+									nQuantTrato := NoRound((Z05->Z05_KGMSDI / (nQtdAux-1)),TamSX3('Z06_KGMSTR')[2])
+								EndIf
+								//nQuantTrato := nQtdRes + ((nQtdRes * Z0G->Z0G_PERAJU ) / 100)
+
+							// D I A   A N T E R I O R 
+							// Quando no DIA ANTERIOR zerar o trato, no dia seguinte, gerar normalmente 
+							Else
+								If (Z05->Z05_KGMSDI - Round(Round((Z05->Z05_KGMSDI / nQtdTrato),TamSX3('Z06_KGMSTR')[2]) * nQtdTrato ,TamSX3('Z06_KGMSTR')[2])) <> 0 .AND. i== 1
+									nQuantTrato := Round(Z05->Z05_KGMSDI / nQtdTrato,TamSX3('Z06_KGMSTR')[2]) + (Z05->Z05_KGMSDI - Round(Round((Z05->Z05_KGMSDI / nQtdTrato),TamSX3('Z06_KGMSTR')[2]) * nQtdTrato ,TamSX3('Z06_KGMSTR')[2])) 
+								Else
+									nQuantTrato := Round(Z05->Z05_KGMSDI  / nQtdTrato,TamSX3('Z06_KGMSTR')[2])
+								EndIf
+							EndIf 
+
+						Else 
+							
+							If nDif == 0
+								While nQtdAux>0 .AND. (nQuantTrato := (nTrtTotal / (nQtdAux-iif(lSobra,1,0)))) < MIN_TRATO
+									--nQtdAux
+								EndDo
+								If !(nQtdAux == 0 .and. ((nQuantTrato := (nTrtTotal / 1)) < MIN_TRATO)) //lSobra .and.
+									nDif := nQtdTrato - nQtdAux  
+								Else
+									nDif := nQtdTrato - 1
+
+								EndIf
+							EndIf
+
+							nQuantTrato := 999 // variavel fixa, nao mecher :)
+							If nQtdTrato == 6 // tratos
+								If lSobra // com sobra do dia anterior
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('4')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('35')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 3 // Corta 3
+											If cValtoChar(i) $ ('346')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 4 // Corta 3
+											If cValtoChar(i) $ ('3456')
+												nQuantTrato := 0
+											EndIf
+											Case nDif == 5 // Corta 4
+											If cValtoChar(i) $ ('23456')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								
+								Else // SEM sobra do dia anterior
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('5')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('25')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 3 // Corta 3
+											If cValtoChar(i) $ ('246')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 4 // Corta 4
+											If cValtoChar(i) $ ('2456')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 5 // Corta 5
+											If cValtoChar(i) $ ('23456')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								EndIf
+
+							ElseIf nQtdTrato == 5 // tratos
+								
+								If lSobra // com sobra do dia anterior
+									Do Case 
+										Case nDif == 1 // Corta 2
+											If cValtoChar(i) $ ('4')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('35')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 3 // Corta 3
+											If cValtoChar(i) $ ('345')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 4 // Corta 4
+											If cValtoChar(i) $ ('345')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								
+								Else // SEM sobra do dia anterior
+
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('4')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('24')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 3 // Corta 3
+											If cValtoChar(i) $ ('235')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 4 // Corta 4
+											If cValtoChar(i) $ ('2345')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								EndIf
+
+							ElseIf nQtdTrato == 4 // tratos
+								
+								If lSobra // com sobra do dia anterior
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('3')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('34')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 3 // Corta 3
+											If cValtoChar(i) $ ('24')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								Else 
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('3')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('24')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 3 // Corta 3
+											If cValtoChar(i) $ ('234')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 4 // Corta 4
+											If cValtoChar(i) $ ('234')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								EndIf
+
+							ElseIf nQtdTrato == 3 // tratos
+								
+								If lSobra // com sobra do dia anterior
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('2')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('2')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								Else 
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('2')
+												nQuantTrato := 0
+											EndIf
+										Case nDif == 2 // Corta 2
+											If cValtoChar(i) $ ('23')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								EndIf
+							ElseIf nQtdTrato == 2 // tratos
+								
+								If !lSobra // Sem sobra do dia anterior
+									Do Case 
+										Case nDif == 1 // Corta 1
+											If cValtoChar(i) $ ('2')
+												nQuantTrato := 0
+											EndIf
+									EndCase
+								EndIf
+
+							EndIf
+							If nQuantTrato > 0
+								nDividendo  := Z05->Z05_KGMSDI
+								nDivisor    := iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0)
+
+								iF lSomaSobra //.and.(( Z05->Z05_KGMSDI -  NoRound((Z05->Z05_KGMSDI / (iIf(nQtdTrato==nDif,1,nQtdTrato-nDif)-iif(lSobra .and. (!nQtdAux == 0),1,0))),TamSX3('Z06_KGMSTR')[2]) * (nQtdAux-1)) > 0)
+
+									if (nResto := nDividendo % nDivisor) > 0 .and. ((nDec := nResto - (NoRound(nResto / nDivisor,TamSX3('Z06_KGMSTR')[2]) * nDivisor)) > 0)
+										nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2]) + nDec
+										lSomaSobra := .F.
+									else
+										nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+									endif
+
+								Else
+									nQuantTrato := NoRound(nDividendo / nDivisor,TamSX3('Z06_KGMSTR')[2])
+								EndIf
+							EndIf
+						EndIf
+					EndIf
+
+                    nQuantMN := u_CalcQtMN(cCodDieta,  nQuantTrato/*aKgMS[i]*/)
+                    nMegCal := U_GetMegaCal(cCodDieta) * nQuantTrato/*aKgMS[i]*/
+                    cSeq := U_GetSeq(cCodDieta)
+                    
+                    RecLock("Z06", .T.)
+                        Z06->Z06_FILIAL := FWxFilial("Z06")
+                        Z06->Z06_DATA   := Z0R->Z0R_DATA
+                        Z06->Z06_VERSAO := Z0R->Z0R_VERSAO
+                        Z06->Z06_CURRAL := oGridZ06G:GetValue("Z05_CURRAL")
+                        Z06->Z06_LOTE   := oGridZ06G:GetValue("Z06_LOTE")
+                        Z06->Z06_TRATO  := StrZero(i, TamSX3("Z06_TRATO")[1]) 
+                        Z06->Z06_DIETA  := cCodDieta 
+                        Z06->Z06_KGMSTR := nQuantTrato// aKgMS[i]
+                        Z06->Z06_KGMNTR := nQuantMN
+                        Z06->Z06_MEGCAL := nMegCal
+                        Z06->Z06_KGMNT  := nQuantMN * Z05->Z05_CABECA
+                        Z06->Z06_DIAPRO := Z05->Z05_DIAPRO
+                        Z06->Z06_SEQ    := cSeq
+                    MsUnlock()
+                next
+
+                RecLock("Z05", .F.)
+                    Z05->Z05_MANUAL := "1"
+                    Z05->Z05_NROTRA := nQtdTrato
+                MsUnlock()
+
+            endif
+        endif
+
+    endif
+    RestArea(aArea)
+return lRet
+
+/*
 Chamada da rotina de ajuste de tratos U_vap05trt
 */
 Static Function vap17trt()
 	Local aSaveLines := FWSaveRows() as Array
-
-	private aTratos 	:= {} as Array
+	private aTratos  := {} as Array
 
 	FWMsgRun(, { || U_vap05trt()}, "Ajuste de dietas")
 
@@ -2114,71 +2577,111 @@ Static Function vap17trt()
 	FWRestRows(aSaveLines)
 return nil
 
+static function vap17msc()
+	Local aSaveLines := FWSaveRows() as Array
+	local aParam    :={mv_par01}
+	local lRet      := .F.
+	local cFillPerg := "VAPCPA052"
+	local oModel 	:= FWModelActive()
+	local oGridZ06G	:= oModel:GetModel("MdGridZ06G")
+	local nQtdeMs   := oGridZ06G:GetValue("XX5_KGMSDI")
+	local cLote 	:= oGridZ06G:GetValue("Z06_LOTE")
+	local cCurral 	:= PADR(oGridZ06G:GetValue("Z05_CURRAL"), TamSx3("Z05_CURRAL")[1])
+	
 
-//Static Function vap17tra()
-//	local aParam      	:= {mv_par01, mv_par02, mv_par03, mv_par04, mv_par05} as Array
-//	local cFillPerg   	:= "VAPCPA053" as Character
-//	local nMaxTrato   	:= u_GetNroTrato() as Numeric
-//	local aPosSX1     	:= {{ cFillPerg, "01", 6},;
-//						  	{ cFillPerg, "02", "ROTA01"},;
-//						  	{ cFillPerg, "03", "ROTA01"},;
-//						  	{ cFillPerg, "04", "A01"},;
-//						  	{ cFillPerg, "05", "A11" }} as Array
-//	Local oModel      	:= FWModelActive() as Object
-//	Local oView  	 	:= FWViewActive() 	as Object
-//
-//	//Local oGridRotaG  := oModel:GetModel("MdGridRotaG") as Object
-//	//Local oGridZ06G   := oModel:GetModel("MdGridZ06G") as Object
-//	//Local oGridZ06D   := oModel:GetModel("MdGridZ06D") as Object
-//	//Local nI,nX,nJ,nY as Numeric
-//	//local aPosSX1     := {{ cFillPerg, "01", 0},;
-//	//					  { cFillPerg, "02", Replicate(" ", TamSX3("ZRT_ROTA")[1])},;
-//	//					  { cFillPerg, "03", Replicate("Z", TamSX3("ZRT_ROTA")[1])},;
-//	//					  { cFillPerg, "04", Replicate(" ", TamSX3("Z08_CODIGO")[1])},;
-//	//					  { cFillPerg, "05", Replicate("Z", TamSX3("Z08_CODIGO")[1]) }} as Array
-//	private cCodDieta 	:= "" as Character
-//
-//	if Z0R->Z0R_LOCK <= '1'
-//        AtuSX1(@cFillPerg)
-//        U_PosSX1(aPosSX1)
-//        if Pergunte(cFillPerg)
-//            if mv_par01 <= 0
-//                Help(/*Descontinuado*/,/*Descontinuado*/,"QTDE TRATO INVALIDA",/**/,"A quantidade de tratos deve ser maior que 0.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, digite uma quatidade de tratos válida." })
-//            elseif mv_par01 > nMaxTrato
-//                Help(/*Descontinuado*/,/*Descontinuado*/,"QTDE TRATO INVALIDA",/**/,"A quantidade de tratos deve ser menor que " + AllTrim(Str(nMaxTrato)) +".", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, digite uma quatidade de tratos válida." })
-//            else   
-//                FWMsgRun(, { || U_ProcTrato()}, "Nro de Tratos", "Ajustando numero de tratos para " + AllTrim(Str(mv_par01))+ "...")
-//
-//				//if Len(aTratos)
-//				//	aSort(aTratos,,, { |a, b| a[1] < b[1] } )
-//				//endif
-//
-//				//For nI := 1 to Len(aTratos)
-//				//	For nJ := 1 to oGridRotaG:Length()
-//				//		oGridRotaG:GoLine(nJ)
-//				//		if oGridRotaG:GetValue("Z0T_ROTA") == aTratos[nI,1]
-//				//			For nX := 1 to oGridZ06G:Length()
-//				//				oGridZ06G:GoLine(nJ)
-//				//				if oGridZ06G:GetValue("Z06_LOTE") == aTratos[nI,1]
-//				//				endif 
-//				//			Next nX 
-//				//		endif
-//				//	Next nJ
-//				//Next nI
-//				if Len(aTratos) > 0
-//					oModel:DeActivate()
-//					oModel:Activate()
-//					oView:Refresh()
-//				endif
-//            endif
-//        endif
-//        mv_par01 := aParam[1]; mv_par02 := aParam[2]; mv_par03 := aParam[3]; mv_par04 := aParam[4]; mv_par05 := aParam[5]
-//    elseif Z0R->Z0R_LOCK = '2' 
-//        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
-//    elseif Z0R->Z0R_LOCK = '3' 
-//        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
-//    endif
-//Return
+	if Empty(cLote)
+		Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois não existe lote viculado ao curral posicionado.", 1, 0,,,,,, {"Operação não permitida."})
+	elseif Z0R->Z0R_LOCK <= '1'
+		if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+cCurral+cLote)) 
+			AtuSX1(@cFillPerg)
+			U_PosSX1({{cFillPerg, "01", nQtdeMs}})
+			if (lRet := Pergunte(cFillPerg))
+				if lRet .and. mv_par01 > GetMV("VA_MXVALTR",,15.0)
+					lRet := MsgYesNo("O valor digitado " + AllTrim(Str(mv_par01)) + " é considerado muito grande para um trato. Pode ser que esse valor esteja errado. Confirma esse valor para o trato?", "Valor pode estar errado.")
+				endif
+				if lRet
+					FWMsgRun(, { || AtuMatSec()}, "Materia Seca", "Ajustando a quantidade de materia seca para " + AllTrim(Str(mv_par01))+ "...")
+				endif
+				if FunName() == "VAPCPA05"
+					U_UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
+				endif
+			endif
+			mv_par01 := aParam[1]
+		else
+			Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral posicionado.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Utilize o botão manutenção para criar o trato."})
+		endif
+	elseif Z0R->Z0R_LOCK = '2' 
+		Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
+	elseif Z0R->Z0R_LOCK = '3' 
+		Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
+	endif
+
+	FWRestRows(aSaveLines)
+
+return lRet
+
+static function AtuMatSec()
+	local aArea     := GetArea() as Array
+	local nQtdTrato := 0 as numeric
+	local aKgMS     := {} as Array
+	local nQtdeMS   := 0 as numeric
+	local nQtdeMN   := 0 as numeric
+	local nQtdMCal  := 0 as numeric
+	local oModel 	:= FWModelActive() as object
+	local oGridZ06G	:= oModel:GetModel("MdGridZ06G") as object
+	local oGridZ06D	:= oModel:GetModel("MdGridZ06D") as object
+	local nI 
+
+	For nI := 1 to oGridZ06D:Length()
+		oGridZ06D:GoLine(nI)
+		if !oGridZ06D:IsDeleted() 
+			nQtdTrato += 1
+		endif 
+	Next
+
+	aKgMS := U_DivTrato(mv_par01, nQtdTrato)
+
+	if nQtdTrato > 0
+		Z06->(DbSetOrder(1)) // Z06_FILIAL+DToS(Z06_DATA)+Z06_VERSAO+Z06_CURRAL+Z06_LOTE+Z06_TRATO
+		For nI:= 1 to  oGridZ06D:Length()
+			oGridZ06D:GoLine(nI)
+			if !oGridZ06D:IsDeleted() 
+				cDieta := oGridZ06D:GetValue("Z06_DIETA")+SPACE(TamSX3("Z06_DIETA")[1]-Len(oGridZ06D:GetValue("Z06_DIETA")))
+				oGridZ06D:SetValue("Z06_KGMSTR", aKgMS[nI])
+				oGridZ06D:SetValue("Z06_KGMNTR", U_CalcQtMN(cDieta, aKgMS[nI]))
+				oGridZ06D:SetValue("Z06_MEGCAL", U_GetMegaCal(cDieta) * aKgMS[nI])
+				oGridZ06D:SetValue("Z06_KGMNT" , u_CalcQtMN(cDieta, aKgMS[nI]) * oGridZ06G:GetValue("Z05_CABECA"))
+
+				Z06->(DbGoTo(oGridZ06D:GetValue("Z06_RECNO")))
+				RecLock("Z06", .F.)
+					Z06->Z06_KGMSTR := oGridZ06D:GetValue("Z06_KGMSTR") 
+					Z06->Z06_KGMNTR := oGridZ06D:GetValue("Z06_KGMNTR")
+					Z06->Z06_KGMNT  := oGridZ06D:GetValue("Z06_KGMNTR") * Z05->Z05_CABECA
+					Z06->Z06_MEGCAL := oGridZ06D:GetValue("Z06_MEGCAL")
+				Z06->(MsUnlock())
+				nQtdeMS += Z06->Z06_KGMSTR
+				nQtdeMN += Z06->Z06_KGMNTR
+				nQtdMCal += Z06->Z06_MEGCAL
+			endif
+		Next
+		
+		RecLock("Z05", .F.)
+			Z05->Z05_KGMSDI := Z05->Z05_TOTMSI := mv_par01 
+			Z05->Z05_KGMNDI := Z05->Z05_TOTMNI := nQtdeMN
+			Z05->Z05_CMSPN  := (mv_par01 / Z05->Z05_PESMAT) *100
+			Z05->Z05_MEGCAL := nQtdMCal
+
+			Z05->Z05_MANUAL := '1'
+			Z05->Z05_ORIGEM := '3'
+		MsUnlock()
+
+		AjuMateria(oModel)
+	endif
+
+	oGridZ06D:GoLine(1)
+	
+	RestArea(aArea)
+return nil
 
 Static Function AtualizaTela()
 	Local oModel	  	:= FWModelActive() 	as Object
@@ -2191,3 +2694,335 @@ Static Function AtualizaTela()
 	oView:Refresh()
 Return
 
+Static Function AltQtdCab()
+	local aAreaZ05  := Z05->(GetArea()) as Array
+	Local oModel	:= FWModelActive() 	as Object
+	LOcal oGridZ06G	:= oModel:GetModel("MdGridZ06G") as Object
+	Local cFillPerg := "VAPCPA05B " as character
+	Local _cMsg     := "" as character
+
+    AtuSX1(@cFillPerg)
+    if Pergunte(cFillPerg)
+        if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+;
+						PADR(oGridZ06G:GetValue("Z05_CURRAL"), TamSx3("Z05_CURRAL")[1])+;
+						PADR(oGridZ06G:GetValue("Z06_LOTE"), TamSx3("Z06_LOTE")[1]))) 
+                // ConOut("Z05_CABECA")
+            _cMsg := cValToChar(Z05->Z05_CABECA) + " / " + cValToChar(MV_PAR01)
+            RecLock("Z05")
+                Z05->Z05_CABECA := MV_PAR01
+            Z05->(MsUnLock())
+			
+			oGridZ06G:LoadValue("Z05_CABECA",Z05->Z05_CABECA)
+
+            MsgInfo("Atualização de cabeças realizada com sucesso: " + _cMsg , "Atenção")
+        Endif
+    EndIf
+
+   Z05->(RestArea(aAreaZ05))
+
+Return
+
+Static Function GeraX1(cPerg)
+
+Local _aArea	:= GetArea()
+Local aRegs     := {}
+Local nX		:= 0
+Local nPergs	:= 0
+Local i := 0, j := 0
+
+//Conta quantas perguntas existem ualmente.
+DbSelectArea('SX1')
+DbSetOrder(1)
+SX1->(DbGoTop())
+If SX1->(DbSeek(cPerg))
+	While !SX1->(Eof()) .And. X1_GRUPO = cPerg
+		nPergs++
+		SX1->(DbSkip())
+	EndDo
+EndIf
+
+aAdd(aRegs,{cPerg, "01", "Número de tratos?", "", "", "MV_CH1", "N", 1   					   , 0					        , 0, "G", "", "MV_PAR01", "", "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
+aAdd(aRegs,{cPerg, "02", "Curral de?"		, "", "", "MV_CH2", "C", TamSx3("Z08_CODIGO")[1]   , TamSx3("Z08_CODIGO")[2]    , 0, "G", "", "MV_PAR02", "", "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
+aAdd(aRegs,{cPerg, "03", "Curral ate?"		, "", "", "MV_CH3", "C", TamSx3("Z08_CODIGO")[1]   , TamSx3("Z08_CODIGO")[2]    , 0, "G", "", "MV_PAR03", "", "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
+
+//Se quantidade de perguntas for diferente, apago todas
+SX1->(DbGoTop())
+If nPergs <> Len(aRegs)
+	For nX:=1 To nPergs
+		If SX1->(DbSeek(cPerg))		
+			If RecLock('SX1',.F.)
+				SX1->(DbDelete())
+				SX1->(MsUnlock())
+			EndIf
+		EndIf
+	Next nX
+EndIf
+
+// gravaÃ§Ã£o das perguntas na tabela SX1
+If nPergs <> Len(aRegs)
+	dbSelectArea("SX1")
+	dbSetOrder(1)
+	For i := 1 to Len(aRegs)
+		If !dbSeek(cPerg+aRegs[i,2])
+			RecLock("SX1",.T.)
+				For j := 1 to FCount()
+					If j <= Len(aRegs[i])
+						FieldPut(j,aRegs[i,j])
+					Endif
+				Next j
+			MsUnlock()
+		EndIf
+	Next i
+EndIf
+
+RestArea(_aArea)
+
+Return nil
+
+
+/*04-01-2021
+Arthur Toshio
+Realiza Transferencia entre currais
+*/
+Static function vap17tcu()
+	Local aArea    	  := FwGetArea()
+	Local aParam      := {mv_par01, mv_par02}
+	Local cFillPerg   := "VAPCPA05A"
+	Local aPosSX1     :={{ cFillPerg, "01", Replicate(" ", TamSX3("B8_X_CURRA")[1])},;
+						{ cFillPerg, "02", Replicate("Z", TamSX3("B8_X_CURRA")[1]) }}
+	Private cCodDieta := ""
+
+    If Z0R->Z0R_LOCK == '3' 
+        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato de "+dToC(Z0R->Z0R_DATA)+" pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
+    Else //if Z0R->Z0R_LOCK == '1'
+        
+        Help(,, "ATENÇÃO.",, "A operação de Transferencia NÃO atualiza os arquivos de Meta do trato.. Caso Necessário, deve-se exportar/gerar novamente o arquivo ", 1, 0,,,,,, {"Será atualizado apenas a Localização do Lote, Roteirização e Planejaento de Trato"})        
+    
+        AtuSX1(@cFillPerg)
+        U_PosSX1(aPosSX1)
+        if Pergunte(cFillPerg)
+            if Empty(mv_par01) .or. Empty(mv_par02)
+                Help(/*Descontinuado*/,/*Descontinuado*/,"",/**/,"Deve-se informar o curral de origem e curral de destino para realizar a transferencia", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, digite os parâmetros corretamente." })
+            ElseIf mv_par01 == mv_par02
+                Help(,, "OPERACAO NAO PERMITDA.",, "Foi selecionado o mesmo curral para origem e destino.", 1, 0,,,,,, {"Operação não permitida."})
+            ElseIf !Empty(mv_par01) .and. !Empty(mv_par02)
+                FWMsgRun(, { || ProcTransf()}, "Transferencia de Currais", "Ajustando os currais " + AllTrim(mv_par01)+ "...")
+				AtualizaTela()
+            endif
+        endif
+        mv_par01 := aParam[1]; mv_par02 := aParam[2]
+    EndIf
+    FwRestArea(aArea)
+return nil
+
+/*04-01-2021
+Arthur Toshio
+*/
+static function procTransf()
+    local cQry     := ""
+    local cAlias   := ""
+    local cAliSB2   := ""
+    local cAliZ0T   := ""
+    local cAliZTD   := ""
+    local cAliZ08   := ""
+
+    //verifica se o Curral de destino já está ocupado com um lote
+    cQry := " SELECT DISTINCT B8_X_CURRA, B8_LOTECTL " +;
+            "   FROM " + RetSqlName("SB8")+ " " +;
+            "  WHERE B8_FILIAL = '" +FwXFilial("SB8")+ "' " +;
+            "    AND B8_SALDO > 0 " +;
+            "	AND B8_X_CURRA = '"+MV_PAR02+"' " +;
+            "	AND D_E_L_E_T_ = ' '"
+    
+    cAlias := MpSysOpenQuery(cQry)
+
+        If !(cAlias)->(Eof())
+            Help(,, "CURRAL OCUPADO.",, "O Curral  " + AllTrim(MV_PAR02) + " Está ocupado com o Lote " + alltrim(((cAlias)->B8_LOTECTL)) + "  Verifique e tente novamente.", 1, 0,,,,,, {"A operação será cancelada."})
+        
+        //Caso não esteja, permite fazer a transferencia.
+        ElseIf (cAlias)->(Eof())
+            // levantar dados da Z08 para inserir na 
+            cQry := " SELECT Z08_FILIAL, Z08_CODIGO, Z08_LINHA, Z08_SEQUEN, Z08_CONFNA " +;
+                                "  FROM " + RetSqlName("Z08010")+ " " +;
+                                " WHERE Z08_FILIAL = '" +FwXFilial("Z08")+ "' " +;
+                                "   AND Z08_CODIGO = '"+MV_PAR02+"' " +;
+                                "   AND D_E_L_E_T_ = ' ' "
+            cAliZ08 := MpSysOpenQuery(cQry)
+
+            //Valida lote de origem
+        
+            cQry := " SELECT DISTINCT B8_X_CURRA, B8_LOTECTL " +;
+                    "   FROM " + RetSqlName("SB8")+ " " +;
+                    "  WHERE B8_FILIAL = '" +FwXFilial("SB8")+ "' " +;
+                    "    AND B8_SALDO > 0 " +;
+                    "	AND B8_X_CURRA = '"+MV_PAR01+"' " +;
+                    "	AND D_E_L_E_T_ = ' '"
+            cAliSB2 := MpSysOpenQuery(cQry)
+        
+            cQry :=" SELECT Z0T_DATA, Z0T_CURRAL, Z0T_LOTE, Z0T_ROTA " +;
+                    "  FROM " + RetSqlName("Z0T")+ " " +; 
+                    " WHERE Z0T_FILIAL = '" +FwXFilial("SB8")+ "' " +;
+                    "   AND Z0T_DATA = '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                    "   AND Z0T_CURRAL = '" +(cAliSB2)->B8_X_CURRA+ "' " +;
+                    "   AND Z0T_LOTE = '" +(cAliSB2)->B8_LOTECTL+ "' " +;
+                    "   AND D_E_L_E_T_ = ' ' "
+            
+            cAliZ0T := MpSysOpenQuery(cQry)
+
+            cAliZTD :=  " SELECT Z0T_DATA, Z0T_CURRAL, Z0T_LOTE, Z0T_ROTA " +;
+                        "  FROM " + RetSqlName("Z0T")+ " " +; 
+                        " WHERE Z0T_FILIAL = '" +FwXFilial("SB8")+ "' " +;
+                        "   AND Z0T_DATA = '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                        "   AND Z0T_CURRAL = '" +mv_par02+ "' " +;
+                        "   AND D_E_L_E_T_ = ' ' "
+
+            cAliZTD := MpSysOpenQuery(cAliZTD)
+
+            If !(cAliSB2)->(Eof())
+            
+                If MsgYesno ("Deseja mesmo transferir o lote " + alltrim(((cAliSB2)->B8_LOTECTL)) + " do Curral " +ALLTRIM(mv_par01)+ " para o curral " +ALLTRIM(mv_par02)+ "??", "Transferencia de Currais")                
+                
+                //SB8 - SALDOS DOS LOTES
+                    Begin Transaction
+                        if TCSqlExec("UPDATE " + RetSqlName("SB8")+ " " +;
+                                    "   SET B8_X_CURRA = '" +mv_par02+ "' " +;
+                                    " WHERE B8_FILIAL = '" +FwXFilial("SB8")+ "' " +;
+                                    "   AND B8_LOTECTL = '" +(cAliSB2)->B8_LOTECTL+ "'" +;
+                                    "   AND D_E_L_E_T_ = ' ' " ) <0
+                    
+                            cErro := TCSQLError()
+                            Help(/*Descontinuado*/,/*Descontinuado*/,"EXCLUSÃO DE TRATO",/**/,"Ocorreu um problema durante a exclusão dos ítens do trato do lote " + ALLTRIM((cAliSB2)->B8_LOTECTL) + "." + CRLF + SubStr(cErro, 1, 250) + "...", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, tente novamente e caso o problema persista entre em contato com o TI-(2)." })
+                            DisarmTransaction()
+                            break
+                        endif
+                        
+                        //Z05010  - PROGRAMAÇÃO DO DIA ATUAL
+                        if TCSqlExec(" UPDATE " + RetSqlName("Z05")+ " " +;
+                                        " SET Z05_CURRAL = '"+mv_par02+"' " +;
+                                    " WHERE Z05_FILIAL = '" +FwXFilial("Z05")+ "' " +;
+                                        " AND Z05_DATA =  '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                                        " AND Z05_LOTE = '" +(cAliSB2)->B8_LOTECTL+ "' "+;
+                                        " AND Z05_CURRAL = '" +(cAliSB2)->B8_X_CURRA+ "' "+; 
+                                        " AND D_E_L_E_T_ = ' '") < 0
+                            cErro := TCSQLError()
+                            Help(/*Descontinuado*/,/*Descontinuado*/,"EXCLUSÃO DE TRATO",/**/,"Ocorreu um problema durante a exclusão dos ítens do trato do lote " + (TMPSB82)->B8_LOTECTL + "." + CRLF + SubStr(cErro, 1, 250) + "...", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, tente novamente e caso o problema persista entre em contato com o TI-(2)." })
+                            DisarmTransaction()
+                            break
+                        endif
+                        //Z06010  - PROGRAMAÇÃO DO DIA ATUAL - DETALHE
+                        if TCSqlExec(" UPDATE " + RetSqlName("Z06")+ " " +;
+                                        " SET Z06_CURRAL = '"+mv_par02+"' " +;
+                                      " WHERE Z06_FILIAL = '" +FwXFilial("Z06")+ "' " +;
+                                        " AND Z06_DATA =  '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                                        " AND Z06_LOTE = '" +(cAliSB2)->B8_LOTECTL+ "' "+;
+                                        " AND Z06_CURRAL = '" +(cAliSB2)->B8_X_CURRA+ "' "+; 
+                                        " AND D_E_L_E_T_ = ' '") < 0
+                            cErro := TCSQLError()
+                            Help(/*Descontinuado*/,/*Descontinuado*/,"EXCLUSÃO DE TRATO",/**/,"Ocorreu um problema durante a exclusão dos ítens do trato do lote " + (TMPSB82)->B8_LOTECTL + "." + CRLF + SubStr(cErro, 1, 250) + "...", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, tente novamente e caso o problema persista entre em contato com o TI-(2)." })
+                            DisarmTransaction()
+                            break
+                        endif
+
+                        // ZOT - ROTEIRIZAÇÃO
+                        if TCSqlExec("UPDATE " + RetSqlName("Z0T")+ " " +;  
+                                    "   SET Z0T_LOTE = ' ' " +;
+                                    "     , Z0T_ROTA = ' ' " +;
+                                    " WHERE Z0T_FILIAL = '" +FwXFilial("Z0T")+ "' " +;
+                                    "   AND Z0T_LOTE = '" +(cAliSB2)->B8_LOTECTL+ "'" +;
+                                    "   AND Z0T_DATA = '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                                    "   AND D_E_L_E_T_ = ' ' " ) < 0
+                            cErro := TCSQLError()
+                            Help(/*Descontinuado*/,/*Descontinuado*/,"EXCLUSÃO DE TRATO",/**/,"Ocorreu um problema durante a exclusão dos ítens do trato do lote " + (TMPSB82)->B8_LOTECTL + "." + CRLF + SubStr(cErro, 1, 250) + "...", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, tente novamente e caso o problema persista entre em contato com o TI-(2)." })
+                            DisarmTransaction()
+                            break
+                        endif
+
+
+                        If !(cAliZTD)->(Eof())
+                            If MsgYesno ("Deseja manter o lote " + alltrim(((cAliSB2)->B8_LOTECTL)) + " do Curral " +ALLTRIM(mv_par01)+ " no roteiro " +ALLTRIM((cAliZ0T)->Z0T_ROTA)+ "??", "Transferencia de Currais")                
+                                //SE MANTEM NO MESMO ROTEIRO
+                                if TCSqlExec("UPDATE " + RetSqlName("Z0T")+ " " +;
+                                        "   SET Z0T_LOTE = '" +(cAliZ0T)->Z0T_LOTE+ "' " +;
+                                        "     , Z0T_ROTA = '" +(cAliZ0T)->Z0T_ROTA+ "' " +;
+                                        " WHERE Z0T_FILIAL = '" +FwXFilial("Z0T")+ "' " +;
+                                        "   AND Z0T_CURRAL = '" +mv_par02+ "'" +;
+                                        "   AND Z0T_DATA = '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                                        "   AND Z0T_VERSAO = '" +Z0R->Z0R_VERSAO+ "' " +;
+                                        "   AND D_E_L_E_T_ = ' ' " ) < 0
+                                cErro := TCSQLError()
+                                Help(/*Descontinuado*/,/*Descontinuado*/,"EXCLUSÃO DE TRATO",/**/,"Ocorreu um problema durante a exclusão dos ítens do trato do lote " + (TMPSB82)->B8_LOTECTL + "." + CRLF + SubStr(cErro, 1, 250) + "...", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, tente novamente e caso o problema persista entre em contato com o TI-(2)." })
+                                DisarmTransaction()
+                                break
+                                endif   
+                            Else 
+                                if TCSqlExec("UPDATE " + RetSqlName("Z0T")+ " " +;
+                                        "   SET Z0T_LOTE = '" +(cAliZ0T)->Z0T_LOTE+ "' " +;
+                                        " WHERE Z0T_FILIAL = '" +FwXFilial("Z0T")+ "' " +;
+                                        "   AND Z0T_CURRAL = '" +mv_par02+ "'" +;
+                                        "   AND Z0T_DATA = '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                                        "   AND Z0T_VERSAO = '" +Z0R->Z0R_VERSAO+ "' " +;
+                                        "   AND D_E_L_E_T_ = ' ' " ) < 0
+                                cErro := TCSQLError()
+                                Help(/*Descontinuado*/,/*Descontinuado*/,"EXCLUSÃO DE TRATO",/**/,"Ocorreu um problema durante a exclusão dos ítens do trato do lote " + (TMPSB82)->B8_LOTECTL + "." + CRLF + SubStr(cErro, 1, 250) + "...", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, tente novamente e caso o problema persista entre em contato com o TI-(2)." })
+                                DisarmTransaction()
+                                break
+                                endif
+                            EndIf   
+
+                        Else    
+                            cQry :=  " SELECT Z0T_DATA, Z0T_CURRAL, Z0T_LOTE, Z0T_ROTA " +;
+                                    "  FROM " + RetSqlName("Z0T")+ " " +; 
+                                    " WHERE Z0T_FILIAL = '" +FwXFilial("SB8")+ "' " +;
+                                    "   AND Z0T_DATA = '" +DToS(Z0R->Z0R_DATA)+ "' " +;
+                                    "   AND D_E_L_E_T_ = ' ' "
+                            
+                            cAliZTU := MpSysOpenQuery(cQry)
+
+                            If !(cAliZTU)->(EOF())
+                            ////If !Z0V->(DbSeek( FWxFilial("Z0V") + DToS(dDtTrato) + cVersao + (cAliasCmpQry)->G1_COMP ))
+                                If MsgYesno ("Deseja manter o lote " + alltrim(((cAliSB2)->B8_LOTECTL)) + " do Curral " +ALLTRIM(mv_par01)+ " no roteiro " +ALLTRIM((cAliZ0T)->Z0T_ROTA)+ "??", "Transferencia de Currais")                
+                                    DBSelectArea("Z0T")
+                                    Z0T->(DBSetOrder(1))        
+                                    
+                                    RecLock("Z0T", .T.)
+                                        Z0T->Z0T_FILIAL := xFilial("Z0X")
+                                        Z0T->Z0T_DATA   := Z0R->Z0R_DATA
+                                        Z0T->Z0T_VERSAO := Z0R->Z0R_VERSAO
+                                        Z0T->Z0T_ROTA   := (cAliZ0T)->Z0T_ROTA
+                                        Z0T->Z0T_CONF   := (cAliZ08)->Z08_CONFNA
+                                        Z0T->Z0T_LINHA  := (cAliZ08)->Z08_LINHA
+                                        Z0T->Z0T_SEQUEN := (cAliZ08)->Z08_SEQUEN
+                                        Z0T->Z0T_CURRAL := (cAliZ08)->Z08_CODIGO
+                                        Z0T->Z0T_LOTE   := (cAliZ0T)->Z0T_LOTE
+                                    MSUnlock()
+                                Else
+                                    DBSelectArea("Z0T")
+                                    Z0T->(DBSetOrder(1))        
+
+                                    RecLock("Z0T", .T.)
+                                        Z0T->Z0T_FILIAL := xFilial("Z0X")
+                                        Z0T->Z0T_DATA   := Z0R->Z0R_DATA
+                                        Z0T->Z0T_VERSAO := Z0R->Z0R_VERSAO
+                                        Z0T->Z0T_ROTA   := ""
+                                        Z0T->Z0T_CONF   := (cAliZ08)->Z08_CONFNA
+                                        Z0T->Z0T_LINHA  := (cAliZ08)->Z08_LINHA
+                                        Z0T->Z0T_SEQUEN := (cAliZ08)->Z08_SEQUEN
+                                        Z0T->Z0T_CURRAL := (cAliZ08)->Z08_CODIGO
+                                        Z0T->Z0T_LOTE   := (cAliZ0T)->Z0T_LOTE
+                                    MSUnlock()
+                                EndIf
+                            EndIf
+                        (cAliZTU)->(DbCloseArea())
+                        EndIf 
+                    End Transaction
+                EndIf
+            EndIf
+            (cAliSB2)->(DbCloseArea())
+        (cAliZ0T)->(DbCloseArea())
+        (cAliZTD)->(DbCloseArea())
+        (cAliZ08)->(DbCloseArea())
+        
+        EndIf
+    (cAlias)->(DbCloseArea())
+    
+return nil

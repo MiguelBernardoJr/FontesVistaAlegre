@@ -73,7 +73,7 @@ User Function VAFATB02(cAlias, nReg, nOpc)
 	aAdd(aField, { "Dt. Emissao De" , "cDtEmDe"   , "D", TamSX3("F2_EMISSAO")[1], TamSX3("F2_EMISSAO")[2], PesqPict("SF2", "F2_EMISSAO"),  { || Vldfiltr(1) }                         , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
 	aAdd(aField, { "Dt. Emissao Ate", "cDtEmAte"  , "D", TamSX3("F2_EMISSAO")[1], TamSX3("F2_EMISSAO")[2], PesqPict("SF2", "F2_EMISSAO"),  { || Vldfiltr(1) }                         , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
 	aAdd(aField, { "Data Abate"     , "cDtAbate"  , "D", TamSX3("D2_XDTABAT")[1], TamSX3("D2_XDTABAT")[2], PesqPict("SD2", "D2_XDTABAT"), /* { || VldCpo(2) } */                      , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "",    ,     .F.,          "",      "N"} )
-	If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador,joao.santos'   
+	If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador,joao.santos,valeria.buzaneli'   
 		aAdd(aField, { "Mostra Marcados", "cMarcado"  , "C", 1                      , 0                      , "@!"                         ,                                             , .F.,     1,      "",   ""   ,    "",   .F.,    .F.,   "S=Sim;N=Não",    ,     .F.,          "",      "N"} )
 	EndIf
 

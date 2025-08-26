@@ -188,7 +188,7 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         "  	 AND Z0W_LOTE = D.LOTE " + _ENTER_ +;
         "  	 AND Z0W_DATA >= DATEADD(D,-" + cValToChar(nDiasHist) + ",GETDATE()) " + _ENTER_ +;
         "  	 AND Z0W.D_E_L_E_T_ = ' '  " + _ENTER_ +;
-        "  	JOIN "+RetSqlName("Z0I")+" (nolock) Z0I ON  " + _ENTER_ +;
+        "  	LEFT JOIN "+RetSqlName("Z0I")+" (nolock) Z0I ON  " + _ENTER_ +;
         "  	     Z0I_FILIAL = Z0W_FILIAL " + _ENTER_ +;
         "  	 AND Z0I_LOTE = Z0W_LOTE " + _ENTER_ +;
         "  	 AND Z0I.Z0I_DATA = Z0W_DATA " + _ENTER_ +;
@@ -212,8 +212,8 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
         " 	  , PESO + (DIAS_DE_COCHO * GMD_ESPERADO) PESO_PROJETADO" + _ENTER_ +;
         "       , H.Z0W_DATA [DATAx] " + _ENTER_ +;
         "       , H.Z0I_NOTMAN [NOTA_MANHA] " + _ENTER_ +;
-        "  	 , H.Z0I_NOTTAR [NOTA_NOITE] " + _ENTER_ +;
-        "  	 , H.Z0W_QTDPRE [KG_PREV] " + _ENTER_ +;
+        "  	 , ISNULL(H.Z0I_NOTTAR,'0') [NOTA_NOITE] " + _ENTER_ +;
+        "  	 , ISNULL(H.Z0W_QTDPRE,'0') [KG_PREV] " + _ENTER_ +;
         "  	 , (SELECT Z05_CABECA FROM "+RetSqlName("Z05")+" Z05 WHERE Z05_DATA = H.Z0W_DATA and Z05_LOTE = H.Z0W_LOTE AND Z05.D_E_L_E_T_ = '') [CABECAS] " + _ENTER_ +;
         "  	 , H.Z0W_QTDREA [KG_TOTAL] " + _ENTER_ +;
         "    FROM DADOS D " + _ENTER_ +;
@@ -257,13 +257,22 @@ WsMethod GET NotasDasBaias WSSERVICE WSNotaCocho
             EndIf
 
             aAdd( aHistorico, JsonObject():New() )
-            aHistorico[len(aHistorico)]["DATA"]       := sToD( (cAlias)->DATAx )
+
+            if Empty((cAlias)->DATAx)
+                dData  := sToD( "19000101" )
+                cDieta := "ADAPT1"
+            else
+                dData  := sToD( (cAlias)->DATAx )
+                cDieta := AllTrim((cAlias)->DIETA)
+            endif
+
+            aHistorico[len(aHistorico)]["DATA"]       := dData
             aHistorico[len(aHistorico)]["NOTA_MANHA"] := AllTrim( (cAlias)->NOTA_MANHA )
             aHistorico[len(aHistorico)]["NOTA_NOITE"] := AllTrim( (cAlias)->NOTA_NOITE )
             aHistorico[len(aHistorico)]["KG_PREV"]    := (cAlias)->KG_PREV
             aHistorico[len(aHistorico)]["KG_TOTAL"]   := (cAlias)->KG_TOTAL
             aHistorico[len(aHistorico)]["KG_MS"]      := (cAlias)->KG_MS
-            aHistorico[len(aHistorico)]["DIETA"]      := AllTrim((cAlias)->DIETA)
+            aHistorico[len(aHistorico)]["DIETA"]      := cDieta
             aHistorico[len(aHistorico)]["CABECAS"]    := (cAlias)->CABECAS
 
             (cAlias)->( dbSkip() )
