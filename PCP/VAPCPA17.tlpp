@@ -1633,6 +1633,7 @@ Atualiza as quantidade de materia seca e natural na tabela Z05
 /*/
 static function AjuMateria(oModel)
 	local aArea      := GetArea() AS Array
+	Local oView 	 := FWViewActive() as Object
 	local oGridZ06D  := oModel:GetModel("MdGridZ06D") as Object 
 	local oGridZ06G  := oModel:GetModel("MdGridZ06G") as Object 
 	local oGridRota  := oModel:GetModel("MdGridRotaD") as Object 
@@ -1701,6 +1702,10 @@ static function AjuMateria(oModel)
 			exit
 		EndIf
 	Next nI
+
+	oView:Refresh("VwGridROTG")
+	oView:Refresh("VwGridROTD")
+	oView:Refresh("VwGridZ06G")
 	
 	RestArea(aArea)
 return nil
@@ -2154,7 +2159,7 @@ Static function ProcTrato()
 	Local nLines 		:= oGridZ06G:Length() as numeric
 	Local nI 			:= 0  as numeric
 	Local cMsg			:= "" as character
-
+	Local cRota			:= oGridRota:GetValue("Z0T_ROTA")
 	Z05->(DbsetOrder(1)) // Z05_FILIAL+DToS(Z0 5_DATA)+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
 
 	begin transaction
@@ -2186,7 +2191,7 @@ Static function ProcTrato()
 
 	if !Empty(cMsg)
 		AtualizaTela()
-		FwAlertInfo("<font color = 'red'><strong>" +oGridRota:GetValue("Z0T_ROTA") +"</strong></font><br>"+;
+		FwAlertInfo("<font color = 'red'><strong>" +cRota+"</strong></font><br>"+;
 					"Currais processados: <font color = 'red'>[ " +cMsg+ " ]</font>")
 	endif
 
@@ -2277,12 +2282,12 @@ static function AjuNroTrat(nQtdTrato)
             if lRet
 
                 Z0G->(DBSETORDER( 2 ))
-                Z0G->(DbSeek(FWxFilial("Z0G")+PadR(AllTrim(Iif(','$Z05->Z05_DIETA,SubStr(Z05->Z05_DIETA,RAt(',', Z05->Z05_DIETA)+1),Z05->Z05_DIETA)),TamSX3("B1_COD")[1]) + (cTrbBrowse)->NOTA_MANHA /* (cAliLotes)->NOTA_MANHA */ ))
+                Z0G->(DbSeek(FWxFilial("Z0G")+PadR(AllTrim(Iif(','$Z05->Z05_DIETA,SubStr(Z05->Z05_DIETA,RAt(',', Z05->Z05_DIETA)+1),Z05->Z05_DIETA)),TamSX3("B1_COD")[1]) + oGridZ06G:GetValue("Z0I_NOTMAN") /* (cAliLotes)->NOTA_MANHA */ ))
 
                 //aKgMS := DivTrato(Z05->Z05_KGMSDI, nQtdTrato)
                 for i  := 1 to nQtdTrato
 
-					nTrtTotal := u_CalcQtMN( cCodDieta, Z05->Z05_KGMSDI) * (cTrbBrowse)->B8_SALDO/* (cAliLotes)->B8_SALDO */
+					nTrtTotal := u_CalcQtMN( cCodDieta, Z05->Z05_KGMSDI) * oGridZ06G:GetValue("Z05_CABECA")/* (cAliLotes)->B8_SALDO */
 
 					nQuantTrato := nQtdAux       := nQtdTrato
 					nDif          := 0
@@ -2294,7 +2299,7 @@ static function AjuNroTrat(nQtdTrato)
 						nQuantTrato := 0
 					Else
 
-						If lMaior 
+						If lMaior
 
 							If GetMV("VA_AJUDAN") == "K"
 								nQuantTrato := Z05->Z05_KGMSDI + Z0G->Z0G_AJSTKG - nTotTrtClc
@@ -2950,7 +2955,7 @@ static function procTransf()
                                 Help(/*Descontinuado*/,/*Descontinuado*/,"EXCLUSÃO DE TRATO",/**/,"Ocorreu um problema durante a exclusão dos ítens do trato do lote " + (TMPSB82)->B8_LOTECTL + "." + CRLF + SubStr(cErro, 1, 250) + "...", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, tente novamente e caso o problema persista entre em contato com o TI-(2)." })
                                 DisarmTransaction()
                                 break
-                                endif   
+                                endif
                             Else 
                                 if TCSqlExec("UPDATE " + RetSqlName("Z0T")+ " " +;
                                         "   SET Z0T_LOTE = '" +(cAliZ0T)->Z0T_LOTE+ "' " +;
@@ -3014,7 +3019,7 @@ static function procTransf()
                     End Transaction
                 EndIf
             EndIf
-            (cAliSB2)->(DbCloseArea())
+			(cAliSB2)->(DbCloseArea())
         (cAliZ0T)->(DbCloseArea())
         (cAliZTD)->(DbCloseArea())
         (cAliZ08)->(DbCloseArea())
