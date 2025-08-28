@@ -7,11 +7,41 @@
 
 namespace custom.VAPCPA17
 
-static aCpoMdRot  := { "Z0T_ROTA"	,"Z06_TRATO" ,"Z06_KGMNT"}
+static IDX_Z05_RECNO          := 1
+static IDX_Z05_FILIAL         := 2
+static IDX_Z05_DATA           := 3
+static IDX_Z05_VERSAO         := 4
+static IDX_Z05_CURRAL         := 5
+static IDX_Z05_LOTE           := 6
+static IDX_Z05_CABECA         := 7
+static IDX_Z05_DIASDI         := 8
+static IDX_Z05_PESMAT         := 9
+static IDX_Z05_KGMSDI         := 10
+static IDX_Z05_TOTMSC         := 11
+static IDX_Z05_TOTMNC         := 12
+static IDX_Z05_NROTRA         := 13
+static IDX_Z05_DIETA          := 14
+static IDX_Z05_PESOCO         := 15
+static IDX_Z05_CMSPN          := 16
+static IDX_Z0T_ROTA           := 17
+static IDX_Z0S_EQUIP          := 18
+static IDX_ZV0_DESC           := 19
+static IDX_Z05_PROGANT        := 20
+static IDX_Z0I_NOTMAN         := 21
+static IDX_Z0I_NOTTAR         := 22
+static IDX_Z06_TRATO          := 23
+static IDX_Z06_DIETA_TRATO    := 24
+static IDX_Z06_KGMSTR         := 25
+static IDX_Z06_KGMNTR         := 26
+static IDX_Z06_MEGCAL         := 27
+static IDX_Z06_KGMNT          := 28
+static IDX_Z06_RECNO          := 29
+
+static aCpoMdRot  	:= { "Z0T_ROTA"	,"Z06_TRATO" ,"Z06_KGMNT"}
 static aCpoGridZ06G := { "Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT","Z0I_NOTTAR","Z0I_NOTMAN","Z05_PROGANT","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z05_TOTMSC","Z0T_ROTA","XX5_PVATU","Z05_NROTRA"}
-static aCpoMdZ06D := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE","Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
-static aCpoMdZ05G := { "Z05_DATA"	,"Z05_DIETA" ,"Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
-static aCpoMdRt1  := { "Z0S_EQUIP"  ,"ZV0_DESC"  ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
+static aCpoMdZ06D 	:= { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE","Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
+static aCpoMdZ05G 	:= { "Z05_DATA"	,"Z05_DIETA" ,"Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
+static aCpoMdRt1  	:= { "Z0S_EQUIP"  ,"ZV0_DESC"  ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
 
 Static MIN_TRATO  := GETMV( 'MB_MINTRAT' ,, 300)
 
@@ -25,17 +55,7 @@ Rotina será usada na chamada <F4> da rotina VAPCPA05
 /*/
 USER FUNCTION VAPCPA17()
 	Private oBrowse as object
-	Private oCurral, oQtdCabeca, oDiasDeCocho, oCMSPV,;
-			oPesoMInicial, oTotMsCalc, oTotMnCal as object
-	Private oExecZ05C  as object
-	Private oExecZ05G  as object
-	Private oExecRotaG as object
-	Private oExecRotaD as object
-	Private oExecZ06D  as object
-	Private oExecZ06G  as object
 
-	u_PreparaQuerys()
-	
 	oBrowse := FWLoadBrw("custom.VAPCPA17.VAPCPA17")
 	oBrowse:Activate()
 	oBrowse:DeActivate()
@@ -43,30 +63,6 @@ USER FUNCTION VAPCPA17()
 	FreeObj(oBrowse)
 	oBrowse := nil
 
-	if oExecZ06G != nil
-		oExecZ06G:Destroy()
-		oExecZ06G := Nil
-	endif
-	if oExecZ06D != nil
-		oExecZ06D:Destroy()
-		oExecZ06D := Nil
-	endif
-	if oExecRotaD != nil
-		oExecRotaD:Destroy()
-		oExecRotaD := Nil
-	endif
-	if oExecRotaG != nil
-		oExecRotaG:Destroy()
-		oExecRotaG := Nil
-	endif
-	if oExecZ05C != nil
-		oExecZ05C:Destroy()
-		oExecZ05C := Nil
-	endif
-	if oExecZ05G != nil
-		oExecZ05G:Destroy()
-		oExecZ05G := Nil
-	endif
 Return
 /*/
 {Protheus.doc} BrowseDef
@@ -995,295 +991,17 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 	endif
 return oStruct
 
-static function LoadZ06D(oFormGrid, lCopia) as Array
-	local aArea     := GetArea() 	AS Array
-	local aTemplate := {0, {}} 		AS Array
-	local aRet      := {} 			AS Array
-	Local cLote  	:= oFormGrid:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE") AS Character
-	Local cRota  	:= oFormGrid:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA") AS Character
-	Local nReg 		:= 0 as Numeric
-	local cZ0TROTA  := IIF(Type("cFiltroRota")!="U" .and. !Empty(cFiltroRota),cFiltroRota,cRota)
-	
-	oExecZ06D:SetString(1,cZ0TROTA)
-	oExecZ06D:SetString(2,cLote)
-
-	cAlias := oExecZ06D:OpenAlias()
-
-	while !(cAlias)->(Eof())
-		AAdd(aRet, aClone(aTemplate))
-		aRet[Len(aRet)][1] := ++nReg
-		aRet[Len(aRet)][2] := {(cAlias)->Z06_TRATO;   // Z06_TRATO
-							, AllTrim((cAlias)->Z06_CURRAL); // Z05_CURRAL
-							, (cAlias)->Z06_LOTE;   // Z06_LOTE
-							, AllTrim((cAlias)->Z06_DIETA);   // Z06_DIETA
-							, (cAlias)->Z06_KGMSTR;  // Z06_KGMSTR
-							, (cAlias)->Z06_KGMNTR;  // Z06_KGMNTR
-							, (cAlias)->Z06_MEGCAL;  // Z06_MEGCAL
-							, (cAlias)->Z06_KGMNT;
-							, (cAlias)->Z06_RECNO}   // Z06_KGMNT
-		(cAlias)->(DbSkip())
-	end
-
-	(cAlias)->(DbCloseArea())
-
-	if !Empty(aArea)
-		RestArea(aArea)
-	endif
-return aRet
-
-static function LoadZ06G(oFormGrid, lCopia) as Array
-	local aArea     := GetArea() 	AS Array
-	local aTemplate := {0, {}} 		AS Array
-	local aRet      := {} 			AS Array
-	Local cRota  	:= oFormGrid:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA") AS Character
-	Local nReg 		:= 0 as Numeric
-	
-	oExecZ06G:SetString(1,cRota)
-
-	cAlias := oExecZ06G:OpenAlias()
-
-	while !(cAlias)->(Eof())
-		AAdd(aRet, aClone(aTemplate))
-		aRet[Len(aRet)][1] := ++nReg
-		aRet[Len(aRet)][2] := { Alltrim((cAlias)->Z05_CURRAL);   // Z06_LOTE
-							, AllTrim((cAlias)->Z05_LOTE);   // Z05_CURRAL
-							, (cAlias)->Z05_CABECA;  // Z06_KGMSTR
-							, (cAlias)->Z05_DIASDI;  // Z06_KGMNTR
-							, (cAlias)->Z05_PESMAT;  // Z06_MEGCAL
-							;//, (cAlias)->Z05_CMSPN;  // Z05_CMSPN
-							, (cAlias)->Z0I_NOTTAR;  // Z0I_NOTTAR
-							, (cAlias)->Z0I_NOTMAN;  // Z0I_NOTMAN
-							, (cAlias)->Z05_PROGANT;  // Z05_PROGANT
-							, (cAlias)->Z05_KGMSDI;   // Z06_KGMNT
-							, AllTrim((cAlias)->Z05_DIETA);   // Z06_DIETA
-							, (cAlias)->Z05_NROTRA;   // Z06_DIETA
-							, (cAlias)->Z05_TOTMNC;   // Z06_KGMNT
-							, (cAlias)->Z05_RECNO;   // Z05_RECNO
-							, (cAlias)->Z05_TOTMSC;  // Z05_TOTMSC
-							, Alltrim((cAlias)->Z0T_ROTA);
-							, Round(((cAlias)->Z05_TOTMSC / (cAlias)->Z05_PESMAT) * 100,2);
-							, (cAlias)->Z05_NROTRA}
-		(cAlias)->(DbSkip())
-	end
-
-	(cAlias)->(DbCloseArea())
-
-	if !Empty(aArea)
-		RestArea(aArea)
-	endif
-return aRet
-
-static function LoadRotG(oModel, lCopia) as Array
-    local aArea     	:= GetArea() as Array
-    local aRet      	:= {} as Array
-    Local cALias    	:= "" as Character
-    Local nSeq      	:= 0  as Numeric
-
-	cAlias := oExecRotaG:OpenAlias()
-
-	While !(cAlias)->(Eof())
-	    aAdd(aRet, {++nSeq,{(cALias)->Z0S_EQUIP,Alltrim((cALias)->ZV0_DESC),(cALias)->Z0T_ROTA}})
-	    (cAlias)->(DbSkip())
-	EndDo
-	(cAlias)->(DBCLOSEAREA())
-    
-    if Len(aRet) == 0
-        aAdd(aRet, {1,{"","",""}})
-    endif
-    
-    RestArea(aArea)
-Return aRet
-
-static function LoadRotD(oModel, lCopia) as Array
-    local aArea     := GetArea() as Array
-    local aRet      := {} as Array
-    Local cALias    := "" as Character
-    Local nSeq      := 0  as Numeric
-	local cZ0TROTA  := oModel:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA") as Character
-
-	oExecRotaD:SetString(1,cZ0TROTA)
-
-	cAlias := oExecRotaD:OpenAlias()
-
-	While !(cAlias)->(Eof())
-	    aAdd(aRet, {++nSeq,{(cALias)->Z0T_ROTA,(cALias)->Z06_TRATO,(cALias)->Z06_KGMNT}})
-	    (cAlias)->(DbSkip())
-	EndDo
-	(cAlias)->(DBCLOSEAREA())
-    
-    if Len(aRet) == 0
-        aAdd(aRet, {1,{"","",0}})
-    endif
-    
-    RestArea(aArea)
-Return aRet
-
-static function LoadRt1(oModel, lCopia) as Array
-    Local aRet   := {} as Array
-	Local cEquip := oModel:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0S_EQUIP")
-	Local cRota  := oModel:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA")
-	Local cDesc  := oModel:oFormModel:GetModel("MdGridRotaG"):GetValue("ZV0_DESC")
-	Local cLote  := oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE")
-	Local cCur  := oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z05_CURRAL")
-	
-	aAdd(aRet, {1 ,{cEquip,cDesc,cRota,cLote,cCur}})
-
-Return aRet
-
-static function LoadHide(oModel, lCopia) as Array
-    Local aRet  	:= {} as Array
-
-	aAdd(aRet, {""})
-	aAdd(aRet, {1})
-
-Return aRet
-//Programaçao anterior 
-static function LoadZ05G(oModel, lCopia) as Array
-	local aArea    	:= GetArea() as Array
-	local aRet     	:= {} as Array
-	local cLoteZ06 	:= oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE") as Character
-	local cAlias	:= "" as Character
-	local nI, nLen as numeric
-	local nReg		:= 0 as Numeric
-	nLen := GetMV("VA_REGHIST",,5) // Identifica a quantidade de registros históricos que devem ser mostradas na rotina VAPCPA05  
-	
-	for nI := 1 to nLen
-		oExecZ05G:SetDate(nI, Z0R->Z0R_DATA-nI)
-	next
-
-	oExecZ05G:SetString(nI, cLoteZ06)
-
-	cAlias := oExecZ05G:OpenAlias()
-	
-	While !(cALias)->(EOF())
-		aAdd(aRet ,{++nReg,{sToD((cAlias)->Z05_DATA),;		
-						AllTrim((cAlias)->Z05_DIETA),;		
-						(cAlias)->Z05_KGMSDI,;		
-						(cAlias)->Z0I_NOTMAN,;		
-						(cAlias)->Z0I_NOTTAR,;		
-						(cAlias)->Z05_CABECA,;		
-						(cAlias)->Z05_MEGCAL,;		
-						(cAlias)->Z05_KGMNDI,;		
-						(cAlias)->Z0W_QTDPRE,;		
-						(cAlias)->Z0W_QTDREA,;		
-						(cAlias)->DIF } }) 	
-		(cALias)->(DbSkip())
-	enddo
-
-	(cALias)->(DbCloseArea())
-
-	if !Empty(aArea)
-		RestArea(aArea)
-	endif
-return aRet
-
-static function LoadZ05C(oModel, lCopia) as Array
-	local aArea    	:= GetArea() as Array
-	local aRet     	:= {} as Array
-	local nRecnoZ05 := oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z05_RECNO") as Numeric
-	local cAlias	:= "" as Character
-
-	oExecZ05C:SetNumeric(1, nRecnoZ05)
-
-	cAlias := oExecZ05C:OpenAlias()
-	
-	if !(cALias)->(EOF())
-		aAdd(aRet ,{ALLTRIM((cAlias)->Z05_CURRAL),;		// Z05_LOTE		// C
-					ALLTRIM((cAlias)->Z05_LOTE  ),;		// Z05_VERSAO	// C
-					(cAlias)->Z05_CABECA,;		// Z05_DATA		// N 
-					(cAlias)->Z05_DIASDI,;		// Z05_TRATO	// N
-					(cAlias)->Z05_PESOCO,;		// Z05_KGMSTR	// N 
-					(cAlias)->Z05_CMSPN,;		// Z05_DIETA	// N
-					(cAlias)->Z05_TOTMSC,;		// Z05_KGMNTR	// N 
-					(cAlias)->Z05_TOTMNC } ) 	// Z05_MEGCAL	// N 
-	endif
-
-	aAdd(aRet , {1})
-
-	(cALias)->(DbCloseArea())
-
-	if !Empty(aArea)
-		RestArea(aArea)
-	endif
-return aRet
-
-/* Gatilho para desativar e ativar a tela a partir do campo XX1_ROTAS */
-User Function RefreshRotaVAPCPA17() as character
-	Local aArea 	  	:= GetArea() 		as Array
-	Local oModel	  	:= FWModelActive() 	as Object
-	Local oCabRotas   	:= oModel:GetModel("MdFieldRota")  as Object
-	
-	IF Type("cFiltroRota") == "U"
-		Private cFiltroRota	as Character
-	endif
-	IF Type("cFiltroEquip") == "U"
-		Private cFiltroEquip	as Character
-	endif
-	
-	//cFiltroRota := Alltrim(oCabRotas:GetValue("XX1_ROTAS"))
-	cFiltroEquip := Alltrim(oCabRotas:GetValue("XX1_EQUIP"))
-
-	if !Empty(cFiltroEquip)
-		AtualizaTela()
-	endif
-
-	RestArea(aArea)
-Return cFiltroEquip
-
 User Function PreparaQuerys()
 	local aArea := GetArea() as Array
 	local cQry  := "" as Character
 	local nI, nLen as numeric
 	local cValues 	:= "" as Character
-	
+
 	nLen := GetMV("VA_REGHIST",,5) // Identifica a quantidade de registros históricos que devem ser mostradas na rotina VAPCPA05  
 	for nI := 1 to nLen
 		cValues += Iif(Empty(cValues),"", ", ") + "(?)"
 	next
 
-	cQry := "select Z0T_ROTA " + CRLF
-	cQry += "	, Z0S_EQUIP " + CRLF
-	cQry += "	, ISNULL(ZV0_DESC,'') AS ZV0_DESC " + CRLF
-	cQry += "   FROM "+RetSqlName("Z0T")+" Z0T   " + CRLF
-	cQry += "   JOIN "+RetSqlName("Z0S")+" Z0S ON Z0S_ROTA = Z0T_ROTA  " + CRLF
-	cQry += "   AND Z0S_FILIAL = Z0T_FILIAL  " + CRLF
-	cQry += "   AND Z0S_DATA = Z0T_DATA  " + CRLF
-	cQry += "   AND Z0S.D_E_L_E_T_ = ''  " + CRLF
-	cQry += "    LEFT JOIN "+RetSqlName("ZV0")+" ZV0 ON  " + CRLF
-	cQry += "	Z0S_EQUIP = ZV0_CODIGO " + CRLF
-	cQry += "	AND ZV0.D_E_L_E_T_ ='' " + CRLF
-	cQry += "  WHERE Z0T_FILIAL = '"+FwXFilial("Z0T")+"'    " + CRLF
-	cQry += "    AND Z0T_DATA = '"+DToS(Z0R->Z0R_DATA)+"'    " + CRLF
-	cQry += "    AND Z0T.D_E_L_E_T_ = '' " + CRLF
-	cQry += "    GROUP BY Z0T_ROTA,Z0S_EQUIP,ZV0_DESC " + CRLF
-
-	oExecRotaG := FwExecStatement():New(cQry)
-
-	cQry := " select Z0T_ROTA  " + CRLF
-	cQry += "	, Z06_TRATO " + CRLF
-	cQry += "	, SUM(Z06_KGMNT) AS Z06_KGMNT " + CRLF
-	cQry += "   from "+RetSqlName("Z06")+" Z06  " + CRLF
-	cQry += "   JOIN "+RetSqlName("Z0T")+" Z0T ON   " + CRLF
-	cQry += "        Z0T_FILIAL = Z06_FILIAL  " + CRLF
-	cQry += "    AND Z0T_LOTE = Z06_LOTE  " + CRLF
-	cQry += "    AND Z0T_DATA = Z06_DATA  " + CRLF
-	cQry += "    AND Z0T_CURRAL = Z06_CURRAL  " + CRLF
-	cQry += "    AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
-	cQry += "  WHERE Z06_FILIAL = '"+FwXFilial("Z06")+"'  " + CRLF
-	cQry += "    AND Z06_DATA = '"+DToS(Z0R->Z0R_DATA)+"'  " + CRLF
-	cQry += "    AND Z06.D_E_L_E_T_ = ''  " + CRLF
-	cQry += "    AND Z0T.Z0T_ROTA = ?  " + CRLF
-	cQry += "    GROUP BY Z0T_ROTA, Z06_TRATO " + CRLF
-
-	oExecRotaD := FwExecStatement():New(cQry)
-
-	cQry := " SELECT * " + CRLF
-	cQry += " FROM "+RetSqlName("Z05")+" Z05" + CRLF
-	cQry += " WHERE Z05.D_E_L_E_T_ = ''" + CRLF
-	cQry += " AND Z05.R_E_C_N_O_ = ? " + CRLF
-
-	oExecZ05C := FwExecStatement():New(cQry)
-		
 	cQry := " select --PERIODO.DIA " + CRLF
 	cQry += " Z05.Z05_DIETA " + CRLF
 	cQry += " , Z05.Z05_DATA " + CRLF
@@ -1330,93 +1048,309 @@ User Function PreparaQuerys()
 	
 	oExecZ05G := FwExecStatement():New(cQry)
 
-	cQry := "select Z05.Z05_LOTE" + CRLF	
-	cQry += " , Z05.Z05_DIETA	" + CRLF
-	cQry += " , Z05.Z05_CURRAL	" + CRLF
-	cQry += " , Z05.Z05_CABECA	" + CRLF
-	cQry += " , Z05.Z05_DIASDI	" + CRLF
-	cQry += " , Z05.Z05_PESMAT	" + CRLF
-	cQry += " , Z05.Z05_KGMSDI	" + CRLF
-	cQry += " , Z05.Z05_TOTMSC	" + CRLF
-	cQry += " , Z05.Z05_TOTMNC	" + CRLF
-	cQry += " , Z0T.Z0T_ROTA	" + CRLF
-	cQry += " , Z05.Z05_NROTRA " + CRLF
-	cQry += " , Z05_CMSPN " + CRLF
-	cQry += " , Z05_NROTRA " + CRLF
-	cQry += " , ISNULL((SELECT SUM(Z05D1.Z05_KGMSDI) FROM Z05010 Z05D1 WHERE Z05D1.Z05_FILIAL = Z05.Z05_FILIAL AND Z05D1.Z05_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z05D1.Z05_LOTE = Z05.Z05_LOTE AND Z05D1.D_E_L_E_T_ ='  ' ),0) Z05_PROGANT " + CRLF
-	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTMAN FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = '"+dToS(Z0R->Z0R_DATA)+"' AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTMAN " + CRLF
-	cQry += " , ISNULL((SELECT TOP 1 Z0I.Z0I_NOTTAR FROM Z0I010 Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = '"+dToS(Z0R->Z0R_DATA)+"' AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND D_E_L_E_T_ ='  '),0) Z0I_NOTTAR " + CRLF
-	cQry += " , Z05.R_E_C_N_O_ Z05_RECNO" + CRLF
-	cQry += "  from "+RetSqlName("Z05")+" Z05" + CRLF
-	cQry += "    JOIN "+RetSqlName("Z0T")+" Z0T ON " + CRLF
-	cQry += "         Z0T_FILIAL = Z05_FILIAL  " + CRLF
-	cQry += "     AND Z0T_LOTE = Z05_LOTE  " + CRLF
-	cQry += "     AND Z0T_DATA = Z05_DATA  " + CRLF
-	cQry += "     AND Z0T_CURRAL = Z05_CURRAL  " + CRLF
-	cQry += "     AND Z0T_ROTA = ?" + CRLF
-	cQry += "     AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
-	cQry += "  where Z05.Z05_FILIAL = '" + FWxFilial("Z06") + "'" + CRLF
-	cQry += "  and Z05.Z05_DATA   = '" + DToS(Z0R->Z0R_DATA) + "'" + CRLF
-	cQry += "  and Z05.D_E_L_E_T_ = ' '" + CRLF
-	cQry += "  order by Z05_CURRAL" + CRLF
+	cQry := "WITH CTE_LOTES_DIA AS ( " + CRLF
+	cQry += "	SELECT " + CRLF
+	cQry += "		Z05.R_E_C_N_O_, Z05.Z05_FILIAL, Z05.Z05_DATA, Z05.Z05_VERSAO, Z05.Z05_CURRAL, Z05.Z05_LOTE, Z05.Z05_CABECA, Z05.Z05_DIASDI, " + CRLF
+	cQry += "		Z05.Z05_PESMAT, Z05.Z05_KGMSDI, Z05.Z05_TOTMSC, Z05.Z05_TOTMNC, Z05.Z05_NROTRA, Z05.Z05_DIETA, Z05.Z05_PESOCO, Z05.Z05_CMSPN, " + CRLF
+	cQry += "		Z0T.Z0T_ROTA, Z0S.Z0S_EQUIP, ISNULL(ZV0.ZV0_DESC, '') AS ZV0_DESC, " + CRLF
+	cQry += "		ISNULL((SELECT SUM(Z05D1.Z05_KGMSDI) FROM "+RetSqlName("Z05")+" Z05D1 WHERE Z05D1.Z05_FILIAL = Z05.Z05_FILIAL AND Z05D1.Z05_DATA = DATEADD(D,-1, Z05.Z05_DATA) AND Z05D1.Z05_LOTE = Z05.Z05_LOTE AND Z05D1.D_E_L_E_T_ =''), 0) AS Z05_PROGANT, " + CRLF
+	cQry += "		ISNULL((SELECT TOP 1 Z0I.Z0I_NOTMAN FROM "+RetSqlName("Z0I")+" Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = Z05.Z05_DATA AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND Z0I.D_E_L_E_T_ =''), '') AS Z0I_NOTMAN, " + CRLF
+	cQry += "		ISNULL((SELECT TOP 1 Z0I.Z0I_NOTTAR FROM "+RetSqlName("Z0I")+" Z0I WHERE Z0I.Z0I_FILIAL = Z05.Z05_FILIAL AND Z0I.Z0I_DATA = Z05.Z05_DATA AND Z0I.Z0I_LOTE = Z05.Z05_LOTE AND Z0I.D_E_L_E_T_ =''), '') AS Z0I_NOTTAR " + CRLF
+	cQry += "	FROM "+RetSqlName("Z05")+" Z05 " + CRLF
+	cQry += "	JOIN "+RetSqlName("Z0T")+" Z0T ON Z0T.Z0T_FILIAL = Z05.Z05_FILIAL AND Z0T.Z0T_LOTE = Z05.Z05_LOTE AND Z0T.Z0T_DATA = Z05.Z05_DATA AND Z0T.Z0T_CURRAL = Z05.Z05_CURRAL AND Z0T.D_E_L_E_T_ = '' " + CRLF
+	cQry += "	JOIN "+RetSqlName("Z0S")+" Z0S ON Z0S.Z0S_FILIAL = Z0T.Z0T_FILIAL AND Z0S.Z0S_ROTA = Z0T.Z0T_ROTA AND Z0S.Z0S_DATA = Z0T.Z0T_DATA AND Z0S.D_E_L_E_T_ = '' " + CRLF
+	cQry += "	LEFT JOIN "+RetSqlName("ZV0")+" ZV0 ON ZV0.ZV0_CODIGO = Z0S.Z0S_EQUIP AND ZV0.D_E_L_E_T_ = '' " + CRLF
+	cQry += "	WHERE Z05.Z05_FILIAL = '"+FwXFilial("Z05")+"' AND Z05.Z05_DATA = '"+DToS(Z0R->Z0R_DATA)+"' AND Z05.Z05_VERSAO = '"+Z0R->Z0R_VERSAO+"' AND Z05.D_E_L_E_T_ = '' " + CRLF
+	cQry += "), " + CRLF
+	cQry += "CTE_TRATOS_DIA AS ( " + CRLF
+	cQry += "	SELECT Z06_LOTE, Z06_CURRAL, Z06_DATA, Z06_TRATO, Z06_DIETA, Z06_KGMSTR, Z06_KGMNTR, Z06_MEGCAL, Z06_KGMNT, R_E_C_N_O_ AS Z06_RECNO " + CRLF
+	cQry += "	FROM "+RetSqlName("Z06")+" " + CRLF
+	cQry += "	WHERE Z06_FILIAL = '"+FwXFilial("Z06")+"' AND Z06_DATA = '"+DToS(Z0R->Z0R_DATA)+"' AND Z06_VERSAO = '"+Z0R->Z0R_VERSAO+"' AND D_E_L_E_T_ = '' " + CRLF
+	cQry += ") " + CRLF
+	cQry += "SELECT LR.R_E_C_N_O_, LR.Z05_FILIAL, LR.Z05_DATA, LR.Z05_VERSAO, LR.Z05_CURRAL, LR.Z05_LOTE, LR.Z05_CABECA, LR.Z05_DIASDI, LR.Z05_PESMAT, LR.Z05_KGMSDI, LR.Z05_TOTMSC, LR.Z05_TOTMNC, LR.Z05_NROTRA, LR.Z05_DIETA, LR.Z05_PESOCO, LR.Z05_CMSPN, LR.Z0T_ROTA, LR.Z0S_EQUIP, LR.ZV0_DESC, LR.Z05_PROGANT, LR.Z0I_NOTMAN, LR.Z0I_NOTTAR, TD.Z06_TRATO, TD.Z06_DIETA AS Z06_DIETA_TRATO, TD.Z06_KGMSTR, TD.Z06_KGMNTR, TD.Z06_MEGCAL, TD.Z06_KGMNT, TD.Z06_RECNO " + CRLF
+	cQry += "FROM CTE_LOTES_DIA LR " + CRLF
+	cQry += "LEFT JOIN CTE_TRATOS_DIA TD ON LR.Z05_LOTE = TD.Z06_LOTE AND LR.Z05_CURRAL = TD.Z06_CURRAL AND LR.Z05_DATA = TD.Z06_DATA " + CRLF
+	cQry += "ORDER BY LR.Z0T_ROTA, LR.Z05_CURRAL, TD.Z06_TRATO" + CRLF
 
-	//cQry := "select Z05.Z05_LOTE" + CRLF	
-	//cQry += " , Z05.Z05_DIETA	" + CRLF
-	//cQry += " , Z05.Z05_CURRAL	" + CRLF
-	//cQry += " , Z05.Z05_CABECA	" + CRLF
-	//cQry += " , Z05.Z05_DIASDI	" + CRLF
-	//cQry += " , Z05.Z05_PESOCO	" + CRLF
-	//cQry += " , Z05.Z05_TOTMSC	" + CRLF
-	//cQry += " , Z05.Z05_TOTMNC	" + CRLF
-	//cQry += " , Z0T.Z0T_ROTA	" + CRLF
-	//cQry += " , Z05.R_E_C_N_O_ Z05_RECNO" + CRLF
-	//cQry += "  from "+RetSqlName("Z05")+" Z05" + CRLF
-	//cQry += "    JOIN "+RetSqlName("Z0T")+" Z0T ON " + CRLF
-	//cQry += "         Z0T_FILIAL = Z05_FILIAL  " + CRLF
-	//cQry += "     AND Z0T_LOTE = Z05_LOTE  " + CRLF
-	//cQry += "     AND Z0T_DATA = Z05_DATA  " + CRLF
-	//cQry += "     AND Z0T_CURRAL = Z05_CURRAL  " + CRLF
-	//cQry += "     AND Z0T_ROTA = ?" + CRLF
-	//cQry += "     AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
-	//cQry += "  where Z05.Z05_FILIAL = '" + FWxFilial("Z06") + "'" + CRLF
-	//cQry += "  and Z05.Z05_DATA   = '" + DToS(Z0R->Z0R_DATA) + "'" + CRLF
-	//cQry += "  and Z05.D_E_L_E_T_ = ' '" + CRLF
-	//cQry += "  order by Z05_CURRAL" + CRLF
-
-
-	oExecZ06G := FwExecStatement():New(cQry)
-
-	cQry := " select Z06.Z06_LOTE		" 		+ CRLF
-	cQry += 		", Z06.Z06_CURRAL	" + CRLF
-	cQry += 		", Z06.Z06_DIETA	" + CRLF
-	cQry += 		", Z06.Z06_TRATO	" + CRLF
-	cQry += 		", Z06.Z06_KGMSTR	" + CRLF
-	cQry += 		", Z06.Z06_KGMNTR	" + CRLF
-	cQry += 		", Z06.Z06_MEGCAL	" + CRLF
-	cQry += 		", Z06.Z06_KGMNT	" + CRLF
-	cQry += 		", Z06.R_E_C_N_O_ Z06_RECNO" + CRLF
-	cQry += 	" from " + RetSqlName("Z06") + " Z06" + CRLF
-	cQry += 	"   JOIN "+RetSqlName("Z0T")+" Z0T ON " + CRLF
-	cQry += 	"        Z0T_FILIAL = Z06_FILIAL  " + CRLF
-	cQry += 	"    AND Z0T_LOTE = Z06_LOTE  " + CRLF
-	cQry += 	"    AND Z0T_DATA = Z06_DATA  " + CRLF
-	cQry += 	"    AND Z0T_CURRAL = Z06_CURRAL  " + CRLF
-	cQry += 	"    AND Z0T_ROTA = ?  " + CRLF// PEGAR ROTA DO COMB CRLF
-	cQry += 	"    AND Z0T.D_E_L_E_T_ = ' '   " + CRLF
-	cQry += " where Z06.Z06_FILIAL = '" + FWxFilial("Z06") + "'" + CRLF
-	cQry += 	" and Z06.Z06_DATA   = '" + DToS(Z0R->Z0R_DATA) + "'" + CRLF
-	cQry += 	" and Z06.Z06_LOTE   = ?" + CRLF
-	cQry += 	" and Z06.D_E_L_E_T_ = ' '" + CRLF
-	cQry += " order by Z06.Z06_TRATO,Z06.Z06_LOTE" + CRLF
-
-	oExecZ06D := FwExecStatement():New(cQry)
+	oExecGeral := FwExecStatement():New(cQry)
 
 	RestArea(aArea)
 Return nil
+static function LoadZ06D(oFormGrid, lCopia) as Array
+	local aRet      := {} AS Array
+	Local cLotePai 	:= oFormGrid:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE") AS Character
+	local nLen, nReg as numeric
+	local aTratosAdicionados := {} as array
+	local nPosLote 	:= aScan(aDadosDetalheRota,{|x| x[IDX_Z05_LOTE]==cLotePai}) as numeric
+
+	nLen := Len(aDadosDetalheRota)
+	nReg := 0
+
+	if nPosLote > 0 
+		While nPosLote <= Len(aDadosDetalheRota) .and. aDadosDetalheRota[nPosLote][IDX_Z05_LOTE] == cLotePai
+			if aDadosDetalheRota[nPosLote][IDX_Z06_TRATO] != nil .AND. AScan(aTratosAdicionados, {|x| x== aDadosDetalheRota[nPosLote][IDX_Z06_TRATO]}) == 0
+				AAdd(aTratosAdicionados, aDadosDetalheRota[nPosLote][IDX_Z06_TRATO])
+				AAdd(aRet, { ++nReg,;
+					{;
+						aDadosDetalheRota[nPosLote][IDX_Z06_TRATO],;
+						AllTrim(aDadosDetalheRota[nPosLote][IDX_Z05_CURRAL]),;
+						aDadosDetalheRota[nPosLote][IDX_Z05_LOTE],;
+						AllTrim(aDadosDetalheRota[nPosLote][IDX_Z06_DIETA_TRATO]),;
+						aDadosDetalheRota[nPosLote][IDX_Z06_KGMSTR],;
+						aDadosDetalheRota[nPosLote][IDX_Z06_KGMNTR],;
+						aDadosDetalheRota[nPosLote][IDX_Z06_MEGCAL],;
+						aDadosDetalheRota[nPosLote][IDX_Z06_KGMNT],;
+						aDadosDetalheRota[nPosLote][IDX_Z06_RECNO];
+					};
+				})
+			endif
+			nPosLote++
+		endDo
+	endif
+
+return aRet
+
+static function LoadZ06G(oFormGrid, lCopia) as Array
+	local aRet      := {} AS Array
+	local nLen, nReg as numeric
+	local aLotesAdicionados := {} as Array
+	local cRotaPai  := oFormGrid:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA")
+	local nPosRota 	:= aScan(aDadosDetalheRota,{|x| x[IDX_Z0T_ROTA]==cRotaPai}) as numeric
+
+	nLen := Len(aDadosDetalheRota)
+	nReg := 0
+
+	if nPosRota > 0
+		While nPosRota <= Len(aDadosDetalheRota) .and. aDadosDetalheRota[nPosRota][IDX_Z0T_ROTA] == cRotaPai
+			if AScan(aLotesAdicionados, {|x| x == aDadosDetalheRota[nPosRota][IDX_Z05_LOTE]}) == 0
+				AAdd(aLotesAdicionados, aDadosDetalheRota[nPosRota][IDX_Z05_LOTE])
+				AAdd(aRet, { ++nReg,;
+					{;
+						Alltrim(aDadosDetalheRota[nPosRota][IDX_Z05_CURRAL]),;
+						AllTrim(aDadosDetalheRota[nPosRota][IDX_Z05_LOTE]),;
+						aDadosDetalheRota[nPosRota][IDX_Z05_CABECA],;
+						aDadosDetalheRota[nPosRota][IDX_Z05_DIASDI],;
+						aDadosDetalheRota[nPosRota][IDX_Z05_PESMAT],;
+						aDadosDetalheRota[nPosRota][IDX_Z0I_NOTTAR],;
+						aDadosDetalheRota[nPosRota][IDX_Z0I_NOTMAN],;
+						aDadosDetalheRota[nPosRota][IDX_Z05_PROGANT],;
+						aDadosDetalheRota[nPosRota][IDX_Z05_KGMSDI],;
+						AllTrim(aDadosDetalheRota[nPosRota][IDX_Z05_DIETA]),;
+						aDadosDetalheRota[nPosRota][IDX_Z05_NROTRA],;
+						aDadosDetalheRota[nPosRota][IDX_Z05_TOTMNC],;
+						aDadosDetalheRota[nPosRota][IDX_Z05_RECNO],;
+						aDadosDetalheRota[nPosRota][IDX_Z05_TOTMSC],;
+						Alltrim(aDadosDetalheRota[nPosRota][IDX_Z0T_ROTA]),;
+						Round((aDadosDetalheRota[nPosRota][IDX_Z05_TOTMSC] / Iif(aDadosDetalheRota[nPosRota][IDX_Z05_PESMAT] == 0, 1, aDadosDetalheRota[nPosRota][IDX_Z05_PESMAT])) * 100, 2),;
+						aDadosDetalheRota[nPosRota][IDX_Z05_NROTRA];
+					};
+				})
+			endif
+			nPosRota++
+		enddo
+	endif 
+return aRet
+
+static function LoadRotG(oModel, lCopia) as Array
+    local aRet      	:= {} as Array
+    Local nSeq      	:= 0  as Numeric
+	local nI, nLen as numeric
+	local aRotasAdicionadas := {} as array
+	Local nMaxRotas := 99 as Numeric
+	Local nPosRota  := 0 as Numeric
+
+	nMaxRotas := Val(MPSysExecScalar("SELECT SUBSTRING(MAX(Z0T_ROTA),5,2) AS Z0T_ROTA FROM "+RetSqlName("Z0T")+" WHERE Z0T_DATA = '"+dToS(Z0R->Z0R_DATA)+"'", "Z0T_ROTA"))
+
+	// Etapa 1: Carregar TODOS os dados detalhados em memória (apenas na primeira vez)
+	FWMsgRun( , {|| aDadosDetalheRota := GetTodosDadosDetalhados() }, "Pré-carregamento", "Buscando todos os dados de trato...")
+
+	// Etapa 2: Popular o grid de rotas a partir dos dados em memória
+	nLen := Len(aDadosDetalheRota)
+
+	for nI := 1 to nMaxRotas
+		if (nPosRota := aScan(aDadosDetalheRota, {|x| x[IDX_Z0T_ROTA]=="ROTA"+StrZero(nI,2)})) > 0 
+			if AScan(aRotasAdicionadas, {|x| x == aDadosDetalheRota[nPosRota][IDX_Z0T_ROTA]}) == 0
+				AAdd(aRotasAdicionadas, aDadosDetalheRota[nPosRota][IDX_Z0T_ROTA])
+				aAdd(aRet, {++nSeq, {aDadosDetalheRota[nPosRota][IDX_Z0S_EQUIP], Alltrim(aDadosDetalheRota[nPosRota][IDX_ZV0_DESC]), aDadosDetalheRota[nPosRota][IDX_Z0T_ROTA]}})
+			endif
+		endif
+	next
+
+    if Len(aRet) == 0
+        aAdd(aRet, {1,{"","",""}})
+    endif
+
+Return aRet
+static function LoadRotD(oFormGrid, lCopia) as Array
+    local aRet      := {} as Array
+    Local nSeq      := 0  as Numeric
+	local nI, nLen 	as numeric
+	local aTratosRota := {} as Array
+	local nPos 		as numeric
+	local cRotaPai  := oFormGrid:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA")
+
+	nLen := Len(aDadosDetalheRota)
+	For nI := 1 to nLen
+		if aDadosDetalheRota[nI][IDX_Z0T_ROTA] == cRotaPai
+			if aDadosDetalheRota[nI][IDX_Z06_TRATO] != nil
+				nPos := AScan(aTratosRota, {|x| x[1] == aDadosDetalheRota[nI][IDX_Z0T_ROTA] .AND. x[2] == aDadosDetalheRota[nI][IDX_Z06_TRATO]})
+				if nPos == 0
+					AAdd(aTratosRota, {aDadosDetalheRota[nI][IDX_Z0T_ROTA], aDadosDetalheRota[nI][IDX_Z06_TRATO], aDadosDetalheRota[nI][IDX_Z06_KGMNT]})
+				else
+					aTratosRota[nPos][3] += aDadosDetalheRota[nI][IDX_Z06_KGMNT]
+				endif
+			endif
+		endif
+	Next
+
+	For nI := 1 to Len(aTratosRota)
+		aAdd(aRet, {++nSeq, aTratosRota[nI]})
+	Next
+    
+    if Len(aRet) == 0
+        aAdd(aRet, {1,{"","",0}})
+    endif
+
+Return aRet
+
+static function LoadRt1(oModel, lCopia) as Array
+    Local aRet   := {} as Array
+	Local cEquip := oModel:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0S_EQUIP")
+	Local cRota  := oModel:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA")
+	Local cDesc  := oModel:oFormModel:GetModel("MdGridRotaG"):GetValue("ZV0_DESC")
+	Local cLote  := oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE")
+	Local cCur  := oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z05_CURRAL")
+	
+	aAdd(aRet, {1 ,{cEquip,cDesc,cRota,cLote,cCur}})
+
+Return aRet
+
+static function LoadHide(oModel, lCopia) as Array
+    Local aRet  	:= {} as Array
+
+	aAdd(aRet, {""})
+	aAdd(aRet, {1})
+
+Return aRet
+//Programaçao anterior 
+static function LoadZ05G(oModel, lCopia) as Array
+	local aArea    	:= GetArea() as Array
+	local aRet     	:= {} as Array
+	local cLoteZ06 	:= oModel:oFormModel:GetModel("MdGridZ06G"):GetValue("Z06_LOTE") as Character
+	local cAlias	:= "" as Character
+	local cValues	:= "" as Character
+	local nI, nLen as numeric
+	local nReg		:= 0 as Numeric
+	
+	nLen := GetMV("VA_REGHIST",,5) // Identifica a quantidade de registros históricos que devem ser mostradas na rotina VAPCPA05  
+	for nI := 1 to nLen
+		oExecZ05G:SetDate(nI, Z0R->Z0R_DATA-nI)
+	next
+
+	oExecZ05G:SetString(nI, cLoteZ06)
+
+	cAlias := oExecZ05G:OpenAlias()
+	
+	While !(cALias)->(EOF())
+		aAdd(aRet ,{++nReg,{sToD((cAlias)->Z05_DATA),;		
+						AllTrim((cAlias)->Z05_DIETA),;		
+						(cAlias)->Z05_KGMSDI,;		
+						(cAlias)->Z0I_NOTMAN,;		
+						(cAlias)->Z0I_NOTTAR,;		
+						(cAlias)->Z05_CABECA,;		
+						(cAlias)->Z05_MEGCAL,;		
+						(cAlias)->Z05_KGMNDI,;		
+						(cAlias)->Z0W_QTDPRE,;		
+						(cAlias)->Z0W_QTDREA,;		
+						(cAlias)->DIF } }) 	
+		(cALias)->(DbSkip())
+	enddo
+
+	(cALias)->(DbCloseArea())
+
+	if !Empty(aArea)
+		RestArea(aArea)
+	endif
+return aRet
+
+/* Gatilho para desativar e ativar a tela a partir do campo XX1_ROTAS */
+User Function RefreshRotaVAPCPA17() as character
+	Local aArea 	  	:= GetArea() 		as Array
+	Local oModel	  	:= FWModelActive() 	as Object
+	Local oCabRotas   	:= oModel:GetModel("MdFieldRota")  as Object
+	
+	IF Type("cFiltroRota") == "U"
+		Private cFiltroRota	as Character
+	endif
+	IF Type("cFiltroEquip") == "U"
+		Private cFiltroEquip	as Character
+	endif
+	
+	//cFiltroRota := Alltrim(oCabRotas:GetValue("XX1_ROTAS"))
+	cFiltroEquip := Alltrim(oCabRotas:GetValue("XX1_EQUIP"))
+
+	if !Empty(cFiltroEquip)
+		AtualizaTela()
+	endif
+
+	RestArea(aArea)
+Return cFiltroEquip
+
+/*/{Protheus.doc} u_GetTodosDadosDetalhados
+   Executa UMA query centralizada para buscar TODOS os dados detalhados
+   de TODAS as rotas do dia e retorna um array de arrays.
+   @author Protheus IA
+   @version 1.2 (Refatorado para Array Simples)
+   @return aRet, Array de arrays com os dados consolidados.
+/*/
+Static Function GetTodosDadosDetalhados() as Array
+	local cAlias 	as character
+	local aRet := {} as Array
+
+	cAlias := oExecGeral:OpenAlias()
+	
+	while !(cAlias)->(Eof())
+		aRow := {}
+		
+		AAdd(aRow, (cAlias)->R_E_C_N_O_ 		)
+		AAdd(aRow, (cAlias)->Z05_FILIAL 		)
+		AAdd(aRow, sToD((cAlias)->Z05_DATA)		)
+		AAdd(aRow, Alltrim((cAlias)->Z05_VERSAO))
+		AAdd(aRow, Alltrim((cAlias)->Z05_CURRAL))
+		AAdd(aRow, Alltrim((cAlias)->Z05_LOTE)	)
+		AAdd(aRow, (cAlias)->Z05_CABECA			)
+		AAdd(aRow, (cAlias)->Z05_DIASDI			)
+		AAdd(aRow, (cAlias)->Z05_PESMAT			)
+		AAdd(aRow, (cAlias)->Z05_KGMSDI			)
+		AAdd(aRow, (cAlias)->Z05_TOTMSC			)
+		AAdd(aRow, (cAlias)->Z05_TOTMNC			)
+		AAdd(aRow, (cAlias)->Z05_NROTRA			)
+		AAdd(aRow, Alltrim((cAlias)->Z05_DIETA)	)
+		AAdd(aRow, (cAlias)->Z05_PESOCO			)
+		AAdd(aRow, (cAlias)->Z05_CMSPN			)
+		AAdd(aRow, Alltrim((cAlias)->Z0T_ROTA)	)
+		AAdd(aRow, Alltrim((cAlias)->Z0S_EQUIP)	)
+		AAdd(aRow, Alltrim((cAlias)->ZV0_DESC)	)
+		AAdd(aRow, (cAlias)->Z05_PROGANT		)
+		AAdd(aRow, (cAlias)->Z0I_NOTMAN			)
+		AAdd(aRow, (cAlias)->Z0I_NOTTAR			)
+		AAdd(aRow, (cAlias)->Z06_TRATO			)
+		AAdd(aRow, Alltrim((cAlias)->Z06_DIETA_TRATO))
+		AAdd(aRow, (cAlias)->Z06_KGMSTR			)
+		AAdd(aRow, (cAlias)->Z06_KGMNTR			)
+		AAdd(aRow, (cAlias)->Z06_MEGCAL			)
+		AAdd(aRow, (cAlias)->Z06_KGMNT			)
+		AAdd(aRow, (cAlias)->Z06_RECNO			)
+
+		AAdd(aRet, aRow)
+		(cAlias)->(DbSkip())
+	end
+	
+	(cAlias)->(DbCloseArea())
+return aRet
 
 /*Toshio - 26-06-2025*/
 //Inclui na SX3 dos campos Z06_TRATO, Z06_DIETA, Z06_KGMSTR  - custom.VAPCPA17.U_VAPCP05VALID() - CONTEÚDO ANTERIOR U_vpcp05vl()
-
 //Validação dos campos Z06_TRATO Z06_DIETA Z06_KGMSTR
 User Function VAPCP05VALID() 
 	Local lRet 		:= .T. as Logical
