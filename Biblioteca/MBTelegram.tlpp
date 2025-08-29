@@ -1,6 +1,7 @@
 #INCLUDE 'Totvs.ch'
 #INCLUDE "JSON.CH"
 #INCLUDE "SHASH.CH"
+#include "fileio.ch"
 
 /*
     MB : 14.09.2025
@@ -15,6 +16,8 @@ Class Telegram From FwRest
     Data cPath      As character
     Data cEndPoint  As character
     Data cChatId    As character
+    Data cPathFile  As character
+    Data cNameFile  As character
 
     Public Method New() Constructor
     Public Method SetChat()
@@ -40,6 +43,8 @@ Method New ( cToken, cID ) Class Telegram
     ::cChatId   := cID
     ::aHeadOut  := {}
     ::cEndPoint := ""
+    ::cPathFile := ""
+    ::cNameFile := ""
 
 Return( Self )
 
@@ -99,7 +104,7 @@ Method SendMessage( cMessage, lHtml ) Class Telegram
     Default lHtml    := .F.
 
     If !Empty(cMessage)
-        // 1) Define o modo de parse
+        // 1) Define o modo de parse        
         cParseMode       := IIF( lHtml, "html", "markdown" )
 
         ::cPath          := "/bot" + ::cToken
@@ -111,12 +116,17 @@ Method SendMessage( cMessage, lHtml ) Class Telegram
         cUrl             := "?parse_mode=" + cParseMode
         // cUrl             += "&use_aliases=true"
         cUrl             += "&chat_id=" + ::cChatId
-        cUrl             += "&text=" + ConvAsc( cMessage ) // ou HttpUrlEncode
+        cUrl             += "&text=" + ConvAsc( cMessage ) // ou   HttpUrlEncode
 
         // 4) Combina e dispara
         ::cEndPoint      := cEndpoint + cUrl // opcional, se quiser gravar no atributo
         _Super:SetPath( ::cEndPoint )
         lRet := _Super:Get()
+
+        If !lRet
+            cRetError := _Super:GetResult() // Pega o retorno JSON da API com o erro
+            MsgAlert("Erro ao enviar mensagem para o Telegram: " + cRetError)
+        EndIf
     EndIf
 
 Return( lRet )
@@ -134,48 +144,48 @@ User Function MBTelegram() // U_MBTelegram()
     */
 
        oTelegram := Telegram():New(;
-            SuperGetMv("MB_TLGTKTI",,"8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI"),;
-            SuperGetMv("MB_TLGIDTI" ,,"-4909361835");
+            "7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo",;
+            "-4974016224";
             )
         If ValType(oTelegram) == "O"
 
             // xRet := oTelegram:SetChat( oTelegram:GetChat( ) /* ChatId */  )
 
-            _cMsg := '1o. bot - V@ Protheus x Telegram'
-            oTelegram:SendMessage( _cMsg, .F. /* lHtml */ )
+            //_cMsg := '1o. bot - V@ Protheus x Telegram'
+            //oTelegram:SendMessage( _cMsg, .F. /* lHtml */ )
+//
+            //_cMsg := '<b>bold</b>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := '<strong>bold</strong>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := '<i>italic</i>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := '<em>italic</em>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := '<u>sublinhado</u>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := '<s>traçado</s>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := '<a href="URL">https://telegram-bot-sdk.readme.io/reference/sendmessage</a>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := '<code>inline fixed-width code</code>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//
+            //_cMsg := 'Nota Fiscal: <pre>000001</pre> - Serie: <pre>1</pre>'
+            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
 
-            _cMsg := '<b>bold</b>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+            oTelegram:SendDocument("E:\010100100507000772201_16-41-47.pdf", "010100100507000772201_16-41-47.pdf", "Teste Local")
+            oTelegram:SendDocument("\COTACOES\010100100507000772201_16-41-47.pdf", "010100100507000772201_16-41-47.pdf.pdf", "Teste System")
 
-            _cMsg := '<strong>bold</strong>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-
-            _cMsg := '<i>italic</i>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-
-            _cMsg := '<em>italic</em>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-
-            _cMsg := '<u>sublinhado</u>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-
-            _cMsg := '<s>traçado</s>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-
-            _cMsg := '<a href="URL">https://telegram-bot-sdk.readme.io/reference/sendmessage</a>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-
-            _cMsg := '<code>inline fixed-width code</code>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-
-            _cMsg := 'Nota Fiscal: <pre>000001</pre> - Serie: <pre>1</pre>'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-          
         EndIf
         oTelegram := Nil
-
-
-
 
 Return()
 
@@ -206,6 +216,9 @@ Return()
                 https://api.telegram.org/bot8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo/getUpdates
                 https://api.telegram.org/bot8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo/sendMessage?markdown&use_aliases=true&chat_id=-4920396972&text=Teste envio mensagem 15/08/2025 - 10:14 - 01
 
+                                Caracteres comuns depois da codificação (baseado no ASCII ou UTF-8)
+        nova linha	            | barra de espaço	| "	    | %	    | -	    |.	    |<	    |>	    |\	    |^	    |_	    |`	    |{	    | |	    | }	    | ~
+        %0A ou %0D ou %0D%0A	| %20	            | %22	| %25	| %2D	|%2E	|%3C	|%3E	|%5C	|%5E	|%5F	|%60	|%7B	| %7C	| %7D	| %7E
 
 
     1.2 -   Envie o comando: /newbot.
@@ -248,4 +261,8 @@ chat_id: -4909361835
 https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/sendMessage?markdown&use_aliases=true&chat_id=-4909361835&text=Teste envio mensagem 19/08/2025 - 14:12
 
 https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/sendDocument?chat_id=-4909361835&caption=Meu PDF de teste&document=@/Users/miguelbernardo/Downloads/teste_telegram.pdf
+
+
+
 */
+

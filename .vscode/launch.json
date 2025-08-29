@@ -72,6 +72,9 @@
 		},
 		{
 			"label": "SIGACOM"
+		},
+		{
+			"label": "sigaadv"
 		}
 	],
 	"lastProgramExecuted": "SIGAMDI",

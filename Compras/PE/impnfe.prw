@@ -13,7 +13,6 @@ Local aDuplic := PARAMIXB
 
 Return aDuplic
 
-
 User Function A140EXC()
 Local lRet := .T.
 
@@ -82,6 +81,8 @@ Local lRet := .T.
     If lRet .And. !FwIsInCallStack('U_GATI001') .Or. !l103Auto
     
     EndIf
+
+    lRet := U_VAMT140TOK()
 
 Return lRet
 

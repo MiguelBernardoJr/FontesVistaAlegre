@@ -56,6 +56,7 @@
 #define MODEL_FIELD 1
 #define MODEL_GRID 2
 
+
 #IFNDEF _ENTER_
 	#DEFINE _ENTER_ (Chr(13)+Chr(10))
 	// Alert("miguel")
@@ -4217,7 +4218,6 @@ user function vap05mnt(cAlias, nReg, nOpc)
                     {.F., nil},;        // 14 - ECM
                     {.F., nil}}         // 15 - Salvar e Criar novo
     local aAreaTrb    := (cTrbBrowse)->(GetArea())
-    Private  aDadosDetalheRota := {}
 
     if Empty((cTrbBrowse)->Z0T_ROTA)
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele não possui Rota.", 1, 0,,,,,, {"Operação não permitida."})
@@ -4232,8 +4232,12 @@ user function vap05mnt(cAlias, nReg, nOpc)
         private Altera := .T.
     endif
 
-	Private oExecZ05G   as object
-	Private oExecGeral  as object
+	Private oExecZ05C  as object
+	Private oExecZ05G  as object
+	Private oExecRotaG as object
+	Private oExecRotaD as object
+	Private oExecZ06D  as object
+	Private oExecZ06G  as object
 
     EnableKey(.F.)
 
@@ -4241,23 +4245,49 @@ user function vap05mnt(cAlias, nReg, nOpc)
     DbSetOrder(1) // Z0R_FILIAL+DToS(Z0R_DATA)+Z0R_VERSAO
 
     if Z0R->Z0R_LOCK <= '1'
-        Custom.VAPCPA17.u_PreparaQuerys()
-                
-        cBakFun := FunName()
-
-        SetFunName("VAPCPA17")
-                
-        FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+        DbSelectArea("Z05")
+        DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     
-        SetFunName(cBakFun)
+        if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
+            //if U_CanUseZ05()
+				
+				Custom.VAPCPA17.u_PreparaQuerys()
+                
+                cBakFun := FunName()
 
-        if oExecZ05G != nil
-            oExecZ05G:Destroy()
-            oExecZ05G := Nil
-        endif
-        if oExecGeral != nil
-            oExecGeral:Destroy()
-            oExecGeral := Nil
+                SetFunName("VAPCPA17")
+                
+                FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+            
+                //ReleaseZ05()
+
+                SetFunName(cBakFun)
+
+				if oExecZ06G != nil
+					oExecZ06G:Destroy()
+					oExecZ06G := Nil
+				endif
+				if oExecZ06D != nil
+					oExecZ06D:Destroy()
+					oExecZ06D := Nil
+				endif
+				if oExecRotaD != nil
+					oExecRotaD:Destroy()
+					oExecRotaD := Nil
+				endif
+				if oExecRotaG != nil
+					oExecRotaG:Destroy()
+					oExecRotaG := Nil
+				endif
+				if oExecZ05C != nil
+					oExecZ05C:Destroy()
+					oExecZ05C := Nil
+				endif
+				if oExecZ05G != nil
+					oExecZ05G:Destroy()
+					oExecZ05G := Nil
+				endif
+            //endif
         endif
     elseif Z0R->Z0R_LOCK = '2' 
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
@@ -4513,7 +4543,11 @@ static function ModelDef()
     local oStrZ05G   := Z05GrdMStr()
     local oStrZ06G   := Z06GrdMStr()
 
+    local oStrRot    := nil
+    local oStrHide    := nil
 
+    local bLoadHide    
+    local bLoadRot   
     local bLoadZ05   := {|oModel, lCopia| LoadZ05(oModel, lCopia) }
     local bLoadZ0I   := {|oFormGrid, lCopia| LoadZ0I(oFormGrid, lCopia) }
     local bLoadZ05An := {|oFormGrid, lCopia| LoadZ05Ant(oFormGrid, lCopia) }
@@ -4522,7 +4556,10 @@ static function ModelDef()
     local bZ06Pre    := {|oGridModel, nLin, cAction| Z06Pre(oGridModel, nLin, cAction)}
     local bZ06LinePo := {|oGridModel, nLin| Z06LinPost(oGridModel, nLin)}
     local bLoadZ06   := {|oFormGrid, lCopia| LoadZ06(oFormGrid, lCopia) }
+    local bLineROT   := NIL
 
+    //local bPreValid  := {|oModel| FrmPreVld(oModel)}
+    //local bPostValid := {|oModel| FrmPostVld(oModel)}
     local bCommit     := {|oModel| FormCommit(oModel)}
     local bCancel     := {|oModel| FormCancel(oModel)}
 

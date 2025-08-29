@@ -33,9 +33,9 @@ for i := 1 to nLen
         SB1->(DBSeek(FwxFilial("SB1")+aCols[i][nPosProd]))
 
         IF CT1->(DBSeek(FWxFilial("CT1")+SB1->B1_X_DEBIT)) .and. CT1->CT1_ITOBRG == '1'
-            cMsg += Iif(Empty(cMsg), "A(s) linha(s) abaixo precisa(m) de identificar o item contabil para quem a solicitação foi feita." + CRLF, "") + aCols[i][nPosItem] + " - " + aCols[i][nPosProd] + CRLF
-            
-            if Empty(aCols[i][nPosOP])
+            IF Empty(aCols[i][nPosIC])
+                cMsg += Iif(Empty(cMsg), "A(s) linha(s) abaixo precisa(m) de identificar o item contabil para quem a solicitação foi feita." + CRLF, "") + aCols[i][nPosItem] + " - " + aCols[i][nPosProd] + CRLF
+            elseif Empty(aCols[i][nPosOP])
                 cMsg += Iif(Empty(cMsg), "A(s) linha(s) abaixo precisa(m) de identificar a Ordem de Producao." + CRLF, "") + aCols[i][nPosItem] + " - " + aCols[i][nPosProd] + CRLF
             elseif Empty(aCols[i][nPosOS])
                 cMsg += Iif(Empty(cMsg), "A(s) linha(s) abaixo precisa(m) de identificar o Número da Ordem de serviço." + CRLF, "") + aCols[i][nPosItem] + " - " + aCols[i][nPosProd] + CRLF

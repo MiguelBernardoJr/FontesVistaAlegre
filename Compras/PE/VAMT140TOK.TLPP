@@ -1,0 +1,41 @@
+#include "totvs.ch"
+
+Static cSpaceHexa := "+%0A"
+
+User Function VAMT140TOK() //U_VAMT140TOK()
+    Local lRet := .T.   as logical
+    Local oTelegram     as object
+    Local _cMsg          as character
+    Local lSendFiles    := .F. as logical
+    Local cMyBotToken   := "7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+    Local cMyChatId     := "-4974016224" as character
+    Local cPathFiles    as character
+
+    if lSendFiles := MsgYesNo("Será enviado uma mensagem para o bot Telegram V@ Almoxarifado, Deseja enviar arquivos correspondentes a NF?")
+        cPathFiles := cGetFile( "", "Escolha o arquivo", 0, "", .f., nOR(GETF_MULTISELECT,GETF_LOCALHARD), .f.)
+    endif
+
+    oTelegram := Telegram():New(cMyBotToken,cMyChatId)
+
+    If ValType(oTelegram) == "O"
+        _cMsg := '<i>Entrada Pré Nota Fiscal</i>' + cSpaceHexa
+        _cMsg += '<b>Fornecedor</b>: <pre>'+"000001"+'</pre>'+ cSpaceHexa
+        _cMsg += '<b>Loja</b>: <pre>'+"01"+'</pre>'+ cSpaceHexa
+        _cMsg += '<b>Nota Fiscal</b>: <pre>'+"TST000001"+'</pre>' + cSpaceHexa
+        _cMsg += '<b>Serie</b>: <pre>'+"1"+'</pre>'+ cSpaceHexa
+        
+        oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+        
+        If lSendFiles
+            _cMsg := '<i>ARQUIVOS RELACIONADOS</i>' + cSpaceHexa
+            _cMsg += '----------------------------' + cSpaceHexa + cSpaceHexa
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+                U_TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
+            _cMsg := '----------------------------'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+        endif
+
+
+    endif
+
+Return lRet

@@ -1,0 +1,267 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "JSON.CH"
+#INCLUDE "SHASH.CH"
+#include "fileio.ch"
+
+/*
+================================================================================
+| CLASS TelegramBotUploader                                                    |
+|------------------------------------------------------------------------------|
+| Autor: Protheus AI                                                           |
+| Data: 29/08/2025                                                             |
+|------------------------------------------------------------------------------|
+| Descrição:                                                                   |
+| Classe responsável por realizar o upload de arquivos para um chat/canal do   |
+| Telegram utilizando a API de Bots.                                           |
+| A classe monta uma requisição HTTP POST do tipo "multipart/form-data".       |
+================================================================================
+*/
+CLASS TelegramBotUploader
+
+    //== PROPRIEDADES ==//
+    DATA cBotToken     AS CHARACTER   // Token de autenticação do Bot
+    DATA cChatId       AS CHARACTER   // ID do chat ou canal de destino
+    DATA cCaption      AS CHARACTER   // Legenda opcional para o arquivo
+    DATA cEndPoint     AS CHARACTER   // URL da API do Telegram
+    DATA cBoundary     AS CHARACTER   // Delimitador para o corpo multipart
+    DATA cResponse     AS CHARACTER   // Resposta JSON retornada pela API
+    DATA lSuccess      AS LOGICAL     // Indica se o último envio foi bem-sucedido
+
+    //== MÉTODOS ==//
+    Public METHOD New(cToken, cChatId) CONSTRUCTOR
+    Public METHOD setCaption(cCaptionText)
+    Public METHOD sendPdf(cFilePath) 
+    Public METHOD buildRequestBody(cFileContent, cFileName)
+    Public METHOD GetMimeType(cFileName)
+    Public METHOD getLastResponse()
+    Public METHOD isSuccess() 
+
+ENDCLASS
+
+/*
+--------------------------------------------------------------------------------
+| Método Construtor                                                            |
+--------------------------------------------------------------------------------
+*/
+METHOD New(cToken AS CHARACTER, cChatId AS CHARACTER) CLASS TelegramBotUploader
+    ::cBotToken  := cToken
+    ::cChatId    := cChatId
+    ::cEndPoint  := "https://api.telegram.org/bot" + ::cBotToken + "/sendDocument"
+    ::cBoundary  := "----ProtheusTelegramBoundary" + cValToChar(Seconds()) // Boundary único por instância
+    ::cCaption   := ""
+    ::cResponse  := ""
+    ::lSuccess   := .F.
+    ::cMimeType  := ""
+RETURN Self
+
+/*
+--------------------------------------------------------------------------------
+| Método para definir uma legenda para o arquivo                               |
+--------------------------------------------------------------------------------
+*/
+METHOD setCaption(cCaptionText AS CHARACTER) CLASS TelegramBotUploader
+    ::cCaption := cCaptionText
+RETURN Self
+
+/*
+--------------------------------------------------------------------------------
+| Método para ler o arquivo e efetuar o envio                                  |
+--------------------------------------------------------------------------------
+*/
+METHOD sendPdf(cFilePath AS CHARACTER) CLASS TelegramBotUploader
+    Local cFileContent  AS CHARACTER
+    Local cFileName     AS CHARACTER
+    Local cBody         AS CHARACTER
+    Local aHeaders      AS ARRAY
+    Local cHeadRet      AS CHARACTER
+    Local cPostRet      AS CHARACTER
+    Local oJson         AS OBJECT
+
+    //-- Variáveis para leitura de baixo nível do arquivo --//
+    Local nHandle       AS NUMERIC
+    Local cBuffer       AS CHARACTER
+    Local nBytesRead    AS NUMERIC
+    Local nChunkSize    := 4096 // Lê em chunks de 4KB
+
+    // 1. Abrir o arquivo em modo leitura e obter um "handle"
+    nHandle := FOpen(cFilePath, 0) // 0 = Modo Somente Leitura
+
+    // Valida se o arquivo pôde ser aberto
+    If nHandle <= 0
+        ::lSuccess  := .F.
+        ::cResponse := '{"ok":false,"description":"Erro ao abrir o arquivo local: ' + cFilePath + '"}'
+        Return .F.
+    Endif
+
+    // 2. Ler o arquivo em pedaços (chunks) até o final
+    cFileContent := ""
+    cBuffer      := Space(nChunkSize)
+
+    WHILE .T.
+        nBytesRead := FRead(nHandle, @cBuffer, nChunkSize)
+
+        IF nBytesRead == 0
+            EXIT // Sai do laço DO WHILE
+        ENDIF
+
+        cFileContent += SubStr(cBuffer, 1, nBytesRead)
+    END
+
+    // 3. Fechar o arquivo
+    FClose(nHandle)
+
+    // O restante do método permanece o mesmo. A variável cFileContent
+    // agora contém o binário correto e é do tipo CHARACTER.
+    cFileName := SubStr(cFilePath,At("\",cFilePath)+1,Len(cFilePath))
+    cBody     := ::buildRequestBody(cFileContent, cFileName)
+
+    if !Empty(cBody)
+        aHeaders := {}
+        AAdd(aHeaders, 'Content-Type: multipart/form-data; boundary=' + ::cBoundary)
+        AAdd(aHeaders, 'User-Agent: Protheus ADVPL Client')
+
+        cHeadRet := ""
+        cPostRet := HTTPSPost(::cEndPoint, "", "", "", "", cBody, 120, aHeaders, @cHeadRet)
+        ::cResponse := cPostRet
+
+        If !Empty(cPostRet)
+            oJson := JsonObject():New()
+            If oJson:FromJson(cPostRet)
+                ::lSuccess := oJson:Get("ok")
+            Else
+                ::lSuccess := .F.
+            Endif
+        Else
+            ::lSuccess := .F.
+        Endif
+    else
+        ::lSuccess := .F.
+    Endif
+
+RETURN ::lSuccess
+
+/*
+--------------------------------------------------------------------------------
+| Método auxiliar para construir o corpo da requisição "multipart/form-data"   |
+--------------------------------------------------------------------------------
+*/
+METHOD buildRequestBody(cFileContent AS CHARACTER, cFileName AS CHARACTER) CLASS TelegramBotUploader
+    Local cBody := ""
+    Local cType := ::GetMimeType(cFileName)
+    
+    if Empty(cType)
+        RETURN cBody
+    endif
+
+    //-- Parte 1: chat_id
+    cBody += '--' + ::cBoundary + CRLF
+    cBody += 'Content-Disposition: form-data; name="chat_id"' + CRLF + CRLF
+    cBody += ::cChatId + CRLF
+
+    //-- Parte 2: caption (opcional)
+    If !Empty(::cCaption)
+        cBody += '--' + ::cBoundary + CRLF
+        cBody += 'Content-Disposition: form-data; name="caption"' + CRLF + CRLF
+        cBody += ::cCaption + CRLF
+    Endif
+
+    //-- Parte 3: document (o arquivo PDF)
+    cBody += '--' + ::cBoundary + CRLF
+    cBody += 'Content-Disposition: form-data; name="document"; filename="' + cFileName + '"' + CRLF
+    cBody += 'Content-Type: ' + cType + CRLF + CRLF
+    cBody += + CRLF + CRLF
+    cBody += cFileContent + CRLF
+
+    //-- Finalização do corpo da requisição
+    cBody += '--' + ::cBoundary + '--' + CRLF
+
+RETURN cBody
+
+/*
+--------------------------------------------------------------------------------
+| Método auxiliar para pegar a extensão do arquivo                             |
+--------------------------------------------------------------------------------
+*/
+METHOD GetMimeType(cFileName as CHARACTER) CLASS TelegramBotUploader
+    Local cExtension := ""
+    
+    ::cMimeType  := ""
+
+    // Extrai a extensão do arquivo
+    If "." $ cFileName
+        cExtension := Lower(SubStr(cFileName, RAt(".", cFileName) + 1))
+    EndIf
+
+    // Define MIME types comuns
+    Do Case
+        Case cExtension == "pdf"
+            ::cMimeType := "application/pdf"
+        Case cExtension == "doc"
+            ::cMimeType := "application/msword"
+        Case cExtension == "docx"
+            ::cMimeType := "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        Case cExtension == "xls"
+            ::cMimeType := "application/vnd.ms-excel"
+        Case cExtension == "xlsx"
+            ::cMimeType := "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        Case cExtension == "txt"
+            ::cMimeType := "text/plain"
+        Case cExtension == "jpg" .Or. cExtension == "jpeg"
+            ::cMimeType := "image/jpeg"
+        Case cExtension == "png"
+            ::cMimeType := "image/png"
+        Case cExtension == "zip"
+            ::cMimeType := "application/zip"
+        Case cExtension == "xml"
+            ::cMimeType := "application/xml"
+        Case cExtension == "csv"
+            ::cMimeType := "application/csv"
+        Case cExtension == "csv"
+            ::cMimeType := "application/csv"
+    EndCase
+
+Return ::cMimeType
+
+/*
+--------------------------------------------------------------------------------
+| Métodos "Getter" para obter informações da última transação                  |
+--------------------------------------------------------------------------------
+*/
+METHOD getLastResponse() CLASS TelegramBotUploader
+RETURN ::cResponse
+
+METHOD isSuccess() CLASS TelegramBotUploader
+RETURN ::lSuccess
+
+/*
+================================================================================
+| FUNÇÃO DE EXEMPLO DE USO                                                     |
+================================================================================
+*/
+User Function TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
+    Local oTelegram   AS OBJECT
+    Local aArquivos   as ARRAY
+    Local nI          AS NUMERIC
+
+    Default cMyBotToken := "7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo"   // Ex: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    Default cMyChatId   := "-4974016224"                                      // Ex: "-1001234567890" (para canais) ou "987654321" (para usuários)
+    Default cPathFiles := ""
+
+    if Empty(cPathFiles)
+        cPathFiles := cGetFile( "", "Escolha o arquivo", 0, "", .f., nOR(GETF_MULTISELECT,GETF_LOCALHARD), .f.)
+    Endif
+    
+    aArquivos := StrToKarr(cPathFiles, "|")
+
+    if Len(aArquivos) > 0
+        oTelegram := TelegramBotUploader():New(cMyBotToken, cMyChatId)
+    endif
+
+    For nI := 1 to Len(aArquivos)
+        cPathFiles := Alltrim(aArquivos[nI])
+
+        oTelegram:sendPdf(cPathFiles)
+    Next nI
+
+Return
+
