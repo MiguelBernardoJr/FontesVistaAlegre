@@ -18,16 +18,25 @@ Class Telegram From FwRest
     Data cChatId    As character
     Data cPathFile  As character
     Data cNameFile  As character
+    Data cBoundary  As character
+    Data cCaption   As character
+    Data cResponse  As character
+    Data lSuccess   As Logical
+    Data cMimeType  As character
 
     Public Method New() Constructor
     Public Method SetChat()
     Public Method GetChat()
     Public Method SendMessage()
-    Public Method SendDocument()
+    Public METHOD SendDocument(cFilePath)
     Public Method SendPhoto()
     Public Method GetUpdates()
     Public Method GetMe()
-
+    Public METHOD setCaption(cCaptionText)
+    Public METHOD buildRequestBody(cFileContent, cFileName)
+    Public METHOD GetMimeType(cFileName)
+    Public METHOD getLastResponse()
+    Public METHOD isSuccess() 
 EndClass
 
 
@@ -45,17 +54,182 @@ Method New ( cToken, cID ) Class Telegram
     ::cEndPoint := ""
     ::cPathFile := ""
     ::cNameFile := ""
+    ::cBoundary  := "----ProtheusTelegramBoundary" + cValToChar(Seconds()) // Boundary único por instância
+    ::cCaption   := ""
+    ::cResponse  := ""
+    ::lSuccess   := .F.
+    ::cMimeType  := ""
 
 Return( Self )
-
 
 Method SetChat( cChatId ) Class Telegram
     ::cChatId := cChatId
 Return( ::cChatId  )
 
-
 Method GetChat() Class Telegram
 Return( ::cChatId  )
+
+METHOD SendDocument(cFilePath AS CHARACTER) CLASS Telegram
+    Local cFileContent  AS CHARACTER
+    Local cFileName     AS CHARACTER
+    Local cBody         AS CHARACTER
+    Local aHeaders      AS ARRAY
+    Local cHeadRet      AS CHARACTER
+    Local cPostRet      AS CHARACTER
+    Local oJson         AS OBJECT
+
+    //-- Variáveis para leitura de baixo nível do arquivo --//
+    Local nHandle       AS NUMERIC
+    Local cBuffer       AS CHARACTER
+    Local nBytesRead    AS NUMERIC
+    Local nChunkSize    := 4096 // Lê em chunks de 4KB
+
+    // 1. Abrir o arquivo em modo leitura e obter um "handle"
+    nHandle := FOpen(cFilePath, 0) // 0 = Modo Somente Leitura
+
+    // Valida se o arquivo pôde ser aberto
+    If nHandle <= 0
+        ::lSuccess  := .F.
+        ::cResponse := '{"ok":false,"description":"Erro ao abrir o arquivo local: ' + cFilePath + '"}'
+        Return .F.
+    Endif
+
+    // 2. Ler o arquivo em pedaços (chunks) até o final
+    cFileContent := ""
+    cBuffer      := Space(nChunkSize)
+
+    WHILE .T.
+        nBytesRead := FRead(nHandle, @cBuffer, nChunkSize)
+
+        IF nBytesRead == 0
+            EXIT // Sai do laço DO WHILE
+        ENDIF
+
+        cFileContent += SubStr(cBuffer, 1, nBytesRead)
+    END
+
+    // 3. Fechar o arquivo
+    FClose(nHandle)
+
+    // O restante do método permanece o mesmo. A variável cFileContent
+    // agora contém o binário correto e é do tipo CHARACTER.
+    cFileName := SubStr(cFilePath,At("\",cFilePath)+1,Len(cFilePath))
+    cBody     := ::buildRequestBody(cFileContent, cFileName)
+
+    if !Empty(cBody)
+        aHeaders := {}
+        AAdd(aHeaders, 'Content-Type: multipart/form-data; boundary=' + ::cBoundary)
+        AAdd(aHeaders, 'User-Agent: Protheus ADVPL Client')
+
+        cHeadRet := ""
+        ::cEndPoint := ::cUrl + ::cPath + "/sendDocument"
+        cPostRet := HTTPSPost(::cEndPoint, "", "", "", "", cBody, 120, aHeaders, @cHeadRet)
+        ::cResponse := cPostRet
+
+        If !Empty(cPostRet)
+            oJson := JsonObject():New()
+            If oJson:FromJson(cPostRet)
+                ::lSuccess := oJson:Get("ok")
+            Else
+                ::lSuccess := .F.
+            Endif
+        Else
+            ::lSuccess := .F.
+        Endif
+    else
+        ::lSuccess := .F.
+    Endif
+
+RETURN ::lSuccess
+
+METHOD buildRequestBody(cFileContent AS CHARACTER, cFileName AS CHARACTER) CLASS Telegram
+    Local cBody := ""
+    Local cType := ::GetMimeType(cFileName)
+    
+    if Empty(cType)
+        RETURN cBody
+    endif
+
+    //-- Parte 1: chat_id
+    cBody += '--' + ::cBoundary + CRLF
+    cBody += 'Content-Disposition: form-data; name="chat_id"' + CRLF + CRLF
+    cBody += ::cChatId + CRLF
+
+    //-- Parte 2: caption (opcional)
+    If !Empty(::cCaption)
+        cBody += '--' + ::cBoundary + CRLF
+        cBody += 'Content-Disposition: form-data; name="caption"' + CRLF + CRLF
+        cBody += ::cCaption + CRLF
+    Endif
+
+    //-- Parte 3: document (o arquivo PDF)
+    cBody += '--' + ::cBoundary + CRLF
+    cBody += 'Content-Disposition: form-data; name="document"; filename="' + cFileName + '"' + CRLF
+    cBody += 'Content-Type: ' + cType + CRLF + CRLF
+    cBody += + CRLF + CRLF
+    cBody += cFileContent + CRLF
+
+    //-- Finalização do corpo da requisição
+    cBody += '--' + ::cBoundary + '--' + CRLF
+
+RETURN cBody
+
+/*
+--------------------------------------------------------------------------------
+| Método auxiliar para pegar a extensão do arquivo                             |
+--------------------------------------------------------------------------------
+*/
+METHOD GetMimeType(cFileName as CHARACTER) CLASS Telegram
+    Local cExtension := ""
+    
+    ::cMimeType  := ""
+
+    // Extrai a extensão do arquivo
+    If "." $ cFileName
+        cExtension := Lower(SubStr(cFileName, RAt(".", cFileName) + 1))
+    EndIf
+
+    // Define MIME types comuns
+    Do Case
+        Case cExtension == "pdf"
+            ::cMimeType := "application/pdf"
+        Case cExtension == "doc"
+            ::cMimeType := "application/msword"
+        Case cExtension == "docx"
+            ::cMimeType := "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        Case cExtension == "xls"
+            ::cMimeType := "application/vnd.ms-excel"
+        Case cExtension == "xlsx"
+            ::cMimeType := "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        Case cExtension == "txt"
+            ::cMimeType := "text/plain"
+        Case cExtension == "jpg" .Or. cExtension == "jpeg"
+            ::cMimeType := "image/jpeg"
+        Case cExtension == "png"
+            ::cMimeType := "image/png"
+        Case cExtension == "zip"
+            ::cMimeType := "application/zip"
+        Case cExtension == "xml"
+            ::cMimeType := "application/xml"
+        Case cExtension == "csv"
+            ::cMimeType := "application/csv"
+        Case cExtension == "csv"
+            ::cMimeType := "application/csv"
+    EndCase
+
+Return ::cMimeType
+
+/*
+--------------------------------------------------------------------------------
+| Métodos "Getter" para obter informações da última transação                  |
+--------------------------------------------------------------------------------
+*/
+METHOD getLastResponse() CLASS Telegram
+RETURN ::cResponse
+
+METHOD isSuccess() CLASS Telegram
+RETURN ::lSuccess
+
 
 // ------------------------------------------------------------------------------------------------------------+
 //  Se precisarmos do chat_id de uma pessoa que envia uma mensagem para o nosso bot, use o mtodo getUpdates . |
@@ -73,7 +247,6 @@ Method GetUpdates() Class Telegram
     EndIf
 
 Return( cRet )
-
 // -------------------------------------------------------------------------------+
 //  informaes bsicas sobre o bot recm criado, precisamos usar o mtodo getMe  |
 // -------------------------------------------------------------------------------+
@@ -90,7 +263,6 @@ Method GetMe() Class Telegram
     EndIf
 
 Return( cRet )
-
 // ---------------------------------------------------------------------+
 // Faz o envio de mensagens para determinad chat id - markdown ou  HTML |
 // ---------------------------------------------------------------------+
@@ -131,6 +303,34 @@ Method SendMessage( cMessage, lHtml ) Class Telegram
 
 Return( lRet )
 
+User Function TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
+    Local oTelegram   AS OBJECT
+    Local aArquivos   as ARRAY
+    Local nI          AS NUMERIC
+
+    Default cMyBotToken := "7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo"
+    Default cMyChatId   := "-4974016224"                                   
+    Default cPathFiles  := ""
+
+    if Empty(cPathFiles)
+        cPathFiles := cGetFile( "", "Escolha o arquivo", 0, "", .f., nOR(GETF_MULTISELECT,GETF_LOCALHARD), .f.)
+    Endif
+    
+    aArquivos := StrToKarr(cPathFiles, "|")
+
+    if Len(aArquivos) > 0
+        oTelegram := Telegram():New(cMyBotToken, cMyChatId)
+    endif
+    
+    if ValType(oTelegram) == "O"
+        For nI := 1 to Len(aArquivos)
+            cPathFiles := Alltrim(aArquivos[nI])
+
+            oTelegram:SendDocument(cPathFiles)
+        Next nI
+    endif 
+Return
+
 User Function MBTelegram() // U_MBTelegram()
 
     Local xRet      := Nil
@@ -153,31 +353,22 @@ User Function MBTelegram() // U_MBTelegram()
 
             //_cMsg := '1o. bot - V@ Protheus x Telegram'
             //oTelegram:SendMessage( _cMsg, .F. /* lHtml */ )
-//
             //_cMsg := '<b>bold</b>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := '<strong>bold</strong>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := '<i>italic</i>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := '<em>italic</em>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := '<u>sublinhado</u>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := '<s>traçado</s>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := '<a href="URL">https://telegram-bot-sdk.readme.io/reference/sendmessage</a>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := '<code>inline fixed-width code</code>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-//
             //_cMsg := 'Nota Fiscal: <pre>000001</pre> - Serie: <pre>1</pre>'
             //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
 

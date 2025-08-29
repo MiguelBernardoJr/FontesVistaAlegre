@@ -28,11 +28,8 @@ User Function VAMT140TOK() //U_VAMT140TOK()
         
         If lSendFiles
             _cMsg := '<i>ARQUIVOS RELACIONADOS</i>' + cSpaceHexa
-            _cMsg += '----------------------------' + cSpaceHexa + cSpaceHexa
             oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-                U_TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
-            _cMsg := '----------------------------'
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+            U_TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
         endif
 
 
