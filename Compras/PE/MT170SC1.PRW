@@ -22,6 +22,10 @@ User Function MT170SC1()
             SC1->C1_GRPRD   := SB1->B1_GRUPO
         endif
 
+        if cUser == "ricardo.santana"
+            SC1->C1_XAPLICA := "E"
+        endif
+
         SC1->C1_SOLICIT := cUser
     SC1->(MsUnLock())
 

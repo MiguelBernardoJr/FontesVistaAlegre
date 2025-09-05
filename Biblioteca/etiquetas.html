@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impressão de Etiquetas</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Estilos Gerais */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Estilos da Tela de Login */
+        #login-screen {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        #login-screen h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* Estilos da Tela de Dados */
+        #data-screen {
+            display: none; /* Começa escondida */
+            width: 100%;
+            max-width: 1800px; /* Aumentado para acomodar mais campos */
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #0072c6;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .header-actions .btn {
+            margin-left: 10px;
+        }
+
+        .content {
+            padding: 20px;
+        }
+        
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            background-color: #f7f7f7;
+            padding: 10px 15px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .section-body {
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap; /* Permite que os campos quebrem para a próxima linha */
+            gap: 15px 25px;  /* Espaçamento vertical e horizontal */
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .input-group input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0; /* Fundo cinza para indicar 'readonly' */
+            border-radius: 4px;
+            min-width: 120px;
+        }
+
+        .data-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em; /* Reduzido para caber mais colunas */
+        }
+
+        .data-grid th, .data-grid td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .data-grid thead {
+            background-color: #e9eff4;
+        }
+        
+        .data-grid tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Estilos de Botões */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .btn-primary {
+            background-color: #0078d4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #005a9e;
+        }
+        
+        .btn-default {
+             background-color: #fff;
+             color: #333;
+             border: 1px solid #ccc;
+        }
+        
+        .btn-default:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .btn-success {
+            background-color: #107c10;
+            color: white;
+        }
+        /* --- ESTILOS PARA IMPRESSÃO --- */
+        @media print {
+            /* Esconde o corpo inteiro por padrão */
+            body * {
+                visibility: hidden;
+            }
+
+            /* Torna visível APENAS a área de dados e seu conteúdo */
+            #data-screen, #data-screen * {
+                visibility: visible;
+            }
+
+            /* Posiciona a área de dados para ocupar a página inteira */
+            #data-screen {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none; /* Remove sombras */
+                border: none; /* Remove bordas */
+                border-radius: 0;
+            }
+
+            /* Esconde o cabeçalho com os botões de ação */
+            .header {
+                display: none;
+            }
+            
+            /* Garante que o conteúdo principal use todo o espaço */
+            .content {
+                padding: 0;
+            }
+            
+            /* Melhora a legibilidade da tabela no papel */
+            .data-grid {
+                font-size: 9pt; /* Tamanho de fonte ideal para impressão */
+                color: #000;
+            }
+            
+            .data-grid th, .data-grid td {
+                border: 1px solid #666;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h1>Acesso ao Sistema de Etiquetas</h1>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Entrar</button>
+        </form>
+    </div>
+
+    <div id="data-screen">
+        <header class="header">
+            <h1>Etiquetas de Entrada - Pré-Note Fiscal de Entrada</h1>
+            <div class="header-actions">
+                <button id="print-danfe-btn" class="btn btn-default">Imprimir DANFE</button>
+                <button class="btn btn-default">Outras Ações</button>
+                <button class="btn btn-default">Log</button>
+                <button class="btn btn-default">Fechar</button>
+                <button class="btn btn-success">Confirmar</button>
+            </div>
+        </header>
+        <main class="content">
+            <section class="section">
+                <div class="section-header">Nota Fiscal</div>
+                <div class="section-body">
+                    <div class="input-group">
+                        <label>Documento</label>
+                        <input type="text" value="TST000001" readonly>
+                    </div>
+                     <div class="input-group">
+                        <label>Serie</label>
+                        <input type="text" value="001" readonly>
+                    </div>
+                     <div class="input-group">
+                        <label>Forn/Cliente</label>
+                        <input type="text" value="000001" readonly>
+                    </div>
+                     <div class="input-group">
+                        <label>Loja</label>
+                        <input type="text" value="01" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>N Fantasia</label>
+                        <input type="text" value="COOPERALGO" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo da Nota</label>
+                        <input type="text" value="N" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo Entrada</label>
+                        <input type="text" value="101" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Armazem</label>
+                        <input type="text" value="0101" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Filial</label>
+                        <input type="text" value="D MG 01" readonly>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section">
+                <div class="section-header">Etiquetas</div>
+                <div style="overflow-x:auto;">
+                    <table class="data-grid">
+                        <thead>
+                            <tr>
+                                <th>CHECK</th>
+                                <th>Item NF</th>
+                                <th>Produto</th>
+                                <th>Descricao</th>
+                                <th>Unidade</th>
+                                <th>Ende 1UM</th>
+                                <th>Quantidade</th>
+                                <th>Qtd por Etiq</th>
+                                <th>Nr Etq a imp</th>
+                                <th>Nro Et Impr</th>
+                                <th>Segunda UM</th>
+                                <th>Ende 2UM</th>
+                                <th>Qtde 2a UM</th>
+                                <th>Qtde Etq Seg</th>
+                                <th>Nr Etiq 2 UM</th>
+                                <th>Log Impr Eti</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox" checked></td>
+                                <td>001</td>
+                                <td>500452</td>
+                                <td>PEDRA BRITA 1(LAVG)</td>
+                                <td>M3</td>
+                                <td>ARMAZEM01A</td>
+                                <td>100.00</td>
+                                <td>25.00</td>
+                                <td>4</td>
+                                <td>0</td>
+                                <td>CX</td>
+                                <td>ARMAZEM01B</td>
+                                <td>50.00</td>
+                                <td>2.00</td>
+                                <td>2</td>
+                                <td>[Ver Log]</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>002</td>
+                                <td>PROD002XYZ</td>
+                                <td>PARAFUSO SEXTAVADO 1/4</td>
+                                <td>UN</td>
+                                <td>ARMAZEM02C</td>
+                                <td>5000.00</td>
+                                <td>100.00</td>
+                                <td>50</td>
+                                <td>25</td>
+                                <td>KG</td>
+                                <td></td>
+                                <td>15.50</td>
+                                <td>0.00</td>
+                                <td>0</td>
+                                <td>[Ver Log]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Pega os elementos da página
+        const loginForm = document.getElementById('login-form');
+        const loginScreen = document.getElementById('login-screen');
+        const dataScreen = document.getElementById('data-screen');
+        const printDanfeBtn = document.getElementById('print-danfe-btn');
+
+        // Adiciona um "ouvinte" para o evento de clique no botão
+        printDanfeBtn.addEventListener('click', function() {
+            // Chama a função de impressão do navegador
+            window.print();
+        });
+
+        // Adiciona um "ouvinte" para o evento de envio do formulário de login
+        loginForm.addEventListener('submit', function(event) {
+            // Previne o comportamento padrão do formulário (que é recarregar a página)
+            event.preventDefault();
+
+            // Pega os valores digitados pelo usuário
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            // Pega o novo botão pelo ID que criamos
+
+            // --- LÓGICA DE LOGIN FICTÍCIA ---
+            // No futuro, aqui você fará uma chamada para a sua API Protheus.
+            // Por enquanto, vamos usar um usuário e senha fixos.
+            if (username === 'admin' && password === '1234') {
+                // Se o login estiver correto, esconde a tela de login
+                loginScreen.style.display = 'none';
+                
+                // e mostra a tela de dados
+                dataScreen.style.display = 'block';
+
+                // Alinha a tela de dados no topo da página
+                document.body.style.alignItems = 'flex-start';
+
+            } else {
+                // Se o login estiver incorreto, mostra um alerta
+                alert('Usuário ou senha inválidos!');
+            }
+        });
+    </script>
+
+</body>
+</html>

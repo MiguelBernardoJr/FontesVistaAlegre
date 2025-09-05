@@ -5,34 +5,96 @@ Static cSpaceHexa := "+%0A"
 User Function VAMT140TOK() //U_VAMT140TOK()
     Local lRet := .T.   as logical
     Local oTelegram     as object
-    Local _cMsg          as character
-    Local lSendFiles    := .F. as logical
-    Local cMyBotToken   := "7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
-    Local cMyChatId     := "-4974016224" as character
-    Local cPathFiles    as character
+    Local _cMsg         as character
+    Local cMyBotToken   := SuperGetMv("MV_AMXURLC",,"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+    Local cMyChatId     := SuperGetMv("MV_AMXIDC" ,,"-4974016224") as character//"-4974016224" as character
+    //cPathFiles := cGetFile( "", "Escolha o arquivo", 0, "", .f., nOR(GETF_MULTISELECT,GETF_LOCALHARD), .f.)
+    Local cNomeComprador as character
 
-    if lSendFiles := MsgYesNo("Será enviado uma mensagem para o bot Telegram V@ Almoxarifado, Deseja enviar arquivos correspondentes a NF?")
-        cPathFiles := cGetFile( "", "Escolha o arquivo", 0, "", .f., nOR(GETF_MULTISELECT,GETF_LOCALHARD), .f.)
-    endif
+    Default cA100For    := "000001"
+    Default cLoja       := "01"
+    Default cNFiscal    := "TST000001"
+    Default dDEmissao   := cToD("03/09/2025")
 
     oTelegram := Telegram():New(cMyBotToken,cMyChatId)
 
     If ValType(oTelegram) == "O"
-        _cMsg := '<i>Entrada Pré Nota Fiscal</i>' + cSpaceHexa
-        _cMsg += '<b>Fornecedor</b>: <pre>'+"000001"+'</pre>'+ cSpaceHexa
-        _cMsg += '<b>Loja</b>: <pre>'+"01"+'</pre>'+ cSpaceHexa
-        _cMsg += '<b>Nota Fiscal</b>: <pre>'+"TST000001"+'</pre>' + cSpaceHexa
-        _cMsg += '<b>Serie</b>: <pre>'+"1"+'</pre>'+ cSpaceHexa
+        _cMsg := '<b><i> Nova Pré-Nota Recebida na Portaria!</i></b>' + cSpaceHexa
+        _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> às <b>'+SubStr(Time(),1,5)+'</b> por <b>'+UsrFullName()+'</b></i>' + cSpaceHexa
+        _cMsg += cSpaceHexa
+        _cMsg += '<b><i> Dados do Documento:</i></b>' + cSpaceHexa
+        _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ cSpaceHexa
+        _cMsg += cSpaceHexa
+        _cMsg += '<b>Código</b>: <pre>'+cA100For+'</pre>'+ cSpaceHexa
+        _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ cSpaceHexa
+        _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ cSpaceHexa
+        _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + cSpaceHexa
+        _cMsg += '<b>Data de Emissão</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + cSpaceHexa
+        _cMsg += cSpaceHexa
+        _cMsg += cSpaceHexa
+
+        _cMsg += '<b>Dados da Compra</b>' + cSpaceHexa
+        _cMsg += cSpaceHexa
+        _cMsg += '<b>Pedido de Compra</b>: <pre>'+SC7->C7_NUM+'</pre>' + cSpaceHexa
         
-        oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-        
-        If lSendFiles
-            _cMsg := '<i>ARQUIVOS RELACIONADOS</i>' + cSpaceHexa
-            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            U_TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
+        if !Empty(SC7->C7_USER)
+            cNomeComprador := MpSysExecScalar("SELECT USR_NOME FROM SYS_USR where USR_ID = '"+SC7->C7_USER+"'","USR_NOME")
+            _cMsg += '<b>Comprador</b>: <pre>'+cNomeComprador+'</pre>' + cSpaceHexa
+            _cMsg += cSpaceHexa
         endif
 
-
+        oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+        
     endif
 
+    oTelegram := nil
+
 Return lRet
+
+//User Function () //U_VAMT140TOK()
+//    Local lRet := .T.   as logical
+//    Local oTelegram     as object
+//    Local _cMsg         as character
+//    Local cMyBotToken   := GetMV("MV_AMXURLC") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+//    Local cMyChatId     := GetMV("MV_AMXIDC") as character//"-4974016224" as character
+//    Local cUrlEtiquetas := "https://t.me/webappvistabot/Etiquetas"
+//
+//    oTelegram := Telegram():New(cMyBotToken,cMyChatId)
+//
+//    If ValType(oTelegram) == "O"
+//        _cMsg := '<b><i> Nova Pré-Nota Recebida na Portaria!</i></b>' + CRLF
+//        _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> às <b>'+Time()+'</b></i>' + CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b><i> Dados do Documento:</i></b>' + CRLF
+//        _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b>Código</b>: <pre>'+cA100For+'</pre>'+ CRLF
+//        _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ CRLF
+//        _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ CRLF
+//        _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + CRLF
+//        _cMsg += '<b>Data de Emissão</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + CRLF
+//        _cMsg += CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b>Dados da Compra</b>' + CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b>Pedido de Compra</b>: <pre>Teste</pre>' + CRLF
+//        _cMsg += '<b>Comprador</b>: <pre>Teste</pre>' + CRLF
+//        _cMsg += CRLF
+//
+//        cButtons := '{'
+//        cButtons += '"inline_keyboard": ['
+//        cButtons += '    ['
+//        cButtons += '      {"text": "Imprimir Etiquetas", "url": "' + cUrlEtiquetas + '"}'
+//        cButtons += '    ]'
+//        cButtons += ']'
+//        cButtons += '}'
+//
+//        //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+//        oTelegram:SendMessageWithButtons(_cMsg,cButtons, .T. /* lHtml */ )
+//        
+//    endif
+//
+//    oTelegram := nil
+//
+//Return lRet
+

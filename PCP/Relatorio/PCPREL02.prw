@@ -329,14 +329,16 @@ If cTipo == "Geral"
 						" 	WHERE B8_FILIAL = '" + FWxFilial("SB8") + "'  " + CRLF +;
 						" 	AND B8_LOTECTL = Z06.Z06_LOTE " + CRLF +;
 						" 	AND SB8.D_E_L_E_T_ = ' ' " + CRLF +;
-						" 	GROUP BY B1_X_SEXO ) AS B1_X_SEXO" + CRLF +;
+						" 	GROUP BY B1_X_SEXO " + CRLF +;
+						"   ORDER BY sum(B8_SALDO) DESC ) AS B1_X_SEXO" + CRLF +;
 						", ( Select TOP 1 B1_XRACA " + CRLF +;
 						" 	from " + RetSqlName("SB8") + " SB8 " + CRLF +;
 						" 	JOIN " + RetSqlName("SB1") + " SB1 ON (B1_COD = B8_PRODUTO AND SB1.D_E_L_E_T_ = ' ') " + CRLF +;
 						" 	WHERE B8_FILIAL = '" + FWxFilial("SB8") + "'  " + CRLF +;
 						" 	AND B8_LOTECTL = Z06.Z06_LOTE " + CRLF +;
 						" 	AND SB8.D_E_L_E_T_ = ' ' " + CRLF +;
-						" 	GROUP BY B1_XRACA )  AS B1_XRACA " + CRLF +;
+						" 	GROUP BY B1_XRACA " + CRLF +;
+						"   ORDER BY sum(B8_SALDO) DESC ) AS B1_XRACA" + CRLF +;
 						", Z05.Z05_DATA" + CRLF +;
 						", Z05.Z05_CURRAL" + CRLF +;
 						", Z06.Z06_LOTE" + CRLF +;

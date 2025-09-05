@@ -28,13 +28,13 @@ Class Telegram From FwRest
     Public Method SetChat()
     Public Method GetChat()
     Public Method SendMessage()
-    Public METHOD SendDocument(cFilePath)
-    Public Method SendPhoto()
+    Public Method SendMessageWithButtons()
+    Public METHOD SendDocument()
     Public Method GetUpdates()
     Public Method GetMe()
-    Public METHOD setCaption(cCaptionText)
-    Public METHOD buildRequestBody(cFileContent, cFileName)
-    Public METHOD GetMimeType(cFileName)
+    Public METHOD setCaption()
+    Public METHOD buildRequestBody()
+    Public METHOD GetMimeType()
     Public METHOD getLastResponse()
     Public METHOD isSuccess() 
 EndClass
@@ -231,9 +231,9 @@ METHOD isSuccess() CLASS Telegram
 RETURN ::lSuccess
 
 
-// ------------------------------------------------------------------------------------------------------------+
+// -------------------------------------------------------------------------------------------------------------+
 //  Se precisarmos do chat_id de uma pessoa que envia uma mensagem para o nosso bot, use o mùtodo getUpdates . |
-// ------------------------------------------------------------------------------------------------------------+
+// -------------------------------------------------------------------------------------------------------------+
 Method GetUpdates() Class Telegram
 
     Local cRet := ""
@@ -293,7 +293,7 @@ Method SendMessage( cMessage, lHtml ) Class Telegram
         // 4) Combina e dispara
         ::cEndPoint      := cEndpoint + cUrl // opcional, se quiser gravar no atributo
         _Super:SetPath( ::cEndPoint )
-        lRet := _Super:Get()
+            lRet := _Super:Get()
 
         If !lRet
             cRetError := _Super:GetResult() // Pega o retorno JSON da API com o erro
@@ -302,6 +302,61 @@ Method SendMessage( cMessage, lHtml ) Class Telegram
     EndIf
 
 Return( lRet )
+
+METHOD SendMessageWithButtons(cMessage AS CHARACTER, cButtonsJson AS CHARACTER, lHtml AS LOGICAL) CLASS Telegram
+    Local cJsonBody   AS CHARACTER
+    Local aHeaders    AS ARRAY
+    Local cHeadRet    AS CHARACTER
+    Local cPostRet    AS CHARACTER
+    Local oJson       AS OBJECT
+    Local cParseMode  AS CHARACTER
+
+    // 1. ValidaÁıes iniciais
+    Default lHtml := .F.
+    If Empty(cMessage) .OR. Empty(cButtonsJson)
+        ::lSuccess  := .F.
+        ::cResponse := '{"ok":false,"description":"Mensagem ou JSON de botıes n„o fornecido."}'
+        Return .F.
+    Endif
+
+    // 2. Define o modo de parse (formataÁ„o do texto)
+    cParseMode := IIF(lHtml, "html", "MarkdownV2")
+
+    // 3. Monta o corpo (body) da requisiÁ„o em formato JSON
+    cJsonBody := '{'
+    cJsonBody += '  "chat_id": "' + ::cChatId + '",'
+    cJsonBody += '  "text": "' + EncodeUTF8(cMessage) + '",'
+    cJsonBody += '  "parse_mode": "' + cParseMode + '",'
+    cJsonBody += '  "reply_markup": ' + EncodeUTF8(cButtonsJson)
+    cJsonBody += '}'
+
+    // 4. Monta os cabeÁalhos (headers) da requisiÁ„o
+    aHeaders := {}
+    // Para este endpoint, o Content-Type È application/json
+    AAdd(aHeaders, 'Content-Type: application/json; charset=utf-8')
+    AAdd(aHeaders, 'User-Agent: Protheus ADVPL Client')
+
+    // 5. Define o endpoint e dispara a requisiÁ„o POST
+    ::cEndPoint := ::cUrl + ::cPath + "/sendMessage"
+    cHeadRet    := "" // Vari·vel para receber o cabeÁalho de retorno
+
+    // Usando a mesma funÁ„o HTTPSPost do seu mÈtodo SendDocument
+    cPostRet := HTTPSPost(::cEndPoint, "", "", "", "", cJsonBody, 120, aHeaders, @cHeadRet)
+    ::cResponse := cPostRet
+
+    // 6. Processa a resposta da API
+    If !Empty(cPostRet)
+        oJson := JsonObject():New()
+        If oJson:FromJson(cPostRet)
+            ::lSuccess := oJson:Get("ok")
+        Else
+            ::lSuccess := .F.
+        Endif
+    Else
+        ::lSuccess := .F.
+    Endif
+
+RETURN ::lSuccess
 
 User Function TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
     Local oTelegram   AS OBJECT
