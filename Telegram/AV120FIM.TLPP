@@ -1,0 +1,21 @@
+#include "totvs.ch"
+
+/*/{Protheus.doc} AV120FIM
+    Ponto de Entrada AV120FIM no final da função ACDV120 - Conferência do produto.
+    Envia mensagem para o BOT Telegram Fiscal
+
+    @type function
+    @version 12.1.2410
+    @author igor.oliveira
+    @since 9/8/2025
+    @return .t.
+/*/
+User Function AV120FIM()
+Return U_VAMT140TOK(4)
+
+/* 
+Inicio da conferência
+*/
+User Function AV120NFE()
+Return U_VAMT140TOK(3)
+

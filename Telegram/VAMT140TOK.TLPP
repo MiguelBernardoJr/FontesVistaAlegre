@@ -1,0 +1,228 @@
+#include "totvs.ch"
+
+/*/{Protheus.doc} VAMT140TOK
+    Função executada em vários P.E para enviar mensagens LOGS para API TELEGRAM
+    Salva ID da mensagem enviada no campo F1_IDALMOX e F1_IDFISCA
+    ID é necessário caso queira alterar a mensagem futuramente.
+
+    @type function
+    @version  12.1.2410
+    @author igor.oliveira
+    @since 9/8/2025
+    @return .t.
+/*/
+User Function VAMT140TOK(nStep) //U_VAMT140TOK()
+    Local lRet              := .T.  as logical
+    Local oBotAlmoxarifado          as object
+    Local oBotFiscal                as object
+    Local _cMsg                     as character
+    Local cTokenAlmoxarifado        := SuperGetMv("MV_AMXURLC",,"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+    Local cIdAlmoxarifado           := SuperGetMv("MV_AMXIDC" ,,"-4974016224") as character//"-4974016224" as character
+    Local cTokenFiscal              := SuperGetMv("MV_FISURLC",,"8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo") as character
+    Local cIdFiscal                 := SuperGetMv("MV_FISIDC" ,,"-4920396972") as character
+    Local nIdMessage                as numeric
+    Local cPedido                   as character
+    Local cUser                     as character
+
+    oBotAlmoxarifado := Telegram():New(cTokenAlmoxarifado,cIdAlmoxarifado)
+    oBotFiscal := Telegram():New(cTokenFiscal,cIdFiscal)
+
+    If ValType(oBotAlmoxarifado) == "O" .and. ValType(oBotFiscal) == "O"
+
+        if nStep == 1 //.and. SF1->F1_IDALMOX == 0 //Aguardando Almoxarifado
+            nPosPedido := aScan(aHeader, {|x| Alltrim(x[2])=="D1_PEDIDO"})
+            cPedido := aCols[1][nPosPedido]
+            cUser := Posicione("SC7",1,FwXFilial("SC7")+cPedido,"C7_USER")
+
+            _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
+                                            cA100For,;
+                                            cLoja,;
+                                            cNFiscal,;
+                                            dDEmissao,;
+                                            cPedido,;
+                                            "Aguardando almoxarifado")
+
+            if SF1->F1_IDALMOX == 0
+
+                nIdMessage := oBotAlmoxarifado:SendMessage( _cMsg, .T. /* lHtml */)
+                
+                if nIdMessage > 0
+                    RecLock("SF1",.f.)
+                        SF1->F1_IDALMOX := nIdMessage
+                    SF1->(MsUnlock())
+                endif
+            else
+                oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
+            endif
+        elseif nStep == 2 .and. SF1->F1_IDALMOX > 0 // "Etiquetas Impressas"
+            SD1->(DBSEEK(SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
+            _cMsg := MontaMensagemPortaria("Pré-nota Recebida na Portaria!",;
+                                            SF1->F1_FORNECE,;
+                                            SF1->F1_LOJA,;
+                                            SF1->F1_DOC,;
+                                            SF1->F1_EMISSAO,;
+                                            SD1->D1_PEDIDO,;
+                                            "Etiquetas Impressas por " + UsrFullName())
+
+            nIdMessage := oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
+        elseif nStep == 3 .and. SF1->F1_IDALMOX > 0 // "Em conferencia"
+
+            SD1->(DBSEEK(SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
+            _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
+                                            SF1->F1_FORNECE,;
+                                            SF1->F1_LOJA,;
+                                            SF1->F1_DOC,;
+                                            SF1->F1_EMISSAO,;
+                                            SD1->D1_PEDIDO,;
+                                            "Em Conferência por " + UsrFullName())
+
+            nIdMessage := oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
+        elseif nStep == 4 .and. SF1->F1_IDALMOX > 0 // 'Conferência Finalizada','Conferência com Divergências'
+            
+            //Mensagem Bot Almoxarifado
+            SD1->(DBSEEK(SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
+            _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
+                                            SF1->F1_FORNECE,;
+                                            SF1->F1_LOJA,;
+                                            SF1->F1_DOC,;
+                                            SF1->F1_EMISSAO,;
+                                            SD1->D1_PEDIDO,;
+                                            IIF(SF1->F1_STATCON == '1','Conferência Finalizada por ' + UsrFullName(),'Conferência com Divergências por ' + UsrFullName()))
+
+            nIdMessage := oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
+
+            if SF1->F1_STATCON == '1'
+                _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
+                                                SF1->F1_FORNECE,;
+                                                SF1->F1_LOJA,;
+                                                SF1->F1_DOC,;
+                                                SF1->F1_EMISSAO,;
+                                                SD1->D1_PEDIDO,;
+                                                "Aguardando Classificação Fiscal")
+
+                nIdMessage := oBotFiscal:SendMessage( _cMsg, .T. /* lHtml */)
+
+                if nIdMessage > 0
+                    RecLock("SF1",.F.)
+                        SF1->F1_IDFISCA := nIdMessage
+                    SF1->(MsUnlock())
+                endif
+            endif
+        elseif nStep == 5
+
+            SD1->(DBSEEK(SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
+            _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
+                                            SF1->F1_FORNECE,;
+                                            SF1->F1_LOJA,;
+                                            SF1->F1_DOC,;
+                                            SF1->F1_EMISSAO,;
+                                            SD1->D1_PEDIDO,;
+                                            "Finalizado por " + UsrFullName())
+
+            oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
+            oBotFiscal:EditMessage( SF1->F1_IDFISCA, _cMsg ,.T. /* lHtml */ )
+        elseif nStep == 99 // Valor alto para deletar mensagem
+            if SF1->F1_IDALMOX > 0
+                oBotAlmoxarifado:DeleteMessage( SF1->F1_IDALMOX)
+            endif
+            if SF1->F1_IDFISCA > 0
+                oBotFiscal:DeleteMessage( SF1->F1_IDFISCA)
+            endif
+        endif
+    endif
+    
+    oBotFiscal  := Nil
+    oBotAlmoxarifado := nil
+
+Return lRet
+
+Static Function MontaMensagemPortaria(cStep as character,cFornece as character, cLoja as character, cNota as character, dEmissao as date, cNumPedido as character, cStatus as character)
+    Local _cMsg           := ''
+    Local cSpaceHexa      := "+%0A" 
+    Local cNomeFornecedor := Alltrim(Posicione("SA2", 1, FwXFilial("SA2") + cFornece + cLoja, "A2_NOME"))
+    Local cCNPJFornecedor := Alltrim(Posicione("SA2", 1, FwXFilial("SA2") + cFornece + cLoja, "A2_CGC"))
+    Local cIdUserSC       := ""
+    Local cNomeComprador  := ""
+    local cNomeInclusao   := AllTrim(MpSysExecScalar("SELECT USR_NOME FROM SYS_USR WHERE USR_CODIGO = '"+FWLeUserlg("F1_USERLGI",1)+"' AND D_E_L_E_T_ = ''","USR_NOME"))
+
+    _cMsg := '<b><i>'+cStep+'</i></b>' + cSpaceHexa
+    _cMsg += '<i>Recebido em: <b>' + dToC(dEmissao) + '</b> por <b>' + cNomeInclusao + '</b></i>' + cSpaceHexa
+    _cMsg += cSpaceHexa
+    _cMsg += '<b><i> Dados do Documento:</i></b>' + cSpaceHexa
+    _cMsg += '<b>Fornecedor</b>: ' + cNomeFornecedor + ''+ cSpaceHexa
+    _cMsg += cSpaceHexa
+    _cMsg += '<b>Código</b>: <pre>' + cFornece + '</pre>' + cSpaceHexa
+    _cMsg += '<b>Loja</b>: <pre>' + cLoja + '</pre>' + cSpaceHexa
+    _cMsg += '<b>CNPJ/CPF</b>: <pre>' + cCNPJFornecedor + '</pre>' + cSpaceHexa
+    _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNota + '</pre>' + cSpaceHexa
+    _cMsg += '<b>Data de Emissão</b>: <pre>' + dToC(dEmissao) + '</pre>' + cSpaceHexa
+    _cMsg += cSpaceHexa
+
+    IF !Empty(cNumPedido)
+        _cMsg += '<b>Dados da Compra</b>' + cSpaceHexa
+        _cMsg += cSpaceHexa
+        _cMsg += '<b>Pedido de Compra</b>: <pre>' + cNumPedido + '</pre>' + cSpaceHexa 
+
+        cIdUserSC := Alltrim(Posicione("SC7", 1, FwXFilial("SC7") + cNumPedido, "C7_USER"))
+        If !Empty(cIdUserSC)
+            // Usar um Posicione em SYS_USR é mais performático que MpSysExecScalar para uma única busca
+            cNomeComprador := UsrFullName(cIdUserSC)
+            If !Empty(cNomeComprador)
+                _cMsg += '<b>Comprador</b>: <pre>' + cNomeComprador + '</pre>' + cSpaceHexa
+            Endif
+            _cMsg += cSpaceHexa
+        Endif
+    Endif
+
+    _cMsg += cSpaceHexa
+    _cMsg += '<i>STATUS</i>:<b> '+cStatus+'</b>'
+
+Return _cMsg
+
+//User Function () //U_VAMT140TOK()
+//    Local lRet := .T.   as logical
+//    Local oBotAlmoxarifado     as object
+//    Local _cMsg         as character
+//    Local cTokenAlmoxarifado   := GetMV("MV_AMXURLC") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+//    Local cIdAlmoxarifado     := GetMV("MV_AMXIDC") as character//"-4974016224" as character
+//    Local cUrlEtiquetas := "https://t.me/webappvistabot/Etiquetas"
+//
+//    oBotAlmoxarifado := Telegram():New(cTokenAlmoxarifado,cIdAlmoxarifado)
+//
+//    If ValType(oBotAlmoxarifado) == "O"
+//        _cMsg := '<b><i> Nova Pré-Nota Recebida na Portaria!</i></b>' + CRLF
+//        _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> às <b>'+Time()+'</b></i>' + CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b><i> Dados do Documento:</i></b>' + CRLF
+//        _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b>Código</b>: <pre>'+cA100For+'</pre>'+ CRLF
+//        _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ CRLF
+//        _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ CRLF
+//        _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + CRLF
+//        _cMsg += '<b>Data de Emissão</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + CRLF
+//        _cMsg += CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b>Dados da Compra</b>' + CRLF
+//        _cMsg += CRLF
+//        _cMsg += '<b>Pedido de Compra</b>: <pre>Teste</pre>' + CRLF
+//        _cMsg += '<b>Comprador</b>: <pre>Teste</pre>' + CRLF
+//        _cMsg += CRLF
+//
+//        cButtons := '{'
+//        cButtons += '"inline_keyboard": ['
+//        cButtons += '    ['
+//        cButtons += '      {"text": "Imprimir Etiquetas", "url": "' + cUrlEtiquetas + '"}'
+//        cButtons += '    ]'
+//        cButtons += ']'
+//        cButtons += '}'
+//
+//        //oBotAlmoxarifado:SendMessage( _cMsg, .T. /* lHtml */ )
+//        oBotAlmoxarifado:SendMessageWithButtons(_cMsg,cButtons, .T. /* lHtml */ )
+//        
+//    endif
+//
+//    oBotAlmoxarifado := nil
+//
+//Return lRet
+

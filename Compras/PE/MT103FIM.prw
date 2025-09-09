@@ -175,9 +175,13 @@ Local nDif 		:= 0
 
 	EndIf
     
+	if SF1->F1_IDALMOX != 0 .or. SF1->F1_IDFISCA  != 0
+		U_VAMT140TOK(5) // enviando mensagem para bot telegram Almoxarifado e Fiscal
+	endif
+
     SD1->(dbCloseArea())
-RestArea(aAreaD1)
-RestArea(aArea)
+	RestArea(aAreaD1)
+	RestArea(aArea)
 Return Nil                
 
 

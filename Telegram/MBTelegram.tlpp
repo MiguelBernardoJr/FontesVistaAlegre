@@ -2,7 +2,7 @@
 #INCLUDE "JSON.CH"
 #INCLUDE "SHASH.CH"
 #include "fileio.ch"
-
+Static cSpaceHexa := "+%0A"
 /*
     MB : 14.09.2025
         https://github.com/lucasbrustolin/ProtheusTelegram
@@ -28,6 +28,8 @@ Class Telegram From FwRest
     Public Method SetChat()
     Public Method GetChat()
     Public Method SendMessage()
+    Public Method EditMessage()
+    Public Method DeleteMessage()
     Public Method SendMessageWithButtons()
     Public METHOD SendDocument()
     Public Method GetUpdates()
@@ -271,33 +273,128 @@ Method SendMessage( cMessage, lHtml ) Class Telegram
     Local cEndpoint  := ""
     Local cUrl       := ""
     Local lRet       := .F.
+    Local nMessageId := 0
+    Local cJsonRet   := ""
+    Local oJson      := nil
 
     Default cMessage := ""
     Default lHtml    := .F.
 
     If !Empty(cMessage)
-        // 1) Define o modo de parse        
-        cParseMode       := IIF( lHtml, "html", "markdown" )
+        // 1) Define o modo de parse
+        cParseMode := IIF( lHtml, "html", "markdown" )
 
-        ::cPath          := "/bot" + ::cToken
+        ::cPath := "/bot" + ::cToken
 
-        // 2) Monta o endpoint (sempre partir de cPath original, que não sofre alteração)
-        cEndpoint        := ::cPath + "/sendMessage"
+        // 2) Monta o endpoint
+        cEndpoint := ::cPath + "/sendMessage"
 
-        // 3) Monta a query string (faça URL?encode do texto se tiver espaços/símbolos)
-        cUrl             := "?parse_mode=" + cParseMode
-        // cUrl             += "&use_aliases=true"
-        cUrl             += "&chat_id=" + ::cChatId
-        cUrl             += "&text=" + ConvAsc( cMessage ) // ou   HttpUrlEncode
+        // 3) Monta a query string
+        cUrl := "?parse_mode=" + cParseMode
+        cUrl += "&chat_id=" + ::cChatId
+        cUrl += "&text=" +  EncodeUTF8(cMessage) // Usar  EncodeUTF8 é mais seguro
 
         // 4) Combina e dispara
-        ::cEndPoint      := cEndpoint + cUrl // opcional, se quiser gravar no atributo
+        ::cEndPoint := cEndpoint + cUrl
         _Super:SetPath( ::cEndPoint )
-            lRet := _Super:Get()
+        lRet := _Super:Get()
+
+        cJsonRet := _Super:GetResult()
+
+        If lRet
+            // Sucesso! Vamos extrair o message_id do JSON de retorno.
+            oJson := JsonObject():New()
+            If FWJsonDeserialize(cJsonRet,@oJson)
+                nMessageId := oJson:result:message_id
+            Else
+                MsgAlert("O Telegram API retornou um erro: " + cJsonRet)
+            EndIf
+        Else
+            // Falha na comunicação HTTP
+            MsgAlert("Erro ao enviar mensagem para o Telegram: " + cJsonRet)
+        EndIf
+    EndIf
+
+Return ( nMessageId )
+
+/*
+================================================================================
+| Method EditMessage | Class Telegram                                          |
+================================================================================
+| Propósito: Edita uma mensagem de texto já enviada.                         |
+| Parâmetros:                                                                |
+|   nMessageId (numeric)  : O ID da mensagem a ser editada.                  |
+|   cNewMessage (character): O novo texto da mensagem.                      |
+|   lHtml (logical)       : .T. se a mensagem deve ser parseada como HTML.    |
+| Retorno:                                                                   |
+|   lSuccess (logical)    : .T. em caso de sucesso, .F. em caso de falha.     |
+================================================================================
+*/
+Method EditMessage( nMessageId, cNewMessage, lHtml ) Class Telegram
+    Local cParseMode := ""
+    Local cEndpoint  := ""
+    Local cUrl       := ""
+    Local lRet       := .F.
+    Local cRetError  := ""
+
+    Default nMessageId  := 0
+    Default cNewMessage := ""
+    Default lHtml       := .F.
+
+    If nMessageId > 0 .And. !Empty(cNewMessage)
+        // 1) Define o modo de parse
+        cParseMode := IIF( lHtml, "html", "markdown" )
+
+        ::cPath := "/bot" + ::cToken
+
+        // 2) Monta o endpoint de edição
+        cEndpoint := ::cPath + "/editMessageText"
+
+        // 3) Monta a query string
+        cUrl := "?chat_id=" + ::cChatId
+        cUrl += "&message_id=" + AllTrim(Str(nMessageId))
+        cUrl += "&text=" + EncodeUTF8(cNewMessage)
+        cUrl += "&parse_mode=" + cParseMode
+
+        // 4) Combina e dispara
+        ::cEndPoint := cEndpoint + cUrl
+        _Super:SetPath( ::cEndPoint )
+        lRet := _Super:Get()
 
         If !lRet
-            cRetError := _Super:GetResult() // Pega o retorno JSON da API com o erro
-            MsgAlert("Erro ao enviar mensagem para o Telegram: " + cRetError)
+            cRetError := _Super:GetResult()
+            MsgAlert("Erro ao editar mensagem no Telegram: " + cRetError)
+        EndIf
+    EndIf
+
+Return( lRet )
+
+Method DeleteMessage( nMessageId ) Class Telegram
+    Local cEndpoint  := ""
+    Local cUrl       := ""
+    Local lRet       := .F.
+    Local cRetError  := ""
+
+    Default nMessageId  := 0
+
+    If nMessageId > 0
+        ::cPath := "/bot" + ::cToken
+
+        // 1) Monta o endpoint de deleção
+        cEndpoint := ::cPath + "/deleteMessage"
+
+        // 2) Monta a query string
+        cUrl := "?chat_id=" + ::cChatId
+        cUrl += "&message_id=" + AllTrim(Str(nMessageId))
+
+        // 3) Combina e dispara
+        ::cEndPoint := cEndpoint + cUrl
+        _Super:SetPath( ::cEndPoint )
+        lRet := _Super:Get()
+
+        If !lRet
+            cRetError := _Super:GetResult()
+            MsgAlert("Erro ao deletar mensagem no Telegram: " + cRetError)
         EndIf
     EndIf
 
@@ -383,57 +480,70 @@ User Function TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
 
             oTelegram:SendDocument(cPathFiles)
         Next nI
-    endif 
+    endif
 Return
 
-User Function MBTelegram() // U_MBTelegram()
+User Function MBTelegram(nType) // U_MBTelegram()
+    Local lRet := .T.   as logical
+    Local oTelegram     as object
+    Local _cMsg         as character
+    Local cMyBotToken   := SuperGetMv("MV_AMXURLC",,"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+    Local cMyChatId     := SuperGetMv("MV_AMXIDC" ,,"-4974016224") as character//"-4974016224" as character
 
-    Local xRet      := Nil
-    Local oTelegram := Nil
-    Local _cMsg     := ""
+    Default cA100For    := "000001"
+    Default cLoja       := "01"
+    Default cNFiscal    := "TST000001"
+    Default dDEmissao   := dDataBase
 
-    Local lRet      := .T.
-    /*
-        ** DESENVOLVIMENTO
-        @ProtheusMiguelBot
-    */
+    oTelegram := Telegram():New(cMyBotToken,cMyChatId)
 
-       oTelegram := Telegram():New(;
-            "7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo",;
-            "-4974016224";
-            )
-        If ValType(oTelegram) == "O"
+    If ValType(oTelegram) == "O"
+        if nType == 1
 
-            // xRet := oTelegram:SetChat( oTelegram:GetChat( ) /* ChatId */  )
+            _cMsg := '<b><i> Nova Pré-Nota Recebida na Portaria!</i></b>' + cSpaceHexa
+            _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> às <b>'+SubStr(Time(),1,5)+'</b> por <b>'+UsrFullName()+'</b></i>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b><i> Dados do Documento:</i></b>' + cSpaceHexa
+            _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>Código</b>: <pre>'+cA100For+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + cSpaceHexa
+            _cMsg += '<b>Data de Emissão</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>STATUS: Aguardando almoxarifado</b>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+            
+        else
+            _cMsg := '<b><i> Nova Pré-Nota Recebida na Portaria!</i></b>' + cSpaceHexa
+            _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> às <b>'+SubStr(Time(),1,5)+'</b> por <b>'+UsrFullName()+'</b></i>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b><i> Dados do Documento:</i></b>' + cSpaceHexa
+            _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>Código</b>: <pre>'+cA100For+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + cSpaceHexa
+            _cMsg += '<b>Data de Emissão</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>STATUS: Em conferencia</b>'
+            
+            nID := 166
+            oTelegram:EditMessage( nID, _cMsg,.T. /* lHtml */ )
+        endif
 
-            //_cMsg := '1o. bot - V@ Protheus x Telegram'
-            //oTelegram:SendMessage( _cMsg, .F. /* lHtml */ )
-            //_cMsg := '<b>bold</b>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := '<strong>bold</strong>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := '<i>italic</i>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := '<em>italic</em>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := '<u>sublinhado</u>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := '<s>traçado</s>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := '<a href="URL">https://telegram-bot-sdk.readme.io/reference/sendmessage</a>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := '<code>inline fixed-width code</code>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
-            //_cMsg := 'Nota Fiscal: <pre>000001</pre> - Serie: <pre>1</pre>'
-            //oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+        
+    endif
 
-            oTelegram:SendDocument("E:\010100100507000772201_16-41-47.pdf", "010100100507000772201_16-41-47.pdf", "Teste Local")
-            oTelegram:SendDocument("\COTACOES\010100100507000772201_16-41-47.pdf", "010100100507000772201_16-41-47.pdf.pdf", "Teste System")
+    oTelegram := nil
 
-        EndIf
-        oTelegram := Nil
+Return lRet
 
-Return()
+
 
 /*
 

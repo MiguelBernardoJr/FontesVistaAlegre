@@ -347,6 +347,10 @@ local i, j, nLen
         endif
     next
 
+if lRet
+    U_VAMT140TOK(2) // Altera Status da mensagem no telegram para "Em conferencia"
+endif
+
 if !Empty(aAreaZA0)
     RestArea(aAreaZA0)
 endif
@@ -355,7 +359,7 @@ if !Empty(aArea)
     RestArea(aArea)
 endif
 
- return lRet
+return lRet
 
 /*---------------------------------------------------------------------*
  | Func:  ViewDef                                                      |
