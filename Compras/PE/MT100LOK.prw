@@ -15,6 +15,7 @@ User Function MT100LOK()
 	Local cSB1Insumo := GetMv("MV_X_PRDMI",,"020017;020080;020079;") // Indica códigos de prudutos que NÃO deverão passar pela regra de
 	Local cGrpAju    := SuperGetMv("MV_GRPAJU",.T.,"02;03")// Grupo de Produtos que será ajustado pela TM
 	Local nI		 := 0
+	Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
 
 	// Alert('MT100LOK')
 	// validacao temporaria para evitar o preenchimento dos campos neste fonte;
@@ -22,118 +23,124 @@ User Function MT100LOK()
 	// if dDataBase>=sToD('20200714') .and. __cUserId=='000101' // Miguel
 	// 	Return .T.
 	// EndIf
-
-/* Se a linha estiver apagada, entao nao precisa realizar a FRENTE, NENHUMA validacao; */
-	If aCols[ n, Len( aCols[ 1 ] ) ]
-		Return .T.
-	EndIf
-
-/* REGRA SOMENTE SERA EXECUTADA NA FILIAL 01 */
-	If xFilial('SF1') <> '01'
-		Return .T.
-	EndIf
-
-/* Chamado: 237 : https://agropecuriavistaalegre.freshdesk.com/a/tickets/237
-	Solicitante: jessica silva 
-	Descri: Validacao Inclusao MILHO; Obrigatoriedade de campos; 
-	REGRA PARA MILHO
-	*/
-	cCampos := ""
-	If cTipo == "N" .and. AllTrim(GdFieldGet('D1_COD')) $ cSB1Milhos .and. SF4->F4_TRANFIL == "2" // 2 = NÃO
-		If Empty( GdFieldGet('D1_X_PESOB') )
-			cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Bruto"
-		EndIf
-
-		If Empty( GdFieldGet('D1_X_IMPUR') )
-			cCampos += Iif( Empty(cCampos), "", ",<br>") + "Impureza %"
-		EndIf
-
-		If Empty( GdFieldGet('D1_X_UMIDA') )
-			cCampos += Iif( Empty(cCampos), "", ",<br>") + "Umidade %"
-		EndIf
-
-		If !Empty(cCampos)
-			MsgInfo('Não foi localizado informação na linha: <b>' + AllTrim(Str(n)) + ;
-				'</b> para o(s) campo(s): <br> <b>' + cCampos + '</b>.')
-			lRet := .F.
-		EndIf
-	EndIf
-
-	cCampos := ""
-	If lRet // .and. xFilial('SF1') $ cFilVld
-
-		// For nI := 1 to Len(aCols)
-
-		/* REGRA PARA GADO */
-		nI := n
-
-		If SubS(GdFieldGet('D1_COD', nI),1,3)<>'BOV' ;
-				.OR. Posicione( 'SF4', 1, xFilial('SF4')+GdFieldGet('D1_TES', nI), 'F4_TRANFIL' ) == "1" ;
-				.OR. cTipo <> "N" // M->F1_TIPO <> "N"
-			// loop
-			lContinua := .F.
-		EndIf
-
-		if lContinua
-			If Empty( GdFieldGet('D1_X_PESCH', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
+	if lAtivo
+		lRet := U_GTPE004()
+	endif 
+	// Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e, 
+	// mantendo a chamada apenas no final do processo, quando a variável l103Auto estiver .F.
+	If lRet .And. !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
+		/* Se a linha estiver apagada, entao nao precisa realizar a FRENTE, NENHUMA validacao; */
+			If aCols[ n, Len( aCols[ 1 ] ) ]
+				Return .T.
 			EndIf
 
-			If Empty( GdFieldGet('D1_X_EMBDT', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Data Embarque"
+		/* REGRA SOMENTE SERA EXECUTADA NA FILIAL 01 */
+			If xFilial('SF1') <> '01'
+				Return .T.
 			EndIf
 
-			If Empty( GdFieldGet('D1_X_EMBHR', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Hora Embarque"
-			EndIf
-
-			If Empty( GdFieldGet('D1_X_CHEDT', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Data Chegada"
-			EndIf
-
-			If Empty( GdFieldGet('D1_X_CHEHR', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Hora Chegada"
-			EndIf
-
-			// If Empty( GdFieldGet('D1_X_JEJUM', nI) )
-			// cCampos += Iif( Empty(cCampos), "", ",<br>") + "Jejum"
-			// EndIf
-			/*  // TIRADO NO DIA 06.04.2018
-			If Empty( GdFieldGet('D1_X_QUEKG', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra"
-			EndIf
-			
-			If Empty( GdFieldGet('D1_X_QUECA', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra/Animal"
-			EndIf
+		/* Chamado: 237 : https://agropecuriavistaalegre.freshdesk.com/a/tickets/237
+			Solicitante: jessica silva 
+			Descri: Validacao Inclusao MILHO; Obrigatoriedade de campos; 
+			REGRA PARA MILHO
 			*/
-			If Empty( GdFieldGet('D1_X_KM', nI) )
-				cCampos += Iif( Empty(cCampos), "", ",<br>") + "Distância"
+			cCampos := ""
+			If cTipo == "N" .and. AllTrim(GdFieldGet('D1_COD')) $ cSB1Milhos .and. SF4->F4_TRANFIL == "2" // 2 = NÃO
+				If Empty( GdFieldGet('D1_X_PESOB') )
+					cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Bruto"
+				EndIf
+
+				If Empty( GdFieldGet('D1_X_IMPUR') )
+					cCampos += Iif( Empty(cCampos), "", ",<br>") + "Impureza %"
+				EndIf
+
+				If Empty( GdFieldGet('D1_X_UMIDA') )
+					cCampos += Iif( Empty(cCampos), "", ",<br>") + "Umidade %"
+				EndIf
+
+				If !Empty(cCampos)
+					MsgInfo('Não foi localizado informação na linha: <b>' + AllTrim(Str(n)) + ;
+						'</b> para o(s) campo(s): <br> <b>' + cCampos + '</b>.')
+					lRet := .F.
+				EndIf
 			EndIf
 
-			If !Empty(cCampos)
-				MsgInfo('Não foi localizado informação na linha: <b>' + AllTrim(Str(nI)) + '</b> para o(s) campo(s): <br> <b>'+cCampos+'</b>.')
-				lRet := .F.
-				// exit
+			cCampos := ""
+			If lRet // .and. xFilial('SF1') $ cFilVld
+
+				// For nI := 1 to Len(aCols)
+
+				/* REGRA PARA GADO */
+				nI := n
+
+				If SubS(GdFieldGet('D1_COD', nI),1,3)<>'BOV' ;
+						.OR. Posicione( 'SF4', 1, xFilial('SF4')+GdFieldGet('D1_TES', nI), 'F4_TRANFIL' ) == "1" ;
+						.OR. cTipo <> "N" // M->F1_TIPO <> "N"
+					// loop
+					lContinua := .F.
+				EndIf
+
+				if lContinua
+					If Empty( GdFieldGet('D1_X_PESCH', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
+					EndIf
+
+					If Empty( GdFieldGet('D1_X_EMBDT', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Data Embarque"
+					EndIf
+
+					If Empty( GdFieldGet('D1_X_EMBHR', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Hora Embarque"
+					EndIf
+
+					If Empty( GdFieldGet('D1_X_CHEDT', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Data Chegada"
+					EndIf
+
+					If Empty( GdFieldGet('D1_X_CHEHR', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Hora Chegada"
+					EndIf
+
+					// If Empty( GdFieldGet('D1_X_JEJUM', nI) )
+					// cCampos += Iif( Empty(cCampos), "", ",<br>") + "Jejum"
+					// EndIf
+					/*  // TIRADO NO DIA 06.04.2018
+					If Empty( GdFieldGet('D1_X_QUEKG', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra"
+					EndIf
+					
+					If Empty( GdFieldGet('D1_X_QUECA', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra/Animal"
+					EndIf
+					*/
+					If Empty( GdFieldGet('D1_X_KM', nI) )
+						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Distância"
+					EndIf
+
+					If !Empty(cCampos)
+						MsgInfo('Não foi localizado informação na linha: <b>' + AllTrim(Str(nI)) + '</b> para o(s) campo(s): <br> <b>'+cCampos+'</b>.')
+						lRet := .F.
+						// exit
+					EndIf
+					// Next nI
+				EndIf
 			EndIf
-			// Next nI
-		EndIf
-	EndIf
 
-	cCampos := ""
-	If lRet
+			cCampos := ""
+			If lRet
 
-		/* REGRA DOS INSUMOS */
+				/* REGRA DOS INSUMOS */
 
-		If AllTrim(Posicione("SB1", 1, xFilial("SB1")+Alltrim(GdFieldGet('D1_COD')), 'B1_GRUPO')) $ cGrpAju ;
-		   .and. !Alltrim(GdFieldGet('D1_COD')) $ cSB1Insumo ;
-		   .and. cTipo == "N";
-		   .and. Empty(GdFieldGet('D1_X_PESOB')) ;
-		   .and. SF4->F4_TRANFIL == "2" // 2 = NÃO
-			cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Bruto"
-			MsgInfo('Não foi localizado informação na linha: <b>' + AllTrim(Str(N)) + '</b> para o(s) campo(s): <br> <b>'+cCampos+'</b>.')
-			lRet := .F.
-		EndIf
+				If AllTrim(Posicione("SB1", 1, xFilial("SB1")+Alltrim(GdFieldGet('D1_COD')), 'B1_GRUPO')) $ cGrpAju ;
+				.and. !Alltrim(GdFieldGet('D1_COD')) $ cSB1Insumo ;
+				.and. cTipo == "N";
+				.and. Empty(GdFieldGet('D1_X_PESOB')) ;
+				.and. SF4->F4_TRANFIL == "2" // 2 = NÃO
+					cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Bruto"
+					MsgInfo('Não foi localizado informação na linha: <b>' + AllTrim(Str(N)) + '</b> para o(s) campo(s): <br> <b>'+cCampos+'</b>.')
+					lRet := .F.
+				EndIf
+			EndIf
 	EndIf
 
 Return lRet

@@ -21,8 +21,6 @@ User Function VAMT140TOK(nStep) //U_VAMT140TOK()
     Local cTokenFiscal              := SuperGetMv("MV_FISURLC",,"8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo") as character
     Local cIdFiscal                 := SuperGetMv("MV_FISIDC" ,,"-4920396972") as character
     Local nIdMessage                as numeric
-    Local cPedido                   as character
-    Local cUser                     as character
 
     oBotAlmoxarifado := Telegram():New(cTokenAlmoxarifado,cIdAlmoxarifado)
     oBotFiscal := Telegram():New(cTokenFiscal,cIdFiscal)
@@ -30,16 +28,13 @@ User Function VAMT140TOK(nStep) //U_VAMT140TOK()
     If ValType(oBotAlmoxarifado) == "O" .and. ValType(oBotFiscal) == "O"
 
         if nStep == 1 //.and. SF1->F1_IDALMOX == 0 //Aguardando Almoxarifado
-            nPosPedido := aScan(aHeader, {|x| Alltrim(x[2])=="D1_PEDIDO"})
-            cPedido := aCols[1][nPosPedido]
-            cUser := Posicione("SC7",1,FwXFilial("SC7")+cPedido,"C7_USER")
-
+            SD1->(DBSEEK(SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
             _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
-                                            cA100For,;
-                                            cLoja,;
-                                            cNFiscal,;
-                                            dDEmissao,;
-                                            cPedido,;
+                                            SF1->F1_FORNECE,;
+                                            SF1->F1_LOJA,;
+                                            SF1->F1_DOC,;
+                                            SF1->F1_EMISSAO,;
+                                            SD1->D1_PEDIDO,;
                                             "Aguardando almoxarifado")
 
             if SF1->F1_IDALMOX == 0
@@ -92,7 +87,7 @@ User Function VAMT140TOK(nStep) //U_VAMT140TOK()
             nIdMessage := oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
 
             if SF1->F1_STATCON == '1'
-                _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
+                _cMsg := MontaMensagemPortaria("Conferência de Pré-Nota Finalizada",;
                                                 SF1->F1_FORNECE,;
                                                 SF1->F1_LOJA,;
                                                 SF1->F1_DOC,;
@@ -117,7 +112,7 @@ User Function VAMT140TOK(nStep) //U_VAMT140TOK()
                                             SF1->F1_DOC,;
                                             SF1->F1_EMISSAO,;
                                             SD1->D1_PEDIDO,;
-                                            "Finalizado por " + UsrFullName())
+                                            "Classificação Fiscal Finalizada por " + UsrFullName())
 
             oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
             oBotFiscal:EditMessage( SF1->F1_IDFISCA, _cMsg ,.T. /* lHtml */ )
