@@ -1,9 +1,8 @@
 #INCLUDE 'PROTHEUS.CH'
 
 User Function MT103EXC()
-    local lRet := .T.
+    local lRet      := .T.
     Local cChave 	:= SF1->F1_FILIAL+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA
-	Local lContinua := .T. // Valor padrão: permite exclusão
 
     If !EMPTY(SF1->F1_DTLANC)
         
@@ -111,6 +110,12 @@ User Function MT103EXC()
                 SD1->(DbSkip())
             EndDo
 	    EndIF
-    endif 
+    endif
+
+    if lRet
+        if SF1->F1_IDALMOX != 0 .or. SF1->F1_IDFISCA != 0 
+            U_VAMT140TOK(99) //deletar mensagem no bot telegram
+        endif
+    endif
 
 Return lRet

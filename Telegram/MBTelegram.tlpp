@@ -1,0 +1,624 @@
+#INCLUDE 'Totvs.ch'
+#INCLUDE "JSON.CH"
+#INCLUDE "SHASH.CH"
+#include "fileio.ch"
+Static cSpaceHexa := "+%0A"
+/*
+    MB : 14.09.2025
+        https://github.com/lucasbrustolin/ProtheusTelegram
+*/
+Class Telegram From FwRest
+
+    Data cUrl       As character // String
+    Data cToken     As character
+
+    Data aHeadOut   As Array
+    Data cPath      As character
+    Data cEndPoint  As character
+    Data cChatId    As character
+    Data cPathFile  As character
+    Data cNameFile  As character
+    Data cBoundary  As character
+    Data cCaption   As character
+    Data cResponse  As character
+    Data lSuccess   As Logical
+    Data cMimeType  As character
+
+    Public Method New() Constructor
+    Public Method SetChat()
+    Public Method GetChat()
+    Public Method SendMessage()
+    Public Method EditMessage()
+    Public Method DeleteMessage()
+    Public Method SendMessageWithButtons()
+    Public METHOD SendDocument()
+    Public Method GetUpdates()
+    Public Method GetMe()
+    Public METHOD setCaption()
+    Public METHOD buildRequestBody()
+    Public METHOD GetMimeType()
+    Public METHOD getLastResponse()
+    Public METHOD isSuccess() 
+EndClass
+
+
+Method New ( cToken, cID ) Class Telegram
+
+    Local cUrl	 := SuperGetMv("MB_TLGURL",,"https://api.telegram.org")// Endereùo base para integraùùo
+
+    _Super:New(cUrl) // Inicializa metodo da classe pai
+
+    ::cURL      := cUrl
+    ::cToken    := cToken
+    ::cPath     := "/bot" + ::cToken
+    ::cChatId   := cID
+    ::aHeadOut  := {}
+    ::cEndPoint := ""
+    ::cPathFile := ""
+    ::cNameFile := ""
+    ::cBoundary  := "----ProtheusTelegramBoundary" + cValToChar(Seconds()) // Boundary ˙nico por inst‚ncia
+    ::cCaption   := ""
+    ::cResponse  := ""
+    ::lSuccess   := .F.
+    ::cMimeType  := ""
+
+Return( Self )
+
+Method SetChat( cChatId ) Class Telegram
+    ::cChatId := cChatId
+Return( ::cChatId  )
+
+Method GetChat() Class Telegram
+Return( ::cChatId  )
+
+METHOD SendDocument(cFilePath AS CHARACTER) CLASS Telegram
+    Local cFileContent  AS CHARACTER
+    Local cFileName     AS CHARACTER
+    Local cBody         AS CHARACTER
+    Local aHeaders      AS ARRAY
+    Local cHeadRet      AS CHARACTER
+    Local cPostRet      AS CHARACTER
+    Local oJson         AS OBJECT
+
+    //-- Vari·veis para leitura de baixo nÌvel do arquivo --//
+    Local nHandle       AS NUMERIC
+    Local cBuffer       AS CHARACTER
+    Local nBytesRead    AS NUMERIC
+    Local nChunkSize    := 4096 // LÍ em chunks de 4KB
+
+    // 1. Abrir o arquivo em modo leitura e obter um "handle"
+    nHandle := FOpen(cFilePath, 0) // 0 = Modo Somente Leitura
+
+    // Valida se o arquivo pÙde ser aberto
+    If nHandle <= 0
+        ::lSuccess  := .F.
+        ::cResponse := '{"ok":false,"description":"Erro ao abrir o arquivo local: ' + cFilePath + '"}'
+        Return .F.
+    Endif
+
+    // 2. Ler o arquivo em pedaÁos (chunks) atÈ o final
+    cFileContent := ""
+    cBuffer      := Space(nChunkSize)
+
+    WHILE .T.
+        nBytesRead := FRead(nHandle, @cBuffer, nChunkSize)
+
+        IF nBytesRead == 0
+            EXIT // Sai do laÁo DO WHILE
+        ENDIF
+
+        cFileContent += SubStr(cBuffer, 1, nBytesRead)
+    END
+
+    // 3. Fechar o arquivo
+    FClose(nHandle)
+
+    // O restante do mÈtodo permanece o mesmo. A vari·vel cFileContent
+    // agora contÈm o bin·rio correto e È do tipo CHARACTER.
+    cFileName := SubStr(cFilePath,At("\",cFilePath)+1,Len(cFilePath))
+    cBody     := ::buildRequestBody(cFileContent, cFileName)
+
+    if !Empty(cBody)
+        aHeaders := {}
+        AAdd(aHeaders, 'Content-Type: multipart/form-data; boundary=' + ::cBoundary)
+        AAdd(aHeaders, 'User-Agent: Protheus ADVPL Client')
+
+        cHeadRet := ""
+        ::cEndPoint := ::cUrl + ::cPath + "/sendDocument"
+        cPostRet := HTTPSPost(::cEndPoint, "", "", "", "", cBody, 120, aHeaders, @cHeadRet)
+        ::cResponse := cPostRet
+
+        If !Empty(cPostRet)
+            oJson := JsonObject():New()
+            If oJson:FromJson(cPostRet)
+                ::lSuccess := oJson:Get("ok")
+            Else
+                ::lSuccess := .F.
+            Endif
+        Else
+            ::lSuccess := .F.
+        Endif
+    else
+        ::lSuccess := .F.
+    Endif
+
+RETURN ::lSuccess
+
+METHOD buildRequestBody(cFileContent AS CHARACTER, cFileName AS CHARACTER) CLASS Telegram
+    Local cBody := ""
+    Local cType := ::GetMimeType(cFileName)
+    
+    if Empty(cType)
+        RETURN cBody
+    endif
+
+    //-- Parte 1: chat_id
+    cBody += '--' + ::cBoundary + CRLF
+    cBody += 'Content-Disposition: form-data; name="chat_id"' + CRLF + CRLF
+    cBody += ::cChatId + CRLF
+
+    //-- Parte 2: caption (opcional)
+    If !Empty(::cCaption)
+        cBody += '--' + ::cBoundary + CRLF
+        cBody += 'Content-Disposition: form-data; name="caption"' + CRLF + CRLF
+        cBody += ::cCaption + CRLF
+    Endif
+
+    //-- Parte 3: document (o arquivo PDF)
+    cBody += '--' + ::cBoundary + CRLF
+    cBody += 'Content-Disposition: form-data; name="document"; filename="' + cFileName + '"' + CRLF
+    cBody += 'Content-Type: ' + cType + CRLF + CRLF
+    cBody += + CRLF + CRLF
+    cBody += cFileContent + CRLF
+
+    //-- FinalizaÁ„o do corpo da requisiÁ„o
+    cBody += '--' + ::cBoundary + '--' + CRLF
+
+RETURN cBody
+
+/*
+--------------------------------------------------------------------------------
+| MÈtodo auxiliar para pegar a extens„o do arquivo                             |
+--------------------------------------------------------------------------------
+*/
+METHOD GetMimeType(cFileName as CHARACTER) CLASS Telegram
+    Local cExtension := ""
+    
+    ::cMimeType  := ""
+
+    // Extrai a extens„o do arquivo
+    If "." $ cFileName
+        cExtension := Lower(SubStr(cFileName, RAt(".", cFileName) + 1))
+    EndIf
+
+    // Define MIME types comuns
+    Do Case
+        Case cExtension == "pdf"
+            ::cMimeType := "application/pdf"
+        Case cExtension == "doc"
+            ::cMimeType := "application/msword"
+        Case cExtension == "docx"
+            ::cMimeType := "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        Case cExtension == "xls"
+            ::cMimeType := "application/vnd.ms-excel"
+        Case cExtension == "xlsx"
+            ::cMimeType := "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        Case cExtension == "txt"
+            ::cMimeType := "text/plain"
+        Case cExtension == "jpg" .Or. cExtension == "jpeg"
+            ::cMimeType := "image/jpeg"
+        Case cExtension == "png"
+            ::cMimeType := "image/png"
+        Case cExtension == "zip"
+            ::cMimeType := "application/zip"
+        Case cExtension == "xml"
+            ::cMimeType := "application/xml"
+        Case cExtension == "csv"
+            ::cMimeType := "application/csv"
+        Case cExtension == "csv"
+            ::cMimeType := "application/csv"
+    EndCase
+
+Return ::cMimeType
+
+/*
+--------------------------------------------------------------------------------
+| MÈtodos "Getter" para obter informaÁıes da ˙ltima transaÁ„o                  |
+--------------------------------------------------------------------------------
+*/
+METHOD getLastResponse() CLASS Telegram
+RETURN ::cResponse
+
+METHOD isSuccess() CLASS Telegram
+RETURN ::lSuccess
+
+
+// -------------------------------------------------------------------------------------------------------------+
+//  Se precisarmos do chat_id de uma pessoa que envia uma mensagem para o nosso bot, use o mùtodo getUpdates . |
+// -------------------------------------------------------------------------------------------------------------+
+Method GetUpdates() Class Telegram
+
+    Local cRet := ""
+
+    ::cEndPoint := ::cPath + "/getUpdates"
+
+    _Super:SetPath( ::cEndPoint )
+
+    If _Super:Get()
+        cRet := _Super:GetResult()
+    EndIf
+
+Return( cRet )
+// -------------------------------------------------------------------------------+
+//  informaùùes bùsicas sobre o bot recùm criado, precisamos usar o mùtodo getMe  |
+// -------------------------------------------------------------------------------+
+Method GetMe() Class Telegram
+
+    Local cRet := ""
+
+    ::cEndPoint := ::cPath  + "/getMe"
+
+    _Super:SetPath( ::cEndPoint )
+
+    If _Super:Get()
+        cRet := _Super:GetResult()
+    EndIf
+
+Return( cRet )
+// ---------------------------------------------------------------------+
+// Faz o envio de mensagens para determinad chat id - markdown ou  HTML |
+// ---------------------------------------------------------------------+
+Method SendMessage( cMessage, lHtml ) Class Telegram
+    Local cParseMode := ""
+    Local cEndpoint  := ""
+    Local cUrl       := ""
+    Local lRet       := .F.
+    Local nMessageId := 0
+    Local cJsonRet   := ""
+    Local oJson      := nil
+
+    Default cMessage := ""
+    Default lHtml    := .F.
+
+    If !Empty(cMessage)
+        // 1) Define o modo de parse
+        cParseMode := IIF( lHtml, "html", "markdown" )
+
+        ::cPath := "/bot" + ::cToken
+
+        // 2) Monta o endpoint
+        cEndpoint := ::cPath + "/sendMessage"
+
+        // 3) Monta a query string
+        cUrl := "?parse_mode=" + cParseMode
+        cUrl += "&chat_id=" + ::cChatId
+        cUrl += "&text=" +  EncodeUTF8(cMessage) // Usar  EncodeUTF8 È mais seguro
+
+        // 4) Combina e dispara
+        ::cEndPoint := cEndpoint + cUrl
+        _Super:SetPath( ::cEndPoint )
+        lRet := _Super:Get()
+
+        cJsonRet := _Super:GetResult()
+
+        If lRet
+            // Sucesso! Vamos extrair o message_id do JSON de retorno.
+            oJson := JsonObject():New()
+            If FWJsonDeserialize(cJsonRet,@oJson)
+                nMessageId := oJson:result:message_id
+            Else
+                MsgAlert("O Telegram API retornou um erro: " + cJsonRet)
+            EndIf
+        Else
+            // Falha na comunicaÁ„o HTTP
+            MsgAlert("Erro ao enviar mensagem para o Telegram: " + cJsonRet)
+        EndIf
+    EndIf
+
+Return ( nMessageId )
+
+/*
+================================================================================
+| Method EditMessage | Class Telegram                                          |
+================================================================================
+| PropÛsito: Edita uma mensagem de texto j· enviada.                         |
+| Par‚metros:                                                                |
+|   nMessageId (numeric)  : O ID da mensagem a ser editada.                  |
+|   cNewMessage (character): O novo texto da mensagem.                      |
+|   lHtml (logical)       : .T. se a mensagem deve ser parseada como HTML.    |
+| Retorno:                                                                   |
+|   lSuccess (logical)    : .T. em caso de sucesso, .F. em caso de falha.     |
+================================================================================
+*/
+Method EditMessage( nMessageId, cNewMessage, lHtml ) Class Telegram
+    Local cParseMode := ""
+    Local cEndpoint  := ""
+    Local cUrl       := ""
+    Local lRet       := .F.
+    Local cRetError  := ""
+
+    Default nMessageId  := 0
+    Default cNewMessage := ""
+    Default lHtml       := .F.
+
+    If nMessageId > 0 .And. !Empty(cNewMessage)
+        // 1) Define o modo de parse
+        cParseMode := IIF( lHtml, "html", "markdown" )
+
+        ::cPath := "/bot" + ::cToken
+
+        // 2) Monta o endpoint de ediÁ„o
+        cEndpoint := ::cPath + "/editMessageText"
+
+        // 3) Monta a query string
+        cUrl := "?chat_id=" + ::cChatId
+        cUrl += "&message_id=" + AllTrim(Str(nMessageId))
+        cUrl += "&text=" + EncodeUTF8(cNewMessage)
+        cUrl += "&parse_mode=" + cParseMode
+
+        // 4) Combina e dispara
+        ::cEndPoint := cEndpoint + cUrl
+        _Super:SetPath( ::cEndPoint )
+        lRet := _Super:Get()
+
+        If !lRet
+            cRetError := _Super:GetResult()
+            MsgAlert("Erro ao editar mensagem no Telegram: " + cRetError)
+        EndIf
+    EndIf
+
+Return( lRet )
+
+Method DeleteMessage( nMessageId ) Class Telegram
+    Local cEndpoint  := ""
+    Local cUrl       := ""
+    Local lRet       := .F.
+    Local cRetError  := ""
+
+    Default nMessageId  := 0
+
+    If nMessageId > 0
+        ::cPath := "/bot" + ::cToken
+
+        // 1) Monta o endpoint de deleÁ„o
+        cEndpoint := ::cPath + "/deleteMessage"
+
+        // 2) Monta a query string
+        cUrl := "?chat_id=" + ::cChatId
+        cUrl += "&message_id=" + AllTrim(Str(nMessageId))
+
+        // 3) Combina e dispara
+        ::cEndPoint := cEndpoint + cUrl
+        _Super:SetPath( ::cEndPoint )
+        lRet := _Super:Get()
+
+        If !lRet
+            cRetError := _Super:GetResult()
+            MsgAlert("Erro ao deletar mensagem no Telegram: " + cRetError)
+        EndIf
+    EndIf
+
+Return( lRet )
+
+METHOD SendMessageWithButtons(cMessage AS CHARACTER, cButtonsJson AS CHARACTER, lHtml AS LOGICAL) CLASS Telegram
+    Local cJsonBody   AS CHARACTER
+    Local aHeaders    AS ARRAY
+    Local cHeadRet    AS CHARACTER
+    Local cPostRet    AS CHARACTER
+    Local oJson       AS OBJECT
+    Local cParseMode  AS CHARACTER
+
+    // 1. ValidaÁıes iniciais
+    Default lHtml := .F.
+    If Empty(cMessage) .OR. Empty(cButtonsJson)
+        ::lSuccess  := .F.
+        ::cResponse := '{"ok":false,"description":"Mensagem ou JSON de botıes n„o fornecido."}'
+        Return .F.
+    Endif
+
+    // 2. Define o modo de parse (formataÁ„o do texto)
+    cParseMode := IIF(lHtml, "html", "MarkdownV2")
+
+    // 3. Monta o corpo (body) da requisiÁ„o em formato JSON
+    cJsonBody := '{'
+    cJsonBody += '  "chat_id": "' + ::cChatId + '",'
+    cJsonBody += '  "text": "' + EncodeUTF8(cMessage) + '",'
+    cJsonBody += '  "parse_mode": "' + cParseMode + '",'
+    cJsonBody += '  "reply_markup": ' + EncodeUTF8(cButtonsJson)
+    cJsonBody += '}'
+
+    // 4. Monta os cabeÁalhos (headers) da requisiÁ„o
+    aHeaders := {}
+    // Para este endpoint, o Content-Type È application/json
+    AAdd(aHeaders, 'Content-Type: application/json; charset=utf-8')
+    AAdd(aHeaders, 'User-Agent: Protheus ADVPL Client')
+
+    // 5. Define o endpoint e dispara a requisiÁ„o POST
+    ::cEndPoint := ::cUrl + ::cPath + "/sendMessage"
+    cHeadRet    := "" // Vari·vel para receber o cabeÁalho de retorno
+
+    // Usando a mesma funÁ„o HTTPSPost do seu mÈtodo SendDocument
+    cPostRet := HTTPSPost(::cEndPoint, "", "", "", "", cJsonBody, 120, aHeaders, @cHeadRet)
+    ::cResponse := cPostRet
+
+    // 6. Processa a resposta da API
+    If !Empty(cPostRet)
+        oJson := JsonObject():New()
+        If oJson:FromJson(cPostRet)
+            ::lSuccess := oJson:Get("ok")
+        Else
+            ::lSuccess := .F.
+        Endif
+    Else
+        ::lSuccess := .F.
+    Endif
+
+RETURN ::lSuccess
+
+User Function TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
+    Local oTelegram   AS OBJECT
+    Local aArquivos   as ARRAY
+    Local nI          AS NUMERIC
+
+    Default cMyBotToken := "7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo"
+    Default cMyChatId   := "-4974016224"                                   
+    Default cPathFiles  := ""
+
+    if Empty(cPathFiles)
+        cPathFiles := cGetFile( "", "Escolha o arquivo", 0, "", .f., nOR(GETF_MULTISELECT,GETF_LOCALHARD), .f.)
+    Endif
+    
+    aArquivos := StrToKarr(cPathFiles, "|")
+
+    if Len(aArquivos) > 0
+        oTelegram := Telegram():New(cMyBotToken, cMyChatId)
+    endif
+    
+    if ValType(oTelegram) == "O"
+        For nI := 1 to Len(aArquivos)
+            cPathFiles := Alltrim(aArquivos[nI])
+
+            oTelegram:SendDocument(cPathFiles)
+        Next nI
+    endif
+Return
+
+User Function MBTelegram(nType) // U_MBTelegram()
+    Local lRet := .T.   as logical
+    Local oTelegram     as object
+    Local _cMsg         as character
+    Local cMyBotToken   := SuperGetMv("MV_AMXURLC",,"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+    Local cMyChatId     := SuperGetMv("MV_AMXIDC" ,,"-4974016224") as character//"-4974016224" as character
+
+    Default cA100For    := "000001"
+    Default cLoja       := "01"
+    Default cNFiscal    := "TST000001"
+    Default dDEmissao   := dDataBase
+
+    oTelegram := Telegram():New(cMyBotToken,cMyChatId)
+
+    If ValType(oTelegram) == "O"
+        if nType == 1
+
+            _cMsg := '<b><i> Nova PrÈ-Nota Recebida na Portaria!</i></b>' + cSpaceHexa
+            _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> ‡s <b>'+SubStr(Time(),1,5)+'</b> por <b>'+UsrFullName()+'</b></i>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b><i> Dados do Documento:</i></b>' + cSpaceHexa
+            _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>CÛdigo</b>: <pre>'+cA100For+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + cSpaceHexa
+            _cMsg += '<b>Data de Emiss„o</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>STATUS: Aguardando almoxarifado</b>'
+            oTelegram:SendMessage( _cMsg, .T. /* lHtml */ )
+            
+        else
+            _cMsg := '<b><i> Nova PrÈ-Nota Recebida na Portaria!</i></b>' + cSpaceHexa
+            _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> ‡s <b>'+SubStr(Time(),1,5)+'</b> por <b>'+UsrFullName()+'</b></i>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b><i> Dados do Documento:</i></b>' + cSpaceHexa
+            _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>CÛdigo</b>: <pre>'+cA100For+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ cSpaceHexa
+            _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + cSpaceHexa
+            _cMsg += '<b>Data de Emiss„o</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += cSpaceHexa
+            _cMsg += '<b>STATUS: Em conferencia</b>'
+            
+            nID := 166
+            oTelegram:EditMessage( nID, _cMsg,.T. /* lHtml */ )
+        endif
+
+        
+    endif
+
+    oTelegram := nil
+
+Return lRet
+
+
+
+/*
+
+1. Primeiro passo È ter um Telegram Bot.
+
+    1.1 -   Para cri·-lo, abra seu app do Telegram, busque por:
+                @BotFather e clique sobre ele.
+
+                @valegreBot
+
+                Here is the token for bot V@ Protheus x Telegram @valegreBot:
+
+                7414420557:AAHwN2Xk1QJ2sZKC0R2MhHBruBFNW3_ebYg
+                https://api.telegram.org/bot7414420557:AAHwN2Xk1QJ2sZKC0R2MhHBruBFNW3_ebYg/getUpdates
+                https://api.telegram.org/bot7414420557:AAHwN2Xk1QJ2sZKC0R2MhHBruBFNW3_ebYg/sendMessage?html&use_aliases=true&chat_id=-1002815947178&text=Teste envio mensagem 15/08/2025 - 10:14 - 01
+
+
+                Almoxarifado:
+                t.me/vaAlmoxarifadoBot
+                7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo
+                https://api.telegram.org/bot7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo/getUpdates
+                https://api.telegram.org/bot7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo/sendMessage?html&use_aliases=true&chat_id=-4974016224&text=Teste envio mensagem 15/08/2025 - 10:14 - 01
+
+
+                Fiscal: 8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo
+                https://api.telegram.org/bot8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo/getUpdates
+                https://api.telegram.org/bot8203794282:AAFizoJv8NliKM5lp5w5g2yKJRg3KsgI8Qo/sendMessage?markdown&use_aliases=true&chat_id=-4920396972&text=Teste envio mensagem 15/08/2025 - 10:14 - 01
+
+                                Caracteres comuns depois da codificaÁ„o (baseado no ASCII ou UTF-8)
+        nova linha	            | barra de espaÁo	| "	    | %	    | -	    |.	    |<	    |>	    |\	    |^	    |_	    |`	    |{	    | |	    | }	    | ~
+        %0A ou %0D ou %0D%0A	| %20	            | %22	| %25	| %2D	|%2E	|%3C	|%3E	|%5C	|%5E	|%5F	|%60	|%7B	| %7C	| %7D	| %7E
+
+
+    1.2 -   Envie o comando: /newbot.
+    1.3 -   Insira um nome para o seu bot. (Exemplo: Bot Teste)
+
+    1.4 -   Insira um username. O username obrigatoriamente tem que terminar com
+            a palavra bot. Ex: MultErpbot, MeuRobo_bot.
+
+    1.5 -   Feito isso, vocÍ receber· um Token. Ele ser· usado para a integraÁ„o
+            com a Protheus ent„o copie ou salve em algum documento.
+
+    1.6 -   Para enviar mensagens para um determinado chat ser· preciso obter
+            o ID do bate-papo, neste caso faÁa o seguinte, inclua-o em grupo
+            por exemplo.
+
+    1.7 -   ApÛs adiciona-lo ao grupo abra o browse e cole o seguinte endereÁo:
+
+            https://api.telegram.org/bot<YourBOTToken>/getUpdates
+
+            Ex: Substitua o <YourBOTToken>  pelo seu Token.
+
+            Caso tenha ocorrido tudo certo ser· exibido um JSON com os dados do chat. Procure o objeto "chat" e guarde o numero correspondente pois ele tambÈm ser· utilizado na integraÁ„o.
+
+            {"update_id": 8393, "message": {"message_id": 3, "de": {"id": 7474, "first_name": "AAA"}, "chat": {"id":803967136, "tÌtulo ":" "}," date ": 25497," new_chat_participant ": {" id ": 71," first_name ":" NAME "," username ":" YOUR_BOT_NAME "}}}
+
+    1.8 - Para mais detalhes acesse a p·gina oficial do Telegram: https://core.telegram.org/bots#6-botfather
+
+
+2. FaÁa o ajuste do fonte Telegram.prw substituindo o Token e o Chat Id que foi gerado pelo bot.
+3. Agora È sÛ compilar e executar !
+
+
+** DESENVOLVIMENTO
+@ProtheusMiguelBot
+8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI
+
+https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/getUpdates
+
+chat_id: -4909361835
+https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/sendMessage?markdown&use_aliases=true&chat_id=-4909361835&text=Teste envio mensagem 19/08/2025 - 14:12
+
+https://api.telegram.org/bot8411575420:AAFS08Cdg-YXhxiAlIGd-XRaMM303iwq2xI/sendDocument?chat_id=-4909361835&caption=Meu PDF de teste&document=@/Users/miguelbernardo/Downloads/teste_telegram.pdf
+
+
+
+*/
+

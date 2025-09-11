@@ -172,6 +172,7 @@ Static Function ViewDef()
     SetKey( VK_F11, { || U_PPeso1() } )
 
 Return oView
+
 User Function zSaveZPB()
 	Local aArea      	:= GetArea()
 	Local lRet       	:= .T.
@@ -189,6 +190,17 @@ User Function zSaveZPB()
 	
 	//Se for Inclusão
 	If nOpc == MODEL_OPERATION_INSERT .OR. nOpc == MODEL_OPERATION_UPDATE
+		
+		if nOpc == MODEL_OPERATION_INSERT
+			cQry := "SELECT * FROM "+RetSqlName("ZPB")+" WHERE ZPB_FILIAL = '"+FwXFilial("ZPB")+"' AND ZPB_CODIGO = '"+oMdl1:GetValue("ZPB_CODIGO")+"' AND ZPB_DATA = '"+dToS(oMdl4:GetValue('ZPB_DATA'))+"' "
+			
+			cAlias := MpSysOpenQry(cQry)
+			if !(cAlias)->(EOF()) .and. (cAlias)->ZPB_PLACA != oMdl1:GetValue("ZPB_PLACA")
+				oMdl1:LoadValue("ZPB_CODIGO",U_fChvITEM("ZPB", "ZPB_DATA", "ZPB_CODIGO", "ZPB_DATA", DtoS(dDataBase)))
+			endif
+
+			(cAlias)->(dbCloseArea())
+		endif
 
 		RecLock('ZPB', lRecLock := !DbSeek( FwXFilial("ZPB") +;
 									dToS(oMdl4:GetValue('ZPB_DATA'))+;

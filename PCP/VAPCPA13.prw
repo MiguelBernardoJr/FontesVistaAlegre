@@ -666,7 +666,7 @@ Return (Nil)
 User Function btnPrc()
 	Local aArea 		:= FwGetArea()
 	Local cTimeIni 		:= Time()
-	Local cLockByName   := GetMV("MV_BTNPRC",,"BTNPRC")
+	Local cLockByName   := SuperGetMV("MV_BTNPRC",,"BTNPRC")
 	Private oZ02SEQ 	:= Nil
 	Private oZ0YQry 	:= Nil
 	Private oZ0YQry1 	:= Nil

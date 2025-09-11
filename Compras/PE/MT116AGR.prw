@@ -6,11 +6,10 @@
 
 
 User Function MT116AGR()   
-// Local nOpcao 	:= PARAMIXB[1]   // Opção Escolhida pelo usuario no aRotina  // 3- incluir  2-visualizar 5-excluir
-// Local nConfirma := PARAMIXB[2]   // Se o usuario confirmou a operação de gravação da NFECODIGO DE APLICAÇÃO DO USUARIO.....
-Local aArea		:= GetArea()
-
-	// Alert('MT116AGR: ' + SF1->F1_DOC )
+	// Local nOpcao 	:= PARAMIXB[1]   // Opção Escolhida pelo usuario no aRotina  // 3- incluir  2-visualizar 5-excluir
+	// Local nConfirma := PARAMIXB[2]   // Se o usuario confirmou a operação de gravação da NFECODIGO DE APLICAÇÃO DO USUARIO.....
+	Local aArea		:= GetArea()
+	Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
 	
 	If nRotina==2 .and. Empty(SF1->F1_X_DTINC)
 	
@@ -21,7 +20,11 @@ Local aArea		:= GetArea()
 		SF1->(MsUnlock())
 		
 	EndIf
-
+	
+	if lAtivo 
+		// Ponto de chamada ConexãoNF-e sempre como última instrução.
+		U_GTPE021()
+	endif 
 RestArea(aArea)
 Return .T.
 

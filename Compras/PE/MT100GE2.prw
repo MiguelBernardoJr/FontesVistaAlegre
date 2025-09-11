@@ -7,24 +7,28 @@
 
 // Gravar dados adicionais no titulo apos gravar documento de entrada
 // Observacao da Nota no Titulo Financeiro na Inclusao da NF de Entrada
-User Function MT100GE2 
-/*
-Local aTitAtual   := PARAMIXB[1]
-Local nOpc        := PARAMIXB[2]
-Local aHeadSE2	  := PARAMIXB[3]
-// Local nX          := PARAMIXB[4]
-// Local aParcelas   := PARAMIXB[5]
-//.....Exemplo de customização
-Local nPos        := Ascan(aHeadSE2,{|x| Alltrim(x[2]) == 'E2_OBS'})  
-   
-   // If nOpc == 1 //.. inclusao
-   //     SE2->E2_OBS:=aCols[nPos]
-   // EndIf
-   
-   Alert('MT100GE2: ' + cValToChar(nPos))
-*/
-Local nParc	:= iIf(Empty(SE2->E2_PARCELA),1,Val(SE2->E2_PARCELA))
-
+User Function MT100GE2()
+	Local nParc	:= iIf(Empty(SE2->E2_PARCELA),1,Val(SE2->E2_PARCELA))
+	Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+	/*
+		Local aTitAtual   := PARAMIXB[1]
+		Local nOpc        := PARAMIXB[2]
+		Local aHeadSE2	  := PARAMIXB[3]
+		// Local nX          := PARAMIXB[4]
+		// Local aParcelas   := PARAMIXB[5]
+		//.....Exemplo de customização
+		Local nPos        := Ascan(aHeadSE2,{|x| Alltrim(x[2]) == 'E2_OBS'})  
+		
+		// If nOpc == 1 //.. inclusao
+		//     SE2->E2_OBS:=aCols[nPos]
+		// EndIf
+		
+		Alert('MT100GE2: ' + cValToChar(nPos))
+	*/
+	if lAtivo 
+		U_GTPE025()
+	endif
+	
 	If Type("aTitSE2") <> "U" .and. !Empty( aTitSE2 ) .and. PARAMIXB[1,2] <> aTitSE2[ nParc, 3]
 		SE2->E2_VENCTO  := DataValida( aTitSE2[ nParc, 3], .T.)
 		SE2->E2_VENCREA := DataValida( aTitSE2[ nParc, 3], .T.)
@@ -55,7 +59,7 @@ Local nParc	:= iIf(Empty(SE2->E2_PARCELA),1,Val(SE2->E2_PARCELA))
 	cQryUpd += " AND E2_FORNECE  = '"	+ SE2->E2_FORNECE + "' " 
 	cQryUpd += " AND E2_LOJA     = '"	+ SE2->E2_LOJA    + "' " 
 	cQryUpd += " AND E2_EMISSAO  = '"	+ DTOS(SE2->E2_EMISSAO)  + "' " 
-		
-	TcSqlExec(cQryUpd) 				
+
+	TcSqlExec(cQryUpd)
 
 Return Nil  
