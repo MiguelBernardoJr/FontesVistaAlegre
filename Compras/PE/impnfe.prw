@@ -5,50 +5,111 @@
 #include "colors.ch"
 
 User Function A103CND2()
-Local aDuplic := PARAMIXB
-
+    Local aDuplic := PARAMIXB
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
 
     // Ponto de chamada ConexãoNF-e sempre como última instrução.
-    aDuplic := U_GTPE001()
-
+    if lAtivo
+        aDuplic := U_GTPE001()
+    endif 
 Return aDuplic
 
 User Function A140EXC()
-Local lRet := .T.
-
+    Local lRet := .T.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+    
     // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
-    lRet := U_GTPE003()
-
+    if lAtivo
+        lRet := U_GTPE003()
+    ENDIF
 
 Return lRet
 
 User Function MT103CWH()
-Local lRet := .T.
+    Local lRet := .T.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
 
-  
-
-    If lRet
+    If lAtivo .and. lRet
         // Ponto de chamada ConexãoNF-e sempre como última instrução.
         lRet := U_GTPE006()
     EndIf
 
 Return lRet
 
+User Function M145ARDEL()
+    Local lRet := .T.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+
+    // Ponto de chamada Conex�oNF-e sempre como primeira instru��o 
+    If lAtivo
+        lRet := U_GTPE018()
+    endif
+    //If
+    //    Regra existente
+    //    [...]
+    //EndIf
+
+Return lRet
+
+User Function MA103ATF()
+    Local aRet := {}
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+    
+    // Ponto de chamada Conex�oNF-e sempre como primeira instru��o.
+    If lAtivo
+        aRet := U_GTPE015()
+    endif 
+    // If
+    //     Regra existente
+    //     [...]
+    // EndIf
+
+Return aRet
+
 User Function MT103IP2()
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
 
-    // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
-    U_GTPE007() 
-
+    if lAtivo
+        // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
+        U_GTPE007() 
+    endif 
  
 Return Nil
+
+User Function MT103TPC()        
+    Local cTesPermit := PARAMIXB[1]
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+    //If
+	//	Regra existente
+	//	[...]
+	//EndIf
+ 
+    if lAtivo
+        // Ponto de chamada Conex�oNF-e sempre como �ltima instru��o
+        U_GTPE019()
+    endif
+Return cTesPermit
+
+User Function MT103BDP()
+    Local lRet := .F.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+    
+    if lAtivo     
+        // Ponto de chamada Conex�oNF-e sempre como primeira instru��o.
+        lRet := U_GTPE020()
+    endif 
+    // If
+    //     Regra existente
+    //     [...]
+    // EndIf
+
+Return lRet
 
 User Function MT116GRV()
     Local nI := 0
     Local nPosProd
     Local nPosDesc
-
-    // Ponto de chamada ConexãoNF-e sempre como última instrução.
-    U_GTPE008()
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
 
     IF IsInCallStack("MATA116")
         For nI := 1 to Len(aCols)
@@ -57,45 +118,67 @@ User Function MT116GRV()
             aCols[nI][nPosDesc] := Alltrim(Posicione("SB1",1,FWXFILIAL("SB1")+aCols[nI][nPosProd],"B1_DESC"))
         Next nI 
     ENDIF
+    // Ponto de chamada ConexãoNF-e sempre como última instrução.
+    if lAtivo
+        U_GTPE008()
+    endif 
 Return Nil
 
 User Function MT140CAB()
-Local lRet := .T.
-
+    Local lRet := .T.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)  
   
     // Ponto de chamada ConexãoNF-e sempre como última instrução.
-    If lRet
+    If lAtivo .and. lRet
         lRet := U_GTPE009()
     EndIf
 
 Return lRet
 
 User Function MT140TOK()
-Local lRet := .T.
-
-    // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
-    lRet := U_GTPE011()
-
+    Local lRet := .T.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)  
+    
+    if lAtivo 
+        // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
+        lRet := U_GTPE011()
+    endif 
     // Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e,
     // mantendo a chamada apenas no final do processo, quando a variavel l103Auto estiver .F.
     If lRet .And. !FwIsInCallStack('U_GATI001') .Or. !l103Auto
     
     EndIf
 
-
 Return lRet
 
 User Function MT140LOK()
-Local lRet := .T.
-
-    // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
-    lRet := U_GTPE012()
-
+    Local lRet := .T.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)  
+    
+    if lAtivo 
+        // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
+        lRet := U_GTPE012()
+    endif 
     // Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e,
     // mantendo a chamada apenas no final do processo, quando a variavel l103Auto estiver .F.
     If lRet .And. !FwIsInCallStack('U_GATI001') .Or. !l103Auto
     EndIf
 
+Return lRet
+
+User Function MT140PC()
+    Local lRet := .F.
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)  
+    
+    //If
+	//	Regra existente
+	//	[...]
+	//EndIf
+    
+    if lAtivo
+        // Ponto de chamada Conex�oNF-e sempre como �ltima instru��o
+        U_GTPE019()
+    endif 
 Return lRet
 
 User Function MTCOLSE2()
@@ -111,7 +194,7 @@ User Function MTCOLSE2()
     Local cPed      := ''
     Local nSomaPar  := 0
     Local nVlrParc  := 0
-
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)  
     Local lPula     := .F.
     Local nTamSE2
 
@@ -211,8 +294,10 @@ User Function MTCOLSE2()
 
             (cAliasT)->(DbCloseArea())
         else
-            //Ponto de chamada ConexãoNF-e sempre como primeira instrução.
-            aColsE2 := U_GTPE013()
+            if lAtivo 
+                //Ponto de chamada ConexãoNF-e sempre como primeira instrução.
+                aColsE2 := U_GTPE013()
+            endif  
         endif  
         (cAlias)->(DbCloseArea())
 
@@ -226,10 +311,13 @@ User Function MTCOLSE2()
 Return aColsE2
 
 User Function MT140SAI()
-
-    // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
-    U_GTPE016()
-
+    Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)  
+    
+    if lAtivo
+        // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
+        U_GTPE016()
+    endif 
+    
     if Type("oGetDados") == "O".and. oGetDados:nOpc == 3 .or.  oGetDados:nOpc == 4
         U_VAMT140TOK(1)
     elseif Type("oGetDados") == "O".and. oGetDados:nOpc == 5 
