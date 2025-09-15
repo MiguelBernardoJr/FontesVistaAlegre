@@ -19,7 +19,6 @@
  |        - Atendendo solicitação do Rodrigo-Fiscal; Validação cadastro Funrural;  |
  | Obs.:  -                                                                        |
 '---------------------------------------------------------------------------------*/
-
 User Function MA020TDOK()
 
 	Local lRet := .T.
@@ -32,44 +31,41 @@ User Function MA020TDOK()
 			" SELECT      " + CRLF +;
 			"             *  " + CRLF +;
 			" FROM        " + RetSQLName('SA2') + CRLF +;
-			" WHERE        " + CRLF +;
-			"             A2_CGC = '" + M->A2_CGC + "' AND " + CRLF +;
+			" WHERE       " + CRLF +;
+			"             rTrim(A2_CGC)+rTrim(A2_INSCR) = '" + AllTrim(M->A2_CGC)+AllTrim(M->A2_INSCR) + "' AND " + CRLF +;
 			"             D_E_L_E_T_ = ' ' "
 		MpSysOpenQry(cQry, cAlias)
-
-		//If !(cAlias)->(EOF())
-		//	MsgInfo("Fornecedor localizado com o codigo: " + AllTrim((cAlias)->A2_COD) + " - " + AllTrim((cAlias)->A2_NOME) + ". Cadastro repetido não é permitido. Esta operação será cancelada.")
-		//	lRet   := .F.
-		//EndIf
+		If !(cAlias)->(EOF())
+			MsgInfo("Fornecedor localizado com o codigo: " + AllTrim((cAlias)->A2_COD) + "/" + AllTrim((cAlias)->A2_LOJA)  + " - " + AllTrim((cAlias)->A2_NOME) + ". Cadastro repetido não é permitido. Esta operação será cancelada.")
+			lRet   := .F.
+		EndIf
 		(cAlias)->(DbCloseArea())
 	EndIf
 
 	If lRet
-		If FWSM0Util():GetSM0Data(, cFIlAnt, {'M0_CODIGO'})[1][2] == "01"
-			If M->A2_EST == 'SP' .OR. M->A2_EST == 'MG' // relatorio DIPAN
-				If Empty( M->A2_X_PRUR )
-					Alert('O Campo que define o tipo de produtor rural é obrigatório e não foi informado.')
-					Return .F.
-				EndIf
-				If Empty( M->A2_CODMUN )
-					Alert('O campo "Cod. Mun. ZF" é obrigatório e não foi informado.')
-					Return .F.
-				EndIf
-
-				// MB : 02.02.2021 - Compra produtor rural SP - sol. Rodrigo fiscal
-				if M->A2_X_PRUR  == "S"  .AND. ;
-						M->A2_TIPORUR == "F"  .AND. ;
-						M->A2_TPESSOA == "PF" .AND. ;
-						M->A2_CONTRIB == "1"  .AND. ;
-						M->A2_INDRUR  == "1"
-
-					If Empty( M->A2_CPFRUR )
-						Alert('O campo "CPF Rural" é obrigatório e não foi informado.')
-						Return .F.
-					EndIf
-				EndIf
-
+		If M->A2_EST == 'SP' .OR. M->A2_EST == 'MG' // relatorio DIPAN
+			If Empty( M->A2_X_PRUR )
+				Alert('O Campo que define o tipo de produtor rural é obrigatório e não foi informado.')
+				Return .F.
 			EndIf
+			If Empty( M->A2_CODMUN )
+				Alert('O campo "Cod. Mun. ZF" é obrigatório e não foi informado.')
+				Return .F.
+			EndIf
+
+			// MB : 02.02.2021 - Compra produtor rural SP - sol. Rodrigo fiscal
+			if M->A2_X_PRUR  == "S"  .AND. ;
+					M->A2_TIPORUR == "F"  .AND. ;
+					M->A2_TPESSOA == "PF" .AND. ;
+					M->A2_CONTRIB == "1"  .AND. ;
+					M->A2_INDRUR  == "1"
+
+				If Empty( M->A2_CPFRUR )
+					Alert('O campo "CPF Rural" é obrigatório e não foi informado.')
+					Return .F.
+				EndIf
+			EndIf
+
 		EndIf
 	EndIf
 Return lRet

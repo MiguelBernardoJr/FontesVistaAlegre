@@ -323,6 +323,22 @@ If cTipo == "Geral"
 						")" + CRLF 
 		_cQry +=	", PRINCIPAL as (" + CRLF +;
 						"select Z05.Z05_FILIAL" + CRLF +;
+						", (Select TOP 1 B1_X_SEXO  " + CRLF +;
+						" 	from " + RetSqlName("SB8") + " SB8 " + CRLF +;
+						" 	JOIN " + RetSqlName("SB1") + " SB1 ON (B1_COD = B8_PRODUTO AND SB1.D_E_L_E_T_ = ' ') " + CRLF +;
+						" 	WHERE B8_FILIAL = '" + FWxFilial("SB8") + "'  " + CRLF +;
+						" 	AND B8_LOTECTL = Z06.Z06_LOTE " + CRLF +;
+						" 	AND SB8.D_E_L_E_T_ = ' ' " + CRLF +;
+						" 	GROUP BY B1_X_SEXO " + CRLF +;
+						"   ORDER BY sum(B8_SALDO) DESC ) AS B1_X_SEXO" + CRLF +;
+						", ( Select TOP 1 B1_XRACA " + CRLF +;
+						" 	from " + RetSqlName("SB8") + " SB8 " + CRLF +;
+						" 	JOIN " + RetSqlName("SB1") + " SB1 ON (B1_COD = B8_PRODUTO AND SB1.D_E_L_E_T_ = ' ') " + CRLF +;
+						" 	WHERE B8_FILIAL = '" + FWxFilial("SB8") + "'  " + CRLF +;
+						" 	AND B8_LOTECTL = Z06.Z06_LOTE " + CRLF +;
+						" 	AND SB8.D_E_L_E_T_ = ' ' " + CRLF +;
+						" 	GROUP BY B1_XRACA " + CRLF +;
+						"   ORDER BY sum(B8_SALDO) DESC ) AS B1_XRACA" + CRLF +;
 						", Z05.Z05_DATA" + CRLF +;
 						", Z05.Z05_CURRAL" + CRLF +;
 						", Z06.Z06_LOTE" + CRLF +;
@@ -393,7 +409,7 @@ If cTipo == "Geral"
 						", Z05.Z05_KGMNDI" + CRLF +;
 						")" + CRLF 
 		If MV_PAR07 == 2
-		_cQry +=	", ESTOQUE AS ( " + CRLF +;
+			_cQry +=	", ESTOQUE AS ( " + CRLF +;
 						"SELECT  D31.D3_FILIAL" + CRLF +;
 						", D3.D3_LOTECTL" + CRLF +;
 						", D3.D3_QUANT	QUANT_ANIMAIS" + CRLF +;
@@ -430,8 +446,11 @@ If cTipo == "Geral"
 						"AND D3.D3_LOTECTL			<>				' '" + CRLF +;
 						"GROUP BY D31.D3_FILIAL, D3.D3_COD, B11.B1_DESC, D3.D3_LOTECTL, D3.D3_QUANT, D3.D3_TM, D31.D3_COD, B1.B1_DESC, D31.D3_EMISSAO, D31.D3_QUANT,D31.D3_CUSTO1	" + CRLF +;
 						")" + CRLF
-					EndIf
+		EndIf
 			_cQry += " select PRP.Z06_LOTE" + CRLF +;
+						", PRP.B1_X_SEXO" + CRLF +;
+						", PRP.B1_XRACA" + CRLF +;
+						", PRP.Z05_DATA" + CRLF +;
 						", PRP.Z05_DATA" + CRLF +;
 						", PRP.Z05_CURRAL" + CRLF +;
 						", PRP.Z05_PESOCO" + CRLF +;
@@ -449,25 +468,25 @@ If cTipo == "Geral"
 						", PRP.CMS_REALIZADO" + CRLF+;
 						", Z0I.Z0I_NOTTAR" + CRLF+; 
 						", Z0I.Z0I_NOTMAN" + CRLF
-						If MV_PAR07 == 2
-				_cQry += ", SUM(D3_QUANT) QTD_RACAO " + CRLF +;
-						", SUM(TOTAL_P_PR) CUSTO_TOTA " + CRLF +;
-						", SUM(TOTAL_P_PR) / PRP.Z05_CABECA CUSTO_ANIM " + CRLF +;
-						", PRP.MEGACAL MEGACALP " + CRLF +;
-						", CASE WHEN PRP.MEGACAL > 0 THEN (PRP.MEGACAL/Z05_KGMSDI) * PRP.CMS_REALIZADO "  + CRLF +;
-       					"       ELSE 0 END AS MEGACALR " + CRLF
-						EndIf
-				_cQry += " from PRINCIPAL PRP" + CRLF 
-					If MV_PAR07 == 2
+		If MV_PAR07 == 2
+			_cQry += ", SUM(D3_QUANT) QTD_RACAO " + CRLF +;
+					", SUM(TOTAL_P_PR) CUSTO_TOTA " + CRLF +;
+					", SUM(TOTAL_P_PR) / PRP.Z05_CABECA CUSTO_ANIM " + CRLF +;
+					", PRP.MEGACAL MEGACALP " + CRLF +;
+					", CASE WHEN PRP.MEGACAL > 0 THEN (PRP.MEGACAL/Z05_KGMSDI) * PRP.CMS_REALIZADO "  + CRLF +;
+					"       ELSE 0 END AS MEGACALR " + CRLF
+		EndIf
+			_cQry += " from PRINCIPAL PRP" + CRLF 
+			If MV_PAR07 == 2
 				_cQry +=  " left join ESTOQUE E ON" + CRLF +;
 						"      E.D3_FILIAL = PRP.Z05_FILIAL AND PRP.Z06_LOTE = E.D3_LOTECTL AND PRP.Z05_DATA = D3_EMISSAO" + CRLF +; 
 						"left join " + RetSqlName("Z0I") + " Z0I ON Z0I.Z0I_FILIAL = PRP.Z05_FILIAL AND Z0I.Z0I_DATA = PRP.Z05_DATA AND  Z0I.Z0I_LOTE = PRP.Z06_LOTE AND Z0I.D_E_L_E_T_ = ' ' " + CRLF +; 
-						"GROUP BY PRP.Z06_LOTE, PRP.Z05_DATA, PRP.Z05_CURRAL, PRP.Z05_PESOCO, PRP.Z05_CABECA, PRP.Z0O_GMD, PRP.Z05_DIASDI" + CRLF +; 
+						"GROUP BY PRP.Z06_LOTE, PRP.B1_X_SEXO, PRP.B1_XRACA, PRP.Z05_DATA, PRP.Z05_CURRAL, PRP.Z05_PESOCO, PRP.Z05_CABECA, PRP.Z0O_GMD, PRP.Z05_DIASDI" + CRLF +; 
 						", PRP.Z05_DIETA, PRP.Z05_NROTRA, PRP.CMS_REALIZADO, PRP.PREVISTO, PRP.REALIZADO, PRP.Z05_KGMSDI--, PRP.Z05_KGMNDI" + CRLF +; 
 						", PRP.PERC_MS, PRP.CMN_PREVISTO, PRP.CMN_REALIZADO, PRP.CMS_REALIZADO, Z0I_NOTTAR, Z0I_NOTMAN, PRP.MEGACAL" + CRLF  
-					EndIf 
-					_cQry +=" order by PRP.Z06_LOTE" + CRLF +;
-							", PRP.Z05_DATA"  
+			EndIf
+			_cQry +=" order by PRP.Z06_LOTE" + CRLF +;
+					", PRP.Z05_DATA"
 
 ElseIf  cTipo == "Saldo"
 		_cQry :="  SELECT B8_LOTECTL, SUM(B8_SALDO) B8_SALDO, B8_X_CURRA, B8_XPESOCO " +CRLF
@@ -476,7 +495,7 @@ ElseIf  cTipo == "Saldo"
 		_cQry +="    AND D_E_L_E_T_ = ' ' " +CRLF
 		_cQry +="GROUP BY B8_LOTECTL, B8_X_CURRA, B8_XPESOCO " +CRLF
 
-ElseIf  cTipo ==  "Apartacao"
+ElseIf  cTipo == "Apartacao"
 
 	_cQry := "  SELECT DISTINCT Z0F_LOTE, Z0F_CURRAL, SUBSTRING(B1_XLOTCOM,3,6) ZBC_PEDIDO, Z0F_DTPES, " + CRLF
 	_cQry += "           COUNT(Z0F_SEQ) QTDE, SUM(Z0F_PESO) Z0F_PESO, SUM(Z0F_PESO)/COUNT(Z0F_SEQ) PESO_MEDIO, " + CRLF
@@ -521,454 +540,355 @@ ElseIf  cTipo == "Faturamento"
 
 ElseIf  cTipo == "Embarque"
 
-_cQry :=" with PRODU AS ( " +CRLF
-_cQry +="    select Z0Y.Z0Y_ORDEM, Z0Y.Z0Y_DATA, Z0Y.Z0Y_TRATO, Z0Y.Z0Y_RECEIT, case when Z0Y_PESDIG > 0 THEN Z0Y_PESDIG ELSE Z0Y_QTDREA  END AS PRD_QTD_REA, Z0Y_QTDPRE PRD_QTD_PRV " +CRLF
-_cQry +="      from " + RetSqlName("Z0Y") + " Z0Y " +CRLF
-_cQry +="     where Z0Y.Z0Y_FILIAL = '" + FWxFilial("Z0Y") + "' " +CRLF
-_cQry +="       and Z0Y.Z0Y_DATINI <> '        ' -- Descarta as linhas que não foram efetivadas " +CRLF
-_cQry +="       and Z0Y.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +=" ) , " +CRLF
-_cQry +=" QTDPROD as ( " +CRLF
-_cQry +="    select PRD.Z0Y_ORDEM, PRD.Z0Y_RECEIT, PRD.Z0Y_TRATO, sum(PRD.PRD_QTD_REA) PRD_QTD_REA, sum(PRD.PRD_QTD_PRV) PRD_QTD_PRV " +CRLF
-_cQry +="      from PRODU PRD " +CRLF
-_cQry +="  group by PRD.Z0Y_ORDEM, PRD.Z0Y_TRATO, PRD.Z0Y_RECEIT " +CRLF
-_cQry +=" ) , " +CRLF
-_cQry +=" TRATO AS ( " +CRLF
-_cQry +="    select Z0W.Z0W_ORDEM, Z0W.Z0W_DATA, Z0W.Z0W_LOTE, Z0W_CURRAL, Z0W.Z0W_TRATO, Z0W.Z0W_RECEIT, CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END  TRT_QTD_REA, Z0W.Z0W_QTDPRE TRT_QTD_PRV " +CRLF
-_cQry +="      from " + RetSqlName("Z0W") + " Z0W " +CRLF
-_cQry +="     where Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "' " +CRLF
-_cQry +="       and Z0W.Z0W_QTDPRE <> '        ' " +CRLF
-_cQry +="       and Z0W.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +=" ) , " +CRLF
-_cQry +=" TRATOLOTE as ( " +CRLF
-_cQry +="    select Z0W_DATA, Z0W_LOTE, Z0W_CURRAL, SUM(TRT_QTD_REA) TRT_QTD_REA,  SUM(TRT_QTD_PRV) TRT_QTD_PRV " +CRLF
-_cQry +="      from TRATO  " +CRLF
-_cQry +="  group by Z0W_DATA, Z0W_LOTE, Z0W_CURRAL " +CRLF
-_cQry +=" ) , " +CRLF
-_cQry +=" QTDTRATO as ( " +CRLF
-_cQry +="    select Z0W.Z0W_ORDEM, Z0W.Z0W_TRATO, sum(Z0W.TRT_QTD_REA) TRT_QTD_REA, sum(Z0W.TRT_QTD_PRV) TRT_QTD_PRV " +CRLF
-_cQry +="      from TRATO Z0W " +CRLF
-_cQry +="  group by Z0W.Z0W_ORDEM, Z0W.Z0W_TRATO      " +CRLF
-_cQry +=" ) , " +CRLF
-_cQry +=" RECEITA as ( " +CRLF
-_cQry +="    select Z0Y_ORDEM, Z0Y_TRATO, Z0Y.Z0Y_RECEIT, Z0Y_COMP, CASE WHEN Z0Y_PESDIG > 0 THEN Z0Y_PESDIG ELSE  Z0Y_QTDREA END AS Z0Y_QTDREA, Z0Y_QTDPRE " +CRLF
-_cQry +="      from " + RetSqlName("Z0Y") + " Z0Y " +CRLF
-_cQry +="     where Z0Y.Z0Y_FILIAL = '" + FWxFilial("Z0Y") + "' " +CRLF
-_cQry +="       and Z0Y.Z0Y_QTDPRE <> '        '  " +CRLF
-_cQry +="       and Z0Y.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +=" ) , " +CRLF
-_cQry +=" REALIZADO as ( " +CRLF
-_cQry +="    select Z0W.Z0W_FILIAL " +CRLF
-_cQry +="         , Z0W.Z0W_ORDEM -- OP " +CRLF
-_cQry +="         , Z0W.Z0W_DATA -- Data do trato " +CRLF
-_cQry +="         , Z0W.Z0W_VERSAO -- versão do trato " +CRLF
-_cQry +="         , Z0W.Z0W_ROTA -- Rota a que o curral pertence " +CRLF
-_cQry +="         , Z0W.Z0W_CURRAL -- Curral " +CRLF
-_cQry +="         , Z0W.Z0W_LOTE -- Lote " +CRLF
-_cQry +="         , Z0W.Z0W_TRATO -- Numero do trato " +CRLF
-_cQry +="         , Z0W.Z0W_RECEIT  " +CRLF
-_cQry +="         , REC.Z0Y_COMP -- Componente da receita do trato " +CRLF
-_cQry +="         , Z0W.Z0W_QTDPRE " +CRLF
-_cQry +="         , Z0W.Z0W_QTDREA -- Quantidade distribuida no cocho para a baia " +CRLF
-_cQry +="         , Z05.Z05_CABECA -- Numero de cabeças da baia no momento do trato " +CRLF
-_cQry +="         , PRD.PRD_QTD_PRV -- Qunatidade total produzida prevista " +CRLF
-_cQry +="         , PRD.PRD_QTD_REA -- Quantidade total produzida aferida na balança " +CRLF
-_cQry +="         , TRT.TRT_QTD_PRV -- Quantidade total distribuida prevista " +CRLF
-_cQry +="         , TRT.TRT_QTD_REA -- Quantidade total distribuida aferida na balança " +CRLF
-_cQry +="         , REC.Z0Y_QTDREA -- Quantidade do componente usado na fabricação da dieta " +CRLF
-_cQry +="         , Z0V.Z0V_INDMS -- Indice de materia seca no dia/versao do trato " +CRLF
-_cQry +="         , Z0W_QTDREA/TRT_QTD_REA*PRD_QTD_REA QTD_MN -- Quantidade total de materia natural distribuida no cocho " +CRLF
-_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*PRD_QTD_REA)/(TRT_QTD_REA*Z05_CABECA) QTD_MN_CABECA -- Quantidade total de materia natural distribuida no cocho por cabeça " +CRLF
-_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA)/TRT_QTD_REA QTD_MN_COMPONENTE -- quantidade de materia natural do componente " +CRLF
-_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA)/(TRT_QTD_REA*Z05_CABECA) QTD_MN_COMPONENTE_CABECA -- quantidade de materia natural do componente por cabeça " +CRLF
-_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA*Z0V_INDMS)/(100*TRT_QTD_REA) QTD_MS_COMPONENTE -- quantidade calculada de materia seca do componente de acordo com o indice de materia seca utilizado no trato " +CRLF
-_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA*Z0V_INDMS)/(100*TRT_QTD_REA*Z05_CABECA) QTD_MS_COMP_CABECA -- quantidade calculada de materia seca do componente por cabeça de acordo com o indice de materia seca utilizado no trato " +CRLF
-_cQry +="      from " + RetSqlName("Z0W") + " Z0W " +CRLF
-_cQry +="      join QTDPROD PRD " +CRLF
-_cQry +="        on PRD.Z0Y_ORDEM = Z0W.Z0W_ORDEM " +CRLF
-_cQry +="       and PRD.Z0Y_TRATO = Z0W.Z0W_TRATO " +CRLF
-_cQry +="      join QTDTRATO TRT " +CRLF
-_cQry +="        on TRT.Z0W_ORDEM = Z0W.Z0W_ORDEM " +CRLF
-_cQry +="       and TRT.Z0W_TRATO = Z0W.Z0W_TRATO " +CRLF
-_cQry +="      join RECEITA REC " +CRLF
-_cQry +="        on REC.Z0Y_ORDEM = Z0W.Z0W_ORDEM " +CRLF
-_cQry +="       and REC.Z0Y_TRATO = Z0W.Z0W_TRATO " +CRLF
-_cQry +="      join " + RetSqlName("Z05") + " Z05 " +CRLF
-_cQry +="        on Z05.Z05_FILIAL = '" + FWxFilial("Z05") + "' " +CRLF
-_cQry +="       and Z05.Z05_DATA   = Z0W.Z0W_DATA " +CRLF
-_cQry +="       and Z05.Z05_LOTE   = Z0W.Z0W_LOTE " +CRLF
-_cQry +="       and Z05.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +="      join " + RetSqlName("Z0V") + " Z0V " +CRLF
-_cQry +="        on Z0V.Z0V_FILIAL = '" + FWxFilial("Z0V") + "' " +CRLF
-_cQry +="       and Z0V.Z0V_DATA   = Z0W.Z0W_DATA " +CRLF
-_cQry +="       and Z0V.Z0V_COMP   = REC.Z0Y_COMP " +CRLF
-_cQry +="       and Z0V.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +="     where Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "'  " +CRLF
-_cQry +="       and Z0W.Z0W_DATINI <> '        ' " +CRLF
-_cQry +="       and Z0W.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +=" ) " +CRLF
-_cQry +=" , PRINCIPAL as ( " +CRLF
-_cQry +="    select Z05.Z05_FILIAL " +CRLF
-_cQry +=" ,         Z05.Z05_DATA " +CRLF
-_cQry +=" ,         Z05.Z05_CURRAL " +CRLF
-_cQry +=" ,         Z06.Z06_LOTE " +CRLF
-_cQry +=" ,         Z05.Z05_PESOCO " +CRLF
-_cQry +=" ,         Z05.Z05_CABECA " +CRLF
-_cQry +=" ,         Z0O.Z0O_CODPLA " +CRLF
-_cQry +=" ,         Z0O.Z0O_GMD " +CRLF
-_cQry +=" ,         Z05.Z05_DIASDI " +CRLF
-_cQry +=" ,         Z05.Z05_DIETA " +CRLF
-_cQry +=" ,         Z05.Z05_NROTRA " +CRLF
-_cQry +=" ,         isnull(Z0WT.TRT_QTD_PRV,0) PREVISTO " +CRLF
-_cQry +=" ,         isnull(Z0WT.TRT_QTD_REA,0) REALIZADO " +CRLF
-_cQry +=" ,         Z05.Z05_KGMSDI " +CRLF
-_cQry +=" ,         case when Z05.Z05_KGMSDI > 0 then Z05.Z05_KGMSDI / Z05.Z05_KGMNDI * 100 else 0 end PERC_MS " +CRLF
-_cQry +=" ,         isnull(Z05_KGMNDI,0) CMN_PREVISTO " +CRLF
-_cQry +=" ,         SUM(QTD_MN_COMPONENTE_CABECA) CMN_REALIZADO --, sum(isnull(Z0W.QTD_MN_CABECA,0)) / Z05.Z05_CABECA CMN_REALIZADO " +CRLF
-_cQry +=" ,         SUM(QTD_MS_COMP_CABECA) CMS_REALIZADO--, sum(isnull(Z0W.QTD_MN_CABECA,0)) / Z05.Z05_CABECA CMN_REALIZADO " +CRLF
-_cQry +="      from " + RetSqlName("Z05") + " Z05 " +CRLF
-_cQry +="      join " + RetSqlName("Z06") + " Z06 " +CRLF
-_cQry +="        on Z06_FILIAL     = '" + FWxFilial("Z06") + "' " +CRLF
-_cQry +="       and Z06.Z06_DATA   = Z05.Z05_DATA " +CRLF
-_cQry +="       and Z06.Z06_VERSAO = Z05.Z05_VERSAO " +CRLF
-_cQry +="       and Z06.Z06_CURRAL = Z05.Z05_CURRAL " +CRLF
-_cQry +="       and Z06.Z06_LOTE   = Z05.Z05_LOTE " +CRLF
-_cQry +="       and Z06.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +="      join " + RetSqlName("SB1") + " SB1 " +CRLF
-_cQry +="        on SB1.B1_FILIAL  = '  ' " +CRLF
-_cQry +="       and SB1.B1_COD     = Z06.Z06_DIETA " +CRLF
-_cQry +="       and SB1.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +="      left join REALIZADO Z0W " +CRLF
-_cQry +="        on Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "' " +CRLF
-_cQry +="       and Z0W.Z0W_DATA   = Z06.Z06_DATA " +CRLF
-_cQry +="       and Z0W.Z0W_LOTE   = Z06.Z06_LOTE " +CRLF
-_cQry +="       and Z0W.Z0W_CURRAL = Z06.Z06_CURRAL " +CRLF
-_cQry +="       and Z0W.Z0W_TRATO  = Z06.Z06_TRATO " +CRLF
-_cQry +="       and Z0W.Z0W_RECEIT = Z06.Z06_DIETA " +CRLF
-_cQry +=" left join " + RetSqlName("Z0O") + " Z0O " +CRLF
-_cQry +="        on Z0O.Z0O_FILIAL = '" + FWxFilial("Z0O") + "' " +CRLF
-_cQry +="       and Z0O.Z0O_LOTE   = Z05_LOTE " +CRLF
-_cQry +="       and Z05.Z05_DATA   between Z0O_DATAIN and case when Z0O_DATATR = '        ' then convert(varchar, getdate(), 112) else Z0O_DATATR end " +CRLF
-_cQry +="       and Z0O.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +=" left join TRATOLOTE Z0WT ON  " +CRLF
-_cQry +="           Z0WT.Z0W_DATA = Z05_DATA " +CRLF
-_cQry +="       AND Z0WT.Z0W_LOTE  = Z05_LOTE " +CRLF
-_cQry +="       AND Z0WT.Z0W_CURRAL = Z05_CURRAL " +CRLF
-_cQry +="     where Z05.Z05_FILIAL = '" + FWxFilial("Z05") + "' " +CRLF
-_cQry +="       and Z05.Z05_DATA   BETWEEN '" + DToS(MV_PAR01) + "' and '" + DToS(MV_PAR02) + "'" + CRLF 
-_cQry +="       and Z05.Z05_LOTE   BETWEEN '" + MV_PAR03 + "' and '" + MV_PAR04 + "'" + CRLF 
-_cQry +="       and Z05.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +="  group by Z05_FILIAL " +CRLF
-_cQry +="         , Z05_DATA " +CRLF
-_cQry +="         , Z05_LOTE " +CRLF
-_cQry +="         , Z05_CURRAL " +CRLF
-_cQry +="         , Z06_LOTE " +CRLF
-_cQry +="         ,	Z05_KGMNDI " +CRLF
-_cQry +="         , Z05_PESOCO " +CRLF
-_cQry +="         , Z0WT.TRT_QTD_PRV  " +CRLF
-_cQry +="         , Z0WT.TRT_QTD_REA " +CRLF
-_cQry +="         , Z0O_CODPLA " +CRLF
-_cQry +="         , Z0O_GMD " +CRLF
-_cQry +="         , Z05_DIASDI " +CRLF
-_cQry +="         , Z05.Z05_CABECA " +CRLF
-_cQry +="         , Z05.Z05_DIETA " +CRLF
-_cQry +="         , Z05.Z05_NROTRA " +CRLF
-_cQry +="         , Z05.Z05_KGMSDI " +CRLF
-_cQry +="         , Z05.Z05_KGMNDI " +CRLF
-_cQry +=" ) " +CRLF
-_cQry +=" , ESTOQUE AS (  " +CRLF
-_cQry +="    SELECT  D31.D3_FILIAL " +CRLF
-_cQry +="          , D3.D3_LOTECTL " +CRLF
-_cQry +="          , D3.D3_QUANT	QUANT_ANIMAIS " +CRLF
-_cQry +="          , D31.D3_COD " +CRLF
-_cQry +="          , B1.B1_DESC " +CRLF
-_cQry +="          , D31.D3_EMISSAO " +CRLF
-_cQry +="          , D31.D3_QUANT " +CRLF
-_cQry +="          , (D31.D3_CUSTO1/D31.D3_QUANT) CUSTO_UNIT " +CRLF
-_cQry +="          , D31.D3_CUSTO1	CUSTO " +CRLF
-_cQry +="          , (SUM(D3C.D3_CUSTO1)/SUM(D3C.D3_QUANT)) AS  MEDIO_PROD " +CRLF
-_cQry +="          , ((SUM(D3C.D3_CUSTO1)/SUM(D3C.D3_QUANT))*D31.D3_QUANT) AS     TOTAL_P_PR " +CRLF
-_cQry +="          , ((SUM(D3C.D3_CUSTO1)/SUM(D3C.D3_QUANT))*D31.D3_QUANT) /D3.D3_QUANT CUSTO_ANIM " +CRLF
-_cQry +="       FROM " + RetSqlName("SD3") + " D3 " +CRLF
-_cQry +=" INNER JOIN " + RetSqlName("SD3") + " D31 ON " +CRLF
-_cQry +="            D31.D3_OP				=				D3.D3_OP " +CRLF
-_cQry +="        AND D31.D_E_L_E_T_			=				' ' " +CRLF
-_cQry +="        AND D31.D3_GRUPO				=				'03' " +CRLF
-_cQry +=" INNER JOIN " + RetSqlName("SD3") + " D3C ON " +CRLF
-_cQry +="            D3C.D3_FILIAL			=				D31.D3_FILIAL " +CRLF
-_cQry +="            AND D3C.D3_COD				=				D31.D3_COD " +CRLF
-_cQry +="            AND D3C.D3_TM				=				'001' " +CRLF
-_cQry +="            AND D3C.D3_EMISSAO			=				D3.D3_EMISSAO " +CRLF
-_cQry +=" INNER JOIN " + RetSqlName("SB1") + " B11 ON " +CRLF
-_cQry +="            B11.B1_COD				=				D3.D3_COD " +CRLF
-_cQry +="        AND B11.D_E_L_E_T_			=				' ' " +CRLF
-_cQry +=" INNER JOIN " + RetSqlName("SB1") + " B1 ON " +CRLF
-_cQry +="            D31.D3_COD				=				B1.B1_COD " +CRLF
-_cQry +="      WHERE D3.D3_FILIAL		    = '" + FWxFilial("SD3") + "' " +CRLF
-_cQry +="        AND D3.D3_LOTECTL	BETWEEN '" + MV_PAR03 + "' and '" + MV_PAR04 + "'  " +CRLF
-_cQry +="        AND D3.D3_EMISSAO	BETWEEN	'" + DToS(MV_PAR01) + "' and '" + DToS(MV_PAR02) + "'" + CRLF 
-_cQry +="        AND D3.D3_CF					=				'PR0' " +CRLF
-_cQry +="        AND D3.D3_ESTORNO			<>				'S' " +CRLF
-_cQry +="        AND D3.D_E_L_E_T_			=				' ' " +CRLF
-_cQry +="        AND D3.D3_LOTECTL			<>				' ' " +CRLF
-_cQry +="   GROUP BY D31.D3_FILIAL, D3.D3_COD, B11.B1_DESC, D3.D3_LOTECTL, D3.D3_QUANT, D3.D3_TM, D31.D3_COD, B1.B1_DESC, D31.D3_EMISSAO, D31.D3_QUANT,D31.D3_CUSTO1	 " +CRLF
-_cQry +=" ) " +CRLF
-_cQry +=" , GERAL AS ( " +CRLF
-_cQry +="    select PRP.Z06_LOTE " +CRLF
-_cQry +="         , PRP.Z05_DATA " +CRLF
-_cQry +="         , PRP.Z05_CURRAL " +CRLF
-_cQry +="         , PRP.Z05_PESOCO " +CRLF
-_cQry +="         , PRP.Z05_CABECA " +CRLF
-_cQry +="         , PRP.Z0O_GMD " +CRLF
-_cQry +="         , PRP.Z05_DIASDI " +CRLF
-_cQry +="         , PRP.Z05_DIETA " +CRLF
-_cQry +="         , PRP.Z05_NROTRA " +CRLF
-_cQry +="         , PRP.PREVISTO " +CRLF
-_cQry +="         , PRP.REALIZADO " +CRLF
-_cQry +="         , PRP.PERC_MS " +CRLF
-_cQry +="         , PRP.CMN_PREVISTO " +CRLF
-_cQry +="         , PRP.CMN_REALIZADO " +CRLF
-_cQry +="         , PRP.Z05_KGMSDI " +CRLF
-_cQry +="         , PRP.CMS_REALIZADO " +CRLF
-_cQry +="         , Z0I_NOTTAR " +CRLF
-_cQry +="         , Z0I_NOTMAN " +CRLF
-_cQry +="         , SUM(D3_QUANT) QTD_RACAO " +CRLF
-_cQry +="         , SUM(TOTAL_P_PR) CUSTO_TOTA " +CRLF
-_cQry +="         , SUM(TOTAL_P_PR) / PRP.Z05_CABECA CUSTO_ANIM " +CRLF
-_cQry +="      from PRINCIPAL PRP " +CRLF
-_cQry +=" left join ESTOQUE E ON " +CRLF
-_cQry +="           E.D3_FILIAL = PRP.Z05_FILIAL AND PRP.Z06_LOTE = E.D3_LOTECTL AND PRP.Z05_DATA = D3_EMISSAO " +CRLF
-_cQry +=" left join Z0I010 Z0I ON Z0I_FILIAL = PRP.Z05_FILIAL AND Z0I.Z0I_DATA = PRP.Z05_DATA AND  Z0I.Z0I_LOTE = PRP.Z06_LOTE AND Z0I.D_E_L_E_T_ = ' '  " +CRLF
-_cQry +="     WHERE Z05_DATA < (  SELECT MAX(Z0W.Z0W_DATA) Z0W_DATA " +CRLF
-_cQry +=" 				FROM " + RetSqlName("Z0W") + " Z0W " +CRLF
-_cQry +=" 				JOIN " + RetSqlName("SD2") + " ON  " +CRLF
-_cQry +=" 				     D2_FILIAL = '" + FWxFilial("SD2") + "' " +CRLF
-_cQry +=" 				 AND D2_LOTECTL = Z0W_LOTE " +CRLF
-_cQry +=" 			   WHERE Z05_FILIAL= Z0W_FILIAL " +CRLF
-_cQry +=" 				     AND Z0W_LOTE = Z06_LOTE " +CRLF
-_cQry +=" 				     AND Z0W.D_E_L_E_T_ = ' ' ) " +CRLF
-_cQry +=" GROUP BY PRP.Z05_FILIAL,PRP.Z06_LOTE, PRP.Z05_DATA, PRP.Z05_CURRAL, PRP.Z05_PESOCO, PRP.Z05_CABECA, PRP.Z0O_GMD, PRP.Z05_DIASDI " +CRLF
-_cQry +=" , PRP.Z05_DIETA, PRP.Z05_NROTRA, PRP.CMS_REALIZADO, PRP.PREVISTO, PRP.REALIZADO, PRP.Z05_KGMSDI--, PRP.Z05_KGMNDI " +CRLF
-_cQry +=" , PRP.PERC_MS, PRP.CMN_PREVISTO, PRP.CMN_REALIZADO, PRP.CMS_REALIZADO, Z0I_NOTTAR, Z0I_NOTMAN " +CRLF
-_cQry +="  " +CRLF
-_cQry +=" ) " +CRLF
-_cQry +=" , ALIMENTACAO AS ( " +CRLF
-_cQry +="       SELECT Z06_LOTE " +CRLF
-_cQry +=" 	       , SUM(Z05_CABECA) Z05_CABECA " +CRLF
-_cQry +=" 		   , SUM(REALIZADO) REALIZADO " +CRLF
-_cQry +=" 		   , SUM(REALIZADO*(PERC_MS/100)) MAT_SECA " +CRLF
-_cQry +="  " +CRLF
-_cQry +=" 		   , ROUND(SUM(REALIZADO*(PERC_MS/100)) / SUM(Z05_CABECA),2) CMS " +CRLF
-_cQry +=" 	    FROM GERAL " +CRLF
-_cQry +="     GROUP BY Z06_LOTE " +CRLF
-_cQry +=" 	) " +CRLF
-_cQry +="  " +CRLF
-_cQry +=" , FATURAMENTO AS ( " +CRLF
-_cQry +="       SELECT SD2.D2_FILIAL,  SD2.D2_LOTECTL, SD2.D2_EMISSAO, SUM(SD2.D2_QUANT) D2_QUANT " +CRLF
-_cQry +="         FROM " + RetSqlName("SD2") + " SD2  " +CRLF
-_cQry +=" 	   WHERE SD2.D2_FILIAL = '" + FWxFilial("SD2") + "'  " +CRLF
-_cQry +=" 	     AND SD2.D2_LOTECTL = '" + MV_PAR03 + "' " +CRLF
-//_cQry +=" 		 AND SD2.D2_EMISSAO = '20201228'  " +CRLF
-_cQry +=" 		 AND SD2.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +=" 		 AND SD2.D2_CLIENTE = '000001' " +CRLF
-_cQry +=" 		 AND D2_XCODABT NOT IN (SELECT ZAB_CODIGO FROM ZAB010 ZAB WHERE ZAB_FILIAL = '" + FWxFilial("SB8") + "' AND ZAB_BAIA = '" + MV_PAR03 + "' AND ZAB.D_E_L_E_T_ = ' ' AND (ZAB_EMERGE NOT IN ('0','2') OR ZAB_OUTMOV NOT IN ('0','2'))) " +CRLF
-_cQry +=" 	GROUP BY SD2.D2_FILIAL,  SD2.D2_LOTECTL, SD2.D2_EMISSAO " +CRLF
-_cQry +=" 		 ) " +CRLF
-_cQry +=" --SELECT * FROM FATURAMENTO " +CRLF
-_cQry +="  , APARTACAO AS ( " +CRLF
-_cQry +="       SELECT Z0F.Z0F_FILIAL, Z0F.Z0F_LOTE, MIN(Z0F.Z0F_DTPES) Z0F_DTPES, COUNT(Z0F.Z0F_SEQ) QTD, ROUND(AVG(Z0F.Z0F_PESO),2) Z0F_PESO " +CRLF
-_cQry +=" 		FROM " + RetSqlName("Z0F") + " Z0F " +CRLF
-_cQry +=" 		WHERE Z0F.Z0F_FILIAL = '" + FWxFilial("Z0F") + "' " +CRLF
-_cQry +=" 		  AND Z0F.Z0F_LOTE = '" + MV_PAR03 + "' " +CRLF
-_cQry +=" 		  AND Z0F.D_E_L_E_T_ = ' ' " +CRLF
-_cQry +=" 	 GROUP BY Z0F.Z0F_FILIAL, Z0F.Z0F_LOTE " +CRLF
-_cQry +=" 		  ) " +CRLF
-_cQry +="  , PLANEJAMENTO AS ( " +CRLF
-_cQry +="       SELECT Z05.Z05_FILIAL, Z05.Z05_LOTE, SUM(Z05.Z05_CABECA) Z05_CABECAS " +CRLF
-_cQry +=" 	    FROM " + RetSqlName("Z05") + " Z05 " +CRLF
-_cQry +=" 		WHERE Z05.Z05_FILIAL = '" + FWxFilial("Z05") + "' " +CRLF
-_cQry +=" 		  AND Z05.Z05_LOTE = '" + MV_PAR03 + "' " +CRLF
-_cQry +=" 		  AND Z05.D_E_L_E_T_ = ' '  " +CRLF
-_cQry +=" 		  AND Z05_KGMNDI > 0 " +CRLF
-_cQry +=" 	 GROUP BY Z05.Z05_FILIAL, Z05.Z05_LOTE " +CRLF
-_cQry +="  ) " +CRLF
-_cQry +="  " +CRLF
-_cQry +="  , DIAS AS ( " +CRLF
-_cQry +="       SELECT Z0W.Z0W_FILIAL, Z0W.Z0W_LOTE  " +CRLF
-_cQry +=" 		   , CASE WHEN MIN(Z0W.Z0W_DATA) = ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL)) THEN DATEADD(DAY,1,MIN(Z0W.Z0W_DATA)) " +CRLF
-_cQry +=" 		     WHEN MIN(Z0W.Z0W_DATA) > ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL )) THEN ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO)+1 DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL )) " +CRLF
-_cQry +=" 			      ELSE MIN(Z0W.Z0W_DATA) END AS DATA_INI " +CRLF
-_cQry +=" 		   , CASE WHEN MAX(Z0W.Z0W_DATA) = F.D2_EMISSAO  THEN MAX(Z0W.Z0W_DATA) " +CRLF
-_cQry +=" 			      ELSE DATEADD(DAY,-1,MAX(Z0W.Z0W_DATA)) END AS DATA_FIM " +CRLF
-_cQry +=" 		   , DATEDIFF(DAY, " +CRLF
-_cQry +=" 					  CASE WHEN MIN(Z0W.Z0W_DATA) = ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL)) THEN DATEADD(DAY,1,MIN(Z0W.Z0W_DATA))" +CRLF
-_cQry +=" 		                   WHEN MIN(Z0W.Z0W_DATA) > ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL )) THEN ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO)+1 DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ' GROUP BY B8_LOTECTL )) " +CRLF
-_cQry +=" 			               ELSE MIN(Z0W.Z0W_DATA)  " +CRLF
-_cQry +=" 					  END , " +CRLF
-_cQry +=" 					  CASE WHEN MAX(Z0W.Z0W_DATA) = F.D2_EMISSAO  THEN MAX(Z0W.Z0W_DATA) " +CRLF
-_cQry +=" 			               ELSE DATEADD(DAY,-1,MAX(Z0W.Z0W_DATA)) " +CRLF
-_cQry +=" 					  END ) DIAS_COCHO " +CRLF
-_cQry +=" 		   , SUM(CASE WHEN Z0W_PESDIG = 0 THEN Z0W_QTDREA ELSE Z0W_PESDIG END ) CONSUMO " +CRLF
-_cQry +=" 	    FROM " + RetSqlName("Z0W") + " Z0W  " +CRLF
-_cQry +="  LEFT JOIN APARTACAO A ON  " +CRLF
-_cQry +=" 			 A.Z0F_FILIAL = Z0W_FILIAL " +CRLF
-_cQry +=" 		 AND A.Z0F_LOTE = Z0W_LOTE " +CRLF
-_cQry +=" 		JOIN FATURAMENTO F ON " +CRLF
-_cQry +=" 		     F.D2_FILIAL = Z0W.Z0W_FILIAL " +CRLF
-_cQry +=" 		 AND F.D2_LOTECTL = Z0W.Z0W_LOTE " +CRLF
-_cQry +=" 	   WHERE Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "' " +CRLF
-_cQry +=" 	     AND Z0W.Z0W_LOTE = '" + MV_PAR03 + "' " +CRLF
-_cQry +=" 		 AND Z0W.D_E_L_E_T_ = ' '  " +CRLF
-_cQry +=" 		 --AND Z0W.Z0W_DATA <> (SELECT MIN(Z0F_DTPES) Z0F_DTPES FROM " + RetSqlName("Z0F") + " Z0F WHERE Z0F_FILIAL = '" + FWxFilial("Z0F") + "' AND Z0F_LOTE = '" + MV_PAR03 + "' AND Z0F.D_E_L_E_T_ = ' ' ) " +CRLF
-_cQry +=" 		 GROUP BY Z0W.Z0W_FILIAL, Z0W.Z0W_LOTE, Z0F_DTPES, D2_EMISSAO " +CRLF
-_cQry +=" 		 ) " +CRLF
-_cQry +=" --		 SELECT * FROM TRATO " +CRLF
-_cQry +="  " +CRLF
-_cQry +="  " +CRLF
-_cQry +="  " +CRLF
-_cQry +="  , EMBARQUE AS ( " +CRLF
-_cQry +="      SELECT ZPB.ZPB_FILIAL, ZPB.ZPB_DATA, ZPB.ZPB_BAIA, SUM(ZPB.ZPB_PESOL) ZPB_PESOL " +CRLF
-_cQry +=" 	   FROM ZPB010 ZPB " +CRLF
-_cQry +=" 	   JOIN FATURAMENTO F ON " +CRLF
-_cQry +=" 	        ZPB.ZPB_FILIAL = F.D2_FILIAL " +CRLF
-_cQry +=" 	    AND ZPB.ZPB_DATA = F.D2_EMISSAO " +CRLF
-_cQry +=" 		AND ZPB.ZPB_BAIA = F.D2_LOTECTL " +CRLF
-_cQry +=" 	  WHERE ZPB.ZPB_FILIAL = '" + FWxFilial("SB8") + "' " +CRLF
-_cQry +=" 	    AND ZPB.ZPB_BAIA = '" + MV_PAR03 + "' " +CRLF
-_cQry +=" 		AND ZPB.D_E_L_E_T_ = ' '  " +CRLF
-_cQry +="    GROUP BY ZPB_FILIAL, ZPB_DATA, ZPB_BAIA " +CRLF
-_cQry +=" ) " +CRLF
-_cQry +="       SELECT DISTINCT F.D2_LOTECTL " +CRLF
-_cQry +=" 	       , SUM(F.D2_QUANT) D2_QUANT  " +CRLF
-_cQry +=" 		   , SUM(E.ZPB_PESOL) PESO_TOTAL " +CRLF
-_cQry +=" 		   , ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ')) Z0F_PESO" +CRLF
-_cQry +=" 		   , ROUND(SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT),2) PESO_FINAL " +CRLF
-_cQry +=" 		   , D.DATA_INI " +CRLF
-_cQry +=" 		   , D.DATA_FIM " +CRLF
-_cQry +=" 		   , D.DIAS_COCHO " +CRLF
-_cQry +=" 		   , ROUND(((SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT))-ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ')))/D.DIAS_COCHO,3) AS GMD " +CRLF
-_cQry +=" 		   , AL.CMS " +CRLF
-_cQry +=" 		   , ROUND(AL.CMS/((ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' '))+SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT))/2)*100,2) CMSPV " +CRLF
-_cQry +=" 		   , ROUND(AL.CMS/ROUND(((SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT))-ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ')))/D.DIAS_COCHO,3),2) CA " +CRLF
-_cQry +=" 		   , AL.Z05_CABECA " +CRLF
-_cQry +=" 		   , ROUND(AL.REALIZADO / D.DIAS_COCHO,3) CONS_MN " +CRLF
-_cQry +=" 		   , AL.MAT_SECA " +CRLF
-_cQry +=" 		   , ROUND(AL.MAT_SECA / D.DIAS_COCHO,2) KGMSDI " +CRLF
-_cQry +=" 		   , AL.REALIZADO " +CRLF
-_cQry +="         FROM FATURAMENTO F " +CRLF
-_cQry +="    LEFT JOIN APARTACAO A ON  " +CRLF
-_cQry +="              F.D2_FILIAL = A.Z0F_FILIAL " +CRLF
-_cQry +=" 	     AND F.D2_LOTECTL = A.Z0F_LOTE " +CRLF
-_cQry +="    LEFT JOIN EMBARQUE E ON  " +CRLF
-_cQry +="              E.ZPB_FILIAL = F.D2_FILIAL " +CRLF
-_cQry +=" 		 AND E.ZPB_BAIA = F.D2_LOTECTL " +CRLF
-_cQry +=" 		 AND E.ZPB_DATA = F.D2_EMISSAO " +CRLF
-_cQry +="    LEFT JOIN DIAS D ON " +CRLF
-_cQry +=" 		     D.Z0W_FILIAL = F.D2_FILIAL " +CRLF
-_cQry +=" 		 AND D.Z0W_LOTE = F.D2_LOTECTL " +CRLF
-_cQry +="    LEFT JOIN ALIMENTACAO AL ON " +CRLF
-_cQry +=" 			 AL.Z06_LOTE = F.D2_LOTECTL " +CRLF
-_cQry +="     GROUP BY D2_LOTECTL, A.Z0F_PESO , D.DATA_INI, D.DATA_FIM, D.DIAS_COCHO, D.CONSUMO, AL.CMS, AL.MAT_SECA, AL.REALIZADO, AL.Z05_CABECA " +CRLF
+	_cQry :=" with PRODU AS ( " +CRLF
+	_cQry +="    select Z0Y.Z0Y_ORDEM, Z0Y.Z0Y_DATA, Z0Y.Z0Y_TRATO, Z0Y.Z0Y_RECEIT, case when Z0Y_PESDIG > 0 THEN Z0Y_PESDIG ELSE Z0Y_QTDREA  END AS PRD_QTD_REA, Z0Y_QTDPRE PRD_QTD_PRV " +CRLF
+	_cQry +="      from " + RetSqlName("Z0Y") + " Z0Y " +CRLF
+	_cQry +="     where Z0Y.Z0Y_FILIAL = '" + FWxFilial("Z0Y") + "' " +CRLF
+	_cQry +="       and Z0Y.Z0Y_DATINI <> '        ' -- Descarta as linhas que não foram efetivadas " +CRLF
+	_cQry +="       and Z0Y.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +=" ) , " +CRLF
+	_cQry +=" QTDPROD as ( " +CRLF
+	_cQry +="    select PRD.Z0Y_ORDEM, PRD.Z0Y_RECEIT, PRD.Z0Y_TRATO, sum(PRD.PRD_QTD_REA) PRD_QTD_REA, sum(PRD.PRD_QTD_PRV) PRD_QTD_PRV " +CRLF
+	_cQry +="      from PRODU PRD " +CRLF
+	_cQry +="  group by PRD.Z0Y_ORDEM, PRD.Z0Y_TRATO, PRD.Z0Y_RECEIT " +CRLF
+	_cQry +=" ) , " +CRLF
+	_cQry +=" TRATO AS ( " +CRLF
+	_cQry +="    select Z0W.Z0W_ORDEM, Z0W.Z0W_DATA, Z0W.Z0W_LOTE, Z0W_CURRAL, Z0W.Z0W_TRATO, Z0W.Z0W_RECEIT, CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END  TRT_QTD_REA, Z0W.Z0W_QTDPRE TRT_QTD_PRV " +CRLF
+	_cQry +="      from " + RetSqlName("Z0W") + " Z0W " +CRLF
+	_cQry +="     where Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "' " +CRLF
+	_cQry +="       and Z0W.Z0W_QTDPRE <> '        ' " +CRLF
+	_cQry +="       and Z0W.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +=" ) , " +CRLF
+	_cQry +=" TRATOLOTE as ( " +CRLF
+	_cQry +="    select Z0W_DATA, Z0W_LOTE, Z0W_CURRAL, SUM(TRT_QTD_REA) TRT_QTD_REA,  SUM(TRT_QTD_PRV) TRT_QTD_PRV " +CRLF
+	_cQry +="      from TRATO  " +CRLF
+	_cQry +="  group by Z0W_DATA, Z0W_LOTE, Z0W_CURRAL " +CRLF
+	_cQry +=" ) , " +CRLF
+	_cQry +=" QTDTRATO as ( " +CRLF
+	_cQry +="    select Z0W.Z0W_ORDEM, Z0W.Z0W_TRATO, sum(Z0W.TRT_QTD_REA) TRT_QTD_REA, sum(Z0W.TRT_QTD_PRV) TRT_QTD_PRV " +CRLF
+	_cQry +="      from TRATO Z0W " +CRLF
+	_cQry +="  group by Z0W.Z0W_ORDEM, Z0W.Z0W_TRATO      " +CRLF
+	_cQry +=" ) , " +CRLF
+	_cQry +=" RECEITA as ( " +CRLF
+	_cQry +="    select Z0Y_ORDEM, Z0Y_TRATO, Z0Y.Z0Y_RECEIT, Z0Y_COMP, CASE WHEN Z0Y_PESDIG > 0 THEN Z0Y_PESDIG ELSE  Z0Y_QTDREA END AS Z0Y_QTDREA, Z0Y_QTDPRE " +CRLF
+	_cQry +="      from " + RetSqlName("Z0Y") + " Z0Y " +CRLF
+	_cQry +="     where Z0Y.Z0Y_FILIAL = '" + FWxFilial("Z0Y") + "' " +CRLF
+	_cQry +="       and Z0Y.Z0Y_QTDPRE <> '        '  " +CRLF
+	_cQry +="       and Z0Y.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +=" ) , " +CRLF
+	_cQry +=" REALIZADO as ( " +CRLF
+	_cQry +="    select Z0W.Z0W_FILIAL " +CRLF
+	_cQry +="         , Z0W.Z0W_ORDEM -- OP " +CRLF
+	_cQry +="         , Z0W.Z0W_DATA -- Data do trato " +CRLF
+	_cQry +="         , Z0W.Z0W_VERSAO -- versão do trato " +CRLF
+	_cQry +="         , Z0W.Z0W_ROTA -- Rota a que o curral pertence " +CRLF
+	_cQry +="         , Z0W.Z0W_CURRAL -- Curral " +CRLF
+	_cQry +="         , Z0W.Z0W_LOTE -- Lote " +CRLF
+	_cQry +="         , Z0W.Z0W_TRATO -- Numero do trato " +CRLF
+	_cQry +="         , Z0W.Z0W_RECEIT  " +CRLF
+	_cQry +="         , REC.Z0Y_COMP -- Componente da receita do trato " +CRLF
+	_cQry +="         , Z0W.Z0W_QTDPRE " +CRLF
+	_cQry +="         , Z0W.Z0W_QTDREA -- Quantidade distribuida no cocho para a baia " +CRLF
+	_cQry +="         , Z05.Z05_CABECA -- Numero de cabeças da baia no momento do trato " +CRLF
+	_cQry +="         , PRD.PRD_QTD_PRV -- Qunatidade total produzida prevista " +CRLF
+	_cQry +="         , PRD.PRD_QTD_REA -- Quantidade total produzida aferida na balança " +CRLF
+	_cQry +="         , TRT.TRT_QTD_PRV -- Quantidade total distribuida prevista " +CRLF
+	_cQry +="         , TRT.TRT_QTD_REA -- Quantidade total distribuida aferida na balança " +CRLF
+	_cQry +="         , REC.Z0Y_QTDREA -- Quantidade do componente usado na fabricação da dieta " +CRLF
+	_cQry +="         , Z0V.Z0V_INDMS -- Indice de materia seca no dia/versao do trato " +CRLF
+	_cQry +="         , Z0W_QTDREA/TRT_QTD_REA*PRD_QTD_REA QTD_MN -- Quantidade total de materia natural distribuida no cocho " +CRLF
+	_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*PRD_QTD_REA)/(TRT_QTD_REA*Z05_CABECA) QTD_MN_CABECA -- Quantidade total de materia natural distribuida no cocho por cabeça " +CRLF
+	_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA)/TRT_QTD_REA QTD_MN_COMPONENTE -- quantidade de materia natural do componente " +CRLF
+	_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA)/(TRT_QTD_REA*Z05_CABECA) QTD_MN_COMPONENTE_CABECA -- quantidade de materia natural do componente por cabeça " +CRLF
+	_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA*Z0V_INDMS)/(100*TRT_QTD_REA) QTD_MS_COMPONENTE -- quantidade calculada de materia seca do componente de acordo com o indice de materia seca utilizado no trato " +CRLF
+	_cQry +="         , ((CASE WHEN Z0W.Z0W_PESDIG > 0 THEN Z0W.Z0W_PESDIG ELSE Z0W.Z0W_QTDREA END )*Z0Y_QTDREA*Z0V_INDMS)/(100*TRT_QTD_REA*Z05_CABECA) QTD_MS_COMP_CABECA -- quantidade calculada de materia seca do componente por cabeça de acordo com o indice de materia seca utilizado no trato " +CRLF
+	_cQry +="      from " + RetSqlName("Z0W") + " Z0W " +CRLF
+	_cQry +="      join QTDPROD PRD " +CRLF
+	_cQry +="        on PRD.Z0Y_ORDEM = Z0W.Z0W_ORDEM " +CRLF
+	_cQry +="       and PRD.Z0Y_TRATO = Z0W.Z0W_TRATO " +CRLF
+	_cQry +="      join QTDTRATO TRT " +CRLF
+	_cQry +="        on TRT.Z0W_ORDEM = Z0W.Z0W_ORDEM " +CRLF
+	_cQry +="       and TRT.Z0W_TRATO = Z0W.Z0W_TRATO " +CRLF
+	_cQry +="      join RECEITA REC " +CRLF
+	_cQry +="        on REC.Z0Y_ORDEM = Z0W.Z0W_ORDEM " +CRLF
+	_cQry +="       and REC.Z0Y_TRATO = Z0W.Z0W_TRATO " +CRLF
+	_cQry +="      join " + RetSqlName("Z05") + " Z05 " +CRLF
+	_cQry +="        on Z05.Z05_FILIAL = '" + FWxFilial("Z05") + "' " +CRLF
+	_cQry +="       and Z05.Z05_DATA   = Z0W.Z0W_DATA " +CRLF
+	_cQry +="       and Z05.Z05_LOTE   = Z0W.Z0W_LOTE " +CRLF
+	_cQry +="       and Z05.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +="      join " + RetSqlName("Z0V") + " Z0V " +CRLF
+	_cQry +="        on Z0V.Z0V_FILIAL = '" + FWxFilial("Z0V") + "' " +CRLF
+	_cQry +="       and Z0V.Z0V_DATA   = Z0W.Z0W_DATA " +CRLF
+	_cQry +="       and Z0V.Z0V_COMP   = REC.Z0Y_COMP " +CRLF
+	_cQry +="       and Z0V.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +="     where Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "'  " +CRLF
+	_cQry +="       and Z0W.Z0W_DATINI <> '        ' " +CRLF
+	_cQry +="       and Z0W.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +=" ) " +CRLF
+	_cQry +=" , PRINCIPAL as ( " +CRLF
+	_cQry +="    select Z05.Z05_FILIAL " +CRLF
+	_cQry +=" ,         Z05.Z05_DATA " +CRLF
+	_cQry +=" ,         Z05.Z05_CURRAL " +CRLF
+	_cQry +=" ,         Z06.Z06_LOTE " +CRLF
+	_cQry +=" ,         Z05.Z05_PESOCO " +CRLF
+	_cQry +=" ,         Z05.Z05_CABECA " +CRLF
+	_cQry +=" ,         Z0O.Z0O_CODPLA " +CRLF
+	_cQry +=" ,         Z0O.Z0O_GMD " +CRLF
+	_cQry +=" ,         Z05.Z05_DIASDI " +CRLF
+	_cQry +=" ,         Z05.Z05_DIETA " +CRLF
+	_cQry +=" ,         Z05.Z05_NROTRA " +CRLF
+	_cQry +=" ,         isnull(Z0WT.TRT_QTD_PRV,0) PREVISTO " +CRLF
+	_cQry +=" ,         isnull(Z0WT.TRT_QTD_REA,0) REALIZADO " +CRLF
+	_cQry +=" ,         Z05.Z05_KGMSDI " +CRLF
+	_cQry +=" ,         case when Z05.Z05_KGMSDI > 0 then Z05.Z05_KGMSDI / Z05.Z05_KGMNDI * 100 else 0 end PERC_MS " +CRLF
+	_cQry +=" ,         isnull(Z05_KGMNDI,0) CMN_PREVISTO " +CRLF
+	_cQry +=" ,         SUM(QTD_MN_COMPONENTE_CABECA) CMN_REALIZADO --, sum(isnull(Z0W.QTD_MN_CABECA,0)) / Z05.Z05_CABECA CMN_REALIZADO " +CRLF
+	_cQry +=" ,         SUM(QTD_MS_COMP_CABECA) CMS_REALIZADO--, sum(isnull(Z0W.QTD_MN_CABECA,0)) / Z05.Z05_CABECA CMN_REALIZADO " +CRLF
+	_cQry +="      from " + RetSqlName("Z05") + " Z05 " +CRLF
+	_cQry +="      join " + RetSqlName("Z06") + " Z06 " +CRLF
+	_cQry +="        on Z06_FILIAL     = '" + FWxFilial("Z06") + "' " +CRLF
+	_cQry +="       and Z06.Z06_DATA   = Z05.Z05_DATA " +CRLF
+	_cQry +="       and Z06.Z06_VERSAO = Z05.Z05_VERSAO " +CRLF
+	_cQry +="       and Z06.Z06_CURRAL = Z05.Z05_CURRAL " +CRLF
+	_cQry +="       and Z06.Z06_LOTE   = Z05.Z05_LOTE " +CRLF
+	_cQry +="       and Z06.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +="      join " + RetSqlName("SB1") + " SB1 " +CRLF
+	_cQry +="        on SB1.B1_FILIAL  = '  ' " +CRLF
+	_cQry +="       and SB1.B1_COD     = Z06.Z06_DIETA " +CRLF
+	_cQry +="       and SB1.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +="      left join REALIZADO Z0W " +CRLF
+	_cQry +="        on Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "' " +CRLF
+	_cQry +="       and Z0W.Z0W_DATA   = Z06.Z06_DATA " +CRLF
+	_cQry +="       and Z0W.Z0W_LOTE   = Z06.Z06_LOTE " +CRLF
+	_cQry +="       and Z0W.Z0W_CURRAL = Z06.Z06_CURRAL " +CRLF
+	_cQry +="       and Z0W.Z0W_TRATO  = Z06.Z06_TRATO " +CRLF
+	_cQry +="       and Z0W.Z0W_RECEIT = Z06.Z06_DIETA " +CRLF
+	_cQry +=" left join " + RetSqlName("Z0O") + " Z0O " +CRLF
+	_cQry +="        on Z0O.Z0O_FILIAL = '" + FWxFilial("Z0O") + "' " +CRLF
+	_cQry +="       and Z0O.Z0O_LOTE   = Z05_LOTE " +CRLF
+	_cQry +="       and Z05.Z05_DATA   between Z0O_DATAIN and case when Z0O_DATATR = '        ' then convert(varchar, getdate(), 112) else Z0O_DATATR end " +CRLF
+	_cQry +="       and Z0O.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +=" left join TRATOLOTE Z0WT ON  " +CRLF
+	_cQry +="           Z0WT.Z0W_DATA = Z05_DATA " +CRLF
+	_cQry +="       AND Z0WT.Z0W_LOTE  = Z05_LOTE " +CRLF
+	_cQry +="       AND Z0WT.Z0W_CURRAL = Z05_CURRAL " +CRLF
+	_cQry +="     where Z05.Z05_FILIAL = '" + FWxFilial("Z05") + "' " +CRLF
+	_cQry +="       and Z05.Z05_DATA   BETWEEN '" + DToS(MV_PAR01) + "' and '" + DToS(MV_PAR02) + "'" + CRLF 
+	_cQry +="       and Z05.Z05_LOTE   BETWEEN '" + MV_PAR03 + "' and '" + MV_PAR04 + "'" + CRLF 
+	_cQry +="       and Z05.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +="  group by Z05_FILIAL " +CRLF
+	_cQry +="         , Z05_DATA " +CRLF
+	_cQry +="         , Z05_LOTE " +CRLF
+	_cQry +="         , Z05_CURRAL " +CRLF
+	_cQry +="         , Z06_LOTE " +CRLF
+	_cQry +="         ,	Z05_KGMNDI " +CRLF
+	_cQry +="         , Z05_PESOCO " +CRLF
+	_cQry +="         , Z0WT.TRT_QTD_PRV  " +CRLF
+	_cQry +="         , Z0WT.TRT_QTD_REA " +CRLF
+	_cQry +="         , Z0O_CODPLA " +CRLF
+	_cQry +="         , Z0O_GMD " +CRLF
+	_cQry +="         , Z05_DIASDI " +CRLF
+	_cQry +="         , Z05.Z05_CABECA " +CRLF
+	_cQry +="         , Z05.Z05_DIETA " +CRLF
+	_cQry +="         , Z05.Z05_NROTRA " +CRLF
+	_cQry +="         , Z05.Z05_KGMSDI " +CRLF
+	_cQry +="         , Z05.Z05_KGMNDI " +CRLF
+	_cQry +=" ) " +CRLF
+	_cQry +=" , ESTOQUE AS (  " +CRLF
+	_cQry +="    SELECT  D31.D3_FILIAL " +CRLF
+	_cQry +="          , D3.D3_LOTECTL " +CRLF
+	_cQry +="          , D3.D3_QUANT	QUANT_ANIMAIS " +CRLF
+	_cQry +="          , D31.D3_COD " +CRLF
+	_cQry +="          , B1.B1_DESC " +CRLF
+	_cQry +="          , D31.D3_EMISSAO " +CRLF
+	_cQry +="          , D31.D3_QUANT " +CRLF
+	_cQry +="          , (D31.D3_CUSTO1/D31.D3_QUANT) CUSTO_UNIT " +CRLF
+	_cQry +="          , D31.D3_CUSTO1	CUSTO " +CRLF
+	_cQry +="          , (SUM(D3C.D3_CUSTO1)/SUM(D3C.D3_QUANT)) AS  MEDIO_PROD " +CRLF
+	_cQry +="          , ((SUM(D3C.D3_CUSTO1)/SUM(D3C.D3_QUANT))*D31.D3_QUANT) AS     TOTAL_P_PR " +CRLF
+	_cQry +="          , ((SUM(D3C.D3_CUSTO1)/SUM(D3C.D3_QUANT))*D31.D3_QUANT) /D3.D3_QUANT CUSTO_ANIM " +CRLF
+	_cQry +="       FROM " + RetSqlName("SD3") + " D3 " +CRLF
+	_cQry +=" INNER JOIN " + RetSqlName("SD3") + " D31 ON " +CRLF
+	_cQry +="            D31.D3_OP				=				D3.D3_OP " +CRLF
+	_cQry +="        AND D31.D_E_L_E_T_			=				' ' " +CRLF
+	_cQry +="        AND D31.D3_GRUPO				=				'03' " +CRLF
+	_cQry +=" INNER JOIN " + RetSqlName("SD3") + " D3C ON " +CRLF
+	_cQry +="            D3C.D3_FILIAL			=				D31.D3_FILIAL " +CRLF
+	_cQry +="            AND D3C.D3_COD				=				D31.D3_COD " +CRLF
+	_cQry +="            AND D3C.D3_TM				=				'001' " +CRLF
+	_cQry +="            AND D3C.D3_EMISSAO			=				D3.D3_EMISSAO " +CRLF
+	_cQry +=" INNER JOIN " + RetSqlName("SB1") + " B11 ON " +CRLF
+	_cQry +="            B11.B1_COD				=				D3.D3_COD " +CRLF
+	_cQry +="        AND B11.D_E_L_E_T_			=				' ' " +CRLF
+	_cQry +=" INNER JOIN " + RetSqlName("SB1") + " B1 ON " +CRLF
+	_cQry +="            D31.D3_COD				=				B1.B1_COD " +CRLF
+	_cQry +="      WHERE D3.D3_FILIAL		    = '" + FWxFilial("SD3") + "' " +CRLF
+	_cQry +="        AND D3.D3_LOTECTL	BETWEEN '" + MV_PAR03 + "' and '" + MV_PAR04 + "'  " +CRLF
+	_cQry +="        AND D3.D3_EMISSAO	BETWEEN	'" + DToS(MV_PAR01) + "' and '" + DToS(MV_PAR02) + "'" + CRLF 
+	_cQry +="        AND D3.D3_CF					=				'PR0' " +CRLF
+	_cQry +="        AND D3.D3_ESTORNO			<>				'S' " +CRLF
+	_cQry +="        AND D3.D_E_L_E_T_			=				' ' " +CRLF
+	_cQry +="        AND D3.D3_LOTECTL			<>				' ' " +CRLF
+	_cQry +="   GROUP BY D31.D3_FILIAL, D3.D3_COD, B11.B1_DESC, D3.D3_LOTECTL, D3.D3_QUANT, D3.D3_TM, D31.D3_COD, B1.B1_DESC, D31.D3_EMISSAO, D31.D3_QUANT,D31.D3_CUSTO1	 " +CRLF
+	_cQry +=" ) " +CRLF
+	_cQry +=" , GERAL AS ( " +CRLF
+	_cQry +="    select PRP.Z06_LOTE " +CRLF
+	_cQry +="         , PRP.Z05_DATA " +CRLF
+	_cQry +="         , PRP.Z05_CURRAL " +CRLF
+	_cQry +="         , PRP.Z05_PESOCO " +CRLF
+	_cQry +="         , PRP.Z05_CABECA " +CRLF
+	_cQry +="         , PRP.Z0O_GMD " +CRLF
+	_cQry +="         , PRP.Z05_DIASDI " +CRLF
+	_cQry +="         , PRP.Z05_DIETA " +CRLF
+	_cQry +="         , PRP.Z05_NROTRA " +CRLF
+	_cQry +="         , PRP.PREVISTO " +CRLF
+	_cQry +="         , PRP.REALIZADO " +CRLF
+	_cQry +="         , PRP.PERC_MS " +CRLF
+	_cQry +="         , PRP.CMN_PREVISTO " +CRLF
+	_cQry +="         , PRP.CMN_REALIZADO " +CRLF
+	_cQry +="         , PRP.Z05_KGMSDI " +CRLF
+	_cQry +="         , PRP.CMS_REALIZADO " +CRLF
+	_cQry +="         , Z0I_NOTTAR " +CRLF
+	_cQry +="         , Z0I_NOTMAN " +CRLF
+	_cQry +="         , SUM(D3_QUANT) QTD_RACAO " +CRLF
+	_cQry +="         , SUM(TOTAL_P_PR) CUSTO_TOTA " +CRLF
+	_cQry +="         , SUM(TOTAL_P_PR) / PRP.Z05_CABECA CUSTO_ANIM " +CRLF
+	_cQry +="      from PRINCIPAL PRP " +CRLF
+	_cQry +=" left join ESTOQUE E ON " +CRLF
+	_cQry +="           E.D3_FILIAL = PRP.Z05_FILIAL AND PRP.Z06_LOTE = E.D3_LOTECTL AND PRP.Z05_DATA = D3_EMISSAO " +CRLF
+	_cQry +=" left join Z0I010 Z0I ON Z0I_FILIAL = PRP.Z05_FILIAL AND Z0I.Z0I_DATA = PRP.Z05_DATA AND  Z0I.Z0I_LOTE = PRP.Z06_LOTE AND Z0I.D_E_L_E_T_ = ' '  " +CRLF
+	_cQry +="     WHERE Z05_DATA < (  SELECT MAX(Z0W.Z0W_DATA) Z0W_DATA " +CRLF
+	_cQry +=" 				FROM " + RetSqlName("Z0W") + " Z0W " +CRLF
+	_cQry +=" 				JOIN " + RetSqlName("SD2") + " ON  " +CRLF
+	_cQry +=" 				     D2_FILIAL = '" + FWxFilial("SD2") + "' " +CRLF
+	_cQry +=" 				 AND D2_LOTECTL = Z0W_LOTE " +CRLF
+	_cQry +=" 			   WHERE Z05_FILIAL= Z0W_FILIAL " +CRLF
+	_cQry +=" 				     AND Z0W_LOTE = Z06_LOTE " +CRLF
+	_cQry +=" 				     AND Z0W.D_E_L_E_T_ = ' ' ) " +CRLF
+	_cQry +=" GROUP BY PRP.Z05_FILIAL,PRP.Z06_LOTE, PRP.Z05_DATA, PRP.Z05_CURRAL, PRP.Z05_PESOCO, PRP.Z05_CABECA, PRP.Z0O_GMD, PRP.Z05_DIASDI " +CRLF
+	_cQry +=" , PRP.Z05_DIETA, PRP.Z05_NROTRA, PRP.CMS_REALIZADO, PRP.PREVISTO, PRP.REALIZADO, PRP.Z05_KGMSDI--, PRP.Z05_KGMNDI " +CRLF
+	_cQry +=" , PRP.PERC_MS, PRP.CMN_PREVISTO, PRP.CMN_REALIZADO, PRP.CMS_REALIZADO, Z0I_NOTTAR, Z0I_NOTMAN " +CRLF
+	_cQry +="  " +CRLF
+	_cQry +=" ) " +CRLF
+	_cQry +=" , ALIMENTACAO AS ( " +CRLF
+	_cQry +="       SELECT Z06_LOTE " +CRLF
+	_cQry +=" 	       , SUM(Z05_CABECA) Z05_CABECA " +CRLF
+	_cQry +=" 		   , SUM(REALIZADO) REALIZADO " +CRLF
+	_cQry +=" 		   , SUM(REALIZADO*(PERC_MS/100)) MAT_SECA " +CRLF
+	_cQry +="  " +CRLF
+	_cQry +=" 		   , ROUND(SUM(REALIZADO*(PERC_MS/100)) / SUM(Z05_CABECA),2) CMS " +CRLF
+	_cQry +=" 	    FROM GERAL " +CRLF
+	_cQry +="     GROUP BY Z06_LOTE " +CRLF
+	_cQry +=" 	) " +CRLF
+	_cQry +="  " +CRLF
+	_cQry +=" , FATURAMENTO AS ( " +CRLF
+	_cQry +="       SELECT SD2.D2_FILIAL,  SD2.D2_LOTECTL, SD2.D2_EMISSAO, SUM(SD2.D2_QUANT) D2_QUANT " +CRLF
+	_cQry +="         FROM " + RetSqlName("SD2") + " SD2  " +CRLF
+	_cQry +=" 	   WHERE SD2.D2_FILIAL = '" + FWxFilial("SD2") + "'  " +CRLF
+	_cQry +=" 	     AND SD2.D2_LOTECTL = '" + MV_PAR03 + "' " +CRLF
+	//_cQry +=" 		 AND SD2.D2_EMISSAO = '20201228'  " +CRLF
+	_cQry +=" 		 AND SD2.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +=" 		 AND SD2.D2_CLIENTE = '000001' " +CRLF
+	_cQry +=" 		 AND D2_XCODABT NOT IN (SELECT ZAB_CODIGO FROM ZAB010 ZAB WHERE ZAB_FILIAL = '" + FWxFilial("SB8") + "' AND ZAB_BAIA = '" + MV_PAR03 + "' AND ZAB.D_E_L_E_T_ = ' ' AND (ZAB_EMERGE NOT IN ('0','2') OR ZAB_OUTMOV NOT IN ('0','2'))) " +CRLF
+	_cQry +=" 	GROUP BY SD2.D2_FILIAL,  SD2.D2_LOTECTL, SD2.D2_EMISSAO " +CRLF
+	_cQry +=" 		 ) " +CRLF
+	_cQry +=" --SELECT * FROM FATURAMENTO " +CRLF
+	_cQry +="  , APARTACAO AS ( " +CRLF
+	_cQry +="       SELECT Z0F.Z0F_FILIAL, Z0F.Z0F_LOTE, MIN(Z0F.Z0F_DTPES) Z0F_DTPES, COUNT(Z0F.Z0F_SEQ) QTD, ROUND(AVG(Z0F.Z0F_PESO),2) Z0F_PESO " +CRLF
+	_cQry +=" 		FROM " + RetSqlName("Z0F") + " Z0F " +CRLF
+	_cQry +=" 		WHERE Z0F.Z0F_FILIAL = '" + FWxFilial("Z0F") + "' " +CRLF
+	_cQry +=" 		  AND Z0F.Z0F_LOTE = '" + MV_PAR03 + "' " +CRLF
+	_cQry +=" 		  AND Z0F.D_E_L_E_T_ = ' ' " +CRLF
+	_cQry +=" 	 GROUP BY Z0F.Z0F_FILIAL, Z0F.Z0F_LOTE " +CRLF
+	_cQry +=" 		  ) " +CRLF
+	_cQry +="  , PLANEJAMENTO AS ( " +CRLF
+	_cQry +="       SELECT Z05.Z05_FILIAL, Z05.Z05_LOTE, SUM(Z05.Z05_CABECA) Z05_CABECAS " +CRLF
+	_cQry +=" 	    FROM " + RetSqlName("Z05") + " Z05 " +CRLF
+	_cQry +=" 		WHERE Z05.Z05_FILIAL = '" + FWxFilial("Z05") + "' " +CRLF
+	_cQry +=" 		  AND Z05.Z05_LOTE = '" + MV_PAR03 + "' " +CRLF
+	_cQry +=" 		  AND Z05.D_E_L_E_T_ = ' '  " +CRLF
+	_cQry +=" 		  AND Z05_KGMNDI > 0 " +CRLF
+	_cQry +=" 	 GROUP BY Z05.Z05_FILIAL, Z05.Z05_LOTE " +CRLF
+	_cQry +="  ) " +CRLF
+	_cQry +="  " +CRLF
+	_cQry +="  , DIAS AS ( " +CRLF
+	_cQry +="       SELECT Z0W.Z0W_FILIAL, Z0W.Z0W_LOTE  " +CRLF
+	_cQry +=" 		   , CASE WHEN MIN(Z0W.Z0W_DATA) = ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL)) THEN DATEADD(DAY,1,MIN(Z0W.Z0W_DATA)) " +CRLF
+	_cQry +=" 		     WHEN MIN(Z0W.Z0W_DATA) > ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL )) THEN ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO)+1 DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL )) " +CRLF
+	_cQry +=" 			      ELSE MIN(Z0W.Z0W_DATA) END AS DATA_INI " +CRLF
+	_cQry +=" 		   , CASE WHEN MAX(Z0W.Z0W_DATA) = F.D2_EMISSAO  THEN MAX(Z0W.Z0W_DATA) " +CRLF
+	_cQry +=" 			      ELSE DATEADD(DAY,-1,MAX(Z0W.Z0W_DATA)) END AS DATA_FIM " +CRLF
+	_cQry +=" 		   , DATEDIFF(DAY, " +CRLF
+	_cQry +=" 					  CASE WHEN MIN(Z0W.Z0W_DATA) = ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL)) THEN DATEADD(DAY,1,MIN(Z0W.Z0W_DATA))" +CRLF
+	_cQry +=" 		                   WHEN MIN(Z0W.Z0W_DATA) > ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO) DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' 'GROUP BY B8_LOTECTL )) THEN ISNULL(A.Z0F_DTPES,(SELECT MIN(B8_XDATACO)+1 DIAS FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ' GROUP BY B8_LOTECTL )) " +CRLF
+	_cQry +=" 			               ELSE MIN(Z0W.Z0W_DATA)  " +CRLF
+	_cQry +=" 					  END , " +CRLF
+	_cQry +=" 					  CASE WHEN MAX(Z0W.Z0W_DATA) = F.D2_EMISSAO  THEN MAX(Z0W.Z0W_DATA) " +CRLF
+	_cQry +=" 			               ELSE DATEADD(DAY,-1,MAX(Z0W.Z0W_DATA)) " +CRLF
+	_cQry +=" 					  END ) DIAS_COCHO " +CRLF
+	_cQry +=" 		   , SUM(CASE WHEN Z0W_PESDIG = 0 THEN Z0W_QTDREA ELSE Z0W_PESDIG END ) CONSUMO " +CRLF
+	_cQry +=" 	    FROM " + RetSqlName("Z0W") + " Z0W  " +CRLF
+	_cQry +="  LEFT JOIN APARTACAO A ON  " +CRLF
+	_cQry +=" 			 A.Z0F_FILIAL = Z0W_FILIAL " +CRLF
+	_cQry +=" 		 AND A.Z0F_LOTE = Z0W_LOTE " +CRLF
+	_cQry +=" 		JOIN FATURAMENTO F ON " +CRLF
+	_cQry +=" 		     F.D2_FILIAL = Z0W.Z0W_FILIAL " +CRLF
+	_cQry +=" 		 AND F.D2_LOTECTL = Z0W.Z0W_LOTE " +CRLF
+	_cQry +=" 	   WHERE Z0W.Z0W_FILIAL = '" + FWxFilial("Z0W") + "' " +CRLF
+	_cQry +=" 	     AND Z0W.Z0W_LOTE = '" + MV_PAR03 + "' " +CRLF
+	_cQry +=" 		 AND Z0W.D_E_L_E_T_ = ' '  " +CRLF
+	_cQry +=" 		 --AND Z0W.Z0W_DATA <> (SELECT MIN(Z0F_DTPES) Z0F_DTPES FROM " + RetSqlName("Z0F") + " Z0F WHERE Z0F_FILIAL = '" + FWxFilial("Z0F") + "' AND Z0F_LOTE = '" + MV_PAR03 + "' AND Z0F.D_E_L_E_T_ = ' ' ) " +CRLF
+	_cQry +=" 		 GROUP BY Z0W.Z0W_FILIAL, Z0W.Z0W_LOTE, Z0F_DTPES, D2_EMISSAO " +CRLF
+	_cQry +=" 		 ) " +CRLF
+	_cQry +=" --		 SELECT * FROM TRATO " +CRLF
+	_cQry +="  " +CRLF
+	_cQry +="  " +CRLF
+	_cQry +="  " +CRLF
+	_cQry +="  , EMBARQUE AS ( " +CRLF
+	_cQry +="      SELECT ZPB.ZPB_FILIAL, ZPB.ZPB_DATA, ZPB.ZPB_BAIA, SUM(ZPB.ZPB_PESOL) ZPB_PESOL " +CRLF
+	_cQry +=" 	   FROM ZPB010 ZPB " +CRLF
+	_cQry +=" 	   JOIN FATURAMENTO F ON " +CRLF
+	_cQry +=" 	        ZPB.ZPB_FILIAL = F.D2_FILIAL " +CRLF
+	_cQry +=" 	    AND ZPB.ZPB_DATA = F.D2_EMISSAO " +CRLF
+	_cQry +=" 		AND ZPB.ZPB_BAIA = F.D2_LOTECTL " +CRLF
+	_cQry +=" 	  WHERE ZPB.ZPB_FILIAL = '" + FWxFilial("SB8") + "' " +CRLF
+	_cQry +=" 	    AND ZPB.ZPB_BAIA = '" + MV_PAR03 + "' " +CRLF
+	_cQry +=" 		AND ZPB.D_E_L_E_T_ = ' '  " +CRLF
+	_cQry +="    GROUP BY ZPB_FILIAL, ZPB_DATA, ZPB_BAIA " +CRLF
+	_cQry +=" ) " +CRLF
+	_cQry +="       SELECT DISTINCT F.D2_LOTECTL " +CRLF
+	_cQry +=" 	       , SUM(F.D2_QUANT) D2_QUANT  " +CRLF
+	_cQry +=" 		   , SUM(E.ZPB_PESOL) PESO_TOTAL " +CRLF
+	_cQry +=" 		   , ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ')) Z0F_PESO" +CRLF
+	_cQry +=" 		   , ROUND(SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT),2) PESO_FINAL " +CRLF
+	_cQry +=" 		   , D.DATA_INI " +CRLF
+	_cQry +=" 		   , D.DATA_FIM " +CRLF
+	_cQry +=" 		   , D.DIAS_COCHO " +CRLF
+	_cQry +=" 		   , ROUND(((SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT))-ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ')))/D.DIAS_COCHO,3) AS GMD " +CRLF
+	_cQry +=" 		   , AL.CMS " +CRLF
+	_cQry +=" 		   , ROUND(AL.CMS/((ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' '))+SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT))/2)*100,2) CMSPV " +CRLF
+	_cQry +=" 		   , ROUND(AL.CMS/ROUND(((SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT))-ISNULL(A.Z0F_PESO, (SELECT AVG(B8_XPESOCO) FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ')))/D.DIAS_COCHO,3),2) CA " +CRLF
+	_cQry +=" 		   , AL.Z05_CABECA " +CRLF
+	_cQry +=" 		   , ROUND(AL.REALIZADO / D.DIAS_COCHO,3) CONS_MN " +CRLF
+	_cQry +=" 		   , AL.MAT_SECA " +CRLF
+	_cQry +=" 		   , ROUND(AL.MAT_SECA / D.DIAS_COCHO,2) KGMSDI " +CRLF
+	_cQry +=" 		   , AL.REALIZADO " +CRLF
+	_cQry +="         FROM FATURAMENTO F " +CRLF
+	_cQry +="    LEFT JOIN APARTACAO A ON  " +CRLF
+	_cQry +="              F.D2_FILIAL = A.Z0F_FILIAL " +CRLF
+	_cQry +=" 	     AND F.D2_LOTECTL = A.Z0F_LOTE " +CRLF
+	_cQry +="    LEFT JOIN EMBARQUE E ON  " +CRLF
+	_cQry +="              E.ZPB_FILIAL = F.D2_FILIAL " +CRLF
+	_cQry +=" 		 AND E.ZPB_BAIA = F.D2_LOTECTL " +CRLF
+	_cQry +=" 		 AND E.ZPB_DATA = F.D2_EMISSAO " +CRLF
+	_cQry +="    LEFT JOIN DIAS D ON " +CRLF
+	_cQry +=" 		     D.Z0W_FILIAL = F.D2_FILIAL " +CRLF
+	_cQry +=" 		 AND D.Z0W_LOTE = F.D2_LOTECTL " +CRLF
+	_cQry +="    LEFT JOIN ALIMENTACAO AL ON " +CRLF
+	_cQry +=" 			 AL.Z06_LOTE = F.D2_LOTECTL " +CRLF
+	_cQry +="     GROUP BY D2_LOTECTL, A.Z0F_PESO , D.DATA_INI, D.DATA_FIM, D.DIAS_COCHO, D.CONSUMO, AL.CMS, AL.MAT_SECA, AL.REALIZADO, AL.Z05_CABECA " +CRLF
 
-
-
-
-/*_cQry := "WITH FATURAMENTO AS (" +CRLF
-_cQry := "      SELECT SD2.D2_FILIAL,  SD2.D2_LOTECTL, SD2.D2_EMISSAO, SUM(SD2.D2_QUANT) D2_QUANT" +CRLF
-_cQry := "        FROM " + RetSqlName("SD2") + " SD2 " +CRLF
-_cQry := "	   WHERE SD2.D2_FILIAL = '" + FWxFilial("SB8") + "' " +CRLF
-_cQry := "	     AND SD2.D2_LOTECTL = '" + MV_PAR03 + "'" +CRLF
-_cQry := "		 AND SD2.D2_EMISSAO = '20201228' " +CRLF
-_cQry := "		 AND SD2.D_E_L_E_T_ = ' '" +CRLF
-_cQry := "		 AND SD2.D2_CLIENTE = '000001'" +CRLF
-_cQry := "		 AND D2_XCODABT+D2_XDTABAT NOT IN (SELECT ZAB_CODIGO+ZAB_DTABAT FROM ZAB010 ZAB WHERE ZAB_FILIAL = '" + FWxFilial("SB8") + "' AND ZAB_BAIA = '" + MV_PAR03 + "' AND ZAB.D_E_L_E_T_ = ' ' AND (ZAB_EMERGE <> '1' OR ZAB_OUTMOV <> '1'))" +CRLF
-_cQry := "	GROUP BY SD2.D2_FILIAL,  SD2.D2_LOTECTL, SD2.D2_EMISSAO" +CRLF
-_cQry := "		 )" +CRLF
-_cQry := "--SELECT * FROM FATURAMENTO" +CRLF
-_cQry := " , APARTACAO AS (" +CRLF
-_cQry := "      SELECT Z0F.Z0F_FILIAL, Z0F.Z0F_LOTE, Z0F.Z0F_DTPES, COUNT(Z0F.Z0F_SEQ) QTD, ROUND(AVG(Z0F.Z0F_PESO),2) Z0F_PESO" +CRLF
-_cQry := "		FROM " + RetSqlName("Z0F") + " Z0F" +CRLF
-_cQry := "		WHERE Z0F.Z0F_FILIAL = '" + FWxFilial("SB8") + "'" +CRLF
-_cQry := "		  AND Z0F.Z0F_LOTE = '" + MV_PAR03 + "'" +CRLF
-_cQry := "		  AND Z0F.D_E_L_E_T_ = ' '" +CRLF
-_cQry := "	 GROUP BY Z0F.Z0F_FILIAL, Z0F.Z0F_LOTE, Z0F.Z0F_DTPES" +CRLF
-_cQry := "		  )" +CRLF
-_cQry := " , PLANEJAMENTO AS (" +CRLF
-_cQry := "      SELECT Z05.Z05_FILIAL, Z05.Z05_LOTE, SUM(Z05.Z05_CABECA) Z05_CABECAS" +CRLF
-_cQry := "	    FROM " + RetSqlName("Z05") + " Z05" +CRLF
-_cQry := "		WHERE Z05.Z05_FILIAL = '" + FWxFilial("SB8") + "'" +CRLF
-_cQry := "		  AND Z05.Z05_LOTE = '" + MV_PAR03 + "'" +CRLF
-_cQry := "		  AND Z05.D_E_L_E_T_ = ' ' " +CRLF
-_cQry := "		  AND Z05_KGMNDI > 0" +CRLF
-_cQry := "	 GROUP BY Z05.Z05_FILIAL, Z05.Z05_LOTE" +CRLF
-_cQry := " )" +CRLF
-_cQry := "" +CRLF
-_cQry := " , TRATO AS (" +CRLF
-_cQry := "      SELECT Z0W.Z0W_FILIAL, Z0W.Z0W_LOTE " +CRLF
-_cQry := "		   , CASE WHEN MIN(Z0W.Z0W_DATA) = A.Z0F_DTPES THEN DATEADD(DAY,1,MIN(Z0W.Z0W_DATA))" +CRLF
-_cQry := "			      ELSE MIN(Z0W.Z0W_DATA) END AS DATA_INI" +CRLF
-_cQry := "		   , CASE WHEN MAX(Z0W.Z0W_DATA) = F.D2_EMISSAO  THEN MAX(Z0W.Z0W_DATA)" +CRLF
-_cQry := "			      ELSE DATEADD(DAY,-1,MAX(Z0W.Z0W_DATA)) END AS DATA_FIM" +CRLF
-_cQry := "		   , DATEDIFF(DAY," +CRLF
-_cQry := "					  CASE WHEN MIN(Z0W.Z0W_DATA) = A.Z0F_DTPES THEN DATEADD(DAY,1,MIN(Z0W.Z0W_DATA))" +CRLF
-_cQry := "			               ELSE MIN(Z0W.Z0W_DATA) " +CRLF
-_cQry := "					  END ," +CRLF
-_cQry := "					  CASE WHEN MAX(Z0W.Z0W_DATA) = F.D2_EMISSAO  THEN MAX(Z0W.Z0W_DATA)" +CRLF
-_cQry := "			               ELSE DATEADD(DAY,-1,MAX(Z0W.Z0W_DATA))" +CRLF
-_cQry := "					  END ) DIAS_COCHO" +CRLF
-_cQry := "		   , SUM(CASE WHEN Z0W_PESDIG = 0 THEN Z0W_QTDREA ELSE Z0W_PESDIG END ) CONSUMO" +CRLF
-_cQry := "	    FROM " + RetSqlName("Z0W") + " Z0W " +CRLF
-_cQry := "	    JOIN APARTACAO A ON " +CRLF
-_cQry := "			 A.Z0F_FILIAL = Z0W_FILIAL" +CRLF
-_cQry := "		 AND A.Z0F_LOTE = Z0W_LOTE" +CRLF
-_cQry := "		JOIN FATURAMENTO F ON" +CRLF
-_cQry := "		     F.D2_FILIAL = Z0W.Z0W_FILIAL" +CRLF
-_cQry := "		 AND F.D2_LOTECTL = Z0W.Z0W_LOTE" +CRLF
-_cQry := "	   WHERE Z0W.Z0W_FILIAL = '" + FWxFilial("SB8") + "'" +CRLF
-_cQry := "	     AND Z0W.Z0W_LOTE = '" + MV_PAR03 + "'" +CRLF
-_cQry := "		 AND Z0W.D_E_L_E_T_ = ' ' " +CRLF
-_cQry := "		 --AND Z0W.Z0W_DATA <> (SELECT MIN(Z0F_DTPES) Z0F_DTPES FROM " + RetSqlName("Z0F") + " Z0F WHERE Z0F_FILIAL = '" + FWxFilial("SB8") + "' AND Z0F_LOTE = '" + MV_PAR03 + "' AND Z0F.D_E_L_E_T_ = ' ' )" +CRLF
-_cQry := "		 GROUP BY Z0W.Z0W_FILIAL, Z0W.Z0W_LOTE, Z0F_DTPES, D2_EMISSAO" +CRLF
-_cQry := "		 )" +CRLF
-_cQry := "--		 SELECT * FROM TRATO" +CRLF
-_cQry := "" +CRLF
-_cQry := "" +CRLF
-_cQry := "" +CRLF
-_cQry := " , EMBARQUE AS (" +CRLF
-_cQry := "     SELECT ZPB.ZPB_FILIAL, ZPB.ZPB_DATA, ZPB.ZPB_BAIA, SUM(ZPB.ZPB_PESOL) ZPB_PESOL" +CRLF
-_cQry := "	   FROM ZPB010 ZPB" +CRLF
-_cQry := "	   JOIN FATURAMENTO F ON" +CRLF
-_cQry := "	        ZPB.ZPB_FILIAL = F.D2_FILIAL" +CRLF
-_cQry := "	    AND ZPB.ZPB_DATA = F.D2_EMISSAO" +CRLF
-_cQry := "		AND ZPB.ZPB_BAIA = F.D2_LOTECTL" +CRLF
-_cQry := "	  WHERE ZPB.ZPB_FILIAL = '" + FWxFilial("SB8") + "'" +CRLF
-_cQry := "	    AND ZPB.ZPB_BAIA = '" + MV_PAR03 + "'" +CRLF
-_cQry := "		AND ZPB.D_E_L_E_T_ = ' ' " +CRLF
-_cQry := "   GROUP BY ZPB_FILIAL, ZPB_DATA, ZPB_BAIA" +CRLF
-_cQry := ")" +CRLF
-_cQry := "      SELECT DISTINCT F.D2_LOTECTL" +CRLF
-_cQry := "	       , SUM(F.D2_QUANT) D2_QUANT " +CRLF
-_cQry := "		   , SUM(E.ZPB_PESOL) PESO_TOTAL" +CRLF
-_cQry := "		   , ISNULL(A.Z0F_PESO, (SELECT DISTINCT B8_XPESOCO FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' '))" +CRLF
-_cQry := "		   , ROUND(SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT),2) PESO_FINAL" +CRLF
-_cQry := "		   , T.DATA_INI" +CRLF
-_cQry := "		   , T.DATA_FIM" +CRLF
-_cQry := "		   , T.DIAS_COCHO" +CRLF
-_cQry := "		   , ROUND(T.CONSUMO / T.DIAS_COCHO,3) CONS_MN" +CRLF
-_cQry := "		   , ROUND(((SUM(E.ZPB_PESOL)/SUM(F.D2_QUANT))-ISNULL(A.Z0F_PESO, (SELECT DISTINCT B8_XPESOCO FROM " + RetSqlName("SB8") + " WHERE B8_FILIAL = '" + FWxFilial("SB8") + "' AND B8_LOTECTL = '" + MV_PAR03 + "' AND D_E_L_E_T_ = ' ')))/T.DIAS_COCHO,3) AS GMD" +CRLF
-_cQry := "        FROM FATURAMENTO F" +CRLF
-_cQry := "   LEFT JOIN APARTACAO A ON " +CRLF
-_cQry := "             F.D2_FILIAL = A.Z0F_FILIAL" +CRLF
-_cQry := "	     AND F.D2_LOTECTL = A.Z0F_LOTE" +CRLF
-_cQry := "   LEFT JOIN EMBARQUE E ON " +CRLF
-_cQry := "             E.ZPB_FILIAL = F.D2_FILIAL" +CRLF
-_cQry := "		 AND E.ZPB_BAIA = F.D2_LOTECTL" +CRLF
-_cQry := "		 AND E.ZPB_DATA = F.D2_EMISSAO" +CRLF
-_cQry := "   LEFT JOIN TRATO T ON" +CRLF
-_cQry := "		     T.Z0W_FILIAL = F.D2_FILIAL" +CRLF
-_cQry := "		 AND T.Z0W_LOTE = F.D2_LOTECTL" +CRLF
-_cQry := "    GROUP BY D2_LOTECTL, A.Z0F_PESO,  T.DATA_INI, T.DATA_FIM, T.DIAS_COCHO, T.CONSUMO" +CRLF
-		*/
 EndIf
 
 If lower(cUserName) $ 'bernardo,mbernardo,atoshio,admin,administrador'
@@ -1030,12 +950,12 @@ If !(_cAliasG)->(Eof())
 
 	// SOMA
 	cXML += U_prtCellXML( 'Row' )
-	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,'11'/*cIndex*/,/*cMergeAcross*/,'sSemDig', 'Number', "=SUBTOTAL(9,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
+	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,'13'/*cIndex*/,/*cMergeAcross*/,'sSemDig', 'Number', "=SUBTOTAL(9,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,    /*cIndex*/,/*cMergeAcross*/,'sSemDig', 'Number', "=SUBTOTAL(9,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,    /*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,    /*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,    /*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
-	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,'18'/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
+	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,'20'/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,    /*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,    /*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,    /*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', "=SUBTOTAL(1,R[2]C:R["+cValToChar(nRegistros+1)+"]C)" /*cFormula*/, )
@@ -1054,6 +974,8 @@ If !(_cAliasG)->(Eof())
 	// Titulo
 	cXML += U_prtCellXML( 'Row',,'33' )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Lote'				,,.T. )
+	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Sexo' 				,,.T. )
+	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Raça' 				,,.T. )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Data' 				,,.T. )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Curral' 				,,.T. )
 	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'s65', 'String', /*cFormula*/, 'Peso Vivo Inicial (PVI)',,.T. )
@@ -1093,6 +1015,8 @@ If !(_cAliasG)->(Eof())
 0
 		cXML += U_prtCellXML( 'Row' )
 	/*01*/	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto' , 'String', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->Z06_LOTE ),,.T. ) // LOTE
+	/*01*/	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto' , 'String', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->B1_X_SEXO ),,.T. ) // LOTE
+	/*01*/	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto' , 'String', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->B1_XRACA ),,.T. ) // LOTE
 	/*02*/	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sData', 'DateTime', /*cFormula*/, U_FrmtVlrExcel( SToD( (_cAliasG)->Z05_DATA ) ),,.T. ) // DATA
 	/*03*/	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sTexto' , 'String', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->Z05_CURRAL ),,.T. ) // CURRAL
 	/*04*/	cXML += U_prtCellXML( 'Cell'/*cTag*/,/*cName*/,/*cHeight*/,/*cIndex*/,/*cMergeAcross*/,'sComDig', 'Number', /*cFormula*/, U_FrmtVlrExcel( (_cAliasG)->Z05_PESOCO),,.T. ) // PVI

@@ -11,11 +11,12 @@ User Function ProcTrfMS(nOpcao, cDoc, cSerie, cFornece, cLoja)
     Local cSql     := ""
     Local cSqlCli  := ""
     Local aArea    := GetArea()
-    Local aAreaSM0 := SM0->(GerArea())
-    Local aAreaSA2 := SA2->(GerArea())
+    Local aAreaSM0 := SM0->(GetArea())
+    Local aAreaSA2 := SA2->(GetArea())
     Local aAreaSD1 := SD1->(GetArea())
     Local cFilNF   := ""
-
+	Local cAlias   := ""
+	Local cAlias1  := ""
 
     If cValToChar(nOpcao) $ "3/4"
 
@@ -52,7 +53,7 @@ User Function ProcTrfMS(nOpcao, cDoc, cSerie, cFornece, cLoja)
         cSqlCli += "FROM " + RetSqlName("SA1") + " SA1 "
         cSqlCli += "WHERE SA1.D_E_L_E_T_ <> '*' AND SA1.A1_FILIAL = '" + cFilNF + "' AND SA1.A1_CGC = '" + cCGCCli + "' "
 
-        TcQuery cSqlCli New Alias "TMPCLI"
+		cAlias := MpSysOpenQuery(cSqlCli)
 
         cSql := "SELECT * "
         cSql += "FROM " + RetSqlName("SD2") + " SD2 "
@@ -62,25 +63,25 @@ User Function ProcTrfMS(nOpcao, cDoc, cSerie, cFornece, cLoja)
         csql += "      SF4.F4_CODIGO = SC6.C6_TES AND SF4.F4_TRANFIL = '1'  AND F4_ESTOQUE = 'S' "
         cSql += "WHERE SD2.D_E_L_E_T_ <> '*' AND SD2.D2_FILIAL = '" + cFilNF + "' AND "
         cSql += "      SD2.D2_DOC = '" + cDoc + "' AND SD2.D2_SERIE = '" + cSerie + "' AND "
-        cSql += "      SD2.D2_CLIENTE = '" + TMPCLI->A1_COD + "' AND SD2.D2_LOJACLI = '" + TMPCLI->A1_LOJA + "' "
+        cSql += "      SD2.D2_CLIENTE = '" + (cAlias)->A1_COD + "' AND SD2.D2_LOJA = '" + (cAlias)->A1_LOJA + "' "
 
-        TcQuery cSql New Alias "TMP"
+		cAlias1 := MpSysOpenQuery(cSql)
 
-        While TMP->(Eof())
+        While (cAlias1)->(Eof())
 
-            If TMP->F4_ESTOQUE == "S"
+            If (cAlias1)->F4_ESTOQUE == "S"
 
-                SB1->(DbSeek(xFilial(1) + TMP->D2_COD))
+                SB1->(DbSeek(xFilial(1) + (cAlias1)->D2_COD))
 
-			    TransfSaldo(TMP->D2_COD, SD1->D1_LOCAL, SB1->B1_DESC, SB1->B1_UM, TMP->D2_LOTECTL, STOD(TMP->C6_DTVALID), TMP->C6_PRODANT, TMP->D2_QUANT)
+			    TransfSaldo((cAlias1)->D2_COD, SD1->D1_LOCAL, SB1->B1_DESC, SB1->B1_UM, (cAlias1)->D2_LOTECTL, STOD((cAlias1)->C6_DTVALID), (cAlias1)->C6_PRODANT, (cAlias1)->D2_QUANT)
                 
 		    EndIf
 
-            TMP->(DbSkip())
+            (cAlias1)->(DbSkip())
         End
 
-        TMPCLI->(DbCloseArea())
-        TMP->(DbCloseArea())
+        (cAlias1)->(DbCloseArea())
+        (cAlias)->(DbCloseArea())
 
     EndIf 
 

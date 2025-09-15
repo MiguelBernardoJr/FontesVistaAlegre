@@ -1030,6 +1030,8 @@ User Function SelLin(cChvCnf, cChvLin)
 			EndIf
 			
 			If (lCnt)
+				cLote := aCurLin[nIndCnf][nIndLin][nCntCur + 1]:aControls[5]
+
 				If ((aCurLin[nIndCnf][nIndLin][nCntCur]:nClrPane != nCrRot)) //aCorTl[4]
 					aCurLin[nIndCnf][nIndLin][nCntCur]:nClrPane := nCrRot
 					aCurLin[nIndCnf][nIndLin][nCntCur]:SetCss("background-color: RGB("+cCrRot+");")
@@ -1052,6 +1054,7 @@ User Function SelLin(cChvCnf, cChvLin)
 						
 				RecLock("Z0T", .F.)
 					Z0T->Z0T_ROTA := cRot
+					Z0T->Z0T_LOTE := cLote
 				Z0T->(MSUnlock())
 	
 				If (!Empty(cRotSub))

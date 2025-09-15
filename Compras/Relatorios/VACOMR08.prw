@@ -126,7 +126,7 @@ Local cSQLInicio 	:= ""
 If cTipo == "VACOMM08"
 
 	_cQry := "    " + CRLF
-	_cQry += "  SELECT D1_FILIAL, D1_EMISSAO, D1_DTDIGIT, F1_X_DTINC, D1_DOC+'-'+D1_SERIE NOTA, A2_COD+'-'+A2_LOJA+'- '+RTRIM(A2_NOME) NOME,   " + CRLF
+	_cQry += "  SELECT D1_FILIAL, D1_EMISSAO,F1_HORA, D1_DTDIGIT, F1_X_DTINC, D1_DOC+'-'+D1_SERIE NOTA, A2_COD+'-'+A2_LOJA+'- '+RTRIM(A2_NOME) NOME,   " + CRLF
 	_cQry += "  	   RTRIM(D1_COD)+'-'+B1_DESC PRODUTO, D1_GRUPO, D1_QUANT, D1_LOCAL, D1_VUNIT, D1_TOTAL, D1_TES+'-'+F4_TEXTO TES, CASE WHEN F4_ESTOQUE = 'S' THEN 'SIM' WHEN F4_ESTOQUE = 'N' THEN 'NAO' END AS F4_ESTOQUE, D1_CC, D1_ITEMCTA, " +CRLF
 	_cQry += "    	   D1_CF, F1_ESPECIE, F4_SITTRIB, D1_PICM, D1_BASEICM, D1_VALICM, D1_VALPIS, D1_VALCOF, F4_CSTCOF, F4_CSTPIS" + CRLF
 	_cQry += "    FROM SD1010 D1  " + CRLF
@@ -137,6 +137,9 @@ If cTipo == "VACOMM08"
 	_cQry += "     AND F1_FORNECE = D1_FORNECE  " + CRLF
 	_cQry += "     AND F1_LOJA = D1_LOJA  " + CRLF
 	_cQry += "     AND F1_EMISSAO = D1_EMISSAO   " + CRLF
+	IF MV_PAR01 == MV_PAR02 .AND. !Empty(MV_PAR03) .and. !Empty(MV_PAR04)
+		_cQry += " AND F1_HORA BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"' "
+	endif
 	_cQry += "     AND F1.D_E_L_E_T_ = ' '   " + CRLF
 	_cQry += "    JOIN SB1010 B1 ON  " + CRLF
 	_cQry += "  	   B1_COD = D1_COD   " + CRLF
@@ -152,7 +155,7 @@ If cTipo == "VACOMM08"
 	_cQry += "     WHERE F1_X_DTINC BETWEEN '"+DtoS(MV_PAR01)+"' AND '"+DtoS(MV_PAR02)+"' AND D1.D_E_L_E_T_ = ' '  " + CRLF
 	_cQry += "       AND D1_TIPO <> 'D'   " + CRLF
 	_cQry += "  UNION ALL   " + CRLF
-	_cQry += "  SELECT D1_FILIAL, D1_EMISSAO, D1_DTDIGIT, F1_X_DTINC, D1_DOC+'-'+D1_SERIE NOTA, A1_COD+'-'+A1_LOJA+'- '+RTRIM(A1_NOME) NOME,   " + CRLF
+	_cQry += "  SELECT D1_FILIAL, D1_EMISSAO,F1_HORA, D1_DTDIGIT, F1_X_DTINC, D1_DOC+'-'+D1_SERIE NOTA, A1_COD+'-'+A1_LOJA+'- '+RTRIM(A1_NOME) NOME,   " + CRLF
 	_cQry += "  	   RTRIM(D1_COD)+'-'+B1_DESC PRODUTO, D1_GRUPO, D1_QUANT, D1_LOCAL, D1_VUNIT, D1_TOTAL, D1_TES+'-'+F4_TEXTO TES, CASE WHEN F4_ESTOQUE = 'S' THEN 'SIM' WHEN F4_ESTOQUE = 'N' THEN 'NAO' END AS F4_ESTOQUE, D1_CC, D1_ITEMCTA, " +CRLF
 	_cQry += "    	   D1_CF, F1_ESPECIE, F4_SITTRIB, D1_PICM, D1_BASEICM, D1_VALICM, D1_VALPIS, D1_VALCOF, F4_CSTCOF, F4_CSTPIS" + CRLF
 	_cQry += "    FROM SD1010 D1  " + CRLF
@@ -163,6 +166,9 @@ If cTipo == "VACOMM08"
 	_cQry += "     AND F1_FORNECE = D1_FORNECE  " + CRLF
 	_cQry += "     AND F1_LOJA = D1_LOJA  " + CRLF
 	_cQry += "     AND F1_EMISSAO = D1_EMISSAO   " + CRLF
+	IF MV_PAR01 == MV_PAR02 .AND. !Empty(MV_PAR03) .and. !Empty(MV_PAR04)
+		_cQry += " AND F1_HORA BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"' "
+	endif
 	_cQry += "     AND F1.D_E_L_E_T_ = ' '   " + CRLF
 	_cQry += "    JOIN SB1010 B1 ON  " + CRLF
 	_cQry += "  	   B1_COD = D1_COD   " + CRLF
@@ -222,6 +228,7 @@ If !(_cAliasG)->(Eof())
 	cXML += '  <Row ss:AutoFitHeight="0" ss:Height="36">' + CRLF
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Filial</Data></Cell>' + CRLF
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Emissão</Data></Cell>' + CRLF
+	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Hora Lançamento</Data></Cell>' + CRLF
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Data Base Protheus</Data></Cell>' + CRLF
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Data Real Lançamento</Data></Cell>' + CRLF
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Nota Fiscal/Serie</Data></Cell>' + CRLF
@@ -236,7 +243,7 @@ If !(_cAliasG)->(Eof())
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Estoque</Data></Cell>' + CRLF
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">C. Custo</Data></Cell>' + CRLF
 	cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Item Contabil</Data></Cell>' + CRLF
-	iF MV_PAR03 == 2
+	iF MV_PAR05 == 2
 		cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">CFOP</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">Especie</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="s65"><Data ss:Type="String">CST ICMS</Data></Cell>' + CRLF
@@ -254,6 +261,7 @@ If !(_cAliasG)->(Eof())
 		cXML += '<Row>' + CRLF
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->D1_FILIAL ) + '</Data></Cell>' + CRLF	
 		cXML += '  <Cell ss:StyleID="sData"><Data ss:Type="DateTime">' + U_FrmtVlrExcel(  (_cAliasG)->D1_EMISSAO )+  '</Data></Cell>' + CRLF	
+		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">' + U_FrmtVlrExcel(  (_cAliasG)->F1_HORA )+  '</Data></Cell>' + CRLF	
 		cXML += '  <Cell ss:StyleID="sData"><Data ss:Type="DateTime">' + U_FrmtVlrExcel(  (_cAliasG)->D1_DTDIGIT )+  '</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="sData"><Data ss:Type="DateTime">' + U_FrmtVlrExcel(  (_cAliasG)->F1_X_DTINC )+  '</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->NOTA ) + '</Data></Cell>' + CRLF
@@ -268,7 +276,7 @@ If !(_cAliasG)->(Eof())
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->F4_ESTOQUE ) + '</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->D1_CC ) + '</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->D1_ITEMCTA ) + '</Data></Cell>' + CRLF
-	If MV_PAR03 == 2
+	If MV_PAR05 == 2
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->D1_CF ) + '</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->F1_ESPECIE ) + '</Data></Cell>' + CRLF
 		cXML += '  <Cell ss:StyleID="sTexto"><Data ss:Type="String">'  + U_FrmtVlrExcel(  (_cAliasG)->F4_SITTRIB ) + '</Data></Cell>' + CRLF
@@ -576,8 +584,10 @@ EndIf
 
 aAdd(aRegs,{cPerg, "01", "Data do Lancamento De?"      , "", "", "MV_CH1", "D", TamSX3("D3_EMISSAO")[1], TamSX3("D3_EMISSAO")[2], 0, "G", "NaoVazio", "MV_PAR01", ""   , "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
 aAdd(aRegs,{cPerg, "02", "Data do Lancamento Ate?"     , "", "", "MV_CH2", "D", TamSX3("D3_EMISSAO")[1], TamSX3("D3_EMISSAO")[2], 0, "G", "NaoVazio", "MV_PAR02", ""   , "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
-aAdd(aRegs,{cPerg, "03", "Informações Fiscais ?"       , "", "", "MV_CH3", "N", 					   1,					    0, 2, "C", ""        , "MV_PAR03", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
-
+aAdd(aRegs,{cPerg, "03", "Hora do Lancamento De?"      , "", "", "MV_CH3", "C", TamSX3("F1_HORA")[1], TamSX3("F1_HORA")[2], 0, "G", "NaoVazio", "MV_PAR03", ""   , "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
+aAdd(aRegs,{cPerg, "04", "Hora do Lancamento Ate?"     , "", "", "MV_CH4", "C", TamSX3("F1_HORA")[1], TamSX3("F1_HORA")[2], 0, "G", "NaoVazio", "MV_PAR04", ""   , "","",""      ,"",""   ,"","","","","","","","","","","","","","","","","","","   ","","","","",""})
+aAdd(aRegs,{cPerg, "05", "Informações Fiscais ?"       , "", "", "MV_CH5", "N", 					   1,					    0, 2, "C", ""        , "MV_PAR05", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
+//aAdd(aRegs,{cPerg, "06", "Informações Fiscais ?"       , "", "", "MV_CH6", "N", 					   1,					    0, 2, "C", ""        , "MV_PAR06", "Não", "","",""      ,"","Sim","","","","","","","","","","","","","","","","","","","","U","","","",""})
 
 //Se quantidade de perguntas for diferente, apago todas
 SX1->(DbGoTop())  

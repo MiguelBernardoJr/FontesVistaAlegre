@@ -4,25 +4,28 @@
 #include "font.ch"
 #include "colors.ch"
 
-User Function MT103FIM   
-Local nOpcao 	:= PARAMIXB[1]   // Opo Escolhida pelo usuario no aRotina  // 3- incluir  2-visualizar 5-excluir
-Local nConfirma := PARAMIXB[2]   // Se o usuario confirmou a operao de gravao da NFECODIGO DE APLICAO DO USUARIO.....
-Local aArea		:= GetArea()
-Local aAreaD1	:= SD1->(GetArea())
-Local cTMEntra	:= SuperGetMv("MV_X_TMCEN",.T.,"301") // Tipo de Movimento de Entrada para Quebra a Maior no peso de Milho da NF
-Local cTMSaida	:= SuperGetMv("MV_X_TMCSA",.T.,"801") // Tipo de Movimento de Saida para Quebra a Menor no peso de Milho da NF
-Local nTolRec	:= SuperGetMv("MV_TOLREC",.T.,40) // Tolerancia no recebimento de insumos se peso for inferior a tolerancia avisa sobre diferena
-Local cProdMil	:= SuperGetMv("MV_X_PRDMI",.T.,"020017;020080;020079;") // Indica cdigos de prudutos que NO devero passar pela regra de 
-Local cSB1Insumo := GetMv("MV_X_PRDMI",,"020017;020080;020079;") // Indica cdigos de prudutos que NO devero passar pela regra de
-Local cGrpAju   := SuperGetMv("MV_GRPAJU",.T.,"02;03")// Grupo de Produtos que ser ajustado pela TM
-Local lCmpAut  	:= IIF("S"==SuperGetMv("MV_X_CMPAU",.T.,"S"),.T.,.F.)  // Compensa automatico S-sim ou N-nao
-Local QryDia	:= "" // Query Dirias
-Local cB1Diari	:= ""
-Local cZ7Fil 	:= ""	                          	
-Local QtdDia	:= 0 
-Local nDif 		:= 0
-
-
+User Function MT103FIM()
+	Local nOpcao 	:= PARAMIXB[1]   // Opo Escolhida pelo usuario no aRotina  // 3- incluir  2-visualizar 5-excluir
+	Local nConfirma := PARAMIXB[2]   // Se o usuario confirmou a operao de gravao da NFECODIGO DE APLICAO DO USUARIO.....
+	Local aArea		:= GetArea()
+	Local aAreaD1	:= SD1->(GetArea())
+	Local cTMEntra	:= SuperGetMv("MV_X_TMCEN",.T.,"301") // Tipo de Movimento de Entrada para Quebra a Maior no peso de Milho da NF
+	Local cTMSaida	:= SuperGetMv("MV_X_TMCSA",.T.,"801") // Tipo de Movimento de Saida para Quebra a Menor no peso de Milho da NF
+	Local nTolRec	:= SuperGetMv("MV_TOLREC",.T.,40) // Tolerancia no recebimento de insumos se peso for inferior a tolerancia avisa sobre diferena
+	Local cProdMil	:= SuperGetMv("MV_X_PRDMI",.T.,"020017;020080;020079;") // Indica cdigos de prudutos que NO devero passar pela regra de 
+	Local cSB1Insumo := GetMv("MV_X_PRDMI",,"020017;020080;020079;") // Indica cdigos de prudutos que NO devero passar pela regra de
+	Local cGrpAju   := SuperGetMv("MV_GRPAJU",.T.,"02;03")// Grupo de Produtos que ser ajustado pela TM
+	Local lCmpAut  	:= IIF("S"==SuperGetMv("MV_X_CMPAU",.T.,"S"),.T.,.F.)  // Compensa automatico S-sim ou N-nao
+	Local QryDia	:= ""// Query Dirias
+	Local cB1Diari	:= ""
+	Local cZ7Fil 	:= ""
+	Local QtdDia	:= 0
+	Local nDif 		:= 0
+	Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+	
+	if lAtivo
+		U_GTPE002()
+	endif 
 	// Alert('MT103FIM - Opo: ' + cValToChar(nOpcao) )
     
 	/* MJ : 26/12/18
@@ -151,10 +154,9 @@ Local nDif 		:= 0
     // FIM Conforme Sim e Incluso
     
 	// Toshio 20220505 - Quando for operçaão do MS chama rotina que faz a transferencia do grupo de Produtos BMS para BOV
-	If cValtoChar(nOpcao) $ "3/4" .And. nConfirma == 1
-        ProcTrfMS(nOpcao, SF1->F1_DOC, SF1->F1_SERIE, SF1->F1_FORNECE, SF1->F1_LOJA)
-    EndIf
-
+	//If cValtoChar(nOpcao) $ "3/4" .And. nConfirma == 1
+    //    U_ProcTrfMS(nOpcao, SF1->F1_DOC, SF1->F1_SERIE, SF1->F1_FORNECE, SF1->F1_LOJA)
+    //EndIf
 
 	/*
 	Excluir itens SD1;
@@ -175,9 +177,13 @@ Local nDif 		:= 0
 
 	EndIf
     
+	if cValtoChar(nOpcao) $ "3/4" .and. nConfirma == 1 .and. SF1->F1_IDALMOX != 0 .and. SF1->F1_IDFISCA != 0
+		U_VAMT140TOK(5) // enviando mensagem para bot telegram Almoxarifado e Fiscal
+	endif
+
     SD1->(dbCloseArea())
-RestArea(aAreaD1)
-RestArea(aArea)
+	RestArea(aAreaD1)
+	RestArea(aArea)
 Return Nil                
 
 

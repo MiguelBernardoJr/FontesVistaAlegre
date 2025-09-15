@@ -84,7 +84,7 @@ static function ProcRel()
             // O laço vai de 1 até a quantidade informada em MV_PAR03
             for nI := 1 to Val(MV_PAR03)
                 // Chama função de impressão da etiquetas passando a descrição do produto e o código como parametros
-                U_ImpEtPdAv({TMPSB1->B1_DESC, TMPSB1->B1_CODBAR, TMPSB1->B1_LOCALI, TMPSB1->B1_UM},MV_PAR02, IIF(!Empty(MV_PAR03), MV_PAR03, 'LPT1'))
+                U_ImpEtPdAv({TMPSB1->B1_DESC, TMPSB1->B1_CODBAR, TMPSB1->B1_LOCALI, TMPSB1->B1_UM},MV_PAR02, IIF(!Empty(MV_PAR04), MV_PAR04 , "LPT1"))
 
             next nI
             

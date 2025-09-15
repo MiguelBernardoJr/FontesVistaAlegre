@@ -1,13 +1,20 @@
 #include "totvs.ch"
 #include 'fwmvcdef.ch'
 
-User Function MTA103MNU
+User Function MTA103MNU()
+	Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
+
 	//.Customizações do cliente
 	aAdd(aRotina,{ "Movto Recebimento", "U_CRIAZ0C()", 0 , 2, 0, .F.})
 
 	// MB: 17.01.2025
 	aAdd(aRotina,{OemToAnsi("Liberar Devolução da NF"), "U_fLibCancNF()", 0 , 20, 0, nil})
 	SetKey( VK_F10, { || U_fLibCancNF() } )
+	
+	if lAtivo
+		// Ponto de chamada ConexãoNF-e sempre como última instrução.
+		U_GTPE010()
+	endif
 Return
 
 /* MB: 17.01.2025

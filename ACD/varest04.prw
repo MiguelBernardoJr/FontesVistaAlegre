@@ -28,7 +28,7 @@ User Function ImpEtqACD(cNome, cCod, cFornec, cLoja, cEntr, nQtde, nUm, cUMed, c
     if !SB5->(DbSeek(FWxFilial("SB5")+cCod)) .or. SB5->B5_IMPETI != 'N'
 
         
-        PZebra(.T.)
+        PZebra(.T.,cPorta)
     
         //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
     
@@ -49,11 +49,10 @@ User Function ImpEtqACD(cNome, cCod, cFornec, cLoja, cEntr, nQtde, nUm, cUMed, c
         
         MSCBEND()
 
-        PZebra(.F.)
+        PZebra(.f.,cPorta)
     endif
 
 Return Nil
-
 
 //Etiqueta de Produtos e transferência VAREST01
 /*   _________________________________________
@@ -65,7 +64,7 @@ Return Nil
 */
 User Function ImpEtqPdt(aCntImp, cPorta, cLocaliz)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -98,7 +97,7 @@ User Function ImpEtqPdt(aCntImp, cPorta, cLocaliz)
         MSCBEND()
     Endif
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -113,7 +112,7 @@ Return Nil
 */
 User Function ImpEtPdtc(aCntImp, cPorta)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -134,7 +133,7 @@ User Function ImpEtPdtc(aCntImp, cPorta)
         MSCBEND()
     endif
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -151,7 +150,7 @@ Return Nil
 
 User Function ImpEtPdAv(aCntImp, cQtd, cPorta)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
     MSCBBEGIN(1,4)
@@ -161,7 +160,7 @@ User Function ImpEtPdAv(aCntImp, cQtd, cPorta)
         MSCBSAY(005, 011, SubStr(aCntImp[1], 35),, "0", "40,30") //Codigo do produto
 
         MSCBSAY(005, 017, 'Localiz.: ' + aCntImp[3] + " Qtd.: " + AllTrim(cQtd) + " " + aCntImp[4],, "0", "40,30") //Localização do produto + Un. Medida
-        MSCBSAYBAR(015,023, AllTrim(aCntImp[2]),, "MB07", 10, .F.,.T.,.F.,,3,1)//CODBAR 
+        MSCBSAYBAR(015,023, AllTrim(aCntImp[2]),, "MB07", 10, .F.,.T.,.F.,,3,1)//CODBAR
 
     if __Debug
         if !existdir("C:\temp")
@@ -172,7 +171,7 @@ User Function ImpEtPdAv(aCntImp, cQtd, cPorta)
         MSCBEND()
     endif
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -189,7 +188,7 @@ Return Nil
 */
 User Function ImpEtqEnd(aCntImp, cPorta)
 
-    PZebra(.T.)
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -206,7 +205,7 @@ User Function ImpEtqEnd(aCntImp, cPorta)
 
     MSCBEND()
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -239,7 +238,7 @@ User Function ImpEtqCx(cTipo, cCodigo, cSeq, cEndereco, cPorta)
 
     cCodBar := nOpera + AllTrim(aCntImp[2]) + AllTrim(aCntImp[3])
 
-    PZebra(.T.) 
+    PZebra(.T.,cPorta)
 
     //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
 
@@ -256,7 +255,7 @@ User Function ImpEtqCx(cTipo, cCodigo, cSeq, cEndereco, cPorta)
 
     MSCBEND()
 
-    PZebra(.F.)
+    PZebra(.f.,cPorta)
 
 Return Nil
 
@@ -277,7 +276,7 @@ User Function ImpEtqTER(cTipo, cNomeCli, cCodCli, cCodLoja, cNomeProd, cCodProd,
     SB5->(DbSetOrder(1)) // B5_FILIAL+B5_COD
     if !SB5->(DbSeek(FWxFilial("SB5")+cCodProd)) .or. SB5->B5_IMPETI != 'N'
     
-        PZebra(.T.) 
+        PZebra(.T.,cPorta)
     
         //MSCBSAY(nXmm, nYmm, cTexto, cRotação, cFonte, cTam, *lReverso, lSerial, cIncr, *lZerosL, lNoAlltrim)
     
@@ -295,19 +294,24 @@ User Function ImpEtqTER(cTipo, cNomeCli, cCodCli, cCodLoja, cNomeProd, cCodProd,
 
         MSCBEND()
     
-        PZebra(.F.)
+        PZebra(.f.,cPorta)
     endif
 
 Return Nil
 
-static function PZebra(lAcao)
-    local cPorta := "LPT1"
+static function PZebra(lAcao, cPorta)
     local cIMp  := "S600"
-    local cFila  := GetMV("TO_IMPTER",,"ZD2301")
+    local cFila  := GetMV("TO_IMPTER",,"ZD230")
     local lSrv   := .F.
 
+    Default cPorta := "LPT1"
     Default lAcao := .T.
 
+    IF cPorta == "LPT1"
+        cFila := "ZD230"
+    else
+        cFila := "ZD230-A"
+    endif
 
     if (lAcao)
         MSCBPRINTER(cIMp,cPorta,,,lSrv,,,,,cFila,)
@@ -319,11 +323,11 @@ static function PZebra(lAcao)
     if __Debug
         if !existdir("C:\temp")
             makedir("C:\temp")
-        endif    
+        endif
         MemoWrite( "C:\temp\zebra.txt", MSCBEND() )
     endif
 
-    MSGINFO("Etiqueta Impressa.")
+    //MSGINFO("Etiqueta Impressa.")
 
 return Nil
 
@@ -343,6 +347,6 @@ U_ImpEtqACD("SEED MIX VHS 10T AUTOM.2D150L ", "1.0100.006.1", "29/06/2020", '10'
 //U_ImpEtqTER("TRANSPORTES PRASNISK","000063","SEED MIX VHS 10T AUTOM.2D150L ", "1.0100.006.1", "29/06/2020", '10', 'PC', "0000000001", "001", "101000061", "LPT2")
 
 
-MSGINFO("Etiqueta Impressa.")
+//MSGINFO("Etiqueta Impressa.")
 
 Return Nil
