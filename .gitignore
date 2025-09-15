@@ -23,3 +23,5 @@ telemetry.txt
 .vscode/servers.json
 .vscode/servers.json
 .vscode/settings.json
+.vscode/launch.json
+.vscode/launch.json
