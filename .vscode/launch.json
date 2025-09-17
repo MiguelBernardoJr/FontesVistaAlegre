@@ -15,7 +15,7 @@
 			"request": "launch",
 			"name": "LV: Web Exclusivo",
 			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "https://liviojose125652.protheus.cloudtotvs.com.br:6701/webapp/",
+			"smartclientUrl": "https://liviojose125652.protheus.cloudtotvs.com.br:7600/webapp/",
 			"isMultiSession": true,
 			"enableTableSync": true
 		},
