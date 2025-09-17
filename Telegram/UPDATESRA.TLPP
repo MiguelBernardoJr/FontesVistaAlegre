@@ -1,0 +1,57 @@
+User Function UPDATESRA()
+
+    Local cArquivo  := "E:\ATUALIZAÇÃO_CADASTRO.csv" // Caminho do seu arquivo CSV
+    Local aLinha    := {}
+    Local nLin      := 0
+    Local nUpdated  := 0
+    Local cMat      := ""
+    Local aDados    := {}
+    Local nI        := 0
+
+    Private lMsHelp := .T.
+
+    // Abre o arquivo para leitura
+    oArquivo := FWFileReader():New(cArquivo)
+
+    //Se o arquivo pode ser aberto
+    If (oArquivo:Open())
+
+        SRA->(DbSetOrder(13))
+         //Se não for fim do arquivo
+        If ! (oArquivo:EoF())
+            While (oArquivo:HasLine())
+                cLinAtu := oArquivo:GetLine()
+                aLinha  := StrTokArr(cLinAtu, ";")
+                // Valida se a linha tem a quantidade mínima de colunas
+                If Len(aLinha) >= 5
+                    aAdd(aDados, aLinha)
+                EndIf
+            enddo
+
+        endif
+    EndIf
+    
+    aSort(aDados,,,{|x,y| x[1]+x[2] < y[1]+y[2]})
+
+    For nI := 1 to Len(aDados)
+        If SRA->(DbSeek(Alltrim(aDados[nI][2]) + Alltrim(aDados[nI][1])))
+            // Inicia a transação e bloqueia o registro
+            RecLock("SRA", .F.)
+
+                // Atualiza os campos
+                SRA->RA_EMAIL   := Alltrim(aDados[nI][4])
+                SRA->RA_TELEFON := Alltrim(aDados[nI][5])
+
+            // Libera o registro e confirma a transação
+            SRA->(MsUnLock())
+            nUpdated++
+            ConOut(Time() + " - SUCESSO: Matrícula " + cMat + " atualizada.")
+
+        Else
+            ConOut(Time() + " - ERRO: Matrícula " + cMat + " da filial " + cFilial + " não encontrada na linha " + cValToChar(nLin))
+        EndIf
+    Next nI 
+
+    MsgInfo("Processo finalizado! " + cValToChar(nUpdated) + " registros atualizados de um total de " + cValToChar(nLin) + " linhas lidas.")
+
+Return

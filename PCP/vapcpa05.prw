@@ -99,28 +99,27 @@ Rotina de criação/manutenção de trato.
 @type function
 /*/
 user function VAPCPA05()
-local cPerg        := "VAPCPA05"
-local i, nLen
-local lRet         := .F.
-local aFields      := {}
-local aBrowse      := {}
-local aIndex       := {}
-//local aFieFilter := {}
-local aSeek        := {}
-local nTrato       := 0
+    local cPerg        := "VAPCPA05"
+    local i, nLen
+    local aFields      := {}
+    local aBrowse      := {}
+    local aIndex       := {}
+    //local aFieFilter := {}
+    local aSeek        := {}
+    local nTrato       := 0
 
-private oTmpZ06    := nil
-private cTrbBrowse := CriaTrab(,.F.)
-private oBrowse    := nil
-Private oLoadTrt   := nil
+    private oTmpZ06    := nil
+    private cTrbBrowse := CriaTrab(,.F.)
+    private oBrowse    := nil
+    Private oLoadTrt   := nil
 
-EnableKey(.T.)
+    EnableKey(.T.)
 
-nNroTratos := u_GetNroTrato()
+    nNroTratos := u_GetNroTrato()
 
-AtuSX1(@cPerg)
-U_PosSX1({{cPerg, "01", dDataBase }})
-x
+    AtuSX1(@cPerg)
+    U_PosSX1({{cPerg, "01", dDataBase }})
+
     DbSelectArea("SX3")
     DbSetOrder(2) // X3_CAMPO
     
@@ -634,10 +633,10 @@ Cria um plano de trato já existente ou carrega um plano já existente.
 @type function
 /*/
 user function vap05cri() 
-local aParam :={mv_par01}
-local i, nLen
-local cPerg  := "VAPCPA05"
-local lRet   := .T.
+    local aParam :={mv_par01}
+    local i, nLen
+    local cPerg  := "VAPCPA05"
+    local lRet   := .T.
 
     EnableKey(.F.)
 
@@ -656,13 +655,18 @@ local lRet   := .T.
             FWMsgRun(, { || U_LoadTrat(mv_par01) }, "Carregamento do trato", "Carregando trato...")
         endif
     endif
-
+    
     EnableKey(.T.)
 
-nLen := Len(aParam)
-for i := 1 to nLen
-    &("mv_par" + StrZero(i, 2)) := aParam[i]
-next
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+        //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
+
+    nLen := Len(aParam)
+    for i := 1 to nLen
+        &("mv_par" + StrZero(i, 2)) := aParam[i]
+    next
 return nil
 
 
@@ -675,10 +679,10 @@ Cria caso não exista, recria um plano de trato já existente ou carrega um plano 
 @type function
 /*/
 user function vap05rcr()
-local aParam :={mv_par01, mv_par02, mv_par03, mv_par04, mv_par05, mv_par06, mv_par07, mv_par08}
-local i, nLen
-local lRet   := .T.
-local cPerg  := "VAPCPA055"
+    local aParam :={mv_par01, mv_par02, mv_par03, mv_par04, mv_par05, mv_par06, mv_par07, mv_par08}
+    local i, nLen
+    local lRet   := .T.
+    local cPerg  := "VAPCPA055"
 
     EnableKey(.F.)
 
@@ -709,10 +713,15 @@ local cPerg  := "VAPCPA055"
 
     EnableKey(.T.)
 
-nLen := Len(aParam)
-for i := 1 to nLen
-    &("mv_par" + StrZero(i, 2)) := aParam[i]
-next
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+         //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
+
+    nLen := Len(aParam)
+    for i := 1 to nLen
+        &("mv_par" + StrZero(i, 2)) := aParam[i]
+    next
 return lRet
 
 
@@ -1369,17 +1378,16 @@ Cria ou recria o trato da na data definida, conforme os parâmetros.
 @type function
 /*/
 user function CriaTrat(dDtTrato, lRecria)
-local cVersao    := StrZero(1, TamSX3("Z0R_VERSAO")[1])
-local cQry       := ""
-local nRecno     := 0
-local cCurraDupl := ""
-local cLoteDupl  := ""
-local cLoteSBov  := ""
-Local lTemDados  := .F. 
-Local aDadosZ0O  := {}
+local cVersao       := StrZero(1, TamSX3("Z0R_VERSAO")[1])
+local cQry          := ""
+local cCurraDupl    := ""
+local cLoteDupl     := ""
+local cLoteSBov     := ""
+Local lTemDados     := .F. 
+Local aDadosZ0O     := {}
 Local nI, nJ 
-local cALias := ""
-default lRecria  := .F.
+local cALias        := ""
+default lRecria     := .F.
 
 Private cAliLotes := ""
 
@@ -1754,7 +1762,6 @@ Grava Registros na Z0O
 /*/
 Static Function LoadZ0O(aDadosB8)
     local aArea      := GetArea()
-    local oView      := FWViewActive()
     local aRet       := {}
     local aDados     := {}
     local i, nLen
@@ -2142,19 +2149,17 @@ static function CriaZ05()
     local nMegaCal      := 0
     local nMCalTrat     := 0
     local nTotMCal      := 0
-    local i             := 0
     Local _nMCALPR      := 0
     Local nDif          := 0
     Local nQtdAux       := 0
     Local lMaior        := .T.
     Local lSobra        := .T.
     Local nBKPnTrtTotal := 0
-    local cQry      := ""
-    local cAlias   := ""
-    local cAliZ05   := ""
-    local cAliZ0W   := ""
-    local nResto    := 0
-    local lSomaSobra := .T.
+    local cQry          := ""
+    local cAlias        := ""
+    local cAliZ0W       := ""
+    local nResto        := 0
+    local lSomaSobra    := .T.
 
     // Verifica se não existe plano de trato associado ao lote 
     if Empty((cAliLotes)->Z0O_CODPLA)
@@ -4201,7 +4206,6 @@ Faz a chamada do viewdef trazendo apenas os botões Confirmar e Fechar
 /*/
 user function vap05mnt(cAlias, nReg, nOpc)
     local aArea   := GetArea()
-    local nPos        := oBrowse:nAt
     local aEnButt := {{.F., nil},;      // 1 - Copiar
                     {.F., nil},;        // 2 - Recortar
                     {.F., nil},;        // 3 - Colar
@@ -4249,45 +4253,40 @@ user function vap05mnt(cAlias, nReg, nOpc)
         DbSetOrder(1) // Z05_FILIAL+Z05_DATA+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
     
         if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-            //if U_CanUseZ05()
-				
-				Custom.VAPCPA17.u_PreparaQuerys()
-                
-                cBakFun := FunName()
-
-                SetFunName("VAPCPA17")
-                
-                FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+            Custom.VAPCPA17.u_PreparaQuerys()
             
-                //ReleaseZ05()
+            cBakFun := FunName()
 
-                SetFunName(cBakFun)
+            SetFunName("VAPCPA17")
+            
+            FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+        
+            SetFunName(cBakFun)
 
-				if oExecZ06G != nil
-					oExecZ06G:Destroy()
-					oExecZ06G := Nil
-				endif
-				if oExecZ06D != nil
-					oExecZ06D:Destroy()
-					oExecZ06D := Nil
-				endif
-				if oExecRotaD != nil
-					oExecRotaD:Destroy()
-					oExecRotaD := Nil
-				endif
-				if oExecRotaG != nil
-					oExecRotaG:Destroy()
-					oExecRotaG := Nil
-				endif
-				if oExecZ05C != nil
-					oExecZ05C:Destroy()
-					oExecZ05C := Nil
-				endif
-				if oExecZ05G != nil
-					oExecZ05G:Destroy()
-					oExecZ05G := Nil
-				endif
-            //endif
+            if oExecZ06G != nil
+                oExecZ06G:Destroy()
+                oExecZ06G := Nil
+            endif
+            if oExecZ06D != nil
+                oExecZ06D:Destroy()
+                oExecZ06D := Nil
+            endif
+            if oExecRotaD != nil
+                oExecRotaD:Destroy()
+                oExecRotaD := Nil
+            endif
+            if oExecRotaG != nil
+                oExecRotaG:Destroy()
+                oExecRotaG := Nil
+            endif
+            if oExecZ05C != nil
+                oExecZ05C:Destroy()
+                oExecZ05C := Nil
+            endif
+            if oExecZ05G != nil
+                oExecZ05G:Destroy()
+                oExecZ05G := Nil
+            endif
         endif
     elseif Z0R->Z0R_LOCK = '2' 
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
@@ -4295,15 +4294,16 @@ user function vap05mnt(cAlias, nReg, nOpc)
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
     endif
 
+    EnableKey(.T.)
+
     oTmpZ06:Zap()
     oBrowse:Refresh()
 
     (cTrbBrowse)->(RestArea(aAreaTrb))
     FWMsgRun(, { || U_LoadTrat(Z0R->Z0R_DATA)}, "Recarregando o trato", "Recarregando o trato")  
+
     oBrowse:Refresh()
-
-    EnableKey(.T.)
-
+    
     if !Empty(aArea)
         RestArea(aArea)
     endif
@@ -4381,15 +4381,20 @@ user function vap05man(cAlias, nReg, nOpc)
     elseif Z0R->Z0R_LOCK = '3' 
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
     endif
-
+    
     EnableKey(.T.)
+
+    //teste aqui
+    U_UpdTrbTmp()
+
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+         //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
 
     if !Empty(aArea)
         RestArea(aArea)
     endif
-    
-    //teste aqui
-    U_UpdTrbTmp()
     //u_vap05rec()
 return nil
 
@@ -4428,12 +4433,19 @@ user function vap05nov()
         private Altera := .T.
     endif
 
+    EnableKey(.F.)
+
     if CurrVazio()
         FWExecView('Incluir', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt)
         ReleaseZ05()
     endif
-
+    
     EnableKey(.T.)
+
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+         //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
 
 return nil
 
@@ -4543,11 +4555,6 @@ static function ModelDef()
     local oStrZ05G   := Z05GrdMStr()
     local oStrZ06G   := Z06GrdMStr()
 
-    local oStrRot    := nil
-    local oStrHide    := nil
-
-    local bLoadHide    
-    local bLoadRot   
     local bLoadZ05   := {|oModel, lCopia| LoadZ05(oModel, lCopia) }
     local bLoadZ0I   := {|oFormGrid, lCopia| LoadZ0I(oFormGrid, lCopia) }
     local bLoadZ05An := {|oFormGrid, lCopia| LoadZ05Ant(oFormGrid, lCopia) }
@@ -4556,10 +4563,7 @@ static function ModelDef()
     local bZ06Pre    := {|oGridModel, nLin, cAction| Z06Pre(oGridModel, nLin, cAction)}
     local bZ06LinePo := {|oGridModel, nLin| Z06LinPost(oGridModel, nLin)}
     local bLoadZ06   := {|oFormGrid, lCopia| LoadZ06(oFormGrid, lCopia) }
-    local bLineROT   := NIL
 
-    //local bPreValid  := {|oModel| FrmPreVld(oModel)}
-    //local bPostValid := {|oModel| FrmPostVld(oModel)}
     local bCommit     := {|oModel| FormCommit(oModel)}
     local bCancel     := {|oModel| FormCancel(oModel)}
 
@@ -4626,7 +4630,7 @@ Bloco de Código de pré-edição da linha do grid no modelo. Foram implementadas as
 static function Z06LinPreG(oGridModel, nLin, cOperacao, cCampo, xValAtr, xValAnt)
     local aArea       := GetArea()
     local lRet        := .T.
-    local i, nLen
+    local i
     local oActiveView := nil
     local cTrato      := ""
     local nRegZ06     := 0
@@ -4692,7 +4696,6 @@ static function Z06LinPost(oGridModel, nLin)
     local lRet   := .T.
     local cTrato := ""
     local i, nLen
-    local oModel := FWModelActive()
 
     default nLin := oGridModel:GetLine()
 
@@ -4882,9 +4885,7 @@ return lRet
 Static Function LineROT(oGridModel, nLin,cAction)
     local aArea     := GetArea()
     Local lRet := .T. 
-    Local cQry := ""
     Local cAlias := ""
-    Local oModel := FWModelActive()
 
     default nLin := oGridModel:GetLine()
 
@@ -5017,7 +5018,6 @@ Carrega os dados da tabela Z05 de acordo com o registro posicinado
 static function LoadZ05(oModel, lCopia)
 local aArea    := GetArea()
 local aRet     := {}
-local i, nLen
 local aCposUsu := {}
 
 DbSelectArea("SB8")
@@ -5230,7 +5230,6 @@ Carrega na tela os detalhes dos tratos anteriores.
 /*/
 static function LoadZ05Ant(oFormGrid, lCopia)
     local aArea     := GetArea()
-    local oView     := FWViewActive()
     local aTemplate :={0, {}}
     local aRet      := {}
     local i, nLen
@@ -5391,9 +5390,6 @@ local oStrZ05C := nil
 local oStrZ0IG := nil
 local oStrZ05G := nil
 local oStrZ06G := nil
-local oStrROT  := nil
-Local oStrHide := nil
-Local oStrTOT  := nil
 
 if FunName() != "VAPCPA05" .or. !Empty((cTrbBrowse)->B8_LOTECTL) 
 
@@ -5489,7 +5485,6 @@ Carrega o registro de trato anterior
 /*/
 static function Anterior(oView)
 local nRecNo   := 0
-local oModel   := FWModelActive()
 local aAreaTMP := (cTrbBrowse)->(GetArea())
 local aAreaZ05 := Z05->(GetArea())
 
@@ -5585,7 +5580,6 @@ Carrega o proximo registro válido de trato
 @type function
 /*/
 static function Proximo(oView)
-local oModel   := FWModelActive()
 local aAreaTMP := (cTrbBrowse)->(GetArea())
 local aAreaZ05 := Z05->(GetArea())
 
@@ -5761,7 +5755,6 @@ Cria a estrutura para o modelo do form Z05 na tela
 static function Z05FldMStr()
 local aArea   := GetArea()
 local oStruct := FWFormModelStruct():New()
-local i, nLen
 local cValid, bValid, bWhen, aCbox, bRelacao
 local aCpos   := {}
 
@@ -5813,7 +5806,6 @@ Cria a estrutura para o modelo da grid Z0I na tela
 @type function
 /*/
 static function Z0IGrdMStr()
-local aArea   := GetArea()
 local oStruct := FWFormModelStruct():New()
 local i, nLen
 local aCBox
@@ -5853,7 +5845,6 @@ Cria a estrutura para o modelo da grid Z05 na tela
 @type function
 /*/
 static function Z05GrdMStr()
-local aArea   := GetArea()
 local oStruct := FWFormModelStruct():New()
 local aCBox
 local i, nLen
@@ -5930,7 +5921,6 @@ Cria a estrutura para o modelo da grid Currais na tela
 @type function
 /*/
 static function HidGrdMStr()
-    local aArea   := GetArea()
     local oStruct := FWFormModelStruct():New()
 
     oStruct:AddField(;
@@ -5996,7 +5986,6 @@ Cria a estrutura para o modelo da grid Z06 na tela
 @type function
 /*/
 static function Z06GrdMStr()
-local aArea   := GetArea()
 local oStruct := FWFormModelStruct():New()
 local i, nLen
 
@@ -6764,7 +6753,6 @@ user function CalcQtMS(cLote, dDtTrato, cVersao)
     local aArea  := GetArea()
     local nQtdMS := 0
     local cQry   :=  ""
-    local cAlais := ""
 
     cQry :=  " with QTDPROD as (" +;
             " select Z0Y.Z0Y_ORDEM, Z0Y.Z0Y_TRATO, sum(Z0Y_QTDREA) PRD_QUANT" +;
@@ -7159,7 +7147,6 @@ static function FillTrato(cCurral, cLote)
 local aParam    :={mv_par01, mv_par02, mv_par03}
 local lRet      := .T.
 local cFillPerg := "VAPCPA051"
-local oModel    := FWModelActive(), oGridModel, oFormModel
 local nMaxTrato := u_GetNroTrato()
 local cTrbAlias := ""
 local i
@@ -7723,7 +7710,6 @@ Reprograma o trato de acordo com parâmetros
 @type function
 /*/
 static function Reprograma()
-local aArea  := GetArea()
 local oView  := FWViewActive()
 local oModel := oView:GetModel()
 local oFormModel, oGridModel
@@ -7922,19 +7908,17 @@ Altera a quantidade de tratos de acordo com a pergunta VAPCPA053
 @type function
 /*/
 user function vap05tra()
-local aAreaTrb    := (cTrbBrowse)->(GetArea())
-local aParam      := {mv_par01, mv_par02, mv_par03, mv_par04, mv_par05}
-local cFillPerg   := "VAPCPA053"
-local nMaxTrato   := u_GetNroTrato()
-local nPos        := oBrowse:nAt
-local aPosSX1     := {{ cFillPerg, "01", 0},;
-                      { cFillPerg, "02", Replicate(" ", TamSX3("ZRT_ROTA")[1])},;
-                      { cFillPerg, "03", Replicate("Z", TamSX3("ZRT_ROTA")[1])},;
-                      { cFillPerg, "04", Replicate(" ", TamSX3("Z08_CODIGO")[1])},;
-                      { cFillPerg, "05", Replicate("Z", TamSX3("Z08_CODIGO")[1]) }}
-private cCodDieta := ""
-
-EnableKey(.T.)
+    local aAreaTrb    := (cTrbBrowse)->(GetArea())
+    local aParam      := {mv_par01, mv_par02, mv_par03, mv_par04, mv_par05}
+    local cFillPerg   := "VAPCPA053"
+    local nMaxTrato   := u_GetNroTrato()
+    local nPos        := oBrowse:nAt
+    local aPosSX1     := {{ cFillPerg, "01", 0},;
+                        { cFillPerg, "02", Replicate(" ", TamSX3("ZRT_ROTA")[1])},;
+                        { cFillPerg, "03", Replicate("Z", TamSX3("ZRT_ROTA")[1])},;
+                        { cFillPerg, "04", Replicate(" ", TamSX3("Z08_CODIGO")[1])},;
+                        { cFillPerg, "05", Replicate("Z", TamSX3("Z08_CODIGO")[1]) }}
+    private cCodDieta := ""
 
     if Z0R->Z0R_LOCK <= '1'
         AtuSX1(@cFillPerg)
@@ -7959,8 +7943,6 @@ EnableKey(.T.)
     oBrowse:nAt := nPos
     oBrowse:Refresh()
 
-EnableKey(.T.)
-    
 return nil
 
 /*04-01-2021
@@ -7968,15 +7950,15 @@ Arthur Toshio
 Realiza Transferencia entre currais
 */
 user function vap05tcu()
-local aAreaTrb    := (cTrbBrowse)->(GetArea())
-local aParam      := {mv_par01, mv_par02}
-local cFillPerg   := "VAPCPA05A"
-local nPos        := oBrowse:nAt
-local aPosSX1     :={{ cFillPerg, "01", Replicate(" ", TamSX3("B8_X_CURRA")[1])},;
-                     { cFillPerg, "02", Replicate("Z", TamSX3("B8_X_CURRA")[1]) }}
-private cCodDieta := ""
+    local aAreaTrb    := (cTrbBrowse)->(GetArea())
+    local aParam      := {mv_par01, mv_par02}
+    local cFillPerg   := "VAPCPA05A"
+    local nPos        := oBrowse:nAt
+    local aPosSX1     :={{ cFillPerg, "01", Replicate(" ", TamSX3("B8_X_CURRA")[1])},;
+                        { cFillPerg, "02", Replicate("Z", TamSX3("B8_X_CURRA")[1]) }}
+    private cCodDieta := ""
 
-EnableKey(.T.)
+    EnableKey(.F.)
 
     If Z0R->Z0R_LOCK == '3' 
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato de "+dToC(Z0R->Z0R_DATA)+" pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
@@ -8007,10 +7989,11 @@ EnableKey(.T.)
     */
     (cTrbBrowse)->(RestArea(aAreaTrb))
     U_LoadTrat(Z0R->Z0R_DATA)
+    
+    EnableKey(.T.)
+
     oBrowse:nAt := nPos 
     oBrowse:Refresh()
-
-EnableKey(.T.)
     
 return nil
 
@@ -8290,12 +8273,11 @@ Altera a quantidade tratos no lote posicionado
 @type function
 /*/
 static function AjuNroTrat(nQtdTrato)
-local aArea   := GetArea()
-local lRet    := .T.
-local aKgMS   := {}
-local i       := 0
-local cSeq    := ""
-local nMegCal := 0
+local aArea         := GetArea()
+local lRet          := .T.
+local i             := 0
+local cSeq          := ""
+local nMegCal       := 0
 local nQuantTrato   := 0
 local nTotTrtClc    := 0
 Local nDif          := 0
@@ -8689,7 +8671,6 @@ EnableKey(.F.)
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois não existe lote viculado ao curral posicionado.", 1, 0,,,,,, {"Operação não permitida."})
     elseif Z0R->Z0R_LOCK <= '1'
         if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
-            EnableKey(.F.)
             AtuSX1(@cFillPerg)
             U_PosSX1({{cFillPerg, "01", (cTrbBrowse)->PROG_MS}})
             if (lRet := Pergunte(cFillPerg))
@@ -8704,7 +8685,6 @@ EnableKey(.F.)
                 endif
             endif
             mv_par01 := aParam[1]
-            EnableKey(.T.)
         else
             Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral posicionado.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Utilize o botão manutenção para criar o trato."})
         endif
@@ -8714,7 +8694,12 @@ EnableKey(.F.)
         Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
     endif
 
-EnableKey(.T.)
+    EnableKey(.T.)
+
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+         //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
 
 return lRet
 
@@ -8833,16 +8818,17 @@ Executado após a liberação da interface. Remove os atalhos e atualiza o browse.
 /*/
 method DeActivate(oModel) class vapcp05Evt
 
-SetKey(VK_F4, nil)
-SetKey(VK_F5, nil)
-SetKey(VK_F6, nil) 
-SetKey(VK_F7, nil) 
+    SetKey(VK_F4, nil)
+    SetKey(VK_F5, nil)
+    SetKey(VK_F6, nil) 
+    SetKey(VK_F7, nil) 
 
-EnableKey(.T.)
+    EnableKey(.T.)
 
-if Type("oBrowse") <> 'U'
-    oBrowse:Refresh()
-endif
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+         //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
 
 return nil
 
@@ -8965,8 +8951,6 @@ local aParam    := {mv_par01, mv_par02, mv_par03, mv_par04, mv_par05}
 local lRet      := .T.
 local cFillPerg := "VAPCPA054 "
 local nMaxTrato := u_GetNroTrato()
-local cTrbAlias := ""
-local nPos      := oBrowse:nAt
 local nQtdTrato := 0
 local i
 local cSeq      := ""
@@ -9190,6 +9174,12 @@ local cQry      := ""
     endif
 
     EnableKey(.T.)
+
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+         //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
+
     for i := 1 to Len(aParam)
         &("mv_par" + StrZero(i, 2)) := aParam[i]
     next
@@ -9226,10 +9216,10 @@ Chama a rotina de geração de arquivos de acordo com o filtro passado
 @type function
 /*/
 user function vap05arq()
-local i, nLen
-local cFilter   := ""
-local cALias    := ""
-local cQry      := "" 
+    local i
+    local cFilter   := ""
+    local cALias    := ""
+    local cQry      := ""
 
     EnableKey(.F.)
     if !Empty(aSeekFiltr)
@@ -9263,7 +9253,13 @@ local cQry      := ""
     endif
 
     FWMsgRun(, { || u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, cFilter) }, "Carregando resumo", "Resumo de trato")
+    
     EnableKey(.T.)
+        
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+         //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
 
 return nil
 
@@ -9277,21 +9273,20 @@ Altera as dietas dos currais de acordo com os parametros passados
 @type function
 /*/
 user function vap05trt()
-local aMVPar      := {}
-local i, nQtdTr   := u_GetNroTrato()
-local aParamBox   := {}
-local lRet        := .F.
+    local aMVPar      := {}
+    local i, nQtdTr   := u_GetNroTrato()
+    local aParamBox   := {}
 
-private nQtdTrato := 0
+    private nQtdTrato := 0
 
-EnableKey(.F.)
+    EnableKey(.F.)
 
     DbSelectArea("Z05")
     DbSetOrder(1) // Z05_FILIAL+DToS(Z05_DATA)+Z05_VERSAO+Z05_CURRAL+Z05_LOTE
 
     if Z0R->Z0R_LOCK <= '1'
 
-        u_vap05rec()
+        //u_vap05rec()
 
         for i := 1 to 13
             AAdd(aMVPar, &("mv_par" + StrZero(i, 2)))
@@ -9308,9 +9303,7 @@ EnableKey(.F.)
         next
 
         if ParamBox(aParamBox, "Dietas", /*<@aRet>*/, {|| u_VldPBox()}, /*<aButtons >*/, /*<lCentered>*/, /*<nPosX>*/, /*<nPosY>*/, /*<oDlgWizard>*/, "VAP05TRT", .T., .F. )
-            EnableKey(.F.)
-                FWMsgRun(, { || u_RunDieta() }, "Ajustando Dietas", "Ajustando Dietas")
-            EnableKey(.T.)
+            FWMsgRun(, { || u_RunDieta() }, "Ajustando Dietas", "Ajustando Dietas")
         endif
 
         nLen := Len(aMVPar)
@@ -9325,9 +9318,15 @@ EnableKey(.F.)
     endif
 
     EnableKey(.T.)
+    
     u_vap05rec()
-return nil 
+    
+    if Type("oBrowse") == "O" .and. oBrowse != NIL
+        //oBrowse:oBrowse:GoColumn(1)
+        oBrowse:Refresh() // Garante a atualização visual
+    endif
 
+return nil
 
 /*/{Protheus.doc} VldPBox
 Valida os parametros da rotina vap05trt
@@ -9338,7 +9337,6 @@ Valida os parametros da rotina vap05trt
 @type function
 /*/
 user function VldPBox()
-local aArea    := GetArea()
 local lRet     := .T.
 local lExistTr := .F.
 local cVar     := ""
@@ -9754,7 +9752,6 @@ Static Function MontaQuery()
     Local cQry := ""
     local cInsertCab := ""
     local cSelectCab := ""
-    local cKgMnTot   := ""
 
     cInsertCab := " Z08_CODIGO" +;              // COCHO
             ", Z0T_ROTA" +;                // ROTA
