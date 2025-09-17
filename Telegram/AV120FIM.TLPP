@@ -13,9 +13,12 @@
 User Function AV120FIM()
 Return U_VAMT140TOK(4)
 
-/* 
+/*
 Inicio da conferência
 */
 User Function AV120NFE()
 Return U_VAMT140TOK(3)
 
+User Function zTstGazTNF()
+    Local nRet := 10
+Return nRet

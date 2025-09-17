@@ -5,7 +5,7 @@
 #INCLUDE "FWPrintSetup.ch"
 #INCLUDE "XMLXFUN.CH"
 
-#DEFINE IMP_SPOOL     2
+#DEFINE IMP_SPOOL     2				
 #DEFINE MAXMENLIN   200				// Máximo de caracteres por linha de dados adicionais
 #DEFINE MAXLINOBS   018             // Máximo de linhas nas observaçoes.
 #DEFINE MAXLINREP	550				// Máximo de linhas relatório.	

@@ -4,7 +4,7 @@
     MB : 29/08/2025
         -> Atualizar Tabela Z0O
 */
-User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
+User Function VATRTMB1( cLote ) //U_VATRTMB1( '1-40' )
 
     Local cAliasF      := GetNextAlias()
     Local cZ0OAlias    := ""
