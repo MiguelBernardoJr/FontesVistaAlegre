@@ -139,13 +139,13 @@ Local aRotina := {}
 	ADD OPTION aRotina TITLE OemToAnsi("Estorno"	   ) 		ACTION "U_BTNEST" 	 OPERATION MODEL_OPERATION_DELETE ACCESS 0 // "Estornar"
 	ADD OPTION aRotina TITLE OemToAnsi("Importar TODOS") 		ACTION "U_BTIMPALL" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Parâmetro Água") 		ACTION "U_BTParH20" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
-	ADD OPTION aRotina TITLE OemToAnsi("Alterar Operadores") 	ACTION "U_AltOpePC" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
+	ADD OPTION aRotina TITLE OemToAnsi("Alterar Operadores") 	ACTION "U_ALTOPER" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Alterar Produtos Silo")	ACTION "U_AltPrdS"  OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	//ADD OPTION aRotina TITLE OemToAnsi("Copiar")     ACTION "VIEWDEF.VAPCPA13"    OPERATION 9 ACCESS 0 // "Copiar"
 
 Return aRotina
 
-User Function AltOpePC()
+/* User Function AltOpePC()
 	
 	GeraX1("ALTMVOPE")
 	
@@ -160,9 +160,9 @@ User Function AltOpePC()
 				MsgAlert("Operador dois não informado!"+ CRLF ,;
 						 "Parametro não será atualizado", "Atenção...")
 			ENDIF
-		endif 
-	endif  
-return
+		endif
+	endif
+return */
 /* ----------------------------------------------------------------------------- */
 User Function btnCfr()
 
