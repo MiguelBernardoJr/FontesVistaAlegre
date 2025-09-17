@@ -5082,12 +5082,12 @@ Static Function getSaldoLote(cLote, cProduto)
 	cQry := "select sum(B8_SALDO) SALDO " + CRLF 
 	cQry += "  from "+RetSQLName("SB8")+" B8 " + CRLF 
 	cQry += " where B8_FILIAL='"+FwxFilial("SB8")+"' " + CRLF 
-	cQry += "   and B8_LOTECTL = '"+cLote+"' " + CRLF 
-	cQry += "   and B8.D_E_L_E_T_ = '' " + CRLF 
+	cQry += "   and B8_LOTECTL = '"+cLote+"' " + CRLF
+	cQry += "   and B8.D_E_L_E_T_ = '' " + CRLF
 	if cFiltro != ''
-		cQry += cFiltro + CRLF 
+		cQry += cFiltro + CRLF
 	endif
-	cQry += "   and B8_SALDO > 0 " + CRLF 
+	cQry += "   and B8_SALDO > 0 " + CRLF
 
 	nRet := MPSysExecScalar(cQry,"SALDO")
 

@@ -323,7 +323,7 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
 
             cQry := "SELECT MAX(ZWS_CODIGO) AS ZWS_CODIGO FROM "+RetSqlName("ZWS")+" (nolock) WHERE D_E_L_E_T_ = ' '"
             cCod := StrZero(Val(MpSySExecScalar( cQry , "ZWS_CODIGO")) + 1,TamSx3("ZWS_CODIGO")[1])
-            // Gravao dos dados
+            // Gravacao dos dados
             RecLock("ZWS", .T.)
                 ZWS->ZWS_CODIGO := cCod
                 ZWS->ZWS_TIPO   := "J"

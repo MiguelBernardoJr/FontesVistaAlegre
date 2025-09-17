@@ -4,7 +4,7 @@
     MB : 29/08/2025
         -> Atualizar Tabela Z0O
 */
-User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
+User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' ) // U_VATRTMB1()
 
     Local cAliasF      := GetNextAlias()
     Local cZ0OAlias    := ""
@@ -12,245 +12,22 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
     Local cCopy        := {}
     Local lDivergencia := .F.
     Local nI           := 0
-    Local nCMS_Prev    := GetMV( 'MB_CMDPREV' ,, 2.1)
-    Local nGordura     := GetMV( 'MB_GORDURA' ,, 27)
+    Local nCMS_Prev    := 0
+    Local nGordura     := 0
 
     Default cLote      := ""
 
-    // 1a. versao
-    // _cQry := ""
-    // _cQry += " WITH PorLote AS ( " + CRLF
-    // _cQry += "   SELECT " + CRLF
-    // _cQry += "     SB8.B8_FILIAL AS Filial, " + CRLF
-    // _cQry += "     SB8.B8_X_CURRA AS Curral, " + CRLF
-    // _cQry += "     SB8.B8_LOTECTL AS Lote, " + CRLF
-    // _cQry += "     SB8.B8_XDATACO, " + CRLF
-    // _cQry += "     SUM(SB8.B8_SALDO) AS TotalQtde, " + CRLF
-    // _cQry += "     SUM(SB8.B8_SALDO * SB8.B8_XPESOCO) * 1.0 / NULLIF(SUM(SB8.B8_SALDO), 0) AS PesoMedio " + CRLF
-    // _cQry += "   FROM " + RetSqlName('SB8') + " (NOLOCK) SB8 " + CRLF
-    // _cQry += "   JOIN " + RetSqlName('SB1') + " (NOLOCK) SB1  " + CRLF
-    // _cQry += "     ON SB1.B1_COD      = SB8.B8_PRODUTO " + CRLF
-    // _cQry += "    AND SB1.D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "   WHERE SB8.D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "     AND SB8.B8_LOTECTL IN ( " + CRLF
-    // _cQry += "                                     SELECT  DISTINCT B8_LOTECTL " + CRLF
-    // _cQry += "                                     FROM    " + RetSqlName('SB8') + " (NOLOCK) SB8 " + CRLF
-    // _cQry += "                                     WHERE    " + CRLF
-    // _cQry += "                                             -- B8_FILIAL = '0101001' AND " + CRLF
-    // _cQry += "                                             B8_X_CURRA <> ' ' AND " + CRLF
-    // _cQry += "                                             B8_SALDO   >  0 AND " + CRLF
-    // _cQry += "                                             D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "     ) " + CRLF
-    // _cQry += "   GROUP BY SB8.B8_FILIAL, SB8.B8_X_CURRA, SB8.B8_LOTECTL, SB8.B8_XDATACO " + CRLF
-    // _cQry += " ), " + CRLF
-    // _cQry += " PorLoteSexo AS ( " + CRLF
-    // _cQry += "   SELECT " + CRLF
-    // _cQry += "     SB8.B8_X_CURRA AS Curral, " + CRLF
-    // _cQry += "     SB8.B8_LOTECTL AS Lote, " + CRLF
-    // _cQry += "     SB1.B1_X_SEXO  AS Sexo, " + CRLF
-    // _cQry += "     SB1.B1_XRACA  AS Raca, " + CRLF
-    // _cQry += "     SUM(SB8.B8_SALDO) AS Quantos, " + CRLF
-    // _cQry += "     ROW_NUMBER() OVER ( " + CRLF
-    // _cQry += "       PARTITION BY SB8.B8_LOTECTL  " + CRLF
-    // _cQry += "       ORDER BY SUM(SB8.B8_SALDO) DESC, " + CRLF
-    // _cQry += "                CASE WHEN SB1.B1_X_SEXO = 'MACHO' THEN 0 ELSE 1 END " + CRLF
-    // _cQry += "     ) AS rn " + CRLF
-    // _cQry += "   FROM " + RetSqlName('SB8') + " (NOLOCK) SB8 " + CRLF
-    // _cQry += "   JOIN " + RetSqlName('SB1') + " (NOLOCK) SB1  " + CRLF
-    // _cQry += "     ON SB1.B1_COD      = SB8.B8_PRODUTO " + CRLF
-    // _cQry += "    AND SB1.D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "   WHERE SB8.D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "     AND SB8.B8_LOTECTL IN ( " + CRLF
-    // _cQry += "                                     SELECT  DISTINCT B8_LOTECTL " + CRLF
-    // _cQry += "                                     FROM    " + RetSqlName('SB8') + " (NOLOCK) SB8 " + CRLF
-    // _cQry += "                                     WHERE    " + CRLF
-    // _cQry += "                                             -- B8_FILIAL = '0101001' AND " + CRLF
-    // _cQry += "                                             B8_X_CURRA <> ' ' AND " + CRLF
-    // _cQry += "                                             B8_SALDO   >  0 AND " + CRLF
-    // _cQry += "                                             D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "     ) " + CRLF
-    // _cQry += "   GROUP BY SB8.B8_X_CURRA, SB8.B8_LOTECTL, SB1.B1_X_SEXO, SB1.B1_XRACA " + CRLF
-    // _cQry += " ) " + CRLF
-    // _cQry += " --SELECT * FROM PorLoteSexo " + CRLF
-    // _cQry += " ,SB8_CTE AS ( " + CRLF
-    // _cQry += " SELECT  " + CRLF
-    // _cQry += "   p.Filial, " + CRLF
-    // _cQry += "   p.Curral, " + CRLF
-    // _cQry += "   p.Lote, " + CRLF
-    // _cQry += "   pls.Sexo, " + CRLF
-    // _cQry += "   pls.Raca, " + CRLF
-    // _cQry += "   p.TotalQtde AS QtdeAnimais, " + CRLF
-    // _cQry += "   B8_XDATACO, " + CRLF
-    // _cQry += "   ROUND(p.PesoMedio, 2) AS PesoMedioInicial " + CRLF
-    // _cQry += " FROM PorLote p " + CRLF
-    // _cQry += " JOIN PorLoteSexo pls  " + CRLF
-    // _cQry += "   ON p.Lote = pls.Lote " + CRLF
-    // _cQry += "   AND pls.rn = 1 " + CRLF
-    // _cQry += " ) " + CRLF
-    // _cQry += " --SELECT * FROM SB8_CTE " + CRLF
-    // _cQry += " , BASE AS ( " + CRLF
-    // _cQry += "         SELECT DISTINCT " + CRLF
-    // _cQry += "         -- Z05_FILIAL              AS Filial, " + CRLF
-    // _cQry += "         sb.Filial, " + CRLF
-    // _cQry += "         sb.Curral, " + CRLF
-    // _cQry += "         sb.Lote, " + CRLF
-    // _cQry += "         -- z05.Z05_CURRAL          AS Curral, " + CRLF
-    // _cQry += "         -- z05.Z05_LOTE            AS Lote, " + CRLF
-    // _cQry += "         Sexo, " + CRLF
-    // _cQry += "         Raca, " + CRLF
-    // _cQry += "         B8_XDATACO, " + CRLF
-    // _cQry += "         sb.PesoMedioInicial, " + CRLF
-    // _cQry += "         ROUND(  " + CRLF
-    // _cQry += "                     -- (z05.Z05_CMSPN/100)  " + CRLF
-    // _cQry += "                     -- (2.1/100) -- este vai ser levado para :PARAMETRO: " + CRLF
-    // _cQry += "                     (" + cValToChar(nCMS_Prev) + "/100) " + CRLF
-    // _cQry += "                     *  " + CRLF
-    // _cQry += "                     ROUND( " + CRLF
-    // _cQry += "                         (sb.PesoMedioInicial +  " + CRLF
-    // _cQry += "                         ((509.6 + (0.4697 * (sb.PesoMedioInicial * 0.96)) - (46.54 * ROUND(CASE WHEN sb.Sexo IN ('MACHO','INTEIRO') THEN -0.12 ELSE 0 END + 1.33 + (0.0036 * (sb.PesoMedioInicial * 0.96)),6))) * (" + cValToChar(nGordura/100) + "/0.28) + " + CRLF
-    // _cQry += "                         CASE " + CRLF
-    // _cQry += " 							CASE " + CRLF
-    // _cQry += " 							WHEN sb.PesoMedioInicial = 0 THEN 0 " + CRLF
-    // _cQry += " 							WHEN sb.PesoMedioInicial/30.0 <= 11 THEN 4 " + CRLF
-    // _cQry += " 							WHEN sb.PesoMedioInicial/30.0 <= 13 THEN 5 " + CRLF
-    // _cQry += " 							WHEN sb.PesoMedioInicial/30.0 <= 15 THEN 6 " + CRLF
-    // _cQry += " 							WHEN sb.PesoMedioInicial/30.0 <= 17 THEN 7 " + CRLF
-    // _cQry += " 							ELSE 8 " + CRLF
-    // _cQry += " 						END  " + CRLF
-    // _cQry += " 						WHEN 4 THEN -33.2 " + CRLF
-    // _cQry += " 						WHEN 5 THEN 0 " + CRLF
-    // _cQry += " 						WHEN 6 THEN 33.2 " + CRLF
-    // _cQry += " 						WHEN 7 THEN 66.4 " + CRLF
-    // _cQry += " 						WHEN 8 THEN 99.6 " + CRLF
-    // _cQry += " 						END ) " + CRLF
-    // _cQry += "                         ) / 2.0 " + CRLF
-    // _cQry += "                     ,2) " + CRLF
-    // _cQry += "                     -- z05.Z05_PESMAT  " + CRLF
-    // _cQry += "                     * sg.G1_ENERG, 2) AS KgMcalPrevisao, " + CRLF
-    // _cQry += CRLF
-    // _cQry += "         CASE " + CRLF
-    // _cQry += "             WHEN sb.PesoMedioInicial = 0 THEN 0 " + CRLF
-    // _cQry += "             WHEN sb.PesoMedioInicial/30.0 <= 11 THEN 4 " + CRLF
-    // _cQry += "             WHEN sb.PesoMedioInicial/30.0 <= 13 THEN 5 " + CRLF
-    // _cQry += "             WHEN sb.PesoMedioInicial/30.0 <= 15 THEN 6 " + CRLF
-    // _cQry += "             WHEN sb.PesoMedioInicial/30.0 <= 17 THEN 7 " + CRLF
-    // _cQry += "             ELSE 8 " + CRLF
-    // _cQry += "         END AS Tamanho, " + CRLF
-    // _cQry += "  " + CRLF
-    // _cQry += "         ROUND( " + CRLF
-    // _cQry += "                 CASE WHEN sb.Sexo IN ('MACHO','INTEIRO')  " + CRLF
-    // _cQry += "                 THEN -0.12  " + CRLF
-    // _cQry += "                 ELSE 0  " + CRLF
-    // _cQry += "                 END  " + CRLF
-    // _cQry += "                 + 1.33 + (0.0036 * (sb.PesoMedioInicial * 0.96)) " + CRLF
-    // _cQry += "         , 2) AS FS, " + CRLF
-    // _cQry += "         ROUND( " + CRLF
-    // _cQry += "             -- primeiro CASE: baseado no Sexo " + CRLF
-    // _cQry += "             CASE " + CRLF
-    // _cQry += "             WHEN sb.Sexo = 'FEMEA' THEN " + CRLF
-    // _cQry += "                 ( " + CRLF
-    // _cQry += "                 ( " + CRLF
-    // _cQry += "                     551.5 " + CRLF
-    // _cQry += "                     - 0.2482 * (sb.PesoMedioInicial * 0.96) " + CRLF
-    // _cQry += "                     + 0.00119 * POWER(sb.PesoMedioInicial * 0.96, 2) " + CRLF
-    // _cQry += "                     - 39.84 * ROUND(CASE WHEN sb.Sexo IN ('MACHO','INTEIRO') THEN -0.12 ELSE 0 END + 1.33 + (0.0036 * (sb.PesoMedioInicial * 0.96)),6) " + CRLF
-    // _cQry += "                 ) " + CRLF
-    // _cQry += "                 * (" + cValToChar(nGordura/100) + " / 0.28) " + CRLF
-    // _cQry += "                 ) " + CRLF
-    // _cQry += "             WHEN sb.Sexo IN ( 'MACHO', 'INTEIRO', 'CAPAO','CASTRADO' ) THEN " + CRLF
-    // _cQry += "                 ( " + CRLF
-    // _cQry += "                 ( " + CRLF
-    // _cQry += "                     509.6 " + CRLF
-    // _cQry += "                     + 0.4697 * (sb.PesoMedioInicial * 0.96) " + CRLF
-    // _cQry += "                     - 46.54 * ROUND(CASE WHEN sb.Sexo IN ('MACHO','INTEIRO') THEN -0.12 ELSE 0 END + 1.33 + (0.0036 * (sb.PesoMedioInicial * 0.96)),6) " + CRLF
-    // _cQry += "                 ) " + CRLF
-    // _cQry += "                 * (" + cValToChar(nGordura/100) + " / 0.28) " + CRLF
-    // _cQry += "                 ) " + CRLF
-    // _cQry += "             ELSE " + CRLF
-    // _cQry += "                 NULL " + CRLF
-    // _cQry += "             END " + CRLF
-    // _cQry += "             + " + CRLF
-    // _cQry += "             -- segundo CASE: ajuste por tamanho (dias de cocho) " + CRLF
-    // _cQry += "             CASE " + CRLF
-    // _cQry += " 				CASE " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial = 0 THEN 0 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 11 THEN 4 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 13 THEN 5 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 15 THEN 6 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 17 THEN 7 " + CRLF
-    // _cQry += " 				ELSE 8 " + CRLF
-    // _cQry += " 			END  " + CRLF
-    // _cQry += " 			WHEN 4 THEN -33.2 " + CRLF
-    // _cQry += " 			WHEN 5 THEN 0 " + CRLF
-    // _cQry += " 			WHEN 6 THEN 33.2 " + CRLF
-    // _cQry += " 			WHEN 7 THEN 66.4 " + CRLF
-    // _cQry += " 			WHEN 8 THEN 99.6 " + CRLF
-    // _cQry += " 			END  " + CRLF
-    // _cQry += "         , 2) AS PesoFinalPrevisto, " + CRLF
-    // _cQry += "  " + CRLF
-    // _cQry += "         ROUND( " + CRLF
-    // _cQry += "             (sb.PesoMedioInicial +  " + CRLF
-    // _cQry += "             ((509.6 + (0.4697 * (sb.PesoMedioInicial * 0.96)) - (46.54 * ROUND(CASE WHEN sb.Sexo IN ('MACHO','INTEIRO') THEN -0.12 ELSE 0 END + 1.33 + (0.0036 * (sb.PesoMedioInicial * 0.96)),6))) * (" + cValToChar(nGordura/100) + "/0.28) + " + CRLF
-    // _cQry += "             CASE " + CRLF
-    // _cQry += " 				CASE " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial = 0 THEN 0 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 11 THEN 4 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 13 THEN 5 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 15 THEN 6 " + CRLF
-    // _cQry += " 				WHEN sb.PesoMedioInicial/30.0 <= 17 THEN 7 " + CRLF
-    // _cQry += " 				ELSE 8 " + CRLF
-    // _cQry += " 			END  " + CRLF
-    // _cQry += " 			WHEN 4 THEN -33.2 " + CRLF
-    // _cQry += " 			WHEN 5 THEN 0 " + CRLF
-    // _cQry += " 			WHEN 6 THEN 33.2 " + CRLF
-    // _cQry += " 			WHEN 7 THEN 66.4 " + CRLF
-    // _cQry += " 			WHEN 8 THEN 99.6 " + CRLF
-    // _cQry += " 			END ) " + CRLF
-    // _cQry += "             ) / 2.0 " + CRLF
-    // _cQry += "         ,2) AS PesoMedio " + CRLF
-    // _cQry += " 		, G1_ENERG Energia " + CRLF
-    // _cQry += " 		  FROM  SB8_CTE AS sb
-    // _cQry += "         -- FROM " + RetSqlName('Z05') + " (NOLOCK) AS z05 " + CRLF
-    // _cQry += "         -- INNER JOIN SB8_CTE AS sb  " + CRLF
-    // _cQry += "         --     ON sb.Lote = z05.Z05_LOTE " + CRLF
-    // _cQry += "         INNER JOIN " + RetSqlName('SG1') + " (NOLOCK) AS sg " + CRLF
-    // _cQry += "             ON sg.G1_COD = 'FINAL' -- z05.Z05_DIETA " + CRLF
-    // _cQry += "         --AND sg.G1_SEQ = '5181' " + CRLF
-    // _cQry += "         AND sg.D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "         -- WHERE z05.D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "         -- AND z05.Z05_DATA = CONVERT(date, GETDATE()) " + CRLF
-    // _cQry += "         -- AND z05.Z05_LOTE IN ( " + CRLF
-    // _cQry += "         WHERE sb.Lote IN (
-    // _cQry += "                                     SELECT  DISTINCT B8_LOTECTL " + CRLF
-    // _cQry += "                                     FROM    " + RetSqlName('SB8') + " (NOLOCK) SB8 " + CRLF
-    // _cQry += "                                     WHERE    " + CRLF
-    // _cQry += "                                             -- B8_FILIAL = '0101001' AND " + CRLF
-    // _cQry += "                                             B8_X_CURRA <> ' ' AND " + CRLF
-    // _cQry += "                                             B8_SALDO   >  0 AND " + CRLF
-    // _cQry += "                                             D_E_L_E_T_ = ' ' " + CRLF
-    // _cQry += "         ) " + CRLF
-    // _cQry += " ) " + CRLF
-    // _cQry += " --SELECT * FROM BASE  " + CRLF
-    // _cQry += " SELECT  " + CRLF
-    // _cQry += "         rTrim(Filial) AS FILIAL,  " + CRLF
-    // _cQry += "         rTrim(Curral) AS CURRAL,  " + CRLF
-    // _cQry += "         rTrim(Lote)   AS LOTE,  " + CRLF
-    // _cQry += "         CASE  " + CRLF
-    // _cQry += "             WHEN rTrim(Sexo) = 'MACHO'  THEN 'Inteiro' " + CRLF
-    // _cQry += "             WHEN rTrim(Sexo) = 'FEMEA'  THEN 'Femea' " + CRLF
-    // _cQry += "             WHEN rTrim(Sexo) = 'CAPAO'  THEN 'Castrado' " + CRLF
-    // _cQry += "             ELSE 'OUTRO' " + CRLF
-    // _cQry += "         END AS SEXO, " + CRLF
-    // _cQry += "         rTrim(Raca) AS Raca, " + CRLF
-    // _cQry += "         B8_XDATACO, " + CRLF
-    // _cQry += "         PesoMedioInicial AS B8_XPESOCO_PesoMedioInicial,  " + CRLF
-    // _cQry += "         PesoFinalPrevisto AS Z0O_PESOPR_PesoFinalPrevisto, " + CRLF
-    // _cQry += "         PesoMedio AS Z0O_PESO_PesoMedio, " + CRLF
-    // _cQry += "         KgMcalPrevisao AS Z0O_MCALPR_KgMcalPrevisao,  " + CRLF
-    // _cQry += "         Tamanho AS Z0O_TAMCAR_Tamanho,  " + CRLF
-    // _cQry += "         FS AS Z0O_FS, " + CRLF
-    // _cQry += " 		   Energia " + CRLF
-    // _cQry += " FROM BASE  " + CRLF
+    If Type("cFilAnt") == "C" .and. TCIsConnected()
+        ConOut("Ambiente Protheus aberto e pronto para uso")
+    Else
+        RpcSetEnv( "01", "0101001" ) //Abro o ambiente, pois o mesmo não encontrava-se aberto
+        ConOut("Setando ambiente")
+        cEmpAnt:= FWCodEmp()
+    EndIf
+    ConOut("Empresa logada: " + cEmpAnt)
+
+    nCMS_Prev    := GetMV( 'MB_CMDPREV' ,, 2.1)
+    nGordura     := GetMV( 'MB_GORDURA' ,, 27)
 
     // 2a. versao
     _cQry := ""
@@ -527,6 +304,8 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
 
     While !(cAliasF)->(EOF())
 
+        cHtml += "<tr><td>" + (cAliasF)->FILIAL + "</td><td>" + (cAliasF)->CURRAL + "</td><td>" + (cAliasF)->LOTE + "</td></tr>"
+
         _cQry := ""+;
             " SELECT 		R_E_C_N_O_  RECNO, *  " + CRLF +;
             " FROM 		" + RetSqlName('Z0O') + CRLF +;
@@ -547,13 +326,7 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
         If !(cZ0OAlias)->(EOF())
 
             Z0O->(DbGoTo( (cZ0OAlias)->RECNO ))
-            /*
-            lDivergencia := Z0O->Z0O_PESOPR <> (cAliasF)->Z0O_PESOPR_PesoFinalPrevisto .OR.;
-                Z0O->Z0O_PESO   <> (cAliasF)->Z0O_PESO_PesoMedio .OR.;
-                Z0O->Z0O_MCALPR <> (cAliasF)->Z0O_MCALPR_KgMcalPrevisao .OR.;
-                Z0O->Z0O_TAMCAR <> (cAliasF)->Z0O_TAMCAR_Tamanho .OR.;
-                Z0O->Z0O_FS     <> (cAliasF)->Z0O_FS
-            */
+
             lDivergencia := Z0O->Z0O_PESOIN <> (cAliasF)->B8_XPESOCO_PesoMedioInicial .OR.;
                 Z0O->Z0O_ENERGI <> (cAliasF)->Energia .OR.;
                 Z0O->Z0O_CMSPRE <> nCMS_Prev
@@ -591,7 +364,7 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
             EndIf
 
         Else
-        
+
             // U_VATRTMB1()      // U_VATRTMB1( '1-40' )
             RecLock( 'Z0O', .T.)
             Z0O->Z0O_FILIAL := xFilial('Z0O')
@@ -611,7 +384,7 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
             Z0O->Z0O_SEXO   := IIF( AllTrim((cAliasF)->SEXO) == "Inteiro", "M", IIF( AllTrim((cAliasF)->SEXO) == "Femea", "F", "C" ) )
             Z0O->Z0O_GORDUR := nGordura
             Z0O->Z0O_RACA   := (cAliasF)->Raca
-            
+
             If AllTrim((cAliasF)->Raca) == "ANGUS"
                 Z0O->Z0O_MCAPV := 6.23
             ElseIf AllTrim((cAliasF)->SEXO) == "Inteiro"
@@ -627,7 +400,7 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' )
             Else
                 Z0O->Z0O_GMD    := 1.4
             EndIf
-            
+
             Z0O->(MsUnLock())
         EndIf
         (cZ0OAlias)->(dbCloseArea())

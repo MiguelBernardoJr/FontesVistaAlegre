@@ -119,6 +119,7 @@ User Function MNTR675(lVPERG, cDEPLANO, cATEPLANO, aMATOS, nTipo, avMatSX1, nRec
 
 	oFontPN := TFont():New("Courier New",13,13,,.T.,,,,.F.,.F.)
 	oFontMN := TFont():New("Courier New",18,18,,.T.,,,,.F.,.F.)
+	oFontMM := TFont():New("Courier New",16,16,,.T.,,,,.F.,.F.)
 	oFontGN := TFont():New("Courier New",20,20,,.T.,,,,.F.,.F.)
 
 	/*
@@ -1388,6 +1389,14 @@ User Function RW675Imp( oPrint, cDEPLANO, cATEPLANO, aMATOS, nRecOS, cAls990 )
 			MNTW675Somal(oPrint)
 
 			oPrint:Say(li,nHorz+15 ,SubStr(STR0043,2,Len(STR0043)-2),oFonTPN)
+			
+			MNTW675Somal(oPrint)
+			MNTW675Somal(oPrint)
+			MNTW675Somal(oPrint)
+			MNTW675Somal(oPrint)
+
+			//oPrint:Say(li,nHorz+15 ,SubStr(STR0043,2,Len(STR0043)-2),oFonTPN)
+			oPrint:Say(li,nHorz+15,"      (  ) ENCERRADA   (  ) ANDAMENTO    (  ) INTERROMPIDO  ",oFontMM)
 
 			If lMNTR675G //Parâmetro {1} indica que o relatório é do MNTR675
 				ExecBlock("MNTR675G",.F.,.F.,{1})
@@ -2651,6 +2660,8 @@ Static Function R675Imp( lEnd, wnRel, titulo, tamanho, cDEPLANO, cATEPLANO,;
 				ExecBlock("MNTR6751",.F.,.F.)
 			EndIf
 
+			U_SomaR765()
+			@ Li,000 Psay "|       (  ) ENCERRADA          (  ) ANDAMENTO         (  ) INTERROMPIDO       |"
 			U_SomaR765()
 
 			li := 80

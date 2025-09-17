@@ -61,7 +61,7 @@ User Function VAMT140TOK(nStep) //U_VAMT140TOK()
 
             nIdMessage := oBotAlmoxarifado:EditMessage( SF1->F1_IDALMOX, _cMsg ,.T. /* lHtml */ )
         elseif nStep == 3 .and. SF1->F1_IDALMOX > 0 // "Em conferencia"
-
+            
             SD1->(DBSEEK(SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
             _cMsg := MontaMensagemPortaria("Pré-Nota Recebida na Portaria!",;
                                             SF1->F1_FORNECE,;

@@ -42,7 +42,7 @@ User Function PerJob13() //U_PerJob13()
                 lRet := .f.
             endif
             
-            BEGIN TRANSACTION
+            //BEGIN TRANSACTION
                 
                 if lRet 
                     if mv_par05 == 1 // VAJOB13
@@ -123,7 +123,7 @@ User Function PerJob13() //U_PerJob13()
                     endif 
                 endif 
 
-            END TRANSACTION
+            //END TRANSACTION
         End
     EndIf
     
