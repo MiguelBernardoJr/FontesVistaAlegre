@@ -35,44 +35,46 @@ Local nPOSCOABA  := 0
 Local nRecSavSTL := 0
 
 If FunName() == "MNTA656" .and. nLanca == "Produto"
+	
+	if Type("aHeader") != "U"
 
-	nPOSNRABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_NRABAS"})
-	nPOSVUABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VUNABA"})
-	nPOSTTABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VTTABA"})
-	nPOSFORT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_FORST9"})
-	nPOSLOJT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_LOJST9"})
-	nPOSCOABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_COBABA"})
-	nRecSavSTL := STL->(Recno())
+		nPOSNRABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_NRABAS"})
+		nPOSVUABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VUNABA"})
+		nPOSTTABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VTTABA"})
+		nPOSFORT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_FORST9"})
+		nPOSLOJT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_LOJST9"})
+		nPOSCOABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_COBABA"})
+		nRecSavSTL := STL->(Recno())
 
-	For nCntFor := 1 to Len(acols)
+		For nCntFor := 1 to Len(acols)
 
-		cQuery := "SELECT STL.R_E_C_N_O_ RECSTL FROM " + RetSQLName( "STL" ) + " STL"
-		cQuery += "	 JOIN "+RetSqlName("STJ")+" STJ ON "
-		cQuery += "	     STJ.TJ_FILIAL = '"+xFilial("STJ")+ "' "
-		cQuery += "	 AND STJ.TJ_ORDEM = STL.TL_ORDEM "
-		cQuery += "	 AND STJ.TJ_PLANO = STL.TL_PLANO AND STJ.D_E_L_E_T_ = ' '"
-		cQuery += " WHERE STL.TL_FILIAL = '"+xFilial("STL")+"' 
-		cQuery += "  AND STL.TL_CODIGO = '130011' AND STL.D_E_L_E_T_ = ' ' 
-		cQuery += " AND STJ.TJ_CODBEM   = '" + aCols[nCntFor,nPOSFROTA] + "' "
-		cQuery += " AND STJ.D_E_L_E_T_ = ' ' "
-		cQuery += " AND STJ.TJ_SERVICO = 'C00014' "
-		cQuery += " ORDER BY 1 DESC"
-		DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSTL", .f., .f.)
+			cQuery := "SELECT STL.R_E_C_N_O_ RECSTL FROM " + RetSQLName( "STL" ) + " STL"
+			cQuery += "	 JOIN "+RetSqlName("STJ")+" STJ ON "
+			cQuery += "	     STJ.TJ_FILIAL = '"+xFilial("STJ")+ "' "
+			cQuery += "	 AND STJ.TJ_ORDEM = STL.TL_ORDEM "
+			cQuery += "	 AND STJ.TJ_PLANO = STL.TL_PLANO AND STJ.D_E_L_E_T_ = ' '"
+			cQuery += " WHERE STL.TL_FILIAL = '"+xFilial("STL")+"' 
+			cQuery += "  AND STL.TL_CODIGO = '130011' AND STL.D_E_L_E_T_ = ' ' 
+			cQuery += " AND STJ.TJ_CODBEM   = '" + aCols[nCntFor,nPOSFROTA] + "' "
+			cQuery += " AND STJ.D_E_L_E_T_ = ' ' "
+			cQuery += " AND STJ.TJ_SERVICO = 'C00014' "
+			cQuery += " ORDER BY 1 DESC"
+			DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSTL", .f., .f.)
 
-		If TMPSTL->( !EoF() )
-			STL->(DbGoTo(TMPSTL->(RECSTL)))
-			RecLock("STL",.f.)
-			STL->TL_NRABAS := aCols[nCntFor][nPOSNRABA]
-			STL->TL_VUNABA := aCols[nCntFor][nPOSVUABA]
-			STL->TL_VTTABA := aCols[nCntFor][nPOSTTABA]
-			STL->TL_FORST9 := aCols[nCntFor][nPOSFORT9]
-			STL->TL_LOJST9 := aCols[nCntFor][nPOSLOJT9]
-			STL->TL_COBABA := aCols[nCntFor][nPOSCOABA]
-			MsUnlock()
-		EndIf
-		TMPSTL->( dbCloseArea() )
-
-	Next
+			If TMPSTL->( !EoF() )
+				STL->(DbGoTo(TMPSTL->(RECSTL)))
+				RecLock("STL",.f.)
+				STL->TL_NRABAS := aCols[nCntFor][nPOSNRABA]
+				STL->TL_VUNABA := aCols[nCntFor][nPOSVUABA]
+				STL->TL_VTTABA := aCols[nCntFor][nPOSTTABA]
+				STL->TL_FORST9 := aCols[nCntFor][nPOSFORT9]
+				STL->TL_LOJST9 := aCols[nCntFor][nPOSLOJT9]
+				STL->TL_COBABA := aCols[nCntFor][nPOSCOABA]
+				MsUnlock()
+			EndIf
+			TMPSTL->( dbCloseArea() )
+		Next
+	EndIf
 
 Endif
 

@@ -1784,6 +1784,8 @@ static function AjuMateria(oModel)
 		Z05->Z05_MANUAL := "1"
 	Z05->(MsUnlock())
 
+	oGridZ06G:LoadValue("Z05_CMSPN" , Z05->Z05_CMSPN)
+
 	cQry := " select Z0T_ROTA " + CRLF
 	cQry += "	, Z06_TRATO " + CRLF
 	cQry += "	, SUM(Z06_KGMNT) AS Z06_KGMNT " + CRLF
@@ -3152,3 +3154,4 @@ static function procTransf()
     (cAlias)->(DbCloseArea())
     
 return nil
+

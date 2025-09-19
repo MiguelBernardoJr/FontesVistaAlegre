@@ -945,6 +945,39 @@ User Function TgPrdZ0E()
 	oGridZ0E:LoadValue('Z0E_RACA'  , SB1->B1_XRACA )
 	oGridZ0E:LoadValue('Z0E_SEXO'  , SB1->B1_X_SEXO )
 Return cRetorno
+ /*--------------------------------------------------------------------------------,
+ | Analista : Igor Gomes Oliveira			                                       |
+ | Data		: 19.09.2025                                                           |
+ | Cliente  : V@                                                                   |
+ | Desc		: Regra para pegar o mesmo XDataCo caso o manejo seja de Recepção 	   |
+ | para Recepção                                                                   |
+ |---------------------------------------------------------------------------------|
+ | Regras   :                                                                      |
+ |                                                                                 |
+ |---------------------------------------------------------------------------------|
+ | Obs.     :                                                                      |
+ '--------------------------------------------------------------------------------*/
+
+User Function TgCurZ0E()
+	local oModel    := FWModelActive()
+	Local oGridZ0D  := oModel:GetModel( 'Z0DDETAIL' )
+	Local oGridZ0E  := oModel:GetModel( 'Z0EDETAIL' )
+	Local dRetorno  := oGridZ0E:GetValue("Z0E_DATACO")
+	Local cQry 		:= ""
+
+	IF "RP" $ Alltrim(oGridZ0D:GetValue("Z0D_CURRAL")) .and. "RP" $ Alltrim(oGridZ0E:GetValue("Z0E_CURRAL")) 
+		cQry := "SELECT TOP 1 B8_XDATACO FROM "+RetSqlName("SB8")+""  + CRLF
+		cQry +=	"WHERE B8_LOTECTL = '"+oGridZ0D:GetValue("Z0D_LOTE")+"' " + CRLF
+		cQry +=	"AND B8_X_CURRA = '"+oGridZ0D:GetValue("Z0D_CURRAL")+"' " + CRLF
+		cQry +=	"AND B8_FILIAL = '"+FWxFilial("SB8")+"' " + CRLF
+		cQry +=	"AND B8_SALDO > 0  " + CRLF
+		cQry +=	"AND D_E_L_E_T_ = '' " + CRLF
+		cQry +=	"GROUP BY B8_XDATACO"  + CRLF
+
+		dRetorno := sToD(MPSysExecScalar(cQry,"B8_XDATACO"))
+		
+	ENDIF
+Return dRetorno
 
 // ======================================================================================= //
 Static Function ModelDef()
@@ -965,9 +998,10 @@ Static Function ModelDef()
 	Next nI 
 
 	aTrigger := {}
-	aAdd(aTrigger, FwStruTrigger("Z0E_LOTE" ,"Z0E_LOTE" ,"U_TgLotZ0E()",.F.,"" ,0 ,"" ,NIL,"04" )) 
-	aAdd(aTrigger, FwStruTrigger("Z0E_RACA" ,"Z0E_RACA" ,"U_TgRacZ0E()",.F.,"" ,0 ,"" ,NIL,"03" )) 
-	aAdd(aTrigger, FwStruTrigger("Z0E_PROD" ,"Z0E_DESC" ,"U_TgPrdZ0E()",.F.,"" ,0 ,"" ,NIL,"05" ))
+	aAdd(aTrigger, FwStruTrigger("Z0E_LOTE"   ,"Z0E_LOTE"   ,"U_TgLotZ0E()",.F.,"" ,0 ,"" ,NIL,"04" )) 
+	aAdd(aTrigger, FwStruTrigger("Z0E_RACA"   ,"Z0E_RACA"   ,"U_TgRacZ0E()",.F.,"" ,0 ,"" ,NIL,"03" )) 
+	aAdd(aTrigger, FwStruTrigger("Z0E_PROD"   ,"Z0E_DESC"   ,"U_TgPrdZ0E()",.F.,"" ,0 ,"" ,NIL,"05" ))
+	aAdd(aTrigger, FwStruTrigger("Z0E_CURRAL" ,"Z0E_DATACO" ,"U_TgCurZ0E()",.F.,"" ,0 ,"" ,NIL,"05" ))
 	
 	For nI := 1 To Len(aTrigger)
 		oStruZ0E:AddTrigger(aTrigger[nI,1], aTrigger[nI,2], aTrigger[nI,3], aTrigger[nI,4])
