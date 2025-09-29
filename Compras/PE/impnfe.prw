@@ -321,9 +321,9 @@ User Function MT140SAI()
     if lAtivo
         // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
         U_GTPE016()
-    endif 
+    endif
     
-    if Type("oGetDados") == "O".and. oGetDados:nOpc == 3 .or.  oGetDados:nOpc == 4
+    if Type("oGetDados") == "O" .and. (oGetDados:nOpc == 3 .or.  oGetDados:nOpc == 4)
         U_VAMT140TOK(1)
     elseif Type("oGetDados") == "O".and. oGetDados:nOpc == 5 
         U_VAMT140TOK(99)

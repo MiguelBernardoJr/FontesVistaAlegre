@@ -85,15 +85,15 @@ Return
  | Func: DocEmail                                                                 |
  | Desc: Envia um e-mail formatado com os detalhes da alteração do parâmetro.    |
  '--------------------------------------------------------------------------------*/
-Static Function DocEmail(cOperadoresAnt, cOperadoresNov)
+Static Function DocEmail(cOpAnt, cOpNov)
 	
 	Local xAssunto  := "Alteração do Parâmetro de Operadores (MV_OPERADO)"
 	Local xHTM		:= ""
 	Local cTitulo   := "Alteração do Parâmetro de Operadores do Sistema"
 	
 	//-- Array com operadores antigos e novos
-	Local aOperAnt  := StrTokArr(cOperadoresAnt + ";", ";")
-	Local aOperNov  := StrTokArr(cOperadoresNov + ";", ";")
+	Local aOperAnt  := StrTokArr(cOpAnt + ";", ";")
+	Local aOperNov  := StrTokArr(cOpNov + ";", ";")
 
 	//-- Busca os nomes dos operadores para enriquecer o e-mail
 	Local cNomeOp1Ant := AllTrim(Posicione("Z0U", 1, xFilial("Z0U") + aOperAnt[1], "Z0U_NOME"))
@@ -102,6 +102,8 @@ Static Function DocEmail(cOperadoresAnt, cOperadoresNov)
 	Local cNomeOp2Nov := AllTrim(Posicione("Z0U", 1, xFilial("Z0U") + aOperNov[2], "Z0U_NOME"))
 	
 	//-- Lista de e-mails que receberão a notificação
+	//Local xEmail	:= "igor.oliveira@vistaalegre.agr.br"
+	//Local cCc 		:= ""
 	Local xEmail	:= "ricardo.cristofano@vistaalegre.agr.br"
 	Local cCc 		:= "ana.lima@vistaalegre.agr.br,lorrayne.teles@vistaalegre.agr.br"
 

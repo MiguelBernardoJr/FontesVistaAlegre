@@ -8,7 +8,7 @@
 namespace custom.VAPCPA17
 
 static aCpoMdRot    := { "Z0T_ROTA"	,"Z06_TRATO" ,"Z06_KGMNT"}
-static aCpoGridZ06G := { "Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT","Z0I_NOTTAR","Z0I_NOTMAN","Z05_PROGANT","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z05_TOTMSC","Z0T_ROTA","XX5_PVATU","Z05_NROTRA","Z05_CMSPN"}
+static aCpoGridZ06G := { "XX5_LEGEND","Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT","Z0I_NOTTAR","Z0I_NOTMAN","Z05_PROGANT","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z05_TOTMSC","Z0T_ROTA","XX5_PVATU","Z05_NROTRA","Z05_CMSPN"}
 static aCpoMdZ06D   := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE","Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
 static aCpoMdZ05G   := { "Z05_DATA"	,"Z05_DIETA" ,"Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
 static aCpoMdRt1    := { "Z0S_EQUIP"  ,"ZV0_DESC"  ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
@@ -258,7 +258,7 @@ user function ViewDef() as object
 	oView:SetOwnerView("VwGridZ06D"  	, "LOTES_CENTER"	) //Relação de Tratos
 	oView:SetOwnerView("VwKgTot2" 		, "LOTES_CIMA"  	) //Totais por Lote
 	oView:SetOwnerView("VwGridZ05G" 	, "LOTES_BAIXO" 	) //Programação anterior
-	oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO_DIR"		) //Totais por Rota
+	oView:SetOwnerView("VwKgTot1"    	, "PROGR_BAIXO_DIR"	) //Totais por Rota
 
 	oView:SetNoInsertLine("VwGridZ06G")
 	oView:SetNoDeleteLine("VwGridZ06G")
@@ -763,7 +763,23 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
                  .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                  .T.)                           // [14]  L   Indica se o campo é virtual
-        Elseif aCampos[nI]$"XX5_KGMSDI" 
+        Elseif aCampos[nI]$"XX5_LEGEND" 
+            oStruct:AddField(;
+                 "",;               			// [01]  C   Titulo do campo
+                 "",;  							// [02]  C   ToolTip do campo
+                 aCampos[nI],;                  // [03]  C   Id do Field
+                 "C",;                          // [04]  C   Tipo do campo
+                 50,;							// [05]  N   Tamanho do campo
+                 0,;                           	// [06]  N   Decimal do campo
+                 nil,;                          // [07]  B   Code-block de validação do campo
+                 nil,;                          // [08]  B   Code-block de validação When do campo
+                 nil,;                          // [09]  A   Lista de valores permitido do campo
+                 .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
+                 NIL,;                          // [11]  B   Code-block de inicializacao do campo
+                 .F.,;                          // [12]  L   Indica se trata-se de um campo chave
+                 .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
+                 .T.)                           // [14]  L   Indica se o campo é virtual
+        Elseif aCampos[nI]$"XX5_KGMSDI"
             oStruct:AddField(;
                  "Tot Ms Infor",;               	// [01]  C   Titulo do campo
                  "Tot Ms Infor",;  				// [02]  C   ToolTip do campo
@@ -868,10 +884,10 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 	
 	if nOpc == 1
 		aCampos := aClone(aCpoGridZ06G)
-		aOrdem := {{"Z05_CURRAL","01"},{"Z06_LOTE","02"}, {"Z05_CABECA","03"}, {"Z05_DIASDI","04"}, {"Z05_PESMAT","05"}, {"Z0I_NOTTAR","06"}, {"Z0I_NOTMAN","07"},  {"Z05_PROGANT","08"}, {"XX5_KGMSDI","09"}, {"Z06_DIETA","11"},{"Z05_NROTRA","12"}, {"Z05_TOTMNC","13"}, {"Z05_TOTMSC","14"}, {"XX5_PVATU","10"}}
+		aOrdem := {{"XX5_LEGEND","01"},{"Z05_CURRAL","02"},{"Z06_LOTE","03"}, {"Z05_CABECA","04"}, {"Z05_DIASDI","05"}, {"Z05_PESMAT","06"}, {"Z0I_NOTTAR","07"}, {"Z0I_NOTMAN","08"},  {"Z05_PROGANT","09"}, {"XX5_KGMSDI","10"}, {"Z06_DIETA","12"},{"Z05_NROTRA","13"}, {"Z05_TOTMNC","14"}, {"Z05_TOTMSC","15"}, {"XX5_PVATU","11"}}
 	else
 		aCampos := aClone(aCpoMdZ06D)
-		aOrdem := {{"Z06_TRATO",1},{"Z06_CURRAL",2}, {"Z06_LOTE",3}, {"Z06_DIETA",4}, {"Z06_KGMSTR",5}, {"Z06_KGMNTR",6}, {"Z06_MEGCAL",7}, {"Z06_KGMNT",8}}
+		aOrdem := {{"Z06_TRATO","1"},{"Z06_CURRAL","2"}, {"Z06_LOTE","3"}, {"Z06_DIETA","4"}, {"Z06_KGMSTR","5"}, {"Z06_KGMNTR","6"}, {"Z06_MEGCAL","7"}, {"Z06_KGMNT","8"}}
 	endif
 	
 	DbSelectArea("SX3")
@@ -899,6 +915,27 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
 				nil,;                           // [15]  C   Inicializador de Browse
 				nil,;                           // [16]  L   Indica se o campo é virtual
+				nil,;                           // [17]  C   Picture Variável
+				nil;                            // [18]  L   Indica pulo de linha após o campo
+			)
+		elseif aOrdem[nI,1]$"XX5_LEGEND"
+			oStruct:AddField(;
+				aOrdem[nI,1],;                  // [01]  C   Nome do Campo
+				cValToChar(aOrdem[nI,2]),; 		// [02]  C   Ordem
+				"",;                			// [03]  C   Titulo do campo
+				"",;	   						// [04]  C   Descricao do campo
+				{ 'Legenda' },;                 // [05]  A   Array com Help
+				"C",;                           // [06]  C   Tipo do campo
+				"@BMP",;                        // [07]  C   Picture
+				nil,;                           // [08]  B   Bloco de PictTre Var
+				nil,;                           // [09]  C   Consulta F3
+				.F.,;                           // [10]  L   Indica se o campo é alteravel
+				nil,;                           // [11]  C   Pasta do campo
+				nil,;                           // [12]  C   Agrupamento do campo
+				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
+				nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
+				nil,;                           // [15]  C   Inicializador de Browse
+				.T.,;                           // [16]  L   Indica se o campo é virtual
 				nil,;                           // [17]  C   Picture Variável
 				nil;                            // [18]  L   Indica pulo de linha após o campo
 			)
@@ -1036,15 +1073,27 @@ static function LoadZ06G(oFormGrid, lCopia) as Array
 	local aRet      := {} 			AS Array
 	Local cRota  	:= oFormGrid:oFormModel:GetModel("MdGridRotaG"):GetValue("Z0T_ROTA") AS Character
 	Local nReg 		:= 0 as Numeric
-	
+	Local cLegenda as character
+
 	oExecZ06G:SetString(1,cRota)
 
 	cAlias := oExecZ06G:OpenAlias()
 
 	while !(cAlias)->(Eof())
 		AAdd(aRet, aClone(aTemplate))
+		if (cAlias)->Z05_KGMSDI < (cAlias)->Z05_PROGANT
+			cLegenda := "BR_VERMELHO"
+		elseif (cAlias)->Z05_KGMSDI = (cAlias)->Z05_PROGANT
+			cLegenda := "BR_AMARELO"
+		elseif (cAlias)->Z05_KGMSDI > (cAlias)->Z05_PROGANT
+			cLegenda := "BR_VERDE"
+		else 
+			cLegenda := "BR_BRANCO"
+		endif
+		
 		aRet[Len(aRet)][1] := ++nReg
-		aRet[Len(aRet)][2] := { Alltrim((cAlias)->Z05_CURRAL);   // Z06_LOTE
+		aRet[Len(aRet)][2] := { cLegenda;
+							, Alltrim((cAlias)->Z05_CURRAL);   // Z06_LOTE
 							, AllTrim((cAlias)->Z05_LOTE);   // Z05_CURRAL
 							, (cAlias)->Z05_CABECA;  // Z06_KGMSTR
 							, (cAlias)->Z05_DIASDI;  // Z06_KGMNTR
@@ -3154,4 +3203,3 @@ static function procTransf()
     (cAlias)->(DbCloseArea())
     
 return nil
-
