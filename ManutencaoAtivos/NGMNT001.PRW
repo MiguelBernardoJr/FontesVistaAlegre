@@ -25,6 +25,7 @@ User Function NGMNT001()
 // Local cSeqTare  := aChaveSTL[8]
 
 Local cQuery     := ""
+Local cAlias     := ""
 Local nCntFor    := 0
 Local nPOSNRABA  := 0
 Local nPOSVUABA  := 0
@@ -36,8 +37,9 @@ Local nRecSavSTL := 0
 
 If FunName() == "MNTA656" .and. nLanca == "Produto"
 	
-	if Type("aHeader") != "U"
+	if Type("aHeader") == "A"
 
+		nPOSFROTA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_CODBEM"})
 		nPOSNRABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_NRABAS"})
 		nPOSVUABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VUNABA"})
 		nPOSTTABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VTTABA"})
@@ -55,24 +57,25 @@ If FunName() == "MNTA656" .and. nLanca == "Produto"
 			cQuery += "	 AND STJ.TJ_PLANO = STL.TL_PLANO AND STJ.D_E_L_E_T_ = ' '"
 			cQuery += " WHERE STL.TL_FILIAL = '"+xFilial("STL")+"' 
 			cQuery += "  AND STL.TL_CODIGO = '130011' AND STL.D_E_L_E_T_ = ' ' 
-			cQuery += " AND STJ.TJ_CODBEM   = '" + aCols[nCntFor,nPOSFROTA] + "' "
+			cQuery += " AND STJ.TJ_CODBEM   = '" + STJ->TJ_CODBEM + "' "
 			cQuery += " AND STJ.D_E_L_E_T_ = ' ' "
 			cQuery += " AND STJ.TJ_SERVICO = 'C00014' "
 			cQuery += " ORDER BY 1 DESC"
-			DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSTL", .f., .f.)
+			
 
-			If TMPSTL->( !EoF() )
-				STL->(DbGoTo(TMPSTL->(RECSTL)))
+			cAlias := MpSysOpenQuery(cQuery)
+			If (cAlias)->( !EoF() )
+				STL->(DbGoTo((cAlias)->(RECSTL)))
 				RecLock("STL",.f.)
-				STL->TL_NRABAS := aCols[nCntFor][nPOSNRABA]
-				STL->TL_VUNABA := aCols[nCntFor][nPOSVUABA]
-				STL->TL_VTTABA := aCols[nCntFor][nPOSTTABA]
-				STL->TL_FORST9 := aCols[nCntFor][nPOSFORT9]
-				STL->TL_LOJST9 := aCols[nCntFor][nPOSLOJT9]
-				STL->TL_COBABA := aCols[nCntFor][nPOSCOABA]
+					STL->TL_NRABAS := aCols[nCntFor][nPOSNRABA]
+					STL->TL_VUNABA := aCols[nCntFor][nPOSVUABA]
+					STL->TL_VTTABA := aCols[nCntFor][nPOSTTABA]
+					STL->TL_FORST9 := aCols[nCntFor][nPOSFORT9]
+					STL->TL_LOJST9 := aCols[nCntFor][nPOSLOJT9]
+					STL->TL_COBABA := aCols[nCntFor][nPOSCOABA]
 				MsUnlock()
 			EndIf
-			TMPSTL->( dbCloseArea() )
+			(cAlias)->( dbCloseArea() )
 		Next
 	EndIf
 
