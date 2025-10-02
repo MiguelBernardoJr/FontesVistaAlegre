@@ -5490,6 +5490,16 @@ User Function SB1Create( __aProd, lCriaSaldoSB9 )
 
 			lErro := U_SB9Create(aProd) // Saldo Inicial
 		EndIf
+
+		NCR->(DbSetOrder(1))
+
+		RecLock( "NCR", lRecLock := !(NCR->(DbSeek( FWxFilial("NCR") + SB1->B1_COD ))))
+			NCR->NCR_FILIAL := FWxFilial("NCR")
+			NCR->NCR_PROD 	:= SB1->B1_COD
+			NCR->NCR_EMREC 	:= "2"
+			NCR->NCR_EMGUIA := "1"
+		NCR->(MsUnlock())
+
 	EndIf
 
 	ConOut('Fim: SB1Create: ' + AllTrim(SB1->B1_COD) + ' - ' + Time())

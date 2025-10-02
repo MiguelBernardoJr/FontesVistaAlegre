@@ -160,58 +160,58 @@ Return(lRet)
 //Utilizado na inicialização Padrão do campo D1_X_DESC (Virtual)
 //---------------------------------------------------------------------------------------------------------
 User Function RETSB1(xCpoDesc)
+	Local aArea     := GetArea()
+	Local cDesc     := Space(40)
+	Local nPosCod
+	Local nPosCC
+	Local nPosITCTA := 0
+	Local nPosCLVL
+	Local nPosDesc
+	Local nPosDCC
+	Local nPosDITCT
+	Local nPosDCLVL
+	Local nPosTES
+	Local nPosDTES
+	Local i := 0
 
-Local aArea     := GetArea()
-Local cDesc     := Space(40)
-Local nPosCod
-Local nPosCC
-Local nPosITCTA := 0
-Local nPosCLVL
-Local nPosDesc
-Local nPosDCC
-Local nPosDITCT
-Local nPosDCLVL
-Local nPosTES
-Local nPosDTES
-Local i         := 0
-Local i := 0
+	If !('MATA'$ alltrim(funname()))
+		RestArea(aArea)
+		Return cDesc
+	Endif
 
-If !('MATA'$ alltrim(funname()))
-	RestArea(aArea)
-	Return cDesc
-Endif
+	IF Type("aHeader") == "A"
+		nPosCod   	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_COD"})
+		nPosCC    	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_CC"})
+		nPosITCTA 	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_ITEMCTA"})
+		nPosCLVL  	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_CLVL"})
+		nPosDesc	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_DESC"})
+		nPosDCC    	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_CC"})
+		nPosDITCT 	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_ITEMC"})
+		nPosDCLVL  	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_CLVL"})
+		nPosTES   	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_TES"})
+		nPosDTES	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_DESCT"})
 
-nPosCod   	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_COD"})
-nPosCC    	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_CC"})
-nPosITCTA 	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_ITEMCTA"})
-nPosCLVL  	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_CLVL"})
-nPosDesc	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_DESC"})
-nPosDCC    	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_CC"})
-nPosDITCT 	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_ITEMC"})
-nPosDCLVL  	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_CLVL"})
-nPosTES   	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_TES"})
-nPosDTES	:= aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "D1_X_DESCT"})
-
-For i:= 1 To Len(aCols)
-	Do Case                                                                         
-		Case xCpoDesc == 'D1_COD'	
-			aCols[i,nPosDesc]	:= FDESC("SB1",aCols[i,nPosCod]   ,"B1_DESC")
-			cDesc := aCols[i,nPosDesc]
-		Case xCpoDesc == 'D1_CC'	
-			aCols[i,nPosDCC]	:= FDESC("CTT",aCols[i,nPosCC]    ,"CTT_DESC01")
-			cDesc := aCols[i,nPosDCC]
-		Case xCpoDesc == 'D1_ITEMCTA'	
-			aCols[i,nPosDITCT]	:= FDESC("CTD",aCols[i,nPosITCTA] ,"CTD_DESC01")
-			cDesc := aCols[i,nPosDITCT]
-		Case xCpoDesc == 'D1_CLVL'	
-			aCols[i,nPosDCLVL]	:= FDESC("CTH",aCols[i,nPosCLVL]  ,"CTH_DESC01")
-			cDesc := aCols[i,nPosDCLVL]
-		Case xCpoDesc == 'D1_TES'	
-			aCols[i,nPosDTES]	:= FDESC("SF4",aCols[i,nPosTES]  ,"F4_TEXTO")
-			cDesc := aCols[i,nPosDTES]
-		OtherWise			
-			cDesc := SPACE(40)                                                               
-	EndCase                                                                         
-Next
+		For i := 1 To Len(aCols)
+			Do Case
+				Case xCpoDesc == 'D1_COD'
+					aCols[i,nPosDesc]	:= FDESC("SB1",aCols[i,nPosCod]   ,"B1_DESC")
+					cDesc := aCols[i,nPosDesc]
+				Case xCpoDesc == 'D1_CC'	
+					aCols[i,nPosDCC]	:= FDESC("CTT",aCols[i,nPosCC]    ,"CTT_DESC01")
+					cDesc := aCols[i,nPosDCC]
+				Case xCpoDesc == 'D1_ITEMCTA'	
+					aCols[i,nPosDITCT]	:= FDESC("CTD",aCols[i,nPosITCTA] ,"CTD_DESC01")
+					cDesc := aCols[i,nPosDITCT]
+				Case xCpoDesc == 'D1_CLVL'	
+					aCols[i,nPosDCLVL]	:= FDESC("CTH",aCols[i,nPosCLVL]  ,"CTH_DESC01")
+					cDesc := aCols[i,nPosDCLVL]
+				Case xCpoDesc == 'D1_TES'	
+					aCols[i,nPosDTES]	:= FDESC("SF4",aCols[i,nPosTES]  ,"F4_TEXTO")
+					cDesc := aCols[i,nPosDTES]
+				OtherWise			
+					cDesc := SPACE(40)                                                               
+			EndCase                                                                         
+		Next
+	ENDIF
 Restarea(aArea)
 Return(cDesc)    

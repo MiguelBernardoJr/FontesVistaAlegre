@@ -3018,6 +3018,15 @@ endIf
 		DisarmTransaction()
 		lRet := .F.
 		MBSaveLog():FULLWrite(, .F., "Fim: MATA010() - Inclusao - Erro ")
+	else	
+		NCR->(DbSetOrder(1))
+
+		RecLock( "NCR", lRecLock := !(NCR->(DbSeek( FWxFilial("NCR") + SB1->B1_COD ))))
+			NCR->NCR_FILIAL := FWxFilial("NCR")
+			NCR->NCR_PROD 	:= SB1->B1_COD
+			NCR->NCR_EMREC 	:= "2"
+			NCR->NCR_EMGUIA := "1"
+		NCR->(MsUnlock())
 	EndIf
 
 	MBSaveLog():FULLWrite(, .F., "Fim: MATA010() - Inclusao")

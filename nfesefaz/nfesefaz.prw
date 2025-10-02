@@ -407,7 +407,7 @@ Local aAreaSA2B 	:= {}
 Local lVincNF       := GetNewPar("MV_VINCNF",.F.)
 Local cD2TesNF		:= "" // TES da NF Sobre Cupom (SD2)
 Local cForma		:= ""
-local cChvPag		:= ""      
+local cChvPag		:= ""
 Local aSX560      	:= {}
 Local aSX513      	:= {}
 Local cFiltro		:= ""
@@ -2945,7 +2945,7 @@ If cTipo == "1"
 		
 						cCodProd  := (cAliasSD2)->D2_COD	            
 						cDescProd := IIF(Empty(SC6->C6_DESCRI),SB1->B1_DESC,SC6->C6_DESCRI) 
-						 
+						
 						If !Empty((cAliasSD2)->D2_IDENTB6) .And. lNFPTER  
 				         	If SC5->C5_TIPO == "N" 
 						         //--A7_FILIAL + A7_CLIENTE + A7_LOJA + A7_PRODUTO
@@ -6646,7 +6646,7 @@ Else
 								Endif
 							Endif
 							
-							If SF4->( FieldPos("F4_ISSST") == 0 )
+							If ( lConfTrib .AND. oISSCfg <> NIL ) .OR. SF4->( FieldPos("F4_ISSST") == 0 )
 								cIndIss := RetIndIss( AllTrim(SF4->F4_NATOPNF), .T. )
 							Else
 								cIndIss := RetIndIss( AllTrim(SF4->F4_ISSST), .F. )
@@ -6780,7 +6780,7 @@ Else
 				If alltrim(SFT->FT_ESTADO) == "EX" .And. cMVEstado == "PE" .And. lMVEASY
 					nIcmDifPE := (cAliasSD1)->D1_ICMSDIF
 				EndIf
-												
+
 				If (cAliasSD1)->D1_TIPO $ "I"
 					If (cAliasSD1)->D1_ICMSRET > 0
 						aTotal[02] += (cAliasSD1)->D1_ICMSRET
@@ -6789,7 +6789,11 @@ Else
 					EndIf
 				Else
 					If lConfTrib
-						aTotal[02] += (cAliasSD1)->D1_CUSTO
+						if (cAliasSD1)->D1_TIPO $ "D,B"
+							aTotal[02] += (cAliasSD1)->D1_TOTAL+(cAliasSD1)->D1_VALIPI+(cAliasSD1)->D1_ICMSRET+(cAliasSD1)->D1_VALFRE+(cAliasSD1)->D1_SEGURO+(cAliasSD1)->D1_DESPESA+nIcmDifPE-(cAliasSD1)->D1_VALDESC
+						else
+							aTotal[02] += (cAliasSD1)->D1_CUSTO
+						endIf
 					Else
 						aTotal[02] += ((cAliasSD1)->D1_TOTAL-(cAliasSD1)->D1_VALDESC+(cAliasSD1)->D1_VALFRE+(cAliasSD1)->D1_SEGURO+(cAliasSD1)->D1_DESPESA;
 									+ IIF(SD1->(ColumnPos('D1_AFRMIMP'))>0,(cAliasSD1)->D1_AFRMIMP,0);
@@ -6807,10 +6811,11 @@ Else
 									+ nIcmDifPE
 					EndIf
 				EndIf
+
 				lSomaPISST	  := .F.
                 lSomaCOFINSST := .F.
 
-				aadd(aTotalItem, {(cAliasSD1)->D1_ITEM, (aTotal[2] + aTotal[3]) - nAcumula})
+				aadd(aTotalItem, {(cAliasSD1)->D1_ITEM, (aTotal[02] + aTotal[03]) - nAcumula})
 				nAcumula += aTotalItem[len(aTotalItem), 2]
 				
 				dbSelectArea(cAliasSD1)
@@ -7056,7 +7061,7 @@ If !Empty(aNota)
 							lIcmDevol		,@nVicmsDeson	,@nVIcmDif		,cMunPres	,aAgrPis[nX]	,aAgrCofins[nX]	,nIcmsDif		,aICMUFDest[nX]	,@nvFCPUFDest	,@nvICMSUFDest	,;
 							@nvICMSUFRemet	,cAmbiente 		,aIPIDevol[nX]	,@nvBCUFDest,aItemVinc[nX]	,@npFCPUFDest	,@npICMSUFDest	,@npICMSInter	,@npICMSIntP	,aLote[nX]		,;
 							@cMensDifal		,@aTotICMSST 	,len(aProd)		,nX			,@nValDifer		,cIndPres		,lExpCDL		,@aMonof02		,@aMonof15		,@lMonof53		,;
-							@lMonof61		,aICMSMono[nX]	,aBenef[nX]		,aCredPresum[nX]            ,aDeson[nX]		,aEntrega		,nTotalItem		,cNFe)
+							@lMonof61		,aICMSMono[nX]	,aBenef[nX]		,aCredPresum[nX]            ,aDeson[nX]		,aEntrega		, nTotalItem	,cNFe)
 	Next nX
   	cString += NfeTotal(aTotal,aRetido,aICMS,aICMSST,lIcmDevol,cVerAmb,aISSQN,nVicmsDeson,aNota,nVIcmDif,aAgrPis,aAgrCofins,nValLeite )
 	cString += NfeTransp(cModFrete,aTransp,aImp,aVeiculo,aReboque,aEspVol,cVerAmb,aReboqu2,cMunDest)
@@ -7146,6 +7151,10 @@ If !Empty(aNota)
 	
 	If LRespTec .and. lTagProduc .and. FindFunction("NfeRespTec")
 		cString += NfeRespTec("")
+	EndIf
+	
+	If ( ExistFunc("AGDI090XML")  .And. "AGRO" $ UPPER(SuperGetMV("MV_CADPROD", .F. ," ")) )
+		cString += AGDI090XML(cTipo, cNota, cSerie, cClieFor, cLoja)
 	EndIf
 	
 	cString += "</infNFe>"
@@ -8915,10 +8924,10 @@ If  !lIssQn
 				cString	+= "<vICMSDeson>" + ConvType(aICMSZFM[3],15,2) + "</vICMSDeson>"
 			endif	
 			nVicmsDeson	+= IIf(lIcmDevol,aICMSZFM[3],0)
-		ElseIf aCST[1] == '30' .and. alltrim(aICMS[11])$ "6|9" .and. !Empty(aICMS[15])
-			cString 	+= NfeTag('<motDesICMS>' ,ConvType(aICMS[11]))
-			cString 	+= '<vICMSDeson>'+ConvType(iIf(lIcmDevol,aICMS[15],0),15,2)+'</vICMSDeson>'   
-			nVicmsDeson	+= IIf(lIcmDevol,aICMS[15],0)
+		ElseIf aCST[1] == '30' .and. alltrim(aICMSST[17])$ "6|9" .and. !Empty(aICMSST[12]) 
+			cString 	+= NfeTag('<motDesICMS>' ,ConvType(aICMSST[17]))
+			cString 	+= '<vICMSDeson>'+ConvType(iIf(lIcmDevol,aICMSST[12],0),15,2)+'</vICMSDeson>'   
+			nVicmsDeson	+= IIf(lIcmDevol,aICMSST[12],0)
 		Else
 			if !empty( aICMSST[17] )
 				cString += '<motDesICMS>'+ConvType(aICMSST[17])+'</motDesICMS>'
@@ -9702,7 +9711,7 @@ If Len(aProd[53]) > 0
 
 EndIf
 
-cString += '<vItem>' +ConvType(nTotalItem)+ '</vItem>'
+cString += '<vItem>' + ConvType(nTotalItem,15,2) + '</vItem>'
 //Aguardando definição dos campos
 // cString += gDFeReferenciado(cNFe,ConvType(aProd[01]))
 
