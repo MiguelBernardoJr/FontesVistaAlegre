@@ -37,8 +37,8 @@ Return
 Static Function ModelDef()
 	Local oModel 	:= nil
     Local oMaster   := FWFormStruct(1, 'ZVA', {|cCampo| AllTrim(cCampo) $ "ZVA_COD|ZVA_CLI|ZVA_LOJA|ZVA_NOME|ZVA_QTLO|ZVA_QTAT|ZVA_COND|ZVA_FRET|ZVA_DTEMIS|ZVA_MENPAD|ZVA_MENNT" })
-    Local oGridZVA   	:= FWFormStruct(1, 'ZVA', {|cCampo| (AllTrim(cCampo) $ "ZVA_ITEM|ZVA_LOTE|ZVA_QUANT|ZVA_TES|ZVA_NUMSC5|ZVA_NF|ZVA_SERINF|ZVA_USER|ZVA_STATUS") })
-    Local oGridZVB   	:= FWFormStruct(1, 'ZVB', {|cCampo| (AllTrim(cCampo) $ "ZVB_COD|ZVB_ITEM|ZVB_ITEMZA|ZVB_NUMSC5|ZVB_LOTE|ZVB_BOV|ZVB_DESC|ZVB_QUANT|ZVB_PRECO|ZVB_TOTAL") })
+    Local oGridZVA  := FWFormStruct(1, 'ZVA', {|cCampo| (AllTrim(cCampo) $ "ZVA_ITEM|ZVA_LOTE|ZVA_QUANT|ZVA_TES|ZVA_NUMSC5|ZVA_NF|ZVA_SERINF|ZVA_USER|ZVA_STATUS") })
+    Local oGridZVB  := FWFormStruct(1, 'ZVB', {|cCampo| (AllTrim(cCampo) $ "ZVB_COD|ZVB_ITEM|ZVB_ITEMZA|ZVB_NUMSC5|ZVB_LOTE|ZVB_BOV|ZVB_DESC|ZVB_QUANT|ZVB_PRECO|ZVB_TOTAL") })
     Local aZVBRel   := {}
     Local aZVARel   := {}
     Local bCommit   := {|| bSaveCom()}
@@ -130,6 +130,9 @@ User Function FATI05M()
     Local nX, nI, nJ, nG
     Local cQry          := ''
     Local aArea 
+    Local cAlias        := ""
+    Local cAliZVB       := ""
+
     If aParam <> NIL
 		oObj := aParam[1]
 		cIdPonto := aParam[2]
@@ -154,14 +157,14 @@ User Function FATI05M()
             cQry += " AND ZVC_DTATE > '"+dToS(Date())+"' " + CRLF 
             cQry += " AND D_E_L_E_T_ = '' " + CRLF
 
-            MpSysOpenQuery(cQry, "TMP")
+            cAlias := MpSysOpenQuery(cQry)
 
-            while !TMP->(EOF())
-                aAdd(aPreco,{ALLTRIM(TMP->ZVC_DESC),TMP->ZVC_PRECO})
-                TMP->(DBSKIP())
+            while !(cAlias)->(EOF())
+                aAdd(aPreco,{ALLTRIM((cAlias)->ZVC_DESC),(cAlias)->ZVC_PRECO})
+                (cAlias)->(DBSKIP())
             END
 
-            TMP->(DBCLOSEAREA(  ))
+            (cAlias)->(DBCLOSEAREA(  ))
 
             if oObj:nOperation == 4
                 aArea := GetArea()
@@ -182,46 +185,46 @@ User Function FATI05M()
                 cQry += "         AND SD2.D2_DOC = ZVA_NF " + CRLF
                 cQry += "         AND SD2.D2_SERIE = ZVA_SERINF " + CRLF
                 cQry += "         AND SD2.D2_PEDIDO = ZVA_NUMSC5 " + CRLF
-                cQry += "         AND SD2.D_E_L_E_T_ <> ' ' -- FILTRAR NFS EXCLUIDAS " + CRLF
-                cQry += "          ) " + CRLF
+                cQry += "         AND SD2.D_E_L_E_T_ <> ' ' -- FILTRAR NFS EXCLUIDAS " + CRLF
+                cQry += "         ) " + CRLF
                 
-				MpSysOpenQuery(cQry, "TMP")
+				cAlias := MpSysOpenQuery(cQry)
                 
-                while !TMP->(EOF())
+                while !(cAlias)->(EOF())
 					ZVA->(DBSELECTAREA( "ZVA" ))
 					ZVA->(DBSETORDER( 2 )) //ZVA_FILIAL+ZVA_NUMSC5
 				
-					if ZVA->(DbSeek(FwxFilial("ZVA")+TMP->ZVA_NUMSC5))
+					if ZVA->(DbSeek((cAlias)->ZVA_FILIAL+(cAlias)->ZVA_NUMSC5))
 						
-						aCabPV  := {{"C5_NUM"    , TMP->ZVA_NUMSC5   , Nil},;
+						aCabPV  := {{"C5_NUM"    , (cAlias)->ZVA_NUMSC5   , Nil},;
 									{"C5_TIPO"   , "N"         		 , Nil},;
-									{"C5_CLIENTE", TMP->ZVA_CLI 	 , Nil},;
-									{"C5_LOJACLI", TMP->ZVA_LOJA	 , Nil},;
-									{"C5_LOJAENT", TMP->ZVA_LOJA	 , Nil},;
-									{"C5_CONDPAG", TMP->ZVA_COND     , NIL}}
+									{"C5_CLIENTE", (cAlias)->ZVA_CLI 	 , Nil},;
+									{"C5_LOJACLI", (cAlias)->ZVA_LOJA	 , Nil},;
+									{"C5_LOJAENT", (cAlias)->ZVA_LOJA	 , Nil},;
+									{"C5_CONDPAG", (cAlias)->ZVA_COND     , NIL}}
 
                         cQry := " SELECT *  " + CRLF 
                         cQry += " FROM "+RetSqlName("ZVB")+" " + CRLF 
                         cQry += " WHERE ZVB_FILIAL = '"+FWxFilial("ZVB")+"' " + CRLF 
-                        cQry += " AND ZVB_COD = '"+TMP->ZVA_COD+"' " + CRLF 
-                        cQry += " AND ZVB_ITEMZA = '"+TMP->ZVA_ITEM+"' " + CRLF 
-                        cQry += " AND D_E_L_E_T_ = ''  " + CRLF 
+                        cQry += " AND ZVB_COD = '"+(cAlias)->ZVA_COD+"' " + CRLF 
+                        cQry += " AND ZVB_ITEMZA = '"+(cAlias)->ZVA_ITEM+"' " + CRLF 
+                        cQry += " AND D_E_L_E_T_ = ''  " + CRLF
                         
                         aItemPV := {}
-                        MpSysOpenQuery(cQry, "TMPZVB")
+                        cAliZVB := MpSysOpenQuery(cQry)
 
-                        while !TMPZVB->(EOF())
-                            aAdd(aItemPV,{  {"C6_NUM"    	, TMPZVB->ZVB_NUMSC5   , Nil},;
-                                            {"C6_ITEM"   	, TMPZVB->ZVB_ITEM     , Nil},;
-                                            {"C6_PRODUTO"	, TMPZVB->ZVB_BOV      , Nil},;
-                                            {"C6_LOTECTL"	, TMPZVB->ZVB_LOTE     , Nil},;
-                                            {"C6_QTDVEN" 	, TMPZVB->ZVB_QUANT    , Nil},;
-                                            {"C6_PRCVEN" 	, TMPZVB->ZVB_PRECO    , Nil},;
-                                            {"C6_VALOR"  	, TMPZVB->ZVB_TOTAL    , Nil},;
-                                            {"C6_TES"    	, TMP->ZVA_TES	       , Nil}})
-                            TMPZVB->(DBSKIP( ))
+                        while !(cAliZVB)->(EOF())
+                            aAdd(aItemPV,{  {"C6_NUM"    	, (cAliZVB)->ZVB_NUMSC5   , Nil},;
+                                            {"C6_ITEM"   	, (cAliZVB)->ZVB_ITEM     , Nil},;
+                                            {"C6_PRODUTO"	, (cAliZVB)->ZVB_BOV      , Nil},;
+                                            {"C6_LOTECTL"	, (cAliZVB)->ZVB_LOTE     , Nil},;
+                                            {"C6_QTDVEN" 	, (cAliZVB)->ZVB_QUANT    , Nil},;
+                                            {"C6_PRCVEN" 	, (cAliZVB)->ZVB_PRECO    , Nil},;
+                                            {"C6_VALOR"  	, (cAliZVB)->ZVB_TOTAL    , Nil},;
+                                            {"C6_TES"    	, (cAlias)->ZVA_TES	       , Nil}})
+                            (cAliZVB)->(DBSKIP( ))
                         ENDDO
-                        TMPZVB->(DBCLOSEAREA())
+                        (cAliZVB)->(DBCLOSEAREA())
 					
 						lMsErroAuto := .F.
 							while !LockByName("ExecSC5Auto"+ ZVA->ZVA_NUMSC5, .t., .f.)
@@ -238,7 +241,6 @@ User Function FATI05M()
 									ConOut(cLogErro)
 									Alert(cLogErro)
 								Next nI
-								DisarmTransaction()
 							ENDIF 
 
 						RECLOCK( "ZVA", .F. )
@@ -250,7 +252,7 @@ User Function FATI05M()
 					Endif
 				ENDDO
 
-				TMP->(DBCLOSEAREA(  ))
+				(cAlias)->(DBCLOSEAREA(  ))
 				FWRestArea(aArea)
             endif 
 		ELSEIF Alltrim(cIdPonto) == "MODELCANCEL"
@@ -287,7 +289,7 @@ User Function FATI05M()
                             endif
                         Next nI
                     endif 
-                ELSE 
+                ELSE
                     oModel:SetErrorMessage("","","","","Pedido Gerado!", 'Não é possivel alterar quantidade em linhas com pedido gerado.', "") 
                     xRet := .F.
                 endif 
@@ -978,6 +980,7 @@ Static Function ExecSC5Auto(oModel,oCab,oGridZVA,oGridZVB)
     
     aCabC5 := {}
     aCabC6 := {}
+
     if !(oGridZVA:isDeleted())
 
         cNumPed := U_fChvITEM( "SC5", , "C5_NUM" )
@@ -1023,13 +1026,12 @@ Static Function ExecSC5Auto(oModel,oCab,oGridZVA,oGridZVB)
                 ConOut(cLogErro)
                 Alert(cLogErro)
             Next nCount
-            DisarmTransaction()
         Else
             cFilEnt	:= SC5->C5_FILIAL
             cPedVen	:= SC5->C5_NUM
 
             If lErro := LIBeFaturar( cFilEnt,  @cPedVen, @cE1HIST)
-                DisarmTransaction()
+                Return
             Else
                 CONOUT( "Pedido de Venda [" + cNumPed + "] gerado com sucesso !!!" + CRLF +;
                 "Nota Fiscal [" + SF2->F2_FILIAL+"-"+ AllTrim(SF2->F2_DOC)+"-"+AllTrim(SF2->F2_SERIE) + "] faturada com sucesso" )

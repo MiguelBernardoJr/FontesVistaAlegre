@@ -9,7 +9,7 @@ namespace custom.VAPCPA17
 
 static aCpoMdRot    := { "Z0T_ROTA"	,"Z06_TRATO" ,"Z06_KGMNT"}
 static aCpoGridZ06G := { "XX5_LEGEND","Z05_CURRAL"	,"Z06_LOTE"  ,"Z05_CABECA","Z05_DIASDI","Z05_PESMAT","Z0I_NOTTAR","Z0I_NOTMAN","Z05_PROGANT","XX5_KGMSDI","Z06_DIETA" ,"Z05_NROTRA","Z05_TOTMNC","Z05_RECNO","Z05_TOTMSC","Z0T_ROTA","XX5_PVATU","Z05_NROTRA","Z05_CMSPN"}
-static aCpoMdZ06D   := { "Z06_TRATO"	,"Z06_CURRAL","Z06_LOTE","Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
+static aCpoMdZ06D   := { "Z06_TRATO","Z06_CURRAL","Z06_LOTE","Z06_DIETA" ,"Z06_KGMSTR","Z06_KGMNTR","Z06_MEGCAL","Z06_KGMNT" ,"Z06_RECNO" }
 static aCpoMdZ05G   := { "Z05_DATA"	,"Z05_DIETA" ,"Z05_KGMSDI","Z0I_NOTMAN","Z0I_NOTTAR","Z05_CABECA","Z05_MEGCAL","Z05_KGMNDI","Z0W_QTDPRE","Z0W_QTDREA","XX1_DIF"}
 static aCpoMdRt1    := { "Z0S_EQUIP"  ,"ZV0_DESC"  ,"Z0T_ROTA", "Z06_CURRAL", "Z06_LOTE"}
 
@@ -155,7 +155,7 @@ user function ModelDef() as object
     oModel:GetModel('MdGridRotaD' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridZ05G' ):SetOnlyView(.T.)
     oModel:GetModel('MdGridZ05G'):SetOnlyQuery(.T.)
-    oModel:GetModel('MdGridZ06G' ):SetOnlyView(.T.)
+    //oModel:GetModel('MdGridZ06G' ):SetOnlyView(.T.)
 
 	oModel:getModel("MdGridRotaG"):SetNoInsertLine(.T.)
     oModel:getModel("MdGridRotaG"):SetNoDeleteLine(.T.)
@@ -761,7 +761,7 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                  .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
                  nil,;                          // [11]  B   Code-block de inicializacao do campo
                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
-                 .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
+                 .T.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                  .T.)                           // [14]  L   Indica se o campo é virtual
         Elseif aCampos[nI]$"XX5_LEGEND" 
             oStruct:AddField(;
@@ -777,7 +777,7 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                  .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
                  NIL,;                          // [11]  B   Code-block de inicializacao do campo
                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
-                 .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
+                 .T.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                  .T.)                           // [14]  L   Indica se o campo é virtual
         Elseif aCampos[nI]$"XX5_KGMSDI"
             oStruct:AddField(;
@@ -786,14 +786,14 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                  aCampos[nI],;                  // [03]  C   Id do Field
                  "N",;                          // [04]  C   Tipo do campo
                  TamSx3("Z05_TOTMSC")[1],;		// [05]  N   Tamanho do campo
-                 TamSx3("Z05_TOTMSC")[2],;                           // [06]  N   Decimal do campo
-                 nil,;                          // [07]  B   Code-block de validação do campo
+                 TamSx3("Z05_TOTMSC")[2],;		// [06]  N   Decimal do campo
+                 FWBuildFeature(STRUCT_FEATURE_VALID, "custom.VAPCPA17.U_vap17mscValid()"),;                          // [07]  B   Code-block de validação do campo
                  nil,;                          // [08]  B   Code-block de validação When do campo
                  nil,;                          // [09]  A   Lista de valores permitido do campo
                  .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
                  nil,;                          // [11]  B   Code-block de inicializacao do campo
                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
-                 .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
+                 .F.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                  .T.)                           // [14]  L   Indica se o campo é virtual
         Elseif aCampos[nI]$"Z05_PROGANT" 
             oStruct:AddField(;
@@ -809,7 +809,7 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                  .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
                  nil,;                          // [11]  B   Code-block de inicializacao do campo
                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
-                 .f.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
+                 .T.,;                          // [13]  L   Indica se o campo NÃO pode receber valor em uma operação de update.
                  .T.)            
         elseif aCampos[nI]$"Z06_RECNO" .or. aCampos[nI]$"Z05_RECNO"
             oStruct:AddField(;
@@ -845,11 +845,23 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
 
 				if Alltrim(SX3->X3_CAMPO) == "Z06_DIETA"
 					nTamanho := 12
+					if nOpc == 1
+						cValid   := "custom.VAPCPA17.u_vap17trtValidZ06G()"
+					else
+						cValid   := "custom.VAPCPA17.u_vap17trtValidZ06D()"
+					endif 
 				elseif Alltrim(SX3->X3_CAMPO) == "Z05_CURRAL" .OR. Alltrim(SX3->X3_CAMPO) == "Z06_CURRAL"
 					nTamanho := 4
 				else
 					nTamanho := TamSX3(SX3->X3_CAMPO)[1]
 				endif
+				
+				lEdit := .T.
+				IF nOpc==1 .AND. Alltrim(SX3->X3_CAMPO) $ "Z06_DIETA|Z05_NROTRA|XX5_KSMDI"
+					lEdit := .F.
+				ELSEIF nOpc==2 //.AND. Alltrim(SX3->X3_CAMPO) $ "Z06_DIETA|Z06_KGMSTR"
+					lEdit := .F.
+				ENDIF
 
                 oStruct:AddField(X3Titulo(),;                   // [01]  C   Titulo do campo
                                  X3Descric(),;                  // [02]  C   ToolTip do campo
@@ -864,7 +876,7 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
                                  FwBuildFeature( STRUCT_FEATURE_INIPAD, "Iif(!Inclui," + SX3->X3_ARQUIVO + "->" + AllTrim(SX3->X3_CAMPO) + ",CriaVar('" + AllTrim(SX3->X3_CAMPO) + "',.T.))" ),; // [11]  B   Code-block de inicializacao do campo
                                  .F.,;                          // [12]  L   Indica se trata-se de um campo chave
                                  ;//IIF(AllTrim(SX3->X3_CAMPO)$"Z06_MEGCAL|Z06_KGMSTR|Z06_KGMNTR|Z06_KGMNT",.F.,.T.),;//(SX3->X3_VISUAL == 'A'),;        // [13]  L   Indica se o campo pode receber valor em uma operação de update.
-                                 iif(nOpc==1,.t.,.F.),;//(SX3->X3_VISUAL == 'A'),;        // [13]  L   Indica se o campo não pode receber valor em uma operação de update.
+                                 lEdit,;//(SX3->X3_VISUAL == 'A'),;        // [13]  L   Indica se o campo não pode receber valor em uma operação de update.
                                  SX3->X3_CONTEXT == 'V')	    // [14]  L   Indica se o campo é virtual
             else
                 Help(/*Descontinuado*/,/*Descontinuado*/,"CAMPO NAO ENCONTRADO",/**/,"O campo " + aCampos[nI] + " não foi encontrado no banco de dados. ", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, entre em contato com o TI." })
@@ -908,7 +920,7 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				"",;                            // [07]  C   Picture
 				nil,;                           // [08]  B   Bloco de PictTre Var
 				nil,;                           // [09]  C   Consulta F3
-				.T.,;                           // [10]  L   Indica se o campo é alteravel
+				.F.,;                           // [10]  L   Indica se o campo é alteravel
 				nil,;                           // [11]  C   Pasta do campo
 				nil,;                           // [12]  C   Agrupamento do campo
 				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
@@ -947,7 +959,7 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				"Programação anterior",;	    // [04]  C   Descricao do campo
 				{"Help"},;                      // [05]  A   Array com Help
 				"N",;                           // [06]  C   Tipo do campo
-				"",;                            // [07]  C   Picture
+				X3Picture("Z05_KGMSDI"),;		// [07]  C   Picture
 				nil,;                           // [08]  B   Bloco de PictTre Var
 				nil,;                           // [09]  C   Consulta F3
 				.T.,;                           // [10]  L   Indica se o campo é alteravel
@@ -968,10 +980,10 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				"KG MS D-1",;	    			// [04]  C   Descricao do campo
 				{"Help"},;                      // [05]  A   Array com Help
 				"N",;                           // [06]  C   Tipo do campo
-				"",;                            // [07]  C   Picture
+				X3Picture("Z05_PROGANT"),;       // [07]  C   Picture
 				nil,;                           // [08]  B   Bloco de PictTre Var
 				nil,;                           // [09]  C   Consulta F3
-				.T.,;                           // [10]  L   Indica se o campo é alteravel
+				.F.,;                           // [10]  L   Indica se o campo é alteravel
 				nil,;                           // [11]  C   Pasta do campo
 				nil,;                           // [12]  C   Agrupamento do campo
 				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
@@ -1003,6 +1015,14 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				nil;                            // [18]  L   Indica pulo de linha após o campo
 			)
 		elseif SX3->(DbSeek(Padr(aOrdem[nI,1], Len(SX3->X3_CAMPO))))
+
+			lEdit := .F.
+			IF nOpc==1 .AND. Alltrim(SX3->X3_CAMPO) $ "Z06_DIETA|Z05_NROTRA"
+				lEdit := .T.
+			elseif nOpc==2 .and. AllTrim(SX3->X3_CAMPO)$"Z06_KGMSTR"
+				lEdit := .T.
+			ENDIF
+			
 			oStruct:AddField(;
 				AllTrim(aOrdem[nI,1]),;        // [01]  C   Nome do Campo
 				cValToChar(aOrdem[aScan(aOrdem,{|x| AllTrim(x[1]) == AllTrim(aOrdem[nI,1])})][2]),; // [02]  C   Ordem
@@ -1013,7 +1033,7 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 				Iif(!Empty(SX3->X3_CAMPO), AllTrim(X3Picture(SX3->X3_CAMPO)), nil),;      // [07]  C   Picture
 				nil,;                           // [08]  B   Bloco de PictTre Var
 				SX3->X3_F3,;                    // [09]  C   Consulta F3
-				iif(nOpc==1,.F.,!AllTrim(SX3->X3_CAMPO)$"Z06_KGMNTR"),;// [10]  L   Indica se o campo é alteravel
+				lEdit,;							// [10]  L   Indica se o campo é alteravel
 				nil,;                           // [11]  C   Pasta do campo
 				nil,;                           // [12]  C   Agrupamento do campo
 				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
@@ -1876,12 +1896,14 @@ static function AjuMateria(oModel)
 		EndIf
 	Next nI
 
-	oGridRota:GoLine(1)
-
 	oView:Refresh("VwGridROTG")
 	oView:Refresh("VwGridROTD")
 	oView:Refresh("VwGridZ06G")
+	oView:Refresh("VwGridZ06D")
 	
+	oGridRota:GoLine(1)
+	oGridZ06D:GoLine(1)
+
 	RestArea(aArea)
 return nil
 
@@ -2754,6 +2776,162 @@ Static Function vap17trt()
 	FWRestRows(aSaveLines)
 return nil
 
+user function vap17trtValidZ06D()
+	local aArea     := GetArea() AS Array
+	local oModel  	:= FWModelActive() as Object 
+	local oGridZ06G := oModel:GetModel("MdGridZ06G") as Object 
+	local oGridZ06D := oModel:GetModel("MdGridZ06D") as Object 
+	local aKgMS     := {}
+	local lRet      := .T.
+	local nI
+	local cDieta	:= ""
+	local cDietaZ06G:= AllTrim(&(ReadVar()))
+	local cSeq      := ""
+	local nTotMN   	:= 0
+	local nMegCal 	:= 0
+
+	If !IsInCallStack("Custom.VAPCPA17.U_vap17trtValidZ06G")
+		SB1->(DbSetOrder(1))
+		if !(SB1->(DbSeek(FwxFilial("SB1")+PADR(cDietaZ06G, TamSx3("B1_COD")[1])))) .or. SB1->B1_X_TRATO!='1'
+			Help(,, "Dieta Inválida",, "O código digitado não pertence a um produto válido ou esse produto não é uma dieta.", 1, 0,,,,,, {"Por favor digite uma dieta válida ou selecione." + CRLF + "<F3 Disponível>."})
+			lRet := .F.
+		endif
+
+		if Z0R->Z0R_LOCK = '2' 
+			Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
+			lRet := .F.
+		elseif Z0R->Z0R_LOCK = '3' 
+			Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
+			lRet := .F.
+		endif
+
+		IF lRet
+			if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+;
+										PADR(oGridZ06G:GetValue("Z05_CURRAL"), TamSx3("Z05_CURRAL")[1])+;
+										PADR(oGridZ06G:GetValue("Z06_LOTE"), TamSx3("Z06_LOTE")[1]))) 
+			if lRet := U_CanUseZ05()
+			endif
+
+			else
+				Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral " + (cTrbBrowse)->Z08_CODIGO + ". É necessário criar o trato manualmente para ele.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"O trato não foi alterado."})
+			endif
+		endif
+	Endif
+	
+	if lRet
+		aKgMS := U_DivTrato(Z05->Z05_KGMSDI, oGridZ06G:GetValue("Z05_NROTRA"))
+
+		nQuantMN := u_CalcQtMN(cDietaZ06G, aKgMS[Val(oGridZ06D:GetValue("Z06_TRATO"))])
+		nMCalTrt := U_GetMegaCal(cDietaZ06G) * aKgMS[Val(oGridZ06D:GetValue("Z06_TRATO"))]
+		cSeq := U_GetSeq(cDietaZ06G)
+		
+		Z06->(DbGoTo(oGridZ06D:GetValue("Z06_RECNO")))
+		
+		RecLock("Z06", .F.)
+			Z06->Z06_DIETA  := cDietaZ06G
+			Z06->Z06_KGMSTR := aKgMS[Val(oGridZ06D:GetValue("Z06_TRATO"))]
+			Z06->Z06_KGMNTR := nQuantMN
+			Z06->Z06_MEGCAL := nMCalTrt
+			Z06->Z06_KGMNT  := nQuantMN * Z05->Z05_CABECA
+			Z06->Z06_SEQ    := cSeq
+		Z06->(MsUnlock())
+
+		oGridZ06D:LoadValue("Z06_KGMNTR", Z06->Z06_KGMNTR)
+		oGridZ06D:LoadValue("Z06_MEGCAL", Z06->Z06_MEGCAL)
+		oGridZ06D:LoadValue("Z06_KGMSTR", Z06->Z06_KGMSTR)
+		oGridZ06D:LoadValue("Z06_KGMNT" , Z06->Z06_KGMNT )
+	endif
+
+	if !IsInCallStack("Custom.VAPCPA17.U_vap17trtValidZ06G")
+		for nI := 1 to oGridZ06D:Length()
+			oGridZ06D:GoLine(nI)
+
+			if !AllTrim(oGridZ06D:GetValue("Z06_DIETA"))$cDieta
+				cDieta += Iif(Empty(cDieta), "", ",") + AllTrim(oGridZ06D:GetValue("Z06_DIETA")) 
+			endif
+
+			nTotMN += oGridZ06D:GetValue("Z06_KGMNTR")
+			nMegCal += oGridZ06D:GetValue("Z06_MEGCAL")
+		next
+
+		RecLock("Z05", .F.)
+			Z05->Z05_MANUAL := "1"
+			Z05->Z05_DIETA  := cDieta
+			Z05->Z05_MANUAL := '1'
+			Z05->Z05_KGMNDI := nTotMN
+			Z05->Z05_MEGCAL := nMegCal
+			Z05->Z05_TOTMNI := Z05->Z05_KGMNDI
+		MsUnlock()
+
+	endif
+	
+	RestArea(aArea)
+Return lRet
+
+user function vap17trtValidZ06G()
+	local aArea     := GetArea() AS Array
+	local oModel  	:= FWModelActive() as Object 
+	local oGridZ06G := oModel:GetModel("MdGridZ06G") as Object 
+	local oGridZ06D := oModel:GetModel("MdGridZ06D") as Object 
+	local lRet      := .T.
+	local nTotMN    := 0
+	local nI
+	local cDieta    := ""
+	local cDietaZ06G:= AllTrim(&(ReadVar()))
+	local nMegCal   := 0
+
+    if Z0R->Z0R_LOCK <= '1'
+		SB1->(DbSetOrder(1))
+		if !SB1->(DbSeek(FwxFilial("SB1")+PADR(cDietaZ06G, TamSx3("B1_COD")[1]))) .OR. SB1->B1_X_TRATO!='1'
+			Help(,, "Dieta Inválida",, "O código digitado não pertence a um produto válido ou esse produto não é uma dieta.", 1, 0,,,,,, {"Por favor digite uma dieta válida ou selecione." + CRLF + "<F3 Disponível>."})
+			lRet := .F.
+		endif
+
+		if lRet
+			if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+;
+									PADR(oGridZ06G:GetValue("Z05_CURRAL"), TamSx3("Z05_CURRAL")[1])+;
+									PADR(oGridZ06G:GetValue("Z06_LOTE"), TamSx3("Z06_LOTE")[1])))
+
+				if (lRet := U_CanUseZ05())
+					for nI := 1 to oGridZ06G:GetValue("Z05_NROTRA")
+						oGridZ06D:GoLine(nI)
+						oGridZ06D:SetValue("Z06_DIETA", cDietaZ06G)
+
+						if !AllTrim(Z06->Z06_DIETA)$cDieta
+							cDieta += Iif(Empty(cDieta), "", ",") + AllTrim(Z06->Z06_DIETA) 
+						endif
+
+						nTotMN += oGridZ06D:GetValue("Z06_KGMNTR")
+						nMegCal += oGridZ06D:GetValue("Z06_MEGCAL")
+					next
+
+					RecLock("Z05", .F.)
+						Z05->Z05_MANUAL := "1"
+						Z05->Z05_DIETA  := cDieta
+						Z05->Z05_MANUAL := '1'
+						Z05->Z05_KGMNDI := nTotMN
+						Z05->Z05_MEGCAL := nMegCal
+						Z05->Z05_TOTMNI := Z05->Z05_KGMNDI
+					MsUnlock()
+				endif
+
+				oGridZ06D:GoLine(1)
+				
+				U_ReleaseZ05()
+			else
+				Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral " + (cTrbBrowse)->Z08_CODIGO + ". É necessário criar o trato manualmente para ele.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"O trato não foi alterado."})
+			endif
+		endif
+
+    elseif Z0R->Z0R_LOCK = '2' 
+        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
+    elseif Z0R->Z0R_LOCK = '3' 
+        Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
+    endif
+
+	RestArea(aArea)
+return lRet
+
 static function vap17msc()
 	Local aSaveLines := FWSaveRows() as Array
 	local aParam    :={mv_par01}
@@ -2797,6 +2975,38 @@ static function vap17msc()
 
 return lRet
 
+user function vap17mscValid()
+	Local aSaveLines := FWSaveRows() as Array
+	local lRet      := .F.
+	local oModel 	:= FWModelActive()
+	local oGridZ06G	:= oModel:GetModel("MdGridZ06G")
+	local cLote 	:= oGridZ06G:GetValue("Z06_LOTE")
+	local cCurral 	:= PADR(oGridZ06G:GetValue("Z05_CURRAL"), TamSx3("Z05_CURRAL")[1])
+	
+	if Empty(cLote)
+		Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois não existe lote viculado ao curral posicionado.", 1, 0,,,,,, {"Operação não permitida."})
+	elseif Z0R->Z0R_LOCK <= '1'
+		if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+cCurral+cLote)) 
+			lRet := .T.
+			if oGridZ06G:GetValue("XX5_KGMSDI") > GetMV("VA_MXVALTR",,15.0)
+				lRet := MsgYesNo("O valor digitado " + AllTrim(Str(oGridZ06G:GetValue("XX5_KGMSDI"))) + " é considerado muito grande para um trato. Pode ser que esse valor esteja errado. Confirma esse valor para o trato?", "Valor pode estar errado.")
+			endif
+			if lRet
+				FWMsgRun(, { || AtuMatSec()}, "Materia Seca", "Ajustando a quantidade de materia seca para " + AllTrim(Str(oGridZ06G:GetValue("XX5_KGMSDI")))+ "...")
+			endif
+		else
+			Help(/*Descontinuado*/,/*Descontinuado*/,"NAO EXISTE TRATO",/**/,"Não existe trato para o curral posicionado.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Utilize o botão manutenção para criar o trato."})
+		endif
+	elseif Z0R->Z0R_LOCK = '2' 
+		Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
+	elseif Z0R->Z0R_LOCK = '3' 
+		Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele foi Encerrado.", 1, 0,,,,,, {"Operação não permitida."})
+	endif
+
+	FWRestRows(aSaveLines)
+
+return lRet
+
 static function AtuMatSec()
 	local aArea     := GetArea() as Array
 	local nQtdTrato := 0 as numeric
@@ -2805,9 +3015,10 @@ static function AtuMatSec()
 	local nQtdeMN   := 0 as numeric
 	local nQtdMCal  := 0 as numeric
 	local oModel 	:= FWModelActive() as object
+	local oView 	:= FWViewActive() as object
 	local oGridZ06G	:= oModel:GetModel("MdGridZ06G") as object
 	local oGridZ06D	:= oModel:GetModel("MdGridZ06D") as object
-	local nI 
+	local nI
 
 	For nI := 1 to oGridZ06D:Length()
 		oGridZ06D:GoLine(nI)
@@ -2816,7 +3027,7 @@ static function AtuMatSec()
 		endif 
 	Next
 
-	aKgMS := U_DivTrato(mv_par01, nQtdTrato)
+	aKgMS := U_DivTrato(oGridZ06G:GetValue("XX5_KGMSDI"), nQtdTrato)
 
 	if nQtdTrato > 0
 		Z06->(DbSetOrder(1)) // Z06_FILIAL+DToS(Z06_DATA)+Z06_VERSAO+Z06_CURRAL+Z06_LOTE+Z06_TRATO
@@ -2843,19 +3054,16 @@ static function AtuMatSec()
 		Next
 		
 		RecLock("Z05", .F.)
-			Z05->Z05_KGMSDI := Z05->Z05_TOTMSI := mv_par01 
+			Z05->Z05_KGMSDI := Z05->Z05_TOTMSI := oGridZ06G:GetValue("XX5_KGMSDI") 
 			Z05->Z05_KGMNDI := Z05->Z05_TOTMNI := nQtdeMN
-			Z05->Z05_CMSPN  := (mv_par01 / Z05->Z05_PESMAT) *100
+			Z05->Z05_CMSPN  := (oGridZ06G:GetValue("XX5_KGMSDI") / Z05->Z05_PESMAT) *100
 			Z05->Z05_MEGCAL := nQtdMCal
-
 			Z05->Z05_MANUAL := '1'
 			Z05->Z05_ORIGEM := '3'
 		MsUnlock()
 
 		AjuMateria(oModel)
 	endif
-
-	oGridZ06D:GoLine(1)
 	
 	RestArea(aArea)
 return nil

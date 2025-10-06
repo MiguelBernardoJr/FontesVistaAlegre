@@ -1101,7 +1101,7 @@ static function RecrTrato(cRotaDe, cRotaAte, cCurralDe, cCurralAte, cLoteDe, cLo
 
         else
    
-            if !LockByName("CriaTrat" + DToS(Z0R->Z0R_DATA), .T., .T.)
+            if !LockByName("CriaTrat" + DToS(Z0R->Z0R_DATA) + iif(lDebug,"01",""), .T., .T.)
                 Help(/*Descontinuado*/,/*Descontinuado*/,"RECRIAÇÃO DO TRATO",/**/,"O trato na data " + DToC(Z0R->Z0R_DATA) + " está em criação ou recriação.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível manipular o trato durante a sua criação/recriação. Por favor, aguarde alguns instantes até que o processamento seja finalizado." })
             else
                 begin sequence
@@ -1651,12 +1651,19 @@ else
                                     "		else Z0O.Z0O_DIAIN " + CRLF +;
                                     "		end Z0O_DIAIN" + CRLF +;
                                     ", DIAS_NO_CURRAL DIAS_COCHO" + CRLF +; 
-                                   " , case " + CRLF +;
-                                          " when cast(UltDiaPlanNut.MAIORDIAPL as numeric) <= cast(convert(datetime, '" + DToS(Z0R->Z0R_DATA) + "', 103) - convert(datetime, DiasPlano.Z0O_DATAIN, 103) as numeric) + cast(Z0O.Z0O_DIAIN as numeric)" + CRLF +; // O primeiro dia é o dia 1 e não o dia 0
-                                          " then right('000' + UltDiaPlanNut.MAIORDIAPL, 3)" + CRLF +;
-                                          " else right('000' + cast((cast(convert(datetime, '" + DToS(Z0R->Z0R_DATA) + "', 103) - convert(datetime, DiasPlano.Z0O_DATAIN, 103) as numeric) + cast(Z0O.Z0O_DIAIN as numeric)) as varchar(3)), 3)" + CRLF +;
-                                      " end DIA_PLNUTRI" + CRLF +;
-                                   " , right('000' + cast((cast(convert(datetime, '" + DToS(Z0R->Z0R_DATA) + "', 103) - convert(datetime, DiasPlano.Z0O_DATAIN, 103) as numeric) + cast(Z0O.Z0O_DIAIN as numeric)) as varchar(3)), 3) DIAS_NO_PLANO" + CRLF +;
+                                    ", case " + CRLF +; 
+                                    "    when TRY_CAST(UltDiaPlanNut.MAIORDIAPL as numeric) IS NULL OR TRY_CAST(Z0O.Z0O_DIAIN as numeric) IS NULL OR TRY_CONVERT(datetime, DiasPlano.Z0O_DATAIN, 112) IS NULL then NULL " + CRLF+;
+                                    "    when TRY_CAST(UltDiaPlanNut.MAIORDIAPL as numeric) <= (DATEDIFF(day, TRY_CONVERT(datetime, DiasPlano.Z0O_DATAIN, 112), '" + DToS(Z0R->Z0R_DATA) + "') + TRY_CAST(Z0O.Z0O_DIAIN as numeric)) " + CRLF+;
+                                    "    then right('000' + UltDiaPlanNut.MAIORDIAPL, 3) " + CRLF+;
+                                    "    else  " + CRLF+;
+                                    "        right('000' + cast( (DATEDIFF(day, TRY_CONVERT(datetime, DiasPlano.Z0O_DATAIN, 112), '" + DToS(Z0R->Z0R_DATA) + "') + TRY_CAST(Z0O.Z0O_DIAIN as numeric)) as varchar(3)), 3) " + CRLF+;
+                                    "    end as DIA_PLNUTRI " + CRLF+;
+                                    ", case  " + CRLF+;
+                                    "    -- Verificamos novamente para garantir que não haja erros " + CRLF+;
+                                    "    when TRY_CAST(Z0O.Z0O_DIAIN as numeric) IS NULL OR TRY_CONVERT(datetime, DiasPlano.Z0O_DATAIN, 112) IS NULL then NULL " + CRLF+;
+                                    "    else " + CRLF+;
+                                    "        right('000' + cast( (DATEDIFF(day, TRY_CONVERT(datetime, DiasPlano.Z0O_DATAIN, 112), '" + DToS(Z0R->Z0R_DATA) + "') + TRY_CAST(Z0O.Z0O_DIAIN as numeric)) as varchar(3)), 3) " + CRLF+;
+                                    "   end as DIAS_NO_PLANO " + CRLF+;
                                    " , Z0O.Z0O_GMD" + CRLF +;
                                    " , Z0O.Z0O_DCESP" + CRLF +;
                                    " , Z0O.Z0O_RENESP" + CRLF +;
@@ -4368,12 +4375,12 @@ user function vap05man(cAlias, nReg, nOpc)
         if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
             if U_CanUseZ05()
                 FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
-                ReleaseZ05()
+                U_ReleaseZ05()
             endif
         elseif !Empty((cTrbBrowse)->B8_LOTECTL)
             if FillTrato()
                 FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt)
-                ReleaseZ05()
+                U_ReleaseZ05()
             endif
         endif
     elseif Z0R->Z0R_LOCK = '2' 
@@ -4437,7 +4444,7 @@ user function vap05nov()
 
     if CurrVazio()
         FWExecView('Incluir', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt)
-        ReleaseZ05()
+        U_ReleaseZ05()
     endif
     
     EnableKey(.T.)
@@ -4504,12 +4511,12 @@ user function VP05Form(dDtTrato, cVersao, cCurral, cLote)
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(dDtTrato)+cVersao+cCurral+cLote)) 
                 if U_CanUseZ05()
                     FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
-                    ReleaseZ05()
+                    U_ReleaseZ05()
                 endif
             elseif !Empty(cLote)
                 if FillTrato(cCurral, cLote)
                     FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt)
-                    ReleaseZ05()
+                    U_ReleaseZ05()
                 endif
             else
                 Help(/*Descontinuado*/,/*Descontinuado*/,"Não existe lote",/**/,"No momento da geração do trato não existia lote vinculado a esse curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível vincular um trato."})
@@ -4522,7 +4529,7 @@ user function VP05Form(dDtTrato, cVersao, cCurral, cLote)
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(dDtTrato)+cVersao+cCurral+cLote)) 
                 if U_CanUseZ05()
                     FWExecView('Manutenção', 'VAPCPA05', MODEL_OPERATION_VIEW,, { || .T. },,,aEnButt )
-                    ReleaseZ05()
+                    U_ReleaseZ05()
                 endif
             else
                 Help(/*Descontinuado*/,/*Descontinuado*/,"Não existe lote",/**/,"Não foi gerado trato vinculado a esse curral.", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Não é possível visualizar o trato."})
@@ -5520,7 +5527,7 @@ default oView  := FWViewActive()
             aAreaZ05 := Z05->(GetArea())
 
             // Libera registro para edição
-            ReleaseZ05()
+            U_ReleaseZ05()
 
             // Posiciona na Z05
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
@@ -5548,12 +5555,12 @@ default oView  := FWViewActive()
                 /*
                 if FillTrato()
                     RecarTrato()
-                    ReleaseZ05()
+                    U_ReleaseZ05()
                 else
                 */
                  if MsgYesNo("Não existe trato criado para o lote " + (cTrbBrowse)->B8_LOTECTL + " no curral " + (cTrbBrowse)->Z08_CODIGO + ". Deseja criar?", "Trato não encontrado.") .and. FillTrato()
                     RecarTrato()
-                    ReleaseZ05()
+                    U_ReleaseZ05()
                 else
                     // Se for clicado no botão cancelar 
                     // Reposiociona no último Z05 Válido
@@ -5613,7 +5620,7 @@ default oView  := FWViewActive()
             aAreaZ05 := Z05->(GetArea())
 
             // Libera registro para edição
-            ReleaseZ05()
+            U_ReleaseZ05()
 
             // Posiciona na Z05
             if Z05->(DbSeek(FWxFilial("Z05")+DToS(Z0R->Z0R_DATA)+Z0R->Z0R_VERSAO+(cTrbBrowse)->Z08_CODIGO+(cTrbBrowse)->B8_LOTECTL)) 
@@ -5635,7 +5642,7 @@ default oView  := FWViewActive()
                 // Chama a interface para criação
                 if MsgYesNo("Não existe trato criado para o lote " + (cTrbBrowse)->B8_LOTECTL + " no curral " + (cTrbBrowse)->Z08_CODIGO + ". Deseja criar?", "Trato não encontrado.") .and. FillTrato()
                     RecarTrato()
-                    ReleaseZ05()
+                    U_ReleaseZ05()
                 else
                     // Se for clicado no botão cancelar 
                     // Reposiociona no último Z05 Válido
@@ -6868,7 +6875,7 @@ default cVersao  := Z0R->Z0R_VERSAO
             DbSelectArea("SG1")
             DbSetOrder(1) // G1_FILIAL+G1_COD+G1_COMP+G1_TRT
             SG1->(DbSeek(FWxFilial("SG1") + cDieta))
-            while !SG1->(Eof()) .and. SG1->G1_FILIAL == FWxFilial("SG1") .and. SG1->G1_COD == cDieta
+            while !SG1->(Eof()) .and. SG1->G1_FILIAL == FWxFilial("SG1") .and. Alltrim(SG1->G1_COD) == Alltrim(cDieta)
                 nPosReg := SG1->(RecNo())
 
                 if (nPosSG1 := aScan(aIMS, {|aMat| aMat[1] == SG1->G1_COMP})) <> 0
@@ -7519,7 +7526,7 @@ local lRet := .T.
 return lRet
 
 
-/*/{Protheus.doc} ReleaseZ05
+/*/{Protheus.doc} U_ReleaseZ05
 Destrava a o registro da tabela Z05 posicionada
 @author jr.andre
 @since 13/09/2019
@@ -7528,7 +7535,7 @@ Destrava a o registro da tabela Z05 posicionada
 
 @type function
 /*/
-static function ReleaseZ05()
+User function ReleaseZ05()
 local lRet 
 
     if (lRet := UnlockByName("Z05" + StrZero(Z05->(RecNo()),10), .T., .T.))
@@ -7623,7 +7630,7 @@ static function InUseZ05(cRotaDe, cRotaAte, cCurralDe, cCurralAte, cLoteDe, cLot
                 lRet := .T.
                 exit
             endif
-            ReleaseZ05()
+            U_ReleaseZ05()
             (cAlias)->(DbSkip())
         end
 
@@ -7719,7 +7726,7 @@ local cDieta := ""
 
 if FillTrato()
 //    RecarTrato()
-//    ReleaseZ05()
+//    U_ReleaseZ05()
 
     oModel:getModel("MdGridZ06"):SetNoInsertLine(.F.)
     oModel:getModel("MdGridZ06"):SetNoDeleteLine(.F.)
@@ -8772,7 +8779,7 @@ local cAlias    := ""
                 Z05->Z05_MANUAL := '1'
                 Z05->Z05_ORIGEM := '3'
             MsUnlock()
-            ReleaseZ05()
+            U_ReleaseZ05()
         endif
     else
         u_vap05man()
@@ -9375,12 +9382,12 @@ Percorre os currais selecionado e altera os tratos de acordo com os parametros d
 @type function
 /*/
 user function RunDieta()
-local i 
-local nQtdTr := u_GetNroTrato()
-local cTrato := ""
-local aTrato := {}
-local cQry   := ""
-local cAlias := ""
+    local i 
+    local nQtdTr := u_GetNroTrato()
+    local cTrato := ""
+    local aTrato := {}
+    local cQry   := ""
+    local cAlias := ""
 
     for i := 1 to nQtdTr
         if !Empty(cTrato := &("mv_par" + StrZero(i+4, 2)))
@@ -9503,7 +9510,7 @@ local nMCalTrt  := 0
         endif
 
         FillEmpty()
-        ReleaseZ05()
+        U_ReleaseZ05()
         if FunName() == "VAPCPA05"
             U_UpdTrbTmp() // Atualiza a quantidade de trato tabela temporária
         endif

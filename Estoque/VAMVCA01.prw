@@ -804,9 +804,9 @@ User Function TgLotZ0E() // trigger
 		If nRegistros == 1
 			oGridZ0E:LoadValue('Z0E_PESTOT', (cAlias)->B8_XPESTOT       )
 			oGridZ0E:LoadValue('Z0E_DATACO', sToD((cAlias)->B8_XDATACO) )
-			//oGridZ0E:LoadValue('Z0E_GMD'   , (cAlias)->B8_GMD           )
+			//oGridZ0E:LoadValue('Z0E_GMD'   , (cAlias)->B8_GMD         )
 			//oGridZ0E:LoadValue('Z0E_DIASCO', (cAlias)->B8_DIASCO 	    )
-			//oGridZ0E:LoadValue('Z0E_RENESP', (cAlias)->B8_XRENESP 	    )
+			//oGridZ0E:LoadValue('Z0E_RENESP', (cAlias)->B8_XRENESP 	)
 			oGridZ0E:LoadValue('Z0E_PESO'  , (cAlias)->B8_XPESOCO       )
 			
 			// MB : 30.03.2021 => pega lote de origem para gatilhar os campos no destino
