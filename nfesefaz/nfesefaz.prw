@@ -9711,11 +9711,11 @@ If Len(aProd[53]) > 0
 
 EndIf
 
-cString += '<vItem>' + ConvType(nTotalItem,15,2) + '</vItem>'
+//cString += '<vItem>' + ConvType(nTotalItem,15,2) + '</vItem>'
 //Aguardando definição dos campos
 // cString += gDFeReferenciado(cNFe,ConvType(aProd[01]))
 
-cString += '</det>' 
+cString += '</det>'
 
 if !EMPTY(SF2->F2_NFCUPOM)
 	lNfCpm := .T.

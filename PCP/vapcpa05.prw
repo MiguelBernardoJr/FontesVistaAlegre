@@ -4266,7 +4266,7 @@ user function vap05mnt(cAlias, nReg, nOpc)
 
             SetFunName("VAPCPA17")
             
-            FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+            FWExecView('Manutenção', 'custom.VAPCPA17.VAPCPA17', MODEL_OPERATION_INSERT,, { || .T. },,,aEnButt )
         
             SetFunName(cBakFun)
 
