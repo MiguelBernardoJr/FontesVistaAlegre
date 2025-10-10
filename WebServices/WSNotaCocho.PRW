@@ -13,7 +13,7 @@ STATIC _ENTER_    := (Chr(13)+Chr(10))
 
 // User Function WSNotaCocho(); Return '20240325'
 
-WSRESTFUL WSNotaCocho DESCRIPTION "WebService REST para NotaCocho"
+WSRESTFUL WSNotaCocho DESCRIPTION "WebServ REST para NotaCocho"
 
     WsMethod GET CadastroDasNotas;
         DESCRIPTION "Listagem do cadastro de notas com a percentagem de ajustes";

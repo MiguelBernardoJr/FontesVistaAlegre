@@ -88,7 +88,6 @@ static nMaxDiasDi := (10^TamSX3("Z05_DIASDI")[1])-1
 
 static aSeekFiltr := {}
 
-
 /*/{Protheus.doc} VAPCPA05
 Rotina de criação/manutenção de trato.
 @author jr.andre

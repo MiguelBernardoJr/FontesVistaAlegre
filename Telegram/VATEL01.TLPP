@@ -1,0 +1,124 @@
+#include "totvs.ch"
+#INCLUDE "TOPCONN.CH"
+
+/*/{Protheus.doc} VAMT140TOK
+    Função executada em vários P.E para enviar mensagens LOGS para API TELEGRAM
+    Salva ID da mensagem enviada no campo F1_IDALMOX e F1_IDFISCA
+    ID é necessário caso queira alterar a mensagem futuramente.
+
+    @type function
+    @version  12.1.2410
+    @author igor.oliveira
+    @since 9/8/2025
+    @return .t.
+/*/
+
+User Function VATEL01()
+    Local lRet          := .T.  as logical
+    Local oBot          as object
+    Local _cMsg         as character
+    Local cButtons      as character
+    Local cToken        := "8316390059:AAGf2Zfkan8OfxyZ2TViOKos_3A_p41U2_8" as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+    Local cId           := "-4857532379" as character//"-4974016224" as character
+    Local cApiGatewayUrl := 'https://zt3ndn802l.execute-api.sa-east-1.amazonaws.com/v1/notas/' as character
+    LOCAL cApiKey        := 'kzRoHVfh9b5HfLLUDJdLE98M8Ne0vTcoaDKU1xm8' as character
+    Local nIdMessage    as numeric
+    Local cQry          as character
+    Local cAlias        as character
+    //Local cUrlMiniApp  := "https://www.vistaalegre.agr.br/Telegram/bot_entrada_gado/gado.html" as character
+    Local cUrlMiniApp   := "https://t.me/vaEntradaGadobot/entradagado" as character
+    Local cUrlCompleta  := "" as character
+    Local oJsonParams  := JsonObject():New()
+    Local cJsonString  := ""
+    Local cBase64      := ""
+
+    DBSELECTAREA("SF1")
+    SF1->(DBGOTO(236225))
+
+    DBSELECTAREA("SD1")
+    SD1->(DBGOTO(377403))
+    
+    cUrlteste := "https://www.vistaalegre.agr.br/Telegram/bot_entrada_gado/gado.html"  + "?"
+    cUrlteste += "filial="       + AllTrim(SF1->F1_FILIAL)
+    cUrlteste += "&numero="      + AllTrim(SF1->F1_DOC)
+    cUrlteste += "&serie="       + AllTrim(SF1->F1_SERIE)
+    cUrlteste += "&fornecedor="  + AllTrim(SF1->F1_FORNECE)
+    cUrlteste += "&loja="        + AllTrim(SF1->F1_LOJA)
+    cUrlteste += "&apiUrl="      + cApiGatewayUrl
+    cUrlteste += "&apiKey="      + cApiKey
+
+    oJsonParams["filial"]      := AllTrim(SF1->F1_FILIAL)
+    oJsonParams["numero"]      := AllTrim(SF1->F1_DOC)
+    oJsonParams["serie"]       := AllTrim(SF1->F1_SERIE)
+    oJsonParams["fornecedor"]  := AllTrim(SF1->F1_FORNECE)
+    oJsonParams["loja"]        := AllTrim(SF1->F1_LOJA)
+    oJsonParams["apiKey"]      := AllTrim(cApiKey)
+    oJsonParams["apiUrl"]      := AllTrim(cApiGatewayUrl)
+
+    cJsonString := oJsonParams:ToJson()
+    cBase64     := Encode64(cJsonString, , .F., .F.)
+    
+    cUrlCompleta := cUrlMiniApp  + "?startapp=" + cBase64
+
+    oBot := Telegram():New(cToken,cId)
+
+    If ValType(oBot) == "O"
+
+        cQry := "SELECT * FROM "+RetSqlName("ZBC")+" WHERE ZBC_FILIAL = '"+fwxFilial("ZBC")+"' AND D_E_L_E_T_ = '' AND ZBC_PEDIDO = '"+SD1->D1_PEDIDO+"'"
+        
+        cAlias := MpSysOpenQuery(cQry)
+
+        if !(cAlias)->(EOF())
+            _cMsg := MontaMensagem("Entrada de Gado",;
+                                    SF1->F1_FORNECE,;
+                                    SF1->F1_LOJA,;
+                                    SF1->F1_DOC,;
+                                    SF1->F1_EMISSAO,;
+                                    (cAlias)->ZBC_CODIGO)
+            cButtons := '{'
+            cButtons += '"inline_keyboard": ['
+            cButtons += '    ['
+            cButtons += '        {"text": "Abrir Detalhes", "url": "' + cUrlCompleta + '"}'
+            cButtons += '    ]'
+            cButtons += ']'
+            cButtons += '}'
+
+            nIdMessage := oBot:SendMessageWithButtons( _cMsg,cButtons, .T.)
+
+        endif
+
+        (cAlias)->(DbCloseArea())
+
+    endif
+
+    SF1->(DbCloseArea())
+    SD1->(DbCloseArea())
+
+    oBot  := Nil
+
+Return lRet
+
+Static Function MontaMensagem(cStep as character,cFornece as character, cLoja as character, cNota as character, dEmissao as date, cNumContrato as character)
+    Local _cMsg           := ''
+    Local cNomeFornecedor := Alltrim(Posicione("SA2", 1, FwXFilial("SA2") + cFornece + cLoja, "A2_NOME"))
+    Local cCNPJFornecedor := Alltrim(Posicione("SA2", 1, FwXFilial("SA2") + cFornece + cLoja, "A2_CGC"))
+    local cNomeInclusao   := AllTrim(MpSysExecScalar("SELECT USR_NOME FROM SYS_USR WHERE USR_CODIGO = '"+FWLeUserlg("F1_USERLGI",1)+"' AND D_E_L_E_T_ = ''","USR_NOME"))
+
+    _cMsg := '<b><i>'+cStep+'</i></b>' + CRLF
+    _cMsg += '<i>Recebido em: <b>' + dToC(dEmissao) + '</b> por <b>' + cNomeInclusao + '</b></i>' + CRLF
+    _cMsg += CRLF
+    _cMsg += '<b><i>Dados do Documento:</i></b>' + CRLF
+    _cMsg += '<b>Fornecedor</b>: ' + cNomeFornecedor + ''+ CRLF
+    _cMsg += CRLF
+    _cMsg += '<b>Codigo</b>: <pre>' + cFornece + '</pre>' + CRLF
+    _cMsg += '<b>Loja</b>: <pre>' + cLoja + '</pre>' + CRLF
+    _cMsg += '<b>CNPJ/CPF</b>: <pre>' + cCNPJFornecedor + '</pre>' + CRLF
+    _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNota + '</pre>' + CRLF
+    _cMsg += '<b>Data de Emissao</b>: <pre>' + dToC(dEmissao) + '</pre>' + CRLF
+    _cMsg += CRLF
+
+    _cMsg += '<b>Contrato</b>: <pre>' + cNumContrato + '</pre>' + CRLF
+
+Return _cMsg
+
+

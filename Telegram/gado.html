@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes da Nota</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 15px; text-align: center; }
+        .status { font-size: 1.2em; font-weight: bold; }
+        .status.success { color: green; }
+        .status.error { color: red; }
+        .info { font-size: 0.9em; color: #666; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Comunicação com a API Protheus via AWS</h1>
+    <div id="status-message" class="status">Aguardando dados...</div>
+    <div id="info-mode" class="info"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async function() {
+            // 1. DECLARAÇÃO DAS VARIÁVEIS NO ESCOPO CORRETO
+            const statusDiv = document.getElementById('status-message');
+            const infoDiv = document.getElementById('info-mode');
+            let params = {};
+
+            // 2. LÓGICA PARA LER OS PARÂMETROS (DO TELEGRAM OU DA URL)
+            const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+
+            if (startParam) {
+                // MODO TELEGRAM (via start_param)
+                infoDiv.innerText = "Modo: Telegram Web App (via start_param)";
+                try {
+                    const decodedJsonString = atob(startParam);
+                    params = JSON.parse(decodedJsonString);
+                } catch (e) {
+                    statusDiv.innerText = `❌ Erro ao decodificar parâmetros do Telegram: ${e.message}`;
+                    statusDiv.className = "status error";
+                    return;
+                }
+            } else {
+                // MODO NAVEGADOR / DEBUG (via query string na URL)
+                infoDiv.innerText = "Modo: Navegador/Debug (via URL)";
+                const urlParams = new URLSearchParams(window.location.search);
+                params = {
+                    filial: urlParams.get('filial'),
+                    numero: urlParams.get('numero'),
+                    serie: urlParams.get('serie'),
+                    fornecedor: urlParams.get('fornecedor'),
+                    loja: urlParams.get('loja'),
+                    apiKey: urlParams.get('apiKey'),
+                    apiUrl: urlParams.get('apiUrl')
+                };
+            }
+
+            // 3. LÓGICA PARA CHAMAR A API
+            try {
+                const { filial, numero, serie, fornecedor, loja, apiKey, apiUrl } = params;
+
+                if (!apiUrl || !apiKey || !filial || !numero) {
+                    throw new Error("Informações de acesso ou da nota estão ausentes.");
+                }
+                
+                // Monta a URL final com parâmetros de consulta (query string), que é o formato que sua API Protheus espera.
+                const finalApiUrl = `${apiUrl}?filial=${filial}&numero=${numero}&serie=${serie}&fornecedor=${fornecedor}&loja=${loja}`;
+                
+                console.log("Chamando API:", finalApiUrl);
+                
+                statusDiv.innerText = `Buscando dados da nota ${numero}...`;
+
+                const response = await fetch(finalApiUrl, {
+                    headers: { 'x-api-key': apiKey }
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("Corpo do erro:", errorBody);
+                    throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+
+                if (data.status === 'sucesso') {
+                    statusDiv.innerText = `✅ Sucesso! Mensagem da API: ${data.mensagem}`;
+                    statusDiv.className = "status success";
+                } else {
+                    throw new Error(data.mensagem);
+                }
+
+            } catch (error) {
+                console.error("Erro no fetch:", error);
+                statusDiv.innerText = `❌ Falha no processamento: ${error.message}`;
+                statusDiv.className = "status error";
+            }
+        });
+    </script>
+</body>
+</html>

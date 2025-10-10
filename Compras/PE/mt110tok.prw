@@ -16,9 +16,11 @@ local nPosItem  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'C1_ITEM'} )
 local nPosProd  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'C1_PRODUTO'} )
 local nPosCC    := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'C1_CC'} )
 local nPosIC    := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'C1_ITEMCTA'} )
-//local nPosOP    := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'C1_OP'} )
-//local nPosOS    := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'C1_OS'} )
 local nPosAP    := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'C1_XAPLICA'} )
+
+if IsInCallStack("MNTA720")
+    Return lRet
+endif
 
 SB1->(DbSetOrder(1))
 
