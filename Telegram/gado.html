@@ -2,95 +2,157 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Detalhes da Nota</title>
+    <title>Detalhes do Contrato e Nota Fiscal</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 15px; text-align: center; }
-        .status { font-size: 1.2em; font-weight: bold; }
-        .status.success { color: green; }
-        .status.error { color: red; }
-        .info { font-size: 0.9em; color: #666; margin-top: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #1c1e21; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow: hidden; margin-bottom: 20px; }
+        .card-header { background-color: #f7f9fc; padding: 16px 24px; border-bottom: 1px solid #e1e8ed; }
+        .card-header h1, .card-header h2 { margin: 0; font-size: 1.5em; }
+        .card-body { padding: 24px; }
+        .header-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .data-item { font-size: 1em; }
+        .data-item .label { display: block; font-size: 0.85em; color: #657786; margin-bottom: 4px; }
+        .data-item .value { font-weight: 500; }
+        .table-container { overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead th { background-color: #e9eff4; padding: 12px; text-align: left; font-size: 0.9em; white-space: nowrap; }
+        .data-table tbody tr.main-row { cursor: pointer; border-bottom: 1px solid #ddd; }
+        .data-table tbody tr.main-row:hover { background-color: #f7f9fc; }
+        .data-table tbody td { padding: 12px; font-size: 0.95em; white-space: nowrap; }
+        .details-row { display: none; }
+        .details-row.show { display: table-row; }
+        .details-content { background-color: #fafafa; padding: 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .main-row.active { background-color: #e9eff4; }
+        .status-message { padding: 20px; text-align: center; font-size: 1.2em; font-weight: bold; color: #d93025; }
+        .info { font-size: 0.9em; color: #666; text-align: center; margin-bottom: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <h1>Comunicação com a API Protheus via AWS</h1>
-    <div id="status-message" class="status">Aguardando dados...</div>
     <div id="info-mode" class="info"></div>
 
+    <div id="loading-container" class="container">
+        <div class="card-body" style="text-align: center; font-size: 1.2em; font-weight: bold;">Aguardando dados...</div>
+    </div>
+    <div id="main-content" class="container hidden">
+        <div id="header-card" class="card">
+            <div class="card-header"><h1 id="header-title"></h1></div>
+            <div class="card-body">
+                <div class="header-grid">
+                    <div class="data-item"><span class="label">Pedido de Compra</span><span class="value" id="pedido-compra"></span></div>
+                    <div class="data-item"><span class="label">Contrato</span><span class="value" id="codigo-contrato"></span></div>
+                    <div class="data-item"><span class="label">Data do Contrato</span><span class="value" id="data-contrato"></span></div>
+                    <div class="data-item"><span class="label">Fornecedor</span><span class="value" id="nome-fornecedor"></span></div>
+                    <div class="data-item"><span class="label">Corretor</span><span class="value" id="nome-corretor"></span></div>
+                    <div class="data-item"><span class="label">Qtd. de Animais</span><span class="value" id="quantidade-animais"></span></div>
+                </div>
+            </div>
+        </div>
+        <div id="items-card" class="card">
+             <div class="card-header"><h2>Itens da Nota Fiscal</h2></div>
+            <div class="card-body" style="padding: 0;">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th><th>Código do Produto</th><th>Descrição</th><th>Quantidade</th><th>Valor Unitário</th><th>Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="error-container" class="container hidden">
+        <div id="error-message" class="status-message"></div>
+    </div>
+
     <script>
+        // --- FUNÇÕES AUXILIARES E DE PREENCHIMENTO ---
+        const formatDate = (dateStr) => { if (!dateStr || dateStr.length !== 8) return dateStr; return `${dateStr.substring(6, 8)}/${dateStr.substring(4, 6)}/${dateStr.substring(0, 4)}`; };
+        const formatTime = (timeStr) => { if (!timeStr || timeStr.trim().length !== 4) return timeStr; return `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}`; };
+        const formatCurrency = (value) => { if (isNaN(value)) return 'N/A'; return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); };
+        function populateHeader(header) {
+            document.getElementById('header-title').innerText = `Contrato: ${header.codigocontrato}`;
+            document.getElementById('pedido-compra').innerText = header.pedidocompra;
+            document.getElementById('codigo-contrato').innerText = header.codigocontrato;
+            document.getElementById('data-contrato').innerText = formatDate(header.datacontrato);
+            document.getElementById('nome-fornecedor').innerText = header.nomefornecedor;
+            document.getElementById('nome-corretor').innerText = `${header.nomecorretor} (Cód: ${header.codigocorretor})`;
+            document.getElementById('quantidade-animais').innerText = header.quantidadeanimais;
+        }
+        function populateTable(items) {
+            const tableBody = document.getElementById('items-tbody'); tableBody.innerHTML = '';
+            items.forEach(item => {
+                const mainRow = document.createElement('tr'); mainRow.className = 'main-row';
+                mainRow.innerHTML = `<td>${item.item}</td><td>${item.codigoproduto}</td><td>${item.descricaoproduto}</td><td>${item.quantidade}</td><td>${formatCurrency(item.valorunitario)}</td><td>${formatCurrency(item.valortotal)}</td>`;
+                const detailsRow = document.createElement('tr'); detailsRow.className = 'details-row';
+                detailsRow.innerHTML = `<td colspan="6"><div class="details-content"><div class="data-item"><span class="label">Peso Origem</span><span class="value">${item.peso} kg</span></div><div class="data-item"><span class="label">Peso Chegada</span><span class="value">${item.pesochegada} kg</span></div><div class="data-item"><span class="label">Quebra (kg)</span><span class="value">${item.quebrakg} kg</span></div><div class="data-item"><span class="label">Quebra (%)</span><span class="value">${item.quebrachegada} %</span></div><div class="data-item"><span class="label">Distância</span><span class="value">${item.km} km</span></div><div class="data-item"><span class="label">Data/Hora Embarque</span><span class="value">${formatDate(item.dataembarque)} ${formatTime(item.horaembarque)}</span></div><div class="data-item"><span class="label">Data/Hora Chegada</span><span class="value">${formatDate(item.datachegada)} ${formatTime(item.horachegada)}</span></div></div></td>`;
+                tableBody.appendChild(mainRow); tableBody.appendChild(detailsRow);
+            });
+            tableBody.addEventListener('click', function(event) {
+                const clickedRow = event.target.closest('.main-row'); if (!clickedRow) return;
+                const detailsRow = clickedRow.nextElementSibling;
+                document.querySelectorAll('.details-row.show').forEach(openRow => {
+                    if (openRow !== detailsRow) { openRow.classList.remove('show'); openRow.previousElementSibling.classList.remove('active'); }
+                });
+                detailsRow.classList.toggle('show'); clickedRow.classList.toggle('active');
+            });
+        }
+        
+        // --- LÓGICA PRINCIPAL ---
         document.addEventListener("DOMContentLoaded", async function() {
-            // 1. DECLARAÇÃO DAS VARIÁVEIS NO ESCOPO CORRETO
-            const statusDiv = document.getElementById('status-message');
+            const loadingContainer = document.getElementById('loading-container');
+            const mainContent = document.getElementById('main-content');
+            const errorContainer = document.getElementById('error-container');
+            const errorMessageDiv = document.getElementById('error-message');
             const infoDiv = document.getElementById('info-mode');
             let params = {};
 
-            // 2. LÓGICA PARA LER OS PARÂMETROS (DO TELEGRAM OU DA URL)
             const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-
             if (startParam) {
-                // MODO TELEGRAM (via start_param)
-                infoDiv.innerText = "Modo: Telegram Web App (via start_param)";
-                try {
-                    const decodedJsonString = atob(startParam);
-                    params = JSON.parse(decodedJsonString);
-                } catch (e) {
-                    statusDiv.innerText = `❌ Erro ao decodificar parâmetros do Telegram: ${e.message}`;
-                    statusDiv.className = "status error";
-                    return;
-                }
+                infoDiv.innerText = "Modo: Telegram Web App";
+                try { params = JSON.parse(atob(startParam)); } 
+                catch (e) { loadingContainer.classList.add('hidden'); errorMessageDiv.innerText = `❌ Erro ao decodificar parâmetros do Telegram: ${e.message}`; errorContainer.classList.remove('hidden'); return; }
             } else {
-                // MODO NAVEGADOR / DEBUG (via query string na URL)
-                infoDiv.innerText = "Modo: Navegador/Debug (via URL)";
+                infoDiv.innerText = "Modo: Navegador/Debug";
                 const urlParams = new URLSearchParams(window.location.search);
                 params = {
-                    filial: urlParams.get('filial'),
-                    numero: urlParams.get('numero'),
-                    serie: urlParams.get('serie'),
-                    fornecedor: urlParams.get('fornecedor'),
-                    loja: urlParams.get('loja'),
-                    apiKey: urlParams.get('apiKey'),
+                    filial: urlParams.get('filial'), numero: urlParams.get('numero'), serie: urlParams.get('serie'),
+                    fornecedor: urlParams.get('fornecedor'), loja: urlParams.get('loja'), apiKey: urlParams.get('apiKey'),
                     apiUrl: urlParams.get('apiUrl')
                 };
             }
 
-            // 3. LÓGICA PARA CHAMAR A API
             try {
                 const { filial, numero, serie, fornecedor, loja, apiKey, apiUrl } = params;
-
-                if (!apiUrl || !apiKey || !filial || !numero) {
-                    throw new Error("Informações de acesso ou da nota estão ausentes.");
-                }
+                if (!apiUrl || !apiKey || !filial || !numero) throw new Error("Informações de acesso ou da nota estão ausentes na URL.");
                 
-                // Monta a URL final com parâmetros de consulta (query string), que é o formato que sua API Protheus espera.
                 const finalApiUrl = `${apiUrl}?filial=${filial}&numero=${numero}&serie=${serie}&fornecedor=${fornecedor}&loja=${loja}`;
-                
                 console.log("Chamando API:", finalApiUrl);
                 
-                statusDiv.innerText = `Buscando dados da nota ${numero}...`;
-
-                const response = await fetch(finalApiUrl, {
-                    headers: { 'x-api-key': apiKey }
-                });
-
-                if (!response.ok) {
-                    const errorBody = await response.text();
-                    console.error("Corpo do erro:", errorBody);
-                    throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
-                }
+                const response = await fetch(finalApiUrl, { headers: { 'x-api-key': apiKey } });
+                if (!response.ok) throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
                 
-                const data = await response.json();
-
-                if (data.status === 'sucesso') {
-                    statusDiv.innerText = `✅ Sucesso! Mensagem da API: ${data.mensagem}`;
-                    statusDiv.className = "status success";
+                const apiData = await response.json();
+                console.log("DADOS REAIS RECEBIDOS DA API:", apiData);
+                
+                if (apiData && apiData.cabecalhoContrato && apiData.itensNotaFiscal) {
+                    populateHeader(apiData.cabecalhoContrato);
+                    populateTable(apiData.itensNotaFiscal);
+                    loadingContainer.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
                 } else {
-                    throw new Error(data.mensagem);
+                    throw new Error("A resposta da API não contém as chaves 'cabecalhoContrato' ou 'itensNotaFiscal'. Verifique a estrutura no console.");
                 }
-
             } catch (error) {
-                console.error("Erro no fetch:", error);
-                statusDiv.innerText = `❌ Falha no processamento: ${error.message}`;
-                statusDiv.className = "status error";
+                console.error("Erro no processamento:", error);
+                loadingContainer.classList.add('hidden');
+                errorMessageDiv.innerText = `❌ Falha no processamento: ${error.message}`;
+                errorContainer.classList.remove('hidden');
             }
         });
     </script>
