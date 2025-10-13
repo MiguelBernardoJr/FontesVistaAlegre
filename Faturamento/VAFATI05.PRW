@@ -860,9 +860,8 @@ Static Function FI05QT()
                     endif
                 endif
                     oGridZVB:SetValue("ZVB_QUANT" ,aBovs[nPosBLot][2][nPosBItem][2][nI][2])
-                    
-                    //oGridZVB:SetValue("ZVB_TOTAL" ,nPreco * aBovs[nPosBLot][2][nPosBItem][2][nI][2])
-            Next 
+                    oGridZVB:SetValue("ZVB_TOTAL" ,oGridZVB:GetValue("ZVB_PRECO") * oGridZVB:GetValue("ZVB_QUANT"))
+            Next
 
             SB1->(DBCLOSEAREA(  ))
         else 
