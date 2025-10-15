@@ -36,7 +36,7 @@ WSMETHOD GET BuscaNota WSRECEIVE filial, numero, serie, fornecedor, loja WSSERVI
 
     // Query para buscar os dados da nota fiscal e do contrato
     cQry := " SELECT D1_FILIAL,D1_DOC,D1_SERIE, D1_ITEM, D1_COD, B1_DESC, D1_QUANT, D1_VUNIT, D1_TOTAL, D1_PEDIDO, D1_EMISSAO, "
-    cQry += " D1_X_PESO, D1_X_PESCH, D1_X_QUECA, D1_X_KM, D1_X_QUEKG, D1_X_EMBDT, D1_X_EMBHR, D1_X_CHEDT, D1_X_CHEHR, "
+    cQry += " ZBC_PESREA, D1_X_PESCH, D1_X_QUECA, D1_X_KM, D1_X_QUEKG, D1_X_EMBDT, D1_X_EMBHR, D1_X_CHEDT, D1_X_CHEHR, "
     cQry += " ZBC_CODIGO, ZCC_DTCONT, ZCC_NOMFOR, ZCC_QTTTAN, ZCC_CODCOR, ZCC_NOMCOR "
     cQry += " FROM "+RetSqlName("SD1")+" SD1 "
     cQry += " LEFT JOIN "+RetSqlName("SB1")+" SB1 ON B1_COD = D1_COD AND SB1.D_E_L_E_T_ = '' "
@@ -48,7 +48,7 @@ WSMETHOD GET BuscaNota WSRECEIVE filial, numero, serie, fornecedor, loja WSSERVI
     cQry += " AND D1_DOC = '"+Self:numero+"' "
     cQry += " AND D1_SERIE = '"+Self:serie+"' "
     cQry += " AND SD1.D_E_L_E_T_ = '' "
-    cQry += " ORDER BY D1_ITEM " // É uma boa prática ordenar os itens
+    cQry += " ORDER BY D1_ITEM "
 
     cAlias := MpSysOpenQry(cQry)
 
@@ -88,8 +88,10 @@ WSMETHOD GET BuscaNota WSRECEIVE filial, numero, serie, fornecedor, loja WSSERVI
             jItem['valorunitario']    := (cAlias)->D1_VUNIT
             jItem['valortotal']       := (cAlias)->D1_TOTAL
             jItem['itemcontrato']     := (cAlias)->ZBC_CODIGO // Link para o item do contrato
-            jItem['peso']             := (cAlias)->D1_X_PESO
+            jItem['peso']             := (cAlias)->ZBC_PESREA
             jItem['pesochegada']      := (cAlias)->D1_X_PESCH
+            jItem['pesototalchegada'] := (cAlias)->ZBC_PESREA * (cAlias)->D1_QUANT
+            jItem['pesototalsaida']   := (cAlias)->D1_X_PESCH * (cAlias)->D1_QUANT
             jItem['quebrachegada']    := (cAlias)->D1_X_QUECA
             jItem['km']               := (cAlias)->D1_X_KM
             jItem['quebrakg']         := (cAlias)->D1_X_QUEKG
@@ -127,7 +129,7 @@ User Function zBusNtTe()
 
     // Query para buscar os dados da nota fiscal e do contrato
     cQry := " SELECT D1_FILIAL, D1_ITEM, D1_COD, B1_DESC, D1_QUANT, D1_VUNIT, D1_TOTAL, D1_PEDIDO, D1_EMISSAO, "
-    cQry += " D1_X_PESO, D1_X_PESCH, D1_X_QUECA, D1_X_KM, D1_X_QUEKG, D1_X_EMBDT, D1_X_EMBHR, D1_X_CHEDT, D1_X_CHEHR, "
+    cQry += " ZBC_PESREA, D1_X_PESCH, D1_X_QUECA, D1_X_KM, D1_X_QUEKG, D1_X_EMBDT, D1_X_EMBHR, D1_X_CHEDT, D1_X_CHEHR, "
     cQry += " ZBC_CODIGO, ZCC_DTCONT, ZCC_NOMFOR, ZCC_QTTTAN, ZCC_CODCOR, ZCC_NOMCOR "
     cQry += " FROM "+RetSqlName("SD1")+" SD1 "
     cQry += " LEFT JOIN "+RetSqlName("SB1")+" SB1 ON B1_COD = D1_COD AND SB1.D_E_L_E_T_ = '' "
@@ -179,7 +181,7 @@ User Function zBusNtTe()
             jItem['valorunitario']    := (cAlias)->D1_VUNIT
             jItem['valortotal']       := (cAlias)->D1_TOTAL
             jItem['itemcontrato']     := (cAlias)->ZBC_CODIGO // Link para o item do contrato
-            jItem['peso']             := (cAlias)->D1_X_PESO
+            jItem['peso']             := (cAlias)->ZBC_PESREA
             jItem['pesochegada']      := (cAlias)->D1_X_PESCH
             jItem['quebrachegada']    := (cAlias)->D1_X_QUECA
             jItem['km']               := (cAlias)->D1_X_KM

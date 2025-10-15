@@ -860,7 +860,7 @@ Static Function FI05QT()
                     endif
                 endif
                     oGridZVB:SetValue("ZVB_QUANT" ,aBovs[nPosBLot][2][nPosBItem][2][nI][2])
-                    oGridZVB:SetValue("ZVB_TOTAL" ,oGridZVB:GetValue("ZVB_PRECO") * oGridZVB:GetValue("ZVB_QUANT"))
+                    oGridZVB:LoadValue("ZVB_TOTAL" ,oGridZVB:GetValue("ZVB_PRECO") * oGridZVB:GetValue("ZVB_QUANT"))
             Next
 
             SB1->(DBCLOSEAREA(  ))
@@ -871,7 +871,7 @@ Static Function FI05QT()
     else 
         oModel:SetErrorMessage("","","","","Campo Lote vazio!", 'Digite o Lote', "") 
         lRet := .F.
-    endif 
+    endif
 
     oGridZVB:SetNoInsertLine(.T.)
     oGridZVB:SetNoDeleteLine(.T.)

@@ -1,0 +1,313 @@
+#include 'Totvs.ch'
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} VACOMM16
+Função customizada para associar pesagens (ZPB) aos itens
+de uma nota fiscal de entrada de gado.
+
+@author Protheus AI
+@since 13/10/2025
+@version 1.0
+/*/
+//-------------------------------------------------------------------
+User Function VACOMM16()
+    Local aArea     := FwGetArea()
+    Local cAlias    := ""
+    Local cQry      := ""
+    Local aPesagens := {}
+    Local lRet      := .T.
+    dDataBase := dDEmissao
+    // A verificação de aHeader e aCols é crucial. [cite: 1]
+    // A rotina que chama esta User Function deve disponibilizar essas variáveis.
+    if Type("aHeader") != "U" .and. Type("aCols") != "U" .and. !Empty(aCols) .and. !Empty(aCols[1,2])
+        
+        cQry := "SELECT ZPB_DATA,* FROM "+RetSqlName("ZPB")+" ZPB " + CRLF
+        cQry += " WHERE ZPB_DATA >= DATEADD(DAY,-10, '"+DToS(dDataBase)+"') " + CRLF
+        cQry += " AND ZPB_FILIAL = '"+FwXFilial("ZPB")+"' " + CRLF
+        cQry += " AND ZPB_CODFOR = '"+cA100For+"' " + CRLF
+        cQry += " AND ZPB_LOJFOR = '"+cLoja+"' " + CRLF
+        cQry += " AND ZPB_STATUS = 'F' " + CRLF  // Status 'F' de Finalizado
+        cQry += " AND ZPB.D_E_L_E_T_ = '' " + CRLF
+        cQry += " AND NOT EXISTS ( " + CRLF
+        cQry += "    SELECT 1 FROM "+RetSqlName("SD1")+" SD1 " + CRLF
+        cQry += "    WHERE SD1.D1_X_PESAG = (CONVERT(VARCHAR, ZPB.ZPB_DATA, 103) + '-' + RIGHT('000000' + LTRIM(RTRIM(ZPB.ZPB_CODIGO)), 6))" + CRLF
+        cQry += "    AND SD1.D_E_L_E_T_ = '' " + CRLF
+        cQry += " )" + CRLF
+
+        cAlias := MpSysOpenQuery(cQry)
+
+        If (cAlias)->(Eof())
+            FWAlertWarning("Não foi encontrada pesagem para o fornecedor dessa nota, verifique o código+loja e data da pesagem!","Atenção!")
+        Else
+            While !(cAlias)->(Eof())
+                aAdd(aPesagens, {;
+                    "LBNO",;
+                    sToD((cAlias)->ZPB_DATA),;
+                    (cAlias)->ZPB_CODIGO,;
+                    (cAlias)->ZPB_PLACA,;
+                    (cAlias)->ZPB_QTANIM,;
+                    (cAlias)->ZPB_PESOL,;
+                    .F. ; // Adiciona uma posição para controle de uso
+                })
+                (cAlias)->(DbSkip())
+            End
+        Endif
+
+        (cAlias)->(DbCloseArea())
+
+        // Só chama a tela se houver pesagens para associar
+        IF Len(aPesagens) > 0
+            // A função MontaTela agora retorna .T. se o usuário confirmar, ou .F. se cancelar.
+            // Ela também precisa de aHeader e aCols para montar a grid da NF.
+            lRet := MontaTela(aPesagens, aHeader, aCols)
+        Endif
+    Endif
+
+    FwRestArea(aArea)
+
+// A função de validação da linha (MATA103) espera um retorno lógico.
+// Retornamos o valor de lRet para que, se o usuário cancelar, a validação possa ser interrompida.
+Return lRet
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} MontaTela
+Cria a interface para associação de pesagens com itens da NF.
+
+@param aPesagens, array, Array com os dados das pesagens da tabela ZPB.
+@param aHeadNF, array, Array com o cabeçalho original dos itens da NF.
+@param aColsNF, array, Array com os dados dos itens da NF.
+
+@return lRet, Lógico, .T. se confirmado, .F. se cancelado.
+
+@author Protheus AI
+@since 13/10/2025
+/*/
+//-------------------------------------------------------------------
+Static Function MontaTela(aPesagens, aHeader, aCols)
+    Local lRet          := .F.
+    Local oDlg
+    Local oFontSub      := TFont():New("Tahoma",,-14) // [cite: 8]
+    Local oBtnConfirm, oBtnAssoc, oBtnCancel
+    Local nJanLarg      := 1200 // Aumentado para comportar duas grids
+    Local nJanAltu      := 600
+    Local nI,nX         := 0
+    Local nPos          := 0
+
+    Private oGridNF
+    Private oGridPes
+    Private aHeadNF       := {}
+    Private aColsNF       := {}
+    Private aHeadPes      := {}
+    
+    // 1. PREPARAÇÃO DOS ARRAYS PARA A GRID DA NOTA FISCAL
+    // Copia o cabeçalho original e adiciona a nova coluna de pesagem.
+    //aHeadNF := aClone(aHeader)
+    aAdd(aHeadPes, {" "        , "cStat"       , "@BMP"            , 1                       , 0                        , ""   , ""   , "C", "", ""})
+    aAdd(aHeadPes, {"Data"     , "ZPB_DATA"    , ""                , TAMSX3("ZPB_DATA")[1]   , 0                        , ".T.", ".T.", "D", "", ""})
+    aAdd(aHeadPes, {"Código"   , "ZPB_CODIGO"  , ""                , TAMSX3("ZPB_CODIGO")[1] , 0                        , ".T.", ".T.", "C", "", ""})
+    aAdd(aHeadPes, {"Placa"    , "ZPB_PLACA"   , ""                , TAMSX3("ZPB_PLACA")[1]  , 0                        , ".T.", ".T.", "C", "", ""})
+    aAdd(aHeadPes, {"Qtd Anim.", "ZPB_QTANIM"  , "@E 999,999"      , TAMSX3("ZPB_QTANIM")[1] , TAMSX3("ZPB_QTANIM")[2]  , ".T.", ".T.", "N", "", ""})
+    aAdd(aHeadPes, {"Peso Líq.", "ZPB_PESOL"   , "@E 999,999.99"   , TAMSX3("ZPB_PESOL")[1]  , TAMSX3("ZPB_PESOL")[2]   , ".T.", ".T.", "N", "", ""})
+
+    aAdd(aHeadNF, {" "              , "zStat"     , "@BMP"            , 1                       , 0                         , ""   , ""   , "C", "", ""})
+    aAdd(aHeadNF, {"Item."          , "D1_ITEM"   , ""                , TAMSX3("D1_ITEM")[1]    , 0                         , ".T.", ".T.", "C", "", ""})
+    aAdd(aHeadNF, {"Produto"        , "D1_COD"    , ""                , TAMSX3("D1_COD")[1]     , 0                         , ".T.", ".T.", "C", "", ""})
+    aAdd(aHeadNF, {"Descrição"      , "D1_X_DESC" , ""                , 50                      , 0                         , ".T.", ".T.", "C", "", ""})
+    aAdd(aHeadNF, {"Quantidade"     , "D1_QUANT"  , "@E 999,999.9999" , TAMSX3("D1_QUANT")[1]   , TAMSX3("D1_QUANT")[2]     , ".T.", ".T.", "C", "", ""})
+    aAdd(aHeadNF, {"Peso Chegada"   , "D1_X_PESCH", "@E 999,999.9999" , TAMSX3("D1_X_PESCH")[1] , TAMSX3("D1_X_PESCH")[2]   , ".T.", ".T.", "C", "", ""})
+    aAdd(aHeadNF, {"Pesagem"        , "D1_X_PESAG", ""                , TAMSX3("D1_X_PESAG")[1] , 0                         , ".T.", ".T.", "C", "", ""})
+
+    // Copia os itens originais e adiciona a nova coluna vazia.
+    For nI := 1 to Len(aCols)
+        aAdd(aColsNF,{})
+        aAdd(aColsNF[Len(aColsNF)], "LBNO")
+        For nX := 1 to Len(aHeadNF)
+            if (nPos := aScan(aHeader, { |x| Alltrim(x[2]) == Alltrim(aHeadNF[nX][2])})) > 0
+                aAdd(aColsNf[Len(aColsNF)], aCols[nI][nPos])
+            endif
+        Next nX
+        aAdd(aColsNF[Len(aColsNF)], .F.)
+    Next nI
+
+   //aColsNF := aClone(aCols)
+   //For nI := 1 to Len(aColsNF)
+   //    aAdd(aColsNF[nI], "")
+   //Next nI
+
+    // 2. CRIAÇÃO DA TELA
+    DEFINE MSDIALOG oDlg TITLE "Associação de Pesagens x Itens da Nota" FROM 000, 000 TO nJanAltu,nJanLarg PIXEL
+
+        @ 015, 005 SAY "Itens da Nota Fiscal" SIZE 200, 020 FONT oFontSub OF oDlg PIXEL
+        @ (nJanAltu/5)+5, 005 SAY "Pesagens Disponíveis do Fornecedor" SIZE 300, 020 FONT oFontSub OF oDlg PIXEL
+
+        @ 005, (nJanLarg/2)-365 BUTTON oBtnAssoc PROMPT "Associar Pesagem" SIZE 100, 020 OF oDlg PIXEL ACTION ( AssociaPesagem() )
+
+        @ 005, (nJanLarg/2)-260 BUTTON oBtnConfirm PROMPT "Inverter Seleção" SIZE 80, 020 OF oDlg PIXEL ACTION (  MarcaDes(oGridNF,"T") )
+
+        @ 005, (nJanLarg/2)-175 BUTTON oBtnConfirm PROMPT "Confirmar" SIZE 80, 020 OF oDlg PIXEL ACTION ( ;
+            iif(lRet := Confirmar(),oDlg:End(),),;
+        )
+
+        @ 005, (nJanLarg/2)-90 BUTTON oBtnCancel PROMPT "Cancelar" SIZE 80, 020 OF oDlg PIXEL ACTION ( ;
+            lRet := .F., ;
+            oDlg:End() ;
+        )
+
+        // 3. CRIAÇÃO DAS GRIDS
+        // Grid da Esquerda: Itens da Nota Fiscal
+                   //MsNewGetDados():New( 035, 005, 210           , 543           , , "AllwaysTrue", "AllwaysTrue", "", aAlterFields2 ,, 4   , "AllwaysTrue", "", "AllwaysTrue", oDlgGen, aHeadAux2, aColsAux2)
+        oGridNF := MsNewGetDados():New( 025, 005, nJanAltu/5 , (nJanLarg/2)-5, , "AllwaysTrue", "AllwaysTrue", "", {},0, 9999, "AllwaysTrue", "", "AllwaysTrue", oDlg   , aHeadNF, aColsNF) // [cite: 17, 18, 19, 20, 21, 22, 27, 31, 32]
+    	oGridNF:oBrowse:blDblClick := {|| MarcaDes(oGridNF,"L")}
+
+        //oGridNF:lActive := .F. // Grid da esquerda não é editável diretamente
+ 
+        // Grid da Direita: Pesagens Disponíveis
+        oGridPes := MsNewGetDados():New( (nJanAltu/5)+15, 005, nJanAltu-5 , (nJanLarg/2)-5, , "AllwaysTrue", "AllwaysTrue", "", {},0, 9999, "AllwaysTrue", "", "AllwaysTrue", oDlg, aHeadPes, aPesagens)
+    	oGridPes:oBrowse:blDblClick := {|| MarcaDes(oGridPes,"C")}
+
+        //oGridPes:lActive := .F. // Grid da direita também não é editável
+
+    ACTIVATE MSDIALOG oDlg CENTERED
+
+Return lRet
+
+Static Function MarcaDes(oObj,cTipo)
+	Local k := nPos := 0
+
+	If cTipo == "L"
+		If oObj:aCols[oObj:oBrowse:nAt,1] == "LBNO"
+			oObj:aCols[oObj:oBrowse:nAt,1] := "LBTIK"
+		Else
+			oObj:aCols[oObj:oBrowse:nAt,1] := "LBNO"
+		EndIf
+	Elseif cTipo == "T"
+		FOR k:= 1 TO len(oObj:aCols)
+			If oObj:aCols[k,1] == "LBNO"
+				oObj:aCols[k,1] := "LBTIK"
+			Else
+				oObj:aCols[k,1] := "LBNO"
+			EndIf
+		Next
+    Else
+        nPos := oObj:nAt
+		FOR k:= 1 TO len(oObj:aCols)
+            if k != nPos
+                oObj:aCols[k,1] := "LBNO"
+            endif
+        Next
+
+        If oObj:aCols[nPos,1] == "LBNO"
+            oObj:aCols[nPos,1] := "LBTIK"
+        Else
+            oObj:aCols[nPos,1] := "LBNO"
+        EndIf
+
+        oObj:nAt := nPos
+        oObj:oBrowse:Refresh()
+
+	EndIf
+Return(NIL)
+
+Static Function AssociaPesagem()
+    Local nI
+    Local cPesagem          := ""
+    Local nPosZPBData       := aScan(aHeadPes, { |x| Alltrim(x[2]) == "ZPB_DATA"})
+    Local nPosZPBCodigo     := aScan(aHeadPes, { |x| Alltrim(x[2]) == "ZPB_CODIGO"})
+    Local nPosZPBQtdAni     := aScan(aHeadPes, { |x| Alltrim(x[2]) == "ZPB_QTANIM"})
+    Local nPosZPBPesoL      := aScan(aHeadPes, { |x| Alltrim(x[2]) == "ZPB_PESOL"})
+    Local nPosSD1XPesag     := aScan(aHeadNF , { |x| Alltrim(x[2]) == "D1_X_PESAG"})
+    Local nPosSD1Quant      := aScan(aHeadNF , { |x| Alltrim(x[2]) == "D1_QUANT"})
+    Local nPosSD1xPesch     := aScan(aHeadNF , { |x| Alltrim(x[2]) == "D1_X_PESCH"})
+    Local nQtdePes          := 0
+    Local nQtdNF            := 0
+    Local lProssegue        := .T.
+    Local nPosINF           := 0
+    Local nPesoIndividual   := 0
+
+    For nI := 1 to len(oGridPes:aCols)
+        if oGridPes:aCols[nI,1] == "LBTIK"
+            cPesagem := dToC(oGridPes:aCols[nI,nPosZPBData]) + "-" + oGridPes:aCols[nI,nPosZPBCodigo]
+            nQtdePes := oGridPes:aCols[nI,nPosZPBQtdAni]
+            nPesoIndividual :=  oGridPes:aCols[nI,nPosZPBPesoL] / nQtdePes
+            exit
+        endif
+    Next nI
+
+    if !Empty(cPesagem)
+        For nI := 1 to len(oGridNF:aCols)
+            if oGridNF:aCols[nI,1] == "LBTIK"
+                nPosINF := nI
+                exit
+            endif
+        Next nI
+
+        if nPosINF == 0
+            FWAlertInfo("Selecione pelo menos um item para relacionar a pesagem!", "Atenção")
+        else
+            For nI := 1 to len(oGridNF:aCols)
+                if oGridNF:aCols[nI,nPosSD1XPesag] == cPesagem
+                    lProssegue := FwAlertYesNo("Pesagem já associada no item [ "+oGridNF:aCols[nI,2]+" ], prosseguir irá desvincular essa pesagem a todas as linhas relacionadas.", "Confirma?")
+                    exit
+                Endif
+            Next nI
+
+            if lProssegue
+                For nI := nPosINF to len(oGridNF:aCols)
+                    if oGridNF:aCols[nI,1] == "LBTIK"
+                        nQtdNF += oGridNF:aCols[nI,nPosSD1Quant]
+                    endif
+                Next nI
+
+                if nQtdNF != nQtdePes
+                    FWAlertInfo("Quantidade de animais selecionados não corresponde com a quantidade da pesagem!", "Atenção")
+                else
+
+                    For nI := 1 to len(oGridNF:aCols)
+                        if oGridNF:aCols[nI,nPosSD1XPesag] == cPesagem
+                            oGridNF:aCols[nI,nPosSD1XPesag] := ""
+                        endif
+                    Next nI
+                    
+                    For nI := nPosINF to len(oGridNF:aCols)
+                        if oGridNF:aCols[nI,1] == "LBTIK"
+                            oGridNF:aCols[nI,1] := "LBNO"
+                            oGridNF:aCols[nI,nPosSD1xPesch] := Round(nPesoIndividual * oGridNF:aCols[nI,nPosSD1Quant],2)
+                            oGridNF:aCols[nI,nPosSD1XPesag] := cPesagem
+                        endif
+                    Next nI
+
+                    For nI := 1 to Len(oGridPes:aCols)
+                        oGridPes:aCols[nI,1] := "LBNO"
+                    Next nI
+
+                    FWAlertInfo("Pesagem associada!", "")
+                Endif
+            endif
+        endif
+    else
+        FWAlertInfo("Selecione um item da nota e uma pesagem para associar.", "Atenção")
+    endif
+Return
+
+Static Function Confirmar()
+    Local nI
+    Local lRet          := .T.
+    Local nPosSD1xPesch := aScan(aHeadNF , { |x| Alltrim(x[2]) == "D1_X_PESCH"})
+    Local nPosSD1XPesag := aScan(aHeadNF , { |x| Alltrim(x[2]) == "D1_X_PESAG"})
+    //Posição aCols principal
+    Local nPosD1XPESCH := aScan(aHeader, { |x| Alltrim(x[2]) == "D1_X_PESCH"})
+    Local nPosD1XPESAG := aScan(aHeader, { |x| Alltrim(x[2]) == "D1_X_PESAG"})
+
+    For nI := 1 to len(oGridNF:aCols)
+        if Empty(oGridNF:aCols[nI,nPosSD1XPesag])
+            FWAlertInfo("O Item [ "+oGridNF:aCols[nI,2]+" ] não possui pesagem associada!", "Atenção")
+            Return .F.
+        endif
+    Next nI
+
+    For nI := 1 to len(oGridNF:aCols)
+        aCols[nI,nPosD1XPESCH] := oGridNF:aCols[nI,nPosSD1xPesch]
+        aCols[nI,nPosD1XPESAG] := oGridNF:aCols[nI,nPosSD1XPesag]
+    Next nI
+
+Return lRet

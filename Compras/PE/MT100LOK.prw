@@ -81,9 +81,9 @@ User Function MT100LOK()
 				EndIf
 
 				if lContinua
-					If Empty( GdFieldGet('D1_X_PESCH', nI) )
-						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
-					EndIf
+					//If Empty( GdFieldGet('D1_X_PESCH', nI) )
+					//	cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
+					//EndIf
 
 					If Empty( GdFieldGet('D1_X_EMBDT', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Data Embarque"
@@ -113,6 +113,7 @@ User Function MT100LOK()
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra/Animal"
 					EndIf
 					*/
+					
 					If Empty( GdFieldGet('D1_X_KM', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Distância"
 					EndIf

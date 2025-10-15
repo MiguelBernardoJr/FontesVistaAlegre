@@ -407,6 +407,7 @@ METHOD SendMessageWithButtons(cMessage AS CHARACTER, cButtonsJson AS CHARACTER, 
     Local cPostRet    AS CHARACTER
     Local oJson       AS OBJECT
     Local cParseMode  AS CHARACTER
+    Local nMessageId  AS NUMERIC
 
     // 1. Validações iniciais
     Default lHtml := .F.
@@ -444,16 +445,19 @@ METHOD SendMessageWithButtons(cMessage AS CHARACTER, cButtonsJson AS CHARACTER, 
     // 6. Processa a resposta da API
     If !Empty(cPostRet)
         oJson := JsonObject():New()
-        If oJson:FromJson(cPostRet)
-            ::lSuccess := oJson:Get("ok")
+        If FWJsonDeserialize(cPostRet,@oJson)
+            ::lSuccess := oJson:ok
+            nMessageId := oJson:result:message_id
         Else
+            MsgAlert("O Telegram API retornou um erro!")
             ::lSuccess := .F.
         Endif
     Else
+        MsgAlert("Erro ao enviar mensagem para o Telegram:")
         ::lSuccess := .F.
     Endif
 
-RETURN ::lSuccess
+RETURN nMessageId
 
 User Function TelegramPathAPI(cPathFiles,cMyBotToken,cMyChatId)
     Local oTelegram   AS OBJECT
