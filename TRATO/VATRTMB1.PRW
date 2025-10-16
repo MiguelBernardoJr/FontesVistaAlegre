@@ -304,7 +304,7 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' ) // U_VATRTMB1()
 
     While !(cAliasF)->(EOF())
 
-        cHtml += "<tr><td>" + (cAliasF)->FILIAL + "</td><td>" + (cAliasF)->CURRAL + "</td><td>" + (cAliasF)->LOTE + "</td></tr>"
+        // cHtml += "<tr><td>" + (cAliasF)->FILIAL + "</td><td>" + (cAliasF)->CURRAL + "</td><td>" + (cAliasF)->LOTE + "</td></tr>"
 
         _cQry := ""+;
             " SELECT 		R_E_C_N_O_  RECNO, *  " + CRLF +;

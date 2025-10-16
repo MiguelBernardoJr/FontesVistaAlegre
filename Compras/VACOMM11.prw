@@ -5544,7 +5544,7 @@ Return lMsErroAuto
 ----	Igor Oliveira 
 ----	12.01.2023 
 ----	Complementa gravação de Títulos a Pagar
-----	MT100GE2()
+----	MT100GE3()
  */
 STATIC Function MT100GE3()
 	MBSaveLog():FULLWrite(, .F., "Inicio:   MT100GE3()")

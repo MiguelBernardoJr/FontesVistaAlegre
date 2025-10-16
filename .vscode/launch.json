@@ -2,76 +2,28 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "totvs_language_web_debug",
-			"request": "launch",
-			"name": "LV: Web Debug",
-			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "https://liviojose125645.protheus.cloudtotvs.com.br:7600/webapp/",
-			"isMultiSession": true,
-			"enableTableSync": true
+			"deepseek.apiKey": "sk-c923b64d7d7243ceab44a32a4f7df964"
 		},
 		{
 			"type": "totvs_language_web_debug",
 			"request": "launch",
-			"name": "LV: Web Exclusivo",
+			"name": "WebDebug 2410",
 			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "https://liviojose125652.protheus.cloudtotvs.com.br:7600/webapp/",
 			"isMultiSession": true,
 			"enableTableSync": true
 		},
 		{
-			"type": "totvs_language_web_debug",
+			"type": "totvs_language_debug",
 			"request": "launch",
-			"name": "V@: Web Debug DEV",
+			"name": "Depuração do idioma TOTVS",
 			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.173:5040/WEBAPP/",
+			"cwb": "${workspaceFolder}",
+			"smartclientBin": "/Applications/_Protheus/SMARTCLIENT20.3.2.8.app/Contents/MacOS/smartclient",
 			"isMultiSession": true,
-			"enableTableSync": true
-		},
-		{
-			"type": "totvs_language_web_debug",
-			"request": "launch",
-			"name": "V@: DEV Slave 01",
-			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.173:4040/WEBAPP/",
-			"isMultiSession": true,
-			"enableTableSync": true
-		},
-		{
-			"type": "totvs_language_web_debug",
-			"request": "launch",
-			"name": "V@: Web Service DEV",
-			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.173:8051/WEBAPP/",
-			"isMultiSession": true,
-			"enableTableSync": true
-		},
-		{
-			"type": "totvs_language_web_debug",
-			"request": "launch",
-			"name": "V@: Igor PROD",
-			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.242:8195/WEBAPP/",
-			"isMultiSession": true,
-			"enableTableSync": true
-		},
-		{
-			"type": "totvs_language_web_debug",
-			"request": "launch",
-			"name": "V@: WebService PROD",
-			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.242:8051/WEBAPP/",
-			"isMultiSession": true,
-			"enableTableSync": true
-		},
-		{
-			"type": "totvs_language_web_debug",
-			"request": "launch",
-			"name": "V@: Toshio PROD",
-			"program": "${command:AskForProgramName}",
-			"smartclientUrl": "http://192.168.0.242:2025/WEBAPP/",
-			"isMultiSession": true,
-			"enableTableSync": true
+			"enableTableSync": true,
+			"extendFeatures": {
+				"charDetails": false
+			}
 		}
 	],
 	"lastPrograms": [
@@ -79,46 +31,9 @@
 			"label": "SIGAMDI"
 		},
 		{
-			"label": "SIGACFG"
-		},
-		{
-			"label": "updbatch"
-		},
-		{
-			"label": "apsdu"
-		},
-		{
-			"label": "xxxx"
-		},
-		{
-			"label": "SIGAEST"
-		},
-		{
-			"args": [],
-			"label": "u_UPD_IMP1"
-		},
-		{
-			"args": [
-				"01"
-			],
-			"label": "u_UPD_IMP1"
-		},
-		{
-			"label": "upddistr"
-		},
-		{
-			"label": "SIGACOM"
-		},
-		{
-			"label": "sigaadv"
-		},
-		{
-			"label": "sigamdi]"
-		},
-		{
-			"label": ","
+			"label": "XXXXXX"
 		}
 	],
-	"lastProgramExecuted": "<cancel>",
+	"lastProgramExecuted": "SIGAMDI",
 	"lastProgramArguments": []
 }
