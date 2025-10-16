@@ -43,7 +43,9 @@
     </style>
 </head>
 <body>
+
     <div id="loading-container" class="container"><div class="spinner"><div class="rect1"></div><div class="rect2"></div><div class="rect3"></div><div class="rect4"></div><div class="rect5"></div></div></div>
+
     <div id="main-content" class="container hidden">
         <div id="header-card" class="card">
             <div class="card-header"><h1 id="header-title"></h1></div>
@@ -91,6 +93,7 @@
             </div>
         </div>
     </div>
+    
     <div id="error-container" class="container hidden"><div class="status-container"><div id="error-message" class="status-message"></div><button id="retry-button" class="retry-button">Tentar Novamente</button></div></div>
 
     <script>
@@ -103,7 +106,6 @@
         const formatNumber = (value) => { if (isNaN(value) || value === null) return 'N/A'; return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
         const getKpiClass = (value) => { if (isNaN(value) || value === null) return ''; return value > 3 ? 'kpi-bad' : 'kpi-good'; };
         
-        // CORRIGIDO para esperar chaves em MINÚSCULO
         function populateHeader(header, notaNumero) {
             document.getElementById('header-title').innerText = `Contrato: ${header.codigocontrato}`;
             document.getElementById('numero-nota').innerText = notaNumero;
@@ -115,7 +117,6 @@
             document.getElementById('quantidade-animais').innerText = header.quantidadeanimais;
         }
 
-        // CORRIGIDO para esperar chaves em MINÚSCULO
         function populateTable(items) {
             const tableBody = document.getElementById('items-tbody');
             tableBody.innerHTML = '';
@@ -124,13 +125,13 @@
                 mainRow.innerHTML = `<td>${item.item}</td><td>${item.codigoproduto}</td><td>${item.descricaoproduto}</td><td>${item.quantidade}</td><td>${formatCurrency(item.valorunitario)}</td><td>${formatCurrency(item.valortotal)}</td>`;
                 const detailsRow = document.createElement('tr'); detailsRow.className = 'details-row';
                 detailsRow.innerHTML = `<td colspan="6"><div class="details-content">
-                    <div class="data-item"><span class="label">Peso Saída</span><span class="value">${formatNumber(item.peso)} kg</span></div>
-                    <div class="data-item"><span class="label">Peso Chegada</span><span class="value">${formatNumber(item.pesochegada)} kg</span></div>
+                    <div class="data-item"><span class="label">Peso Total (Saída)</span><span class="value">${formatNumber(item.peso)} kg</span></div>
+                    <div class="data-item"><span class="label">Peso Individual (Saída)</span><span class="value">${formatNumber(item.pesoindividualsaida)} kg</span></div>
+                    <div class="data-item"><span class="label">Peso Total (Chegada)</span><span class="value">${formatNumber(item.pesochegada)} kg</span></div>
+                    <div class="data-item"><span class="label">Peso Individual (Chegada)</span><span class="value">${formatNumber(item.pesoindividualchegada)} kg</span></div>
                     <div class="data-item"><span class="label">Quebra (kg)</span><span class="value">${formatNumber(item.quebrakg)} kg</span></div>
                     <div class="data-item"><span class="label">Quebra (%)</span><span class="value ${getKpiClass(item.quebrachegada)}">${formatNumber(item.quebrachegada)} %</span></div>
                     <div class="data-item"><span class="label">Distância</span><span class="value">${item.km || 'N/A'} km</span></div>
-                    <div class="data-item"><span class="label">Peso Total Saída</span><span class="value">${formatNumber(item.pesototalsaida)} kg</span></div>
-                    <div class="data-item"><span class="label">Peso Total Chegada</span><span class="value">${formatNumber(item.pesototalchegada)} kg</span></div>
                     <div class="data-item"><span class="label">Data/Hora Embarque</span><span class="value">${formatDate(item.dataembarque) || 'N/A'} ${formatTime(item.horaembarque) || ''}</span></div>
                     <div class="data-item"><span class="label">Data/Hora Chegada</span><span class="value">${formatDate(item.datachegada) || 'N/A'} ${formatTime(item.horachegada) || ''}</span></div>
                 </div></td>`;
@@ -138,13 +139,13 @@
             });
         }
         
-        // CORRIGIDO para esperar chaves em MINÚSCULO
         function calculateAndDisplayTotals(items) {
             const totals = items.reduce((acc, item) => {
                 acc.quantidade += (parseFloat(item.quantidade) || 0);
                 acc.valorTotal += (parseFloat(item.valortotal) || 0);
-                acc.pesoSaida += (parseFloat(item.pesototalsaida) || 0);
-                acc.pesoChegada += (parseFloat(item.pesototalchegada) || 0);
+                // CORREÇÃO: Somar os pesos TOTAIS de cada item
+                acc.pesoSaida += (parseFloat(item.peso) || 0);
+                acc.pesoChegada += (parseFloat(item.pesochegada) || 0);
                 return acc;
             }, { quantidade: 0, valorTotal: 0, pesoSaida: 0, pesoChegada: 0 });
             document.getElementById('total-quantidade').innerText = Math.round(totals.quantidade);

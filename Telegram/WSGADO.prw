@@ -81,24 +81,24 @@ WSMETHOD GET BuscaNota WSRECEIVE filial, numero, serie, fornecedor, loja WSSERVI
 
             // Para cada registro, cria um objeto de item
             jItem := JsonObject():New()
-            jItem['item']             := (cAlias)->D1_ITEM
-            jItem['codigoproduto']    := AllTrim((cAlias)->D1_COD)
-            jItem['descricaoproduto'] := AllTrim((cAlias)->B1_DESC)
-            jItem['quantidade']       := (cAlias)->D1_QUANT
-            jItem['valorunitario']    := (cAlias)->D1_VUNIT
-            jItem['valortotal']       := (cAlias)->D1_TOTAL
-            jItem['itemcontrato']     := (cAlias)->ZBC_CODIGO // Link para o item do contrato
-            jItem['peso']             := (cAlias)->ZBC_PESREA
-            jItem['pesochegada']      := (cAlias)->D1_X_PESCH
-            jItem['pesototalchegada'] := (cAlias)->ZBC_PESREA * (cAlias)->D1_QUANT
-            jItem['pesototalsaida']   := (cAlias)->D1_X_PESCH * (cAlias)->D1_QUANT
-            jItem['quebrachegada']    := (cAlias)->D1_X_QUECA
-            jItem['km']               := (cAlias)->D1_X_KM
-            jItem['quebrakg']         := (cAlias)->D1_X_QUEKG
-            jItem['dataembarque']     := (cAlias)->D1_X_EMBDT
-            jItem['horaembarque']     := (cAlias)->D1_X_EMBHR
-            jItem['datachegada']      := (cAlias)->D1_X_CHEDT
-            jItem['horachegada']      := (cAlias)->D1_X_CHEHR
+            jItem['item']                   := (cAlias)->D1_ITEM
+            jItem['codigoproduto']          := AllTrim((cAlias)->D1_COD)
+            jItem['descricaoproduto']       := AllTrim((cAlias)->B1_DESC)
+            jItem['quantidade']             := (cAlias)->D1_QUANT
+            jItem['valorunitario']          := (cAlias)->D1_VUNIT
+            jItem['valortotal']             := (cAlias)->D1_TOTAL
+            jItem['itemcontrato']           := (cAlias)->ZBC_CODIGO // Link para o item do contrato
+            jItem['peso']                   := (cAlias)->ZBC_PESREA
+            jItem['pesochegada']            := (cAlias)->D1_X_PESCH
+            jItem['pesoindividualchegada']  := (cAlias)->D1_X_PESCH  / (cAlias)->D1_QUANT 
+            jItem['pesoindividualsaida']    := (cAlias)->ZBC_PESREA  / (cAlias)->D1_QUANT
+            jItem['quebrachegada']          := ((cAlias)->D1_X_PESCH / (cAlias)->ZBC_PESREA) * 100
+            jItem['km']                     := (cAlias)->D1_X_KM
+            jItem['quebrakg']               := (cAlias)->D1_X_PESCH - (cAlias)->ZBC_PESREA
+            jItem['dataembarque']           := (cAlias)->D1_X_EMBDT
+            jItem['horaembarque']           := (cAlias)->D1_X_EMBHR
+            jItem['datachegada']            := (cAlias)->D1_X_CHEDT
+            jItem['horachegada']            := (cAlias)->D1_X_CHEHR
             
             // Adiciona o objeto do item ao array de itens
             AAdd(aItens, jItem)

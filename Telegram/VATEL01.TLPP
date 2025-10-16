@@ -18,11 +18,11 @@ User Function VATEL02()
     Local nI 
 
     For nI := 1 to Len(aRecnos)
-        U_VATEL01(/* aRecnos[nI][1],aRecnos[nI][2] */)
+        U_VATEL01(aRecnos[nI][1],aRecnos[nI][2])
     Next nI
 Return
 
-User Function VATEL01(/* nReSF1,nReSD1 */)
+User Function VATEL01(nReSF1,nReSD1)
     Local lRet          := .T.  as logical
     Local oBot          as object
     Local _cMsg         as character
@@ -41,11 +41,11 @@ User Function VATEL01(/* nReSF1,nReSD1 */)
     Local cJsonString  := ""
     Local cBase64      := ""
 
-    //DBSELECTAREA("SF1")
-    //SF1->(DBGOTO(nReSF1))
-//
-    //DBSELECTAREA("SD1")
-    //SD1->(DBGOTO(nReSD1))
+    DBSELECTAREA("SF1")
+    SF1->(DBGOTO(nReSF1))
+
+    DBSELECTAREA("SD1")
+    SD1->(DBGOTO(nReSD1))
     
     cUrlteste := "https://www.vistaalegre.agr.br/Telegram/bot_entrada_gado/gado.html"  + "?"
     cUrlteste += "filial="       + AllTrim(SF1->F1_FILIAL)
