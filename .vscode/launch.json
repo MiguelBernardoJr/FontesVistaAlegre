@@ -40,6 +40,15 @@
 		{
 			"type": "totvs_language_web_debug",
 			"request": "launch",
+			"name": "V@: DEV Slave 02",
+			"program": "${command:AskForProgramName}",
+			"smartclientUrl": "http://192.168.0.173:4041/WEBAPP/",
+			"isMultiSession": true,
+			"enableTableSync": true
+		},
+		{
+			"type": "totvs_language_web_debug",
+			"request": "launch",
 			"name": "V@: Web Service DEV",
 			"program": "${command:AskForProgramName}",
 			"smartclientUrl": "http://192.168.0.173:8051/WEBAPP/",
@@ -117,8 +126,11 @@
 		},
 		{
 			"label": ","
+		},
+		{
+			"label": "vtdebug"
 		}
 	],
-	"lastProgramExecuted": "<cancel>",
+	"lastProgramExecuted": "SIGAMDI",
 	"lastProgramArguments": []
 }

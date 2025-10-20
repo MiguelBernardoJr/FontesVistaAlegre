@@ -5,7 +5,7 @@
 Função customizada para associar pesagens (ZPB) aos itens
 de uma nota fiscal de entrada de gado.
 
-@author Protheus AI
+@author Igor Oliveira
 @since 13/10/2025
 @version 1.0
 /*/
@@ -16,13 +16,11 @@ User Function VACOMM16()
     Local cQry      := ""
     Local aPesagens := {}
     Local lRet      := .T.
-    dDataBase := dDEmissao
-    // A verificação de aHeader e aCols é crucial. [cite: 1]
-    // A rotina que chama esta User Function deve disponibilizar essas variáveis.
-    if Type("aHeader") != "U" .and. Type("aCols") != "U" .and. !Empty(aCols) .and. !Empty(aCols[1,2])
-        
+
+    if Type("aHeader") != "U" .and. Type("aCols") != "U" .and. !Empty(aCols) .and. !Empty(aCols[1,2])// .and. SB1->B1_GRUPO $ "01|BOV"
+
         cQry := "SELECT ZPB_DATA,* FROM "+RetSqlName("ZPB")+" ZPB " + CRLF
-        cQry += " WHERE ZPB_DATA >= DATEADD(DAY,-10, '"+DToS(dDataBase)+"') " + CRLF
+        cQry += " WHERE ZPB_DATA >= DATEADD(DAY,-10, '"+DToS(dDEmissao)+"') " + CRLF
         cQry += " AND ZPB_FILIAL = '"+FwXFilial("ZPB")+"' " + CRLF
         cQry += " AND ZPB_CODFOR = '"+cA100For+"' " + CRLF
         cQry += " AND ZPB_LOJFOR = '"+cLoja+"' " + CRLF
@@ -227,7 +225,7 @@ Static Function AssociaPesagem()
     For nI := 1 to len(oGridPes:aCols)
         if oGridPes:aCols[nI,1] == "LBTIK"
             cPesagem := dToC(oGridPes:aCols[nI,nPosZPBData]) + "-" + oGridPes:aCols[nI,nPosZPBCodigo]
-            nQtdePes := oGridPes:aCols[nI,nPosZPBQtdAni]
+            //nQtdePes := oGridPes:aCols[nI,nPosZPBQtdAni]
             nPesoIndividual :=  oGridPes:aCols[nI,nPosZPBPesoL] / nQtdePes
             exit
         endif
@@ -258,30 +256,30 @@ Static Function AssociaPesagem()
                     endif
                 Next nI
 
-                if nQtdNF != nQtdePes
-                    FWAlertInfo("Quantidade de animais selecionados não corresponde com a quantidade da pesagem!", "Atenção")
-                else
+                //if nQtdNF != nQtdePes
+                //    FWAlertInfo("Quantidade de animais selecionados não corresponde com a quantidade da pesagem!", "Atenção")
+                //else
 
-                    For nI := 1 to len(oGridNF:aCols)
-                        if oGridNF:aCols[nI,nPosSD1XPesag] == cPesagem
-                            oGridNF:aCols[nI,nPosSD1XPesag] := ""
-                        endif
-                    Next nI
-                    
-                    For nI := nPosINF to len(oGridNF:aCols)
-                        if oGridNF:aCols[nI,1] == "LBTIK"
-                            oGridNF:aCols[nI,1] := "LBNO"
-                            oGridNF:aCols[nI,nPosSD1xPesch] := Round(nPesoIndividual * oGridNF:aCols[nI,nPosSD1Quant],2)
-                            oGridNF:aCols[nI,nPosSD1XPesag] := cPesagem
-                        endif
-                    Next nI
+                For nI := 1 to len(oGridNF:aCols)
+                    if oGridNF:aCols[nI,nPosSD1XPesag] == cPesagem
+                        oGridNF:aCols[nI,nPosSD1XPesag] := ""
+                    endif
+                Next nI
+                
+                For nI := nPosINF to len(oGridNF:aCols)
+                    if oGridNF:aCols[nI,1] == "LBTIK"
+                        oGridNF:aCols[nI,1] := "LBNO"
+                        oGridNF:aCols[nI,nPosSD1xPesch] := Round(nPesoIndividual * oGridNF:aCols[nI,nPosSD1Quant],2)
+                        oGridNF:aCols[nI,nPosSD1XPesag] := cPesagem
+                    endif
+                Next nI
 
-                    For nI := 1 to Len(oGridPes:aCols)
-                        oGridPes:aCols[nI,1] := "LBNO"
-                    Next nI
+                For nI := 1 to Len(oGridPes:aCols)
+                    oGridPes:aCols[nI,1] := "LBNO"
+                Next nI
 
-                    FWAlertInfo("Pesagem associada!", "")
-                Endif
+                FWAlertInfo("Pesagem associada!", "")
+                //Endif
             endif
         endif
     else

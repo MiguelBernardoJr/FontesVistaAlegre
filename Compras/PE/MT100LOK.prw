@@ -25,7 +25,7 @@ User Function MT100LOK()
 	// EndIf
 	if lAtivo
 		lRet := U_GTPE004()
-	endif 
+	endif
 	// Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e, 
 	// mantendo a chamada apenas no final do processo, quando a variável l103Auto estiver .F.
 	If lRet .And. !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
