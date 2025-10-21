@@ -6,7 +6,7 @@
 	@author Cristiam Rossi
 	@since 25/09/2025
 /*/
-user function MT241SD3()
+user function MT241SD3
 local aArea     := getArea()
 local cTMdev    := superGetMV("FS_MOTDEV",,"010")
 local cMotivo   := ""

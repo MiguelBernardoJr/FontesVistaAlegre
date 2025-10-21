@@ -12,7 +12,6 @@ user function VAOrdSep()
 local   cCodOpe  := CBRetOpe()
 local   cOrdSep
 local   cVolume
-local   cPicture := "@E 999999999.99" // pesqPict("SD3","D3_QUANT")
 private cCodEmb  := superGetMV( "FS_ORDSEPE",, "001" )    // CB3->CB3_CODEMB
 private cTM      := superGetMV( "FS_ORDSEPT",, "512" )
 private cCUSTO   := superGetMV( "FS_ORDSEPC",, "A0240" )
@@ -83,7 +82,7 @@ private aBipados := {}
 				@ 3,0 VTsay left( (cAliasCB8)->B1_DESC, VTmaxCol() )
 				@ 4,0 VTsay "Saldo: " + cValToChar( CB8->CB8_SALDOS )
 				@ 5,0 VTsay "Qtde:"
-				@ 5,6 VTGet nQtde Picture cPicture valid nQtde > 0 .and. nQtde <= CB8->CB8_SALDOS
+				@ 5,6 VTGet nQtde Picture "9999" valid nQtde > 0 .and. nQtde <= CB8->CB8_SALDOS
 
 				@ 6,0 VTsay "Etiqueta:"
 				@ 7,0 VTGet cEtiqueta Picture "@!" valid valEtiq(@cEtiqueta)
@@ -358,8 +357,8 @@ local cCusto1   := cCUSTO
 			SD3->(DbSeek(xFilial("SD3")+cDocumento))
 			while ! SD3->( eof() ) .and. SD3->D3_FILIAL == xFilial("SD3") .and. SD3->D3_DOC == cDocumento
 				recLock("SD3",.F.)
-				SD3->D3_XSA    := CB7->CB7_NUMSA
-				SD3->D3_XOS    := CB7->CB7_ORDSEP
+				SD3->D3_NUMSA    := CB7->CB7_NUMSA
+				SD3->D3_XSEPSA    := CB7->CB7_ORDSEP
 				msUnlock()
 				SD3->( dbSkip() )
 			endDo

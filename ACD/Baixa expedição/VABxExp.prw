@@ -163,18 +163,8 @@ local aItens241  := {}
 			MostraErro()
 		else
 			reclock("CB7",.F.)
-				CB7->CB7_STATUS := "9"
+			CB7->CB7_STATUS := "9"
 			msunlock()
-
-			//_cQry := "update "+RetSqlName("SCP")+" " +;
-			//			"SET CP_OK = 'xx', CP_PREREQU = 'N' " +;
-			//			"WHERE CP_ORDSEP = '"+CB7->CB7_ORDSEP+"' " +;
-			//			"AND CP_FILIAL = '"+FwxFilial("SCP")+"' " +;
-			//			"AND D_E_L_E_T_ = '' "
-//
-			//if (TCSqlExec(_cQry) < 0)
-			//	Alert("TCSQLError(): " + TCSQLError())
-			//EndIf
 		EndIf
 	EndIf
 

@@ -1649,9 +1649,8 @@ while !SCP->(Eof())
 		CB8->(MsUnLock())
 
         recLock("SCP", .F.)
-            SCP->CP_ORDSEP  := cOrdSep
-            SCP->CP_OK      := ""
-            //SCP->CP_PREREQU := "S"
+        SCP->CP_ORDSEP := cOrdSep
+        SCP->CP_OK     := ""
         msUnlock()
 
 		aadd(aRecSCP,{SCP->(Recno()),cOrdSep})
