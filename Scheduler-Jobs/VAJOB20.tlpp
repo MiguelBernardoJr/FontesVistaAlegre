@@ -7,7 +7,6 @@
 #ENDIF
 
 Static cSEMAFORO := Upper("VAJOB20"+cValToChar(ThreadId()))
-Static cRunOnce := "RUNONCEJOB" 
 
 User Function VAJOB20() AS Logical
 
@@ -92,7 +91,7 @@ User Function JOB20VA() // U_JOB20VA()
 			exit
 		endif
 
-		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) < 2 .and. ;
+		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) < 1 .and. ;
 			   iif("ADAPTACAO03" $ Alltrim((cAlias)->RECEITA), !("FINAL" $ cDieta), IIF("FINAL" $ Alltrim((cAlias)->RECEITA), !("ADAPTACAO03" $ cDieta), .T.))
 
 			aAdd(aSemaforos, {(cAlias)->RECNO,(cAlias)->ROTAS,cSemaforo+"_"+iif(Empty(Alltrim((cAlias)->ROTAS)),cValToChar((cAlias)->RECNO),Alltrim((cAlias)->ROTAS))})
