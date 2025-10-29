@@ -1033,9 +1033,9 @@ Static Function ModelDef()
 	//oStruZ0E:SetProperty('Z0E_LOTE'  , MODEL_FIELD_WHEN, bVldAUX)
 	oStruZ0E:SetProperty('Z0E_CURRAL', MODEL_FIELD_WHEN, bVldAUX)
 	
-	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
-		"iif(FwFldGet('Z0C_TPMOV') $ '14',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
-	oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
+	//bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
+	//	"iif(FwFldGet('Z0C_TPMOV') $ '14',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
+	//oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
 	
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
 		"FwFldGet('Z0C_TPMOV')$'5'" )

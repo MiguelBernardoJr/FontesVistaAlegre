@@ -58,6 +58,15 @@
 		{
 			"type": "totvs_language_web_debug",
 			"request": "launch",
+			"name": "V@: ACD Prod",
+			"program": "${command:AskForProgramName}",
+			"smartclientUrl": "http://192.168.0.242:12041/WEBAPP/",
+			"isMultiSession": true,
+			"enableTableSync": true
+		},
+		{
+			"type": "totvs_language_web_debug",
+			"request": "launch",
 			"name": "V@: Igor PROD",
 			"program": "${command:AskForProgramName}",
 			"smartclientUrl": "http://192.168.0.242:8195/WEBAPP/",

@@ -183,7 +183,6 @@ Static Function ViewDef()
 	oView:AddIncrementField( 'GRID_CTE' , 'ZFI_ITEM')
 	
 	oStrCte:RemoveField("ZFI_CODIGO")
-	oStrCte:RemoveField("ZFI_ITEM")
 	oStrCte:RemoveField("ZFI_ZFFITE")
 
 	oView:SetCloseOnOk( { |oView| .F. } )

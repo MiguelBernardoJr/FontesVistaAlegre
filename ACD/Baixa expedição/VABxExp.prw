@@ -58,6 +58,7 @@ private aRegs    := {}
 		cQry +=	" AND CB9_ORDSEP = '"+cOrdSep+"'"
 		cQry +=	" AND CB9.D_E_L_E_T_ = ' '"
 		cQry +=  " ORDER BY CB9_PROD"
+		
 		cAlias := MpSysOpenQuery(cQry)
 
 		While ! (cAlias)->( eof() )
@@ -210,7 +211,7 @@ return lOk
 	@type function
 /*/
 static function criaSaldo( cProd, cLocal )
-local aProdSB9 := {}
+	local aProdSB9 := {}
 
 	SB2->( dbSetOrder(1) )
 	if SB2->( dbSeek( xFilial("SB2") + padR(cProd, len(SB2->B2_COD)) + padR(cLocal, len(SB2->B2_LOCAL)) ) )

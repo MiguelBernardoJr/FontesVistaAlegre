@@ -122,9 +122,11 @@ user function vaest021(cIndividuo, nQtdIndiv, cArmz, cRacao, nQuant, cArmzRac, c
 						Conout("DIFERENCA 		[" + cValToChar(ABS(nQuant-SB2->B2_QATU)) + "]")
 						Conout("VA_DIFTRAT 		[" + cValToChar(GetMV("VA_DIFTRAT",,1)) + "]")
 						ConOut("CalcEst			[" + cValToChar(CalcEst( SB1->B1_COD, cArmzRac, __DATA)[1]) + "]")
+						ConOut("xCalcest		[" + cValToChar(xCalcest( SB1->B1_COD, cArmzRac, __DATA )[1]) + "]")
 
 						//nQuant := CalcEst( SB1->B1_COD, cArmzRac, __DATA)[1]
-						nQuant := SB2->B2_QATU
+        				nQuant := xCalcest( SB1->B1_COD, cArmzRac, __DATA )[1]
+						//nQuant := SB2->B2_QATU
 					EndIf
 
 					aEmpenho := { { cIndividuo, cArmz, nQtdIndiv, cLoteCTL },;

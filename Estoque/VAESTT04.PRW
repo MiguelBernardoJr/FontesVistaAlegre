@@ -61,8 +61,6 @@ Local _cAlias    := CriaTrab(,.F.)
         ZLQ->(DbSetOrder(1)) //ZLQ_FILIAL+ZLQ_DATA+ZLQ_PRODUT+ZLQ_LOCAL
         //MsgInfo("FILIAL: "+(_cAlias)->ZCQ_FILIAL+ " DATA: "+DToC(SToD((_cAlias)->ZCQ_DATA))+ " PRODUTO : " +(_cAlias)->ZCQ_PROD, "TESTE ")
         
-
-
         nSaldo := (aEstAux := xCalcest( (_cAlias)->ZCQ_PROD, (_cAlias)->ZCQ_LOCAL, dDataBase ))[1]
         //nQuant := (aAuxPrd := CalcEstL( (cAliaQTD)->B1_COD, (cAliaQTD)->B2_LOCAL, MV_PAR01+1, (cAliaQTD)->B8_LOTECTL))[1]
         If   nSaldo > 0

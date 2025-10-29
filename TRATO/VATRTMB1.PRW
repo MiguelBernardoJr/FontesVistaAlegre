@@ -24,6 +24,7 @@ User Function VATRTMB1( cLote ) // U_VATRTMB1( '1-40' ) // U_VATRTMB1()
         ConOut("Setando ambiente")
         cEmpAnt:= FWCodEmp()
     EndIf
+    
     ConOut("Empresa logada: " + cEmpAnt)
 
     nCMS_Prev    := GetMV( 'MB_CMDPREV' ,, 2.1)

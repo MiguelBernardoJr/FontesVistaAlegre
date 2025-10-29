@@ -41,7 +41,6 @@ Static Function ModelDef()
     Local oGridZVB  := FWFormStruct(1, 'ZVB', {|cCampo| (AllTrim(cCampo) $ "ZVB_COD|ZVB_ITEM|ZVB_ITEMZA|ZVB_NUMSC5|ZVB_LOTE|ZVB_BOV|ZVB_DESC|ZVB_QUANT|ZVB_PRECO|ZVB_TOTAL") })
     Local aZVBRel   := {}
     Local aZVARel   := {}
-    Local bCommit   := {|| bSaveCom()}
 
     oGridZVA:SetProperty('ZVA_LOTE'   ,   MODEL_FIELD_VALID, {|| FI05LT()})
     oGridZVA:SetProperty('ZVA_QUANT'  ,   MODEL_FIELD_VALID, {|| FI05QT()})
