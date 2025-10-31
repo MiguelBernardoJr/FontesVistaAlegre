@@ -9855,7 +9855,7 @@ Function NGGRAVSC1CM( cVOP, avItenC, cCHAMADOR, lUsePrAlt, cSC1Bkp )
 					nSALDODIS := NGMUStoLvl(cCodPro, cLOCSTL,.T.) // Atualiza tabela
 				Else
 					If cTpSaldo == "C" //Busca saldo que o estoque tinha na data informada no parâmetro dData
-						nSALDODIS := CalcEst(SB2->B2_COD,SB2->B2_LOCAL,dDataBase+1)[1]
+						nSALDODIS := xCalcEst(SB2->B2_COD,SB2->B2_LOCAL,dDataBase+1)[1]
 					ElseIf cTpSaldo == "S" //Retorna saldo atual independente da data
 						nSALDODIS := SaldoSB2(.F.,.T.,dDataBase+3650,.F.)
 					ElseIf cTpSaldo == "Q" //Retorna saldo com desconto de quantidade reservada e quantidade a enderecar

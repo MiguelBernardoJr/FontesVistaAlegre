@@ -1611,17 +1611,17 @@ while !SCP->(Eof())
         if !CB7->(DbSeek(FWxFilial("CB7")+SCP->CP_NUM))
             cOrdSep := GetSX8Num( "CB7", "CB7_ORDSEP" )
 		    RecLock( "CB7", .t. )
-		    CB7->CB7_FILIAL := xFilial( "CB7" )
-		    CB7->CB7_ORDSEP := cOrdSep
-            CB7->CB7_NUMSA  := SCP->CP_NUM
-		    CB7->CB7_LOCAL  := SCP->CP_LOCAL  
-		    CB7->CB7_DTEMIS := dDataBase
-		    CB7->CB7_HREMIS := Time()
-		    CB7->CB7_STATUS := " "   // gravar STATUS de nao iniciada somente depois do processo
-		    CB7->CB7_CODOPE := cCodOpe
-		    CB7->CB7_PRIORI := "1"
-		    CB7->CB7_ORIGEM := "4"
-		    CB7->CB7_TIPEXP := cTipExp
+                CB7->CB7_FILIAL := xFilial( "CB7" )
+                CB7->CB7_ORDSEP := cOrdSep
+                CB7->CB7_NUMSA  := SCP->CP_NUM
+                CB7->CB7_LOCAL  := SCP->CP_LOCAL  
+                CB7->CB7_DTEMIS := dDataBase
+                CB7->CB7_HREMIS := Time()
+                CB7->CB7_STATUS := " "   // gravar STATUS de nao iniciada somente depois do processo
+                CB7->CB7_CODOPE := cCodOpe
+                CB7->CB7_PRIORI := "1"
+                CB7->CB7_ORIGEM := "4"
+                CB7->CB7_TIPEXP := cTipExp
 		    CB7->(MsUnLock())
 		    ConfirmSX8()
 		    //Grava o historico das geracoes:
@@ -1631,21 +1631,21 @@ while !SCP->(Eof())
 
 		cOrdSep   := CB7->CB7_ORDSEP
 		CB8->(RecLock( "CB8", .T. ))
-		CB8->CB8_FILIAL := FWxFilial( "CB8" )
-		CB8->CB8_ORDSEP := cOrdSep
-		CB8->CB8_NUMSA	:= SCP->CP_NUM
-		CB8->CB8_ITEM   := SCP->CP_ITEM
-		CB8->CB8_PROD   := SCP->CP_PRODUTO
-		CB8->CB8_LOCAL  := SCP->CP_LOCAL
-		CB8->CB8_QTDORI := SCP->CP_QUANT
-		CB8->CB8_SALDOS := SCP->CP_QUANT
-		CB8->CB8_LCALIZ := Space(15)
-		CB8->CB8_SEQUEN := ""
-		CB8->CB8_LOTECT := SCP->CP_LOTE
-		CB8->CB8_CFLOTE := If("10*" $ cTipExp,"1","2")
-		If CB8->(ColumnPos("CB8_TRT")) > 0
-			CB8->CB8_TRT	:= SCP->CP_TRT
-		EndIf
+            CB8->CB8_FILIAL := FWxFilial( "CB8" )
+            CB8->CB8_ORDSEP := cOrdSep
+            CB8->CB8_NUMSA	:= SCP->CP_NUM
+            CB8->CB8_ITEM   := SCP->CP_ITEM
+            CB8->CB8_PROD   := SCP->CP_PRODUTO
+            CB8->CB8_LOCAL  := SCP->CP_LOCAL
+            CB8->CB8_QTDORI := SCP->CP_QUANT
+            CB8->CB8_SALDOS := SCP->CP_QUANT
+            CB8->CB8_LCALIZ := Space(15)
+            CB8->CB8_SEQUEN := ""
+            CB8->CB8_LOTECT := SCP->CP_LOTE
+            CB8->CB8_CFLOTE := If("10*" $ cTipExp,"1","2")
+            If CB8->(ColumnPos("CB8_TRT")) > 0
+                CB8->CB8_TRT	:= SCP->CP_TRT
+            EndIf
 		CB8->(MsUnLock())
 
         recLock("SCP", .F.)

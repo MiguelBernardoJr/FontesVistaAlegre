@@ -273,9 +273,9 @@ Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, 
 		//EndIf
 		
 		nMinThread := 1 //Val(GetSrvProfString( "ThreadMinOrdem", cValToChar(nTotThread) ))
-		nMaxThread := 4 //Val(GetSrvProfString( "ThreadMaxOrdem", "30" ))
-		nFreeThread := 4
-		nIncThread := 4
+		nMaxThread := 5 //Val(GetSrvProfString( "ThreadMaxOrdem", "30" ))
+		nFreeThread := 5
+		nIncThread := 5
 	EndIf
 
 	// encerra o manualJob
