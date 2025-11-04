@@ -62,6 +62,8 @@ Static Function AlteraPedido(nValorDesconto)
     aadd(aLinha,{"C7_DESC"      , (nValorDesconto * SC7->C7_PRECO) / 100    ,nil})
     aadd(aLinha,{"C7_VLDESC"    , nValorDesconto                            ,nil})
     aadd(aLinha,{"C7_FRETE"     , "S"                                       ,nil})
+    aadd(aLinha,{"C7_CC"        , SC7->C7_CC                                ,nil})
+    aadd(aLinha,{"C7_ITEMCTA"   , SC7->C7_ITEMCTA                           ,nil})
     
     aAdd(aItens,aLinha)
     
@@ -71,6 +73,6 @@ Static Function AlteraPedido(nValorDesconto)
     If lMsErroAuto
         MostraErro()
     EndIf
-    
+
     FwRestArea(aArea)
 Return
