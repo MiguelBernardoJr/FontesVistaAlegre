@@ -59,6 +59,9 @@ private aBipados := {}
 		cCB8Qry +=  " ORDER BY B1_LOCALI, CB8_PROD"
 		cAliasCB8 := MpSysOpenQuery(cCB8Qry)
 
+		DbSelectArea("STL")
+		STL->(DBSetOrder(15))//TL_FILIAL+TL_NUMSA+TL_ITEMSA
+
 		While ! (cAliasCB8)->( eof() )
 			CB8->(dbGoTo((cAliasCB8)->REG))
 
@@ -76,48 +79,52 @@ private aBipados := {}
 				nQtde     := 1
 
 				vtClear()
-				@ 0,0 VtSay "-= Separacao =-"
-				@ 1,0 VTsay "ir p/ local:" + (cAliasCB8)->B1_LOCALI
-				@ 2,0 VTsay "Cod Prod: " + left( (cAliasCB8)->B1_COD, VTmaxCol() )
-				@ 3,0 VTsay left( (cAliasCB8)->B1_DESC, VTmaxCol() )
-				@ 4,0 VTsay "Saldo: " + cValToChar( CB8->CB8_SALDOS )
-				@ 5,0 VTsay "Qtde:"
-				@ 5,6 VTGet nQtde Picture "9999" valid nQtde > 0 .and. nQtde <= CB8->CB8_SALDOS
+					@ 0,0 VtSay "-= Separacao =-"
+					@ 1,0 VTsay "ir p/ local:" + (cAliasCB8)->B1_LOCALI
+					@ 2,0 VTsay "Cod Prod: " + left( (cAliasCB8)->B1_COD, VTmaxCol() )
+					@ 3,0 VTsay left( (cAliasCB8)->B1_DESC, VTmaxCol() )
+					@ 4,0 VTsay "Saldo: " + cValToChar( CB8->CB8_SALDOS )
+					@ 5,0 VTsay "Qtde:"
+					@ 5,6 VTGet nQtde Picture "9999" valid nQtde > 0 .and. nQtde <= CB8->CB8_SALDOS
 
-				@ 6,0 VTsay "Etiqueta:"
-				@ 7,0 VTGet cEtiqueta Picture "@!" valid valEtiq(@cEtiqueta)
-				VTkeyboard( chr(13) )
+					@ 6,0 VTsay "Etiqueta:"
+					@ 7,0 VTGet cEtiqueta Picture "@!" valid valEtiq(@cEtiqueta)
+					VTkeyboard( chr(13) )
 				vtRead
 				If VTLastKey() == 27
 					exit
 				EndIf
 
-				if ( nPos := aScan( aBipados, {|it| it[1] == SB1->B1_COD} ) ) == 0
-//					SB1->( dbSeek( xFilial("SB1") + cEtiqueta ) )
-					aAdd( aBipados, { SB1->B1_COD, SB1->B1_LOCPAD, 0 , alltrim( SB1->B1_DESC ), SB1->B1_UM } )
+				IF STL->(DbSeek(CB8->CB8_FILIAL+CB8->CB8_NUMSA+CB8->CB8_ITEMSA))
+					aAdd( aBipados, { SB1->B1_COD, SB1->B1_LOCPAD, 0 , alltrim( SB1->B1_DESC ), SB1->B1_UM , STL->TL_ORDEM, CB8->CB8_NUMSA} )
 					nPos := len( aBipados )
+				ELSE
+					if ( nPos := aScan( aBipados, {|it| it[1] == SB1->B1_COD} ) ) == 0
+						aAdd( aBipados, { SB1->B1_COD, SB1->B1_LOCPAD, 0 , alltrim( SB1->B1_DESC ), SB1->B1_UM , "" , CB8->CB8_NUMSA} )
+						nPos := len( aBipados )
+					endif
 				endif
 				aBipados[nPos,3] := aBipados[nPos,3] + nQtde
 
 				recLock( "CB8", .F. )
-				CB8->CB8_SALDOS := CB8->CB8_SALDOS - nQtde
+					CB8->CB8_SALDOS := CB8->CB8_SALDOS - nQtde
 				msUnlock()
 
-				CB9->( dbSetOrder(8) )
-				If ! CB9->( dbSeek( xFilial("CB9")+ CB8->(CB8_ORDSEP+CB8_PROD) ) )
+				CB9->( dbSetOrder(15) )
+				If ! CB9->( dbSeek( xFilial("CB9")+ CB8->(CB8_ORDSEP+CB8_PROD+CB8_NUMSA) ) )
 					recLock("CB9",.T.)
-					CB9->CB9_FILIAL := xFilial("CB9")
-					CB9->CB9_ORDSEP := CB7->CB7_ORDSEP
-					CB9->CB9_PROD   := CB8->CB8_PROD
-					CB9->CB9_CODSEP := CB7->CB7_CODOPE
-					CB9->CB9_ITESEP := CB8->CB8_ITEM
-					CB9->CB9_SEQUEN := CB8->CB8_SEQUEN
-					CB9->CB9_LOCAL  := CB8->CB8_LOCAL
-					CB9->CB9_NSERSU := CB8->CB8_NUMSER
-					CB9->CB9_PEDIDO := CB8->CB8_PEDIDO
-					CB9->CB9_VOLUME := cVolume
-					CB9->CB9_TRT	:= CB8->CB8_TRT
-					CB9->CB9_NUMSA  := CB8->CB8_NUMSA
+						CB9->CB9_FILIAL := xFilial("CB9")
+						CB9->CB9_ORDSEP := CB7->CB7_ORDSEP
+						CB9->CB9_PROD   := CB8->CB8_PROD
+						CB9->CB9_CODSEP := CB7->CB7_CODOPE
+						CB9->CB9_ITESEP := CB8->CB8_ITEM
+						CB9->CB9_SEQUEN := CB8->CB8_SEQUEN
+						CB9->CB9_LOCAL  := CB8->CB8_LOCAL
+						CB9->CB9_NSERSU := CB8->CB8_NUMSER
+						CB9->CB9_PEDIDO := CB8->CB8_PEDIDO
+						CB9->CB9_VOLUME := cVolume
+						CB9->CB9_TRT	:= CB8->CB8_TRT
+						CB9->CB9_NUMSA  := CB8->CB8_NUMSA
 				else
 					recLock("CB9",.F.)
 				EndIf
@@ -133,6 +140,8 @@ private aBipados := {}
 		FimProcess()
 		movEstoque()
 	endDo
+	
+	STL->( dbCloseArea() )
 
 return nil
 
@@ -186,13 +195,13 @@ local cCodVol := CB6->(GetSX8Num("CB6","CB6_VOLUME"))
 
     ConfirmSX8()
     RecLock("CB6",.T.)
-    CB6->CB6_FILIAL := xFilial("CB6")
-    CB6->CB6_VOLUME := cCodVol
-    CB6->CB6_PEDIDO := CB7->CB7_PEDIDO
-    CB6->CB6_NOTA   := CB7->CB7_NOTA
-    CB6->CB6_SERIE  := CB7->CB7_SERIE
-    CB6->CB6_TIPVOL := cCodEmb  //"001"    // CB3->CB3_CODEMB
-    CB6->CB6_STATUS := "1"   // ABERTO
+		CB6->CB6_FILIAL := xFilial("CB6")
+		CB6->CB6_VOLUME := cCodVol
+		CB6->CB6_PEDIDO := CB7->CB7_PEDIDO
+		CB6->CB6_NOTA   := CB7->CB7_NOTA
+		CB6->CB6_SERIE  := CB7->CB7_SERIE
+		CB6->CB6_TIPVOL := cCodEmb  //"001"    // CB3->CB3_CODEMB
+		CB6->CB6_STATUS := "1"   // ABERTO
     CB6->(MsUnlock())
 return cCodVol
 
@@ -297,74 +306,141 @@ local cCusto1   := cCUSTO
 	@ 3,0 VtSay "transf estoque"
 	@ 4,0 VtSay "p/ " + cArmDest
 
-	SCP->( dbSetOrder(1) )
-	if ! empty( CB7->CB7_NUMSA ) .and. SCP->( dbSeek( xFilial("SCP") + CB7->CB7_NUMSA ) ) .and. ! empty( SCP->CP_CC )
-		cCusto1 := SCP->CP_CC 
-	endif
 
 	lMsHelpAuto := .T.
 	lMsErroAuto := .F.
+	
+	SCP->( dbSetOrder(1) )
+	IF empty(aBipados[1,6])
+		cDocumento	:= IIf( Empty(cDocumento) , NextNumero("SD3",2,"D3_DOC",.T.) , cDocumento)
+		cDocumento	:= A261RetINV(cDocumento)
+		aAdd(aRotAuto, {cDocumento, dDataBase})
 
-	cDocumento	:= IIf( Empty(cDocumento) , NextNumero("SD3",2,"D3_DOC",.T.) , cDocumento)
-	cDocumento	:= A261RetINV(cDocumento)
+		for nI := 1 to len( aBipados )
+			aAux := {}
 
-	aAdd(aRotAuto, {cDocumento, dDataBase})
+			criaSaldo( aBipados[nI,1], cArmDest )
 
-	for nI := 1 to len( aBipados )
-		aAux := {}
+			if ! empty( aBipados[nI,7] ) .and. SCP->( dbSeek( xFilial("SCP") + aBipados[nI,7] ) ) .and. ! empty( SCP->CP_CC )
+				cCusto1 := SCP->CP_CC 
+			endif
 
-		criaSaldo( aBipados[nI,1], cArmDest )
+			AADD( aAux , { "ITEM", strZero( nI, len( SD3->D3_ITEM ) ), nil } )
 
-		AADD( aAux , { "ITEM", strZero( nI, len( SD3->D3_ITEM ) ), nil } )
+			// Produto Origem
+			AADD( aAux , {"D3_COD"    , aBipados[nI,1], nil } )
+			AADD( aAux , {"D3_DESCRI" , aBipados[nI,4], nil } )
+			AADD( aAux , {"D3_UM"     , aBipados[nI,5], nil } )
+			AADD( aAux , {"D3_LOCAL"  , aBipados[nI,2], nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+			// Produto Destino
+			AADD( aAux , {"D3_COD"    , aBipados[nI,1], nil } )
+			AADD( aAux , {"D3_UM"     , aBipados[nI,5], nil } )
+			AADD( aAux , {"D3_LOCAL"  , cArmDest      , nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+			//
+			AADD( aAux , {"D3_NUMSERI", ""            , nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            , nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
+			AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI"), nil } )
+			AADD( aAux , {"D3_QUANT"  , aBipados[nI,3]       , nil } )	// Qtde
+			AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM"), nil } )
+			AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO"), nil } )
+			AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") , nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            , nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
+			AADD( aAux , {"D3_ITEMGRD", ""            , nil } )
+			AADD( aAux , {"D3_OBSERVA", "S.A.: " + aBipados[nI,7], nil } )
+			AADD( aAux , {"D3_CC"     , cCusto1       , nil } )
+			aAdd( aRotAuto, aClone( aAux ) )
+		next
 
-		// Produto Origem
-		AADD( aAux , {"D3_COD"    , aBipados[nI,1], nil } )
-		AADD( aAux , {"D3_DESCRI" , aBipados[nI,4], nil } )
-		AADD( aAux , {"D3_UM"     , aBipados[nI,5], nil } )
-		AADD( aAux , {"D3_LOCAL"  , aBipados[nI,2], nil } )
-		AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
-		// Produto Destino
-		AADD( aAux , {"D3_COD"    , aBipados[nI,1], nil } )
-		AADD( aAux , {"D3_UM"     , aBipados[nI,5], nil } )
-		AADD( aAux , {"D3_LOCAL"  , cArmDest      , nil } )
-		AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
-		//
-		AADD( aAux , {"D3_NUMSERI", ""            , nil } )
-		AADD( aAux , {"D3_LOTECTL", ""            , nil } )
-		AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
-		AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
-		AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI"), nil } )
-		AADD( aAux , {"D3_QUANT"  , aBipados[nI,3]       , nil } )	// Qtde
-		AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM"), nil } )
-		AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO"), nil } )
-		AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") , nil } )
-		AADD( aAux , {"D3_LOTECTL", ""            , nil } )
-		AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
-		AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
-		AADD( aAux , {"D3_ITEMGRD", ""            , nil } )
-		AADD( aAux , {"D3_OBSERVA", "S.A.: " + CB7->CB7_NUMSA, nil } )
-		AADD( aAux , {"D3_CC"     , cCusto1       , nil } )
-		aAdd( aRotAuto, aClone( aAux ) )
-	next
-
-	if len( aRotAuto ) > 1
-		MSExecAuto( {|x,y| Mata261(x,y)}, aRotAuto, 3)
-		If lMsErroAuto
-			cMsgErro := MostraErro()
-			conout( "Erro" + cMsgErro )
-		else
-			SD3->(DbSetOrder(2))
-			SD3->(DbSeek(xFilial("SD3")+cDocumento))
-			while ! SD3->( eof() ) .and. SD3->D3_FILIAL == xFilial("SD3") .and. SD3->D3_DOC == cDocumento
-				recLock("SD3",.F.)
-				SD3->D3_NUMSA    := CB7->CB7_NUMSA
-				SD3->D3_XSEPSA    := CB7->CB7_ORDSEP
-				msUnlock()
-				SD3->( dbSkip() )
-			endDo
+		if len( aRotAuto ) > 1
+			MSExecAuto( {|x,y| Mata261(x,y)}, aRotAuto, 3)
+			If lMsErroAuto
+				cMsgErro := MostraErro()
+				conout( "Erro" + cMsgErro )
+			else
+				SD3->(DbSetOrder(2))
+				SD3->(DbSeek(xFilial("SD3")+cDocumento))
+				while ! SD3->( eof() ) .and. SD3->D3_FILIAL == xFilial("SD3") .and. SD3->D3_DOC == cDocumento
+					recLock("SD3",.F.)
+						SD3->D3_NUMSA    := aBipados[1,7]
+						//SD3->D3_XSEPSA    := CB7->CB7_ORDSEP
+					msUnlock()
+					SD3->( dbSkip() )
+				endDo
+			EndIf
 		EndIf
-	EndIf
+	Else
+		for nI := 1 to len( aBipados )
+			cDocumento	:= NextNumero("SD3",2,"D3_DOC",.T.)
+			cDocumento	:= A261RetINV(cDocumento)
+			
+			aRotAuto := {}
+			
+			aAdd(aRotAuto, {cDocumento, dDataBase})
 
+			aAux := {}
+
+			criaSaldo( aBipados[nI,1], cArmDest )
+
+			if ! empty( aBipados[nI,7] ) .and. SCP->( dbSeek( xFilial("SCP") + aBipados[nI,7] ) ) .and. ! empty( SCP->CP_CC )
+				cCusto1 := SCP->CP_CC 
+			endif
+
+			AADD( aAux , { "ITEM", strZero( 1, len( SD3->D3_ITEM ) ), nil } )
+
+			// Produto Origem
+			AADD( aAux , {"D3_COD"    , aBipados[nI,1]				, nil } )
+			AADD( aAux , {"D3_DESCRI" , aBipados[nI,4]				, nil } )
+			AADD( aAux , {"D3_UM"     , aBipados[nI,5]				, nil } )
+			AADD( aAux , {"D3_LOCAL"  , aBipados[nI,2]				, nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            				, nil } )
+			// Produto Destino
+			AADD( aAux , {"D3_COD"    , aBipados[nI,1]				, nil } )
+			AADD( aAux , {"D3_UM"     , aBipados[nI,5]				, nil } )
+			AADD( aAux , {"D3_LOCAL"  , cArmDest      				, nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            				, nil } )
+			//
+			AADD( aAux , {"D3_NUMSERI", ""            				, nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            				, nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            				, nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     		, nil } )
+			AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI")		, nil } )
+			AADD( aAux , {"D3_QUANT"  , aBipados[nI,3]       		, nil } )	// Qtde
+			AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM")		, nil } )
+			AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO")		, nil } )
+			AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") 		, nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            				, nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            				, nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     		, nil } )
+			AADD( aAux , {"D3_ITEMGRD", ""            				, nil } )
+			AADD( aAux , {"D3_OBSERVA", "S.A.: " + aBipados[nI,7]	, nil } )
+			AADD( aAux , {"D3_CC"     , cCusto1       				, nil } )
+			aAdd( aRotAuto, aClone( aAux ) )
+
+			MSExecAuto( {|x,y| Mata261(x,y)}, aRotAuto, 3)
+			if len( aRotAuto ) > 1
+				If lMsErroAuto
+					cMsgErro := MostraErro()
+					conout( "Erro" + cMsgErro )
+				else
+					SD3->(DbSetOrder(2))
+					SD3->(DbSeek(xFilial("SD3")+cDocumento))
+					while ! SD3->( eof() ) .and. SD3->D3_FILIAL == xFilial("SD3") .and. SD3->D3_DOC == cDocumento
+						recLock("SD3",.F.)
+							SD3->D3_NUMSA    := aBipados[nI,7]
+							//SD3->D3_XSEPSA    := CB7->CB7_ORDSEP
+						msUnlock()
+						SD3->( dbSkip() )
+					endDo
+				EndIf
+			EndIf
+		next
+	Endif
 return nil
 
 

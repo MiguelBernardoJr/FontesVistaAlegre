@@ -140,6 +140,6 @@
 			"label": "vtdebug"
 		}
 	],
-	"lastProgramExecuted": "<cancel>",
+	"lastProgramExecuted": "vtdebug",
 	"lastProgramArguments": []
 }
