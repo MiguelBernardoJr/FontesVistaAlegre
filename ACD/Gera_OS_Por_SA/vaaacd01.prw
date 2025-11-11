@@ -404,9 +404,9 @@ return nil
 
 
 user function lokmoacd01()
-local lRet := .f.
-local lPreSep :=("09*" $ CB7->CB7_TIPEXP)
-local nPosDel := Len(aHeader)+1
+    local lRet := .f.
+    local lPreSep :=("09*" $ CB7->CB7_TIPEXP)
+    local nPosDel := Len(aHeader)+1
 
     if aCols[n,nPosDel] //item deletado...
         lRet := .f.
@@ -437,10 +437,10 @@ return lRet
 
 
 user function TOKMOACD01()
-local nX
-local nLinhas := 0
-local nPosDel := Len(aHeader)+1
-local lRet := .t.
+    local nX
+    local nLinhas := 0
+    local nPosDel := Len(aHeader)+1
+    local lRet := .t.
 
     for nX:= 1 to Len(aCols)
         if ! aCols[nX,nPosDel]
@@ -456,21 +456,21 @@ return lRet
 
 
 user function macd01es(cAlias,nReg,nOpcx)
-local oDlg
-local oGet
-local cSeekCB8 := xFilial("CB8") + CB7->CB7_ORDSEP
-local nI
-local nOpca := 0
+    local oDlg
+    local oGet
+    local cSeekCB8 := xFilial("CB8") + CB7->CB7_ORDSEP
+    local nI
+    local nOpca := 0
 
-local aSize := {}
-local aInfo := {}
-local aObjects := {}
+    local aSize := {}
+    local aInfo := {}
+    local aObjects := {}
 
-private Altera := .f.
-private Inclui := .f.
-private aHeader := {}
-private aCols := {}
-private aTela := {}, aGets := {}
+    private Altera := .f.
+    private Inclui := .f.
+    private aHeader := {}
+    private aCols := {}
+    private aTela := {}, aGets := {}
 
     CB8->(DbSetOrder(1)) // Forca a utilizacao do indice de ordem 1, pois o programa estava se perdendo (by Erike)
     CB9->(DbSetOrder(1))
@@ -638,16 +638,16 @@ private aTela := {}, aGets := {}
 return nil
 
 user function macd01gr( )
-local aRotBack := {}
-local cArqInd := ""
-local cChaveInd := ""
-local cCondicao := ""
-local lMark := .f.
-//local cFilSC2 := ".t."
-local cSerie
+    local aRotBack := {}
+    local cArqInd := ""
+    local cChaveInd := ""
+    local cCondicao := ""
+    local lMark := .f.
+    //local cFilSC2 := ".t."
+    local cSerie
 
-private nOrigExp := ""
-private cSeparador := Space(6) 
+    private nOrigExp := ""
+    private cSeparador := Space(6) 
 
  //   if Pergunte("VAAACD0101",.t.)
  //       nOrigExp := mv_par01
@@ -1584,6 +1584,7 @@ static function GeraOSepRequisicao( cMarca, lInverte )
     local nI,nJ
     local aSTL    := {} // Solicitações originarias da Ordem de serviço - Frotas
     local aSCP    := {} // Solicitações originarias do Módulo estoque
+    local aLogSA  := {} // Solicitações originarias do Módulo estoque
 
     //Local lParcial  := SuperGetMV("MV_CBOSPRC",,.F.)  //Permite ou nao gerar Ordens de Separacoes parciais
 

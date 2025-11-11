@@ -85,7 +85,7 @@ private aBipados := {}
 					@ 3,0 VTsay left( (cAliasCB8)->B1_DESC, VTmaxCol() )
 					@ 4,0 VTsay "Saldo: " + cValToChar( CB8->CB8_SALDOS )
 					@ 5,0 VTsay "Qtde:"
-					@ 5,6 VTGet nQtde Picture "9999" valid nQtde > 0 .and. nQtde <= CB8->CB8_SALDOS
+					@ 5,6 VTGet nQtde Picture "@E 9999.999" valid nQtde > 0 .and. nQtde <= CB8->CB8_SALDOS
 
 					@ 6,0 VTsay "Etiqueta:"
 					@ 7,0 VTGet cEtiqueta Picture "@!" valid valEtiq(@cEtiqueta)
