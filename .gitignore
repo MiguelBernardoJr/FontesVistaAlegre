@@ -33,3 +33,5 @@ telemetry.txt
 /.vscode
 /.vscode
 /.vscode
+*.PRW
+/Tucano
