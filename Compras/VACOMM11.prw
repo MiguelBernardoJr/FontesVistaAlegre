@@ -600,7 +600,7 @@ ElseIf nOpc == 5 .and. !Empty(cVersao:= U_fVldVersao(ZCC->ZCC_CODIGO, ZCC->ZCC_V
 
 ElseIf nOpc == 5 .and. !U_fCanDel(ZCC->ZCC_CODIGO, ZCC->ZCC_VERSAO)
 	Aviso("Aviso", 'O contrato No.: ' + ZCC->ZCC_CODIGO + ' na versao selecionada: ' + ZCC->ZCC_VERSAO + ' nao pode ser excluida.' + CRLF+;
-				   'Existem pedidos de compra vinculados ja a este contrato.' , ;
+				   'Existem pedidos de compra vinculados a este contrato.' , ;
 				   {"Sair"})
 	Return nil
 EndIf
