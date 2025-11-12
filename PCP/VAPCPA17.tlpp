@@ -2117,6 +2117,7 @@ return nil
 user function vap17mscValid()
 	local lRet      := .F.
 	local oModel 	:= FWModelActive()
+	local oView 	:= FWViewActive()
 	local oGridZ06G	:= oModel:GetModel("MdGridZ06G")
 
 	if Empty(oGridZ06G:GetValue("Z06_LOTE"))
@@ -2130,6 +2131,8 @@ user function vap17mscValid()
 		if lRet
 			FWMsgRun(, { || AtuMatSec()}, "Materia Seca", "Ajustando a quantidade de materia seca para " + AllTrim(Str(oGridZ06G:GetValue("XX5_KGMSDI")))+ "...")
 			FWMsgRun(, { || AtuTotRot()}, "Totais da Rota", "Ajustando os Totais da Rota...")
+			oView:Refresh()
+			//oView:Refresh("VwGridROTD")
 		endif
 	elseif Z0R->Z0R_LOCK = '2' 
 		Help(,, "OPERACAO NAO PERMITDA.",, "Não é possível alterar o trato pois ele já foi Publicado.", 1, 0,,,,,, {"Operação não permitida."})
@@ -2524,8 +2527,6 @@ User Function vap17traValidZ06G()
 	//Local aSaveLines:= FWSaveRows() as Array
 	Local nMaxTrato  := u_GetNroTrato() as numeric
 	local oModel  	 := FWModelActive() as Object 
-	local oGridRotaG := oModel:GetModel("MdGridRotaG") as Object 
-	local oGridRotaD := oModel:GetModel("MdGridRotaD") as Object 
 	local oGridZ06G  := oModel:GetModel("MdGridZ06G") as Object 
 	local oGridZ06D  := oModel:GetModel("MdGridZ06D") as Object 
 	local lRet       := .T.
@@ -2601,8 +2602,10 @@ User Function vap17traValidZ06G()
 				oGridZ06D:SetNoDeleteLine(.T.)
 				oGridZ06D:SetNoInsertLine(.T.)
 
+
 				FWMsgRun(, { || AtuTotRot()}, "Totais da Rota", "Ajustando os Totais da Rota...")
 
+				oGridZ06D:GoLine(1)
 			endif
 		endif
     elseif Z0R->Z0R_LOCK = '2'
