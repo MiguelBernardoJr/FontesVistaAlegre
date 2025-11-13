@@ -240,14 +240,14 @@ User Function FATI05M()
 									ConOut(cLogErro)
 									Alert(cLogErro)
 								Next nI
-							ENDIF 
+							ENDIF
 
 						RECLOCK( "ZVA", .F. )
                             ZVA->ZVA_STATUS := "C"
 						ZVA->(MSUNLOCK())
 
 						MsgAlert( "A linha com o pedido [ "+ZVA->ZVA_NUMSC5+" ] teve o status alterado para [CANCELADO], pois a nota foi excluida.", "Atenção...")
-						TMP->(DBSKIP())
+						(cAlias)->(DBSKIP())
 					Endif
 				ENDDO
 

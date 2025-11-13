@@ -20,7 +20,7 @@ Static lCDVLanc		:= nil
 ±±³Parametros³ExpC1: Tipo da NF                                           ³±±
 ±±³          ³       [0] Entrada                                          ³±±
 ±±³          ³       [1] Saida                                            ³±±
-±±³          ³ExpC2: Serie da NF                                          ³±±
+±±³          ³ExpC2: Serie da NF                                          ³±±17
 ±±³          ³ExpC3: Numero da nota fiscal                                ³±±
 ±±³          ³ExpC4: Codigo do cliente ou fornecedor                      ³±±
 ±±³          ³ExpC5: Loja do cliente ou fornecedor                        ³±±
@@ -499,6 +499,7 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 	Local cTpNf 		:= ""
 	Local nValIcmsC 	:= 0
 	Local cNcmProd      := ""
+	Local lGeraCob		:= .F.
 	Local lCobValida   	:= .T.
 	Local dCrtNT2025 	:= CtoD("01/09/2025")
 	local lAchouSL1		:= .F. // Indica se achou o registra da venda na SL1 (SIGALOJA)
@@ -544,6 +545,7 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 	Local oCPCfg		as Json
 	Local oCPSTCfg		as Json
 	Local oCPCTCfg		as Json
+	Local lCstTag		:= .F.
 
 //Declaração de Arrays
 	Private aUF     	:= {}
@@ -6100,13 +6102,16 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 								aadd(aDI,(GetNFEIMP(.F.,cDocEnt,cSerEnt,cFornece,cLojaEnt,cTipoNFEnt,cPedido,cItemPC,cLote,cItem)))
 							Else
-								//Tratamento para TAG Importação quando existe a integração com a EIC  (Se a nota for complementar)
-								cTipoNFEnt := getEICTpNFEnt(cTipoNFEnt, cNFOri, cSerOri, cFornece, cLojaEnt, cProd, cItemOri, @cPedido, @cItemPC)
-
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³Tratamento para TAG Importação quando existe a integração com a EIC  (Se a nota for complementar)     |
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								If Empty(cTipoNFEnt)
+									cTipoNFEnt:= "2"
+								EndIf
 								if cTipoNFEnt == '6' .or. cTipoNFEnt == '2'
 									aadd(aDI,(GetNFEIMP(.F.,cDocEnt,cSerEnt,cFornece,cLojaEnt,cTipoNFEnt,cPedido,cItem,cLote, )))
 								else
-									aadd(aDI,(GetNFEIMP(.F.,cNFOri,cSerOri,cFornece,cLojaEnt,cTipoNFEnt,cPedido,cItemPC, ,cItemOri )))
+									aadd(aDI,(GetNFEIMP(.F.,cNFOri,cSerOri,cFornece,cLojaEnt,cTipoNFEnt, ,cItemOri, ,cItem )))
 								EndIf
 							EndIf
 							aAdi := aDI
@@ -6781,6 +6786,10 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 												If lConfTrib
 													If (DKD->(ColumnPos("DKD_VALBRU"))>0)
 														aTotal[02] += GetAdvFVal("DKD","DKD_VALBRU",xFilial("DKD") + (cAliasSD1)->D1_DOC + (cAliasSD1)->D1_SERIE + (cAliasSD1)->D1_FORNECE + (cAliasSD1)->D1_LOJA + (cAliasSD1)->D1_ITEM + (cAliasSD1)->D1_EMISSAO + SFT->FT_ESPECIE,1)
+													ElseIf (cAliasSD1)->D1_TIPO $ "D,B"
+														aTotal[02] += (cAliasSD1)->D1_TOTAL+(cAliasSD1)->D1_VALIPI+(cAliasSD1)->D1_ICMSRET+(cAliasSD1)->D1_VALFRE+(cAliasSD1)->D1_SEGURO+(cAliasSD1)->D1_DESPESA+nIcmDifPE-(cAliasSD1)->D1_VALDESC
+													Else
+														aTotal[02] += (cAliasSD1)->D1_CUSTO
 													EndIf
 												Else
 													aTotal[02] += ((cAliasSD1)->D1_TOTAL-(cAliasSD1)->D1_VALDESC+(cAliasSD1)->D1_VALFRE+(cAliasSD1)->D1_SEGURO+(cAliasSD1)->D1_DESPESA;
@@ -6926,18 +6935,15 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 										cForma := GetFormPgt("", aDupl)
 									EndIf
 
-									if cForma == "99" //Outros
-										if cTipo == "1"
-											cDesc99	:= &(SuperGetMV("MV_MFATIPR",,'"Negociação Futura"')) //Descrição da forma de pagamento quando 99 - outros faturamento
-										else
-											cDesc99	:= &(SuperGetMV("MV_TPAGCOM",,'"Negociação Futura"')) //Descrição da forma de pagamento quando 99 - outros compras
-										endIf
-									elseIf cForma $ "90,91" //90-Sem pagamento, 91-Pagamento Posterior
-										cIndPag := ""
+									if cTipo == "1"
+										cDesc99	:= &(SuperGetMV("MV_MFATIPR",,'"Negociação Futura"')) //Descrição da forma de pagamento quando 99 - outros faturamento
+									else
+										cDesc99	:= &(SuperGetMV("MV_TPAGCOM",,'"Negociação Futura"')) //Descrição da forma de pagamento quando 99 - outros compras
 									endIf
 
-									aadd(aDetPag, {cForma, aTotal[02]+aTotal[03], 0.00, "", "", "", "", cIndPag, cDesc99,nil,{},"","" } )   
-								EndIf	
+									aadd(aDetPag, {cForma, aTotal[02]+aTotal[03], 0.00, "", "", "", "", Iif( cForma <> "90", cIndPag, "" ), cDesc99,nil,{},"","" } )
+								EndIf
+
 								//Exemplo de como gerar o Grupo Cobrança
 								//aadd(aFat,{"Número da Fatura",Valor Original da Fatura,Valor do desconto,Valor Líquido da Fatura})
 
@@ -7046,12 +7052,12 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 										lIcmDevol		,@nVicmsDeson	,@nVIcmDif		,cMunPres	,aAgrPis[nX]	,aAgrCofins[nX]	,nIcmsDif		,aICMUFDest[nX]	,@nvFCPUFDest	,@nvICMSUFDest	,;
 										@nvICMSUFRemet	,cAmbiente 		,aIPIDevol[nX]	,@nvBCUFDest,aItemVinc[nX]	,@npFCPUFDest	,@npICMSUFDest	,@npICMSInter	,@npICMSIntP	,aLote[nX]		,;
 										@cMensDifal		,@aTotICMSST 	,len(aProd)		,nX			,@nValDifer		,cIndPres		,lExpCDL		,@aMonof02		,@aMonof15		,@lMonof53		,;
-										@lMonof61		,aICMSMono[nX]	,aBenef[nX]		,aCredPresum[nX]            ,aDeson[nX]		,aEntrega		, nTotalItem	,cNFe			,oNfTciIntg)
+										@lMonof61		,aICMSMono[nX]	,aBenef[nX]		,aCredPresum[nX]            ,aDeson[nX]		,aEntrega		, nTotalItem	,cNFe			,oNfTciIntg,	@lCstTag	)
 								Next nX
 
 								DestroyTCI(@oNfTciIntg)
 
-								cString += NfeTotal(aTotal,aRetido,aICMS,aICMSST,lIcmDevol,cVerAmb,aISSQN,nVicmsDeson,aNota,nVIcmDif,aAgrPis,aAgrCofins,nValLeite )
+								cString += NfeTotal(aTotal,aRetido,aICMS,aICMSST,lIcmDevol,cVerAmb,aISSQN,nVicmsDeson,aNota,nVIcmDif,aAgrPis,aAgrCofins,nValLeite,lCstTag )
 								cString += NfeTransp(cModFrete,aTransp,aImp,aVeiculo,aReboque,aEspVol,cVerAmb,aReboqu2,cMunDest)
 
 								//Elimina da memória a instancia da classe.
@@ -7070,17 +7076,16 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 									//Retirado o grupo de duplicata para não ocorrer a Rejeição 867: Grupo duplicata informado e forma de pagamento não é Duplicata Mercantil.
 
 									//If aScan( aDetPag,{ |x|x[1] == "14"} ) > 0
-
-									//Criado a validacao para atender a Rejeicao 853 - Dados de cobrança não devem ser informados para pagamento a vista
-									//Link da Consultoria https://tdn.totvs.com/pages/releaseview.action?pageId=980996878
 									If ( (cAmbiente == "2") .Or. (cAmbiente == "1" .And. Date() >= dCrtNT2025) )
 										If Len(aDupl) == 1 .And. aDupl[1][2] == aNota[3]
 											lCobValida := .F.
 										EndIf
 									EndIf
 
-									If lGrupCob
-										cString += NfeCob(aDupl, aFat, (Alltrim(cSerie)+ Alltrim(cNota)), lBonifica, @nValBDup, lCobValida)
+									lGeraCob := lGrupCob .And. lCobValida
+
+									If lGeraCob
+										cString += NfeCob(aDupl, aFat, (Alltrim(cSerie)+ Alltrim(cNota)), lBonifica, @nValBDup)
 									EndIf
 									// EndIf
 									cString += NfePag(aDetPag, lBonifica, nValBDup)
@@ -7804,7 +7809,7 @@ Static Function NfeItem(aProd		, aICMS			, aICMSST	, aIPI			, aPIS	   		, aPISST
 		lIcmDevol	, nVicmsDeson	, nVIcmDif	, cMunPres		, aAgrPis  		, aAgrCofins , nIcmsDif		, aICMUFDest	, nvFCPUFDest	, nvICMSUFDest	,;
 		nvICMSUFRemet, cAmbiente	, aIPIDevol	, nvBCUFDest	, aItemVinc		, npFCPUFDest, npICMSUFDest	, npICMSInter	, npICMSIntP	, aLote			,;
 		cMensDifal	, aTotICMSST	, nTotProd	, nItProd		, nValDifer		, cIndPres	 , lExpCDL		, aMonof02		, aMonof15		, lMonof53		,;
-		lMonof61	, aICMSMono 	, aBenef	, aCredPresum	,lDeduzDeson	, aEntrega	 , nTotalItem	, cNFe			, oNfTciIntg )
+		lMonof61	, aICMSMono 	, aBenef	, aCredPresum	,lDeduzDeson	, aEntrega	 , nTotalItem	, cNFe			, oNfTciIntg	, lCstTag )
 
 	Local cString 		:= ""
 	Local cMVCODREG		:= AllTrim(SuperGetMV("MV_CODREG", ," "))
@@ -7876,6 +7881,7 @@ Static Function NfeItem(aProd		, aICMS			, aICMSST	, aIPI			, aPIS	   		, aPISST
 	Local lIdDest		:= .F.
 	Local lCamb			:= .F.
 	Local cDocItemId	:= ''
+	Local cCstTag		:= ""
 
 	DEFAULT aICMS    		:= {}
 	DEFAULT aICMSST  		:= {}
@@ -7918,6 +7924,7 @@ Static Function NfeItem(aProd		, aICMS			, aICMSST	, aIPI			, aPIS	   		, aPISST
 	default aCredPresum		:= {}
 	Default aEntrega		:= {}
 	Default cNFe			:= ""
+	Default lCstTag			:= .F.
 
 	PRIVATE aImpMono		:= {}
 	PRIVATE nVicmsMono		:= 0
@@ -9458,6 +9465,8 @@ If !Empty(cDocItemId) .AND. oXmlRefTri != NIL
 
 	//Imposto sobre bens e serviço e/ou contributos sobre bens e serviços
 	cString += oXmlRefTri:GetXmlIbsCbs(cDocItemId, oNfTciIntg)
+	cCstTag	:= oXmlRefTri:getCstIbsCbs(cDocItemId, oNfTciIntg)
+	lCstTag := lCstTag .or. oXmlRefTri:setIbsCBSbyCST(cCstTag)
 endif
 
 If lMvPisCofD  .And. aDest[9] == 'PR'  // Lei Est. PR 17.127/12 informar todos os impostos na Danfe
@@ -9734,7 +9743,7 @@ endif
 
 Return(cString)
 
-Static Function NfeTotal(aTotal,aRet,aICMS,aICMSST,lIcmDevol,cVerAmb,aISSQN,nVicmsDeson,aNota,nVIcmDif,aAgrPis,aAgrCofins,nValLeite )
+Static Function NfeTotal(aTotal,aRet,aICMS,aICMSST,lIcmDevol,cVerAmb,aISSQN,nVicmsDeson,aNota,nVIcmDif,aAgrPis,aAgrCofins,nValLeite,lCstTag  )
 
 	Local cString		:= ""
 	Local cMVREGIESP	:= AllTrim(GetNewPar("MV_REGIESP","2"))	/*	1 – Microempresa Municipal; 2 – Estimativa; 3 – Sociedade de Profissionais; 
@@ -9809,7 +9818,7 @@ Static Function NfeTotal(aTotal,aRet,aICMS,aICMSST,lIcmDevol,cVerAmb,aISSQN,nVic
 		Next nX
 	EndIf
 	
-	if oXmlRefTri != nil
+	if oXmlRefTri != nil .and. lCstTag
 		cString += oXmlRefTri:getXmlTotalIbsCbsIs()
 	endif	
 	
@@ -9956,7 +9965,7 @@ Next nX
 cString += '</transp>'
 Return(cString)
 
-Static Function NfeCob(aDupl, aFat, cFatura, lBonifica, nValBDup, lCobValida)
+Static Function NfeCob(aDupl, aFat, cFatura, lBonifica, nValBDup)
 
 Local cString 		:= ""
 Local nX			:= 0 
@@ -9969,7 +9978,6 @@ default nValBDup	:= 0
 DEFAULT cFatura		:= ""
 DEFAULT aDupl		:= {}  
 DEFAULT aFat		:= {}
-DEFAULT lCobValida	:= .T.
                
 //Ordeno as duplicatas por data de vencimento
 If Len(aDupl) > 1
@@ -10000,22 +10008,20 @@ If Len(aDupl)>0
 		cString += '</fat>'
 	EndIf
 
-	If lCobValida
-		For nX := 1 To Len(aDupl)
-			cString += '<dup>'
-			cString += '<Dup>'+ConvType(PADL(nX,3,"0"))+'</Dup>'
-			If (aDupl[nX][02] < DATE()) .and. lDatDupl
-				cString += '<dtVenc>'+ConvType(DATE())+'</dtVenc>'	
-			Else
-				cString += '<dtVenc>'+ConvType(aDupl[nX][02])+'</dtVenc>'
-			EndIf
-			cString += '<vDup>'+ConvType(aDupl[nX][03],15,2)+'</vDup>'
-			cString += '</dup>'
-			if lBonifica 
-				nValBDup += aDupl[nX][03]
-			endif
-		Next nX
-	EndIf
+	For nX := 1 To Len(aDupl)
+		cString += '<dup>'
+		cString += '<Dup>'+ConvType(PADL(nX,3,"0"))+'</Dup>'
+		If (aDupl[nX][02] < DATE()) .and. lDatDupl
+			cString += '<dtVenc>'+ConvType(DATE())+'</dtVenc>'	
+		Else
+			cString += '<dtVenc>'+ConvType(aDupl[nX][02])+'</dtVenc>'
+		EndIf
+		cString += '<vDup>'+ConvType(aDupl[nX][03],15,2)+'</vDup>'
+		cString += '</dup>'
+		if lBonifica 
+			nValBDup += aDupl[nX][03]
+		endif
+	Next nX	
 	cString += '</cobr>'
 EndIf
 
@@ -12037,7 +12043,7 @@ IF len(aDetPag) > 0
 		endIf
 
 		cString +='<forma>'+aDetPag[nX][1]+'</forma>' 
-		If aDetPag[nX][1] $ "90-91" //SEM PAGAMENTO
+		If aDetPag[nX][1] == "90" //SEM PAGAMENTO
 			cString +='<valor>'+ConvType(0,15,2)+'</valor>'
 		else
 			cString +='<valor>'+ConvType(iif(lBonifica .and. nValBDup > 0, nValBDup , aDetPag[nX][2]),15,2)+'</valor>'
@@ -12230,8 +12236,7 @@ Static Function GetFormPgt(cCondPag, aDupl)
 			//	cForma := "22"
 		Case cCondPag == "SPG" //SEM PAGAMENTO
 			cForma := "90"
-		Case cCondPag == "PP" //PAGAMENTO POSTERIOR
-			cForma := "91"
+
 		OtherWise
 			cForma := "99"	// OUTROS
 		EndCase
@@ -13915,32 +13920,3 @@ Retorna o grupo
 	cString += '</DFeReferenciado>'
 
 return cString*/
-
-/*/{Protheus.doc} getEICTpNFEnt
-Funcao que retorna o tipo da nota de entrada (utilizado para COMEX).
-Tratamento para TAG Importação quando existe a integração com a EIC  (Se a nota for complementar)
-@type function
-@version 12.1.2510
-@author COMEX
-@since 10/17/2025
-@param cNFOri, character, Documento de origem
-@param cSerOri, character, Serie de origem
-@param cFornece, character, codigo do fornecedor
-@param cLojaEnt, character, loja do fornecedor
-@param cTipoNFEnt, character, tipo da nota de entrada atual
-@return variant, retorna o tipo da nota de entrada
-/*/
-static function getEICTpNFEnt(cTipoNFEnt, cNFOri, cSerOri, cFornece, cLojaEnt, cCodProd, cItem, cPedido, cItemPC )
-	local aAreaSD1 := nil
-
-	If Empty(cTipoNFEnt) .and. !empty(cNfOri)
-		aAreaSD1 := SD1->(GetArea())
-		SD1->(dbsetOrder(1)) //D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEM
-		SD1->(dbSeek(xFilial("SD1")+cNFOri+cSerOri+cFornece+cLojaEnt+cCodProd+cItem))
-		cTipoNFEnt := SD1->D1_TIPO_NF
-		cPedido := SD1->D1_PEDIDO
-		cItemPC := SD1->D1_ITEMPC
-		RestArea(aAreaSD1)
-	EndIf
-
-return cTipoNFEnt
