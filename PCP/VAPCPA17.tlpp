@@ -1073,7 +1073,7 @@ static function LoadHide(oModel, lCopia) as Array
 	aAdd(aRet, {""})
 	aAdd(aRet, {1})
 
-Return aRet
+ 	Return aRet
 //Programaçao anterior 
 static function LoadZ05G(oModel, lCopia) as Array
 	local aArea    	:= GetArea() as Array
@@ -1677,6 +1677,7 @@ Atualiza as quantidade de materia seca e natural na tabela Z05
 /*/
 static function AjuMateria(oModel)
 	local aArea      := GetArea() AS Array
+	Local oView 	 := FWViewActive()
 	local oGridZ06D  := oModel:GetModel("MdGridZ06D") as Object 
 	local oGridZ06G  := oModel:GetModel("MdGridZ06G") as Object 
 	local oGridRota  := oModel:GetModel("MdGridRotaD") as Object 
@@ -1759,6 +1760,12 @@ static function AjuMateria(oModel)
 			exit
 		EndIf
 	Next nI
+
+	oGridRota:GoLine(1)
+
+	oView:Refresh("VwGridROTD")
+	oView:Refresh("VwKgTot3")
+	oView:Refresh("VwKgTot2")
 
 	RestArea(aArea)
 return nil
