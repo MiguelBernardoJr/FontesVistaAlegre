@@ -20,7 +20,7 @@ Static lCDVLanc		:= nil
 ±±³Parametros³ExpC1: Tipo da NF                                           ³±±
 ±±³          ³       [0] Entrada                                          ³±±
 ±±³          ³       [1] Saida                                            ³±±
-±±³          ³ExpC2: Serie da NF                                          ³±±17
+±±³          ³ExpC2: Serie da NF                                          ³±±
 ±±³          ³ExpC3: Numero da nota fiscal                                ³±±
 ±±³          ³ExpC4: Codigo do cliente ou fornecedor                      ³±±
 ±±³          ³ExpC5: Loja do cliente ou fornecedor                        ³±±

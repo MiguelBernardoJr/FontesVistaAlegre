@@ -266,6 +266,10 @@ user function ViewDef() as object
 	oView:EnableTitleView('VwGridZ05G'	, "Programação anterior"	)
 	oView:EnableTitleView('VwKgTot1'   	, "Totais por Rota"			)
 
+	//oView:SetViewProperty("VwGridROTG", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; selection-color: #FFFFFF; }"})
+	//oView:SetViewProperty("VwGridZ06G", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; selection-color: #FFFFFF; }"})
+	//oView:SetViewProperty("VwGridZ06D", "SETCSS", {"QTableView { selection-background-color: #1C9DBD; selection-color: #FFFFFF; }"})
+	
 	if Inclui .or. Altera
 		oView:AddUserButton( "Gerar Arquivos (F7)" 	, 'OK', {|| u_vapcpa08(Z0R->Z0R_DATA, Z0R->Z0R_VERSAO, "")} )
 		oView:AddUserButton( "Nro Tratos (F8)"		, 'OK', {|| vap17tra() } )
@@ -723,6 +727,10 @@ static function Z06GrdMStr(nOpc as Numeric) as Object
 				elseif Alltrim(SX3->X3_CAMPO) == "XX5_KSMDI"
 					lEdit := .F.
 					nTamanho := TamSX3(SX3->X3_CAMPO)[1]
+				elseif Alltrim(SX3->X3_CAMPO) == "Z05_CABECA"
+					lEdit := .F.
+					nTamanho := TamSX3(SX3->X3_CAMPO)[1]
+					cValid   := "custom.VAPCPA17.U_AlteraQuantidadeCabeca()"
 				else
 					nTamanho := TamSX3(SX3->X3_CAMPO)[1]
 				endif
@@ -885,7 +893,7 @@ static function Z06GrdVStr(nOpc as Numeric) as Object
 		elseif SX3->(DbSeek(Padr(aOrdem[nI,1], Len(SX3->X3_CAMPO))))
 
 			lEdit := .F.
-			IF nOpc==1 .AND. Alltrim(SX3->X3_CAMPO) $ "Z06_DIETA|Z05_NROTRA"
+			IF nOpc==1 .AND. Alltrim(SX3->X3_CAMPO) $ "Z06_DIETA|Z05_NROTRA|Z05_CABECA"
 				lEdit := .T.
 			elseif nOpc==2 .and. AllTrim(SX3->X3_CAMPO)$"Z06_KGMSTR|Z06_DIETA"
 				lEdit := .T.
@@ -1212,137 +1220,258 @@ User Function PreparaQuerys()
 	//cQry += "    AND Z0T.Z0T_ROTA = ?  " + CRLF
 	//cQry += "    GROUP BY Z0T_ROTA, Z06_TRATO " + CRLF
 
-	cQry := " with QBASE as (
-    cQry += "            select ZG1_COD, sum(ZG1_QUANT) QUANT " + CRLF
-    cQry += "              from "+RetSqlName("ZG1")+" ZG1 " + CRLF
-    cQry += "             where ZG1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
-    cQry += "               and ZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
-    cQry += "               and ZG1.ZG1_SEQ    = ( " + CRLF
-    cQry += "                   select max(ZG1_SEQ) " + CRLF
-    cQry += "                     from ( " + CRLF
-    cQry += "                          select max(ZG1_SEQ) ZG1_SEQ " + CRLF
-    cQry += "                            from "+RetSqlName("ZG1")+" MAXZG1 " + CRLF
-    cQry += "                           where MAXZG1.ZG1_FILIAL = ZG1.ZG1_FILIAL " + CRLF
-    cQry += "                             and MAXZG1.ZG1_COD    = ZG1.ZG1_COD " + CRLF
-    cQry += "                             and MAXZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
-    cQry += "                             and MAXZG1.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "                          ) ZG1 " + CRLF
-    cQry += "                   ) " + CRLF
-    cQry += "               and ZG1.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "          group by ZG1_COD " + CRLF
-    cQry += "       ) " + CRLF
-    cQry += "       , MAXSEQ as ( " + CRLF
-    cQry += "            select ZG1.ZG1_COD, ZG1.ZG1_COMP, max(ZG1.ZG1_SEQ) ZG1_SEQ " + CRLF
-    cQry += "              from "+RetSqlName("ZG1")+" ZG1 " + CRLF
-    cQry += "             where ZG1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
-    cQry += "               and ZG1.ZG1_COD    = ZG1.ZG1_COD " + CRLF
-    cQry += "               and ZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
-    cQry += "               and ZG1.ZG1_SEQ    = ( " + CRLF
-    cQry += "                   select max(ZG1_SEQ) " + CRLF
-    cQry += "                     from ( " + CRLF
-    cQry += "                          select max(ZG1_SEQ) ZG1_SEQ " + CRLF
-    cQry += "                            from "+RetSqlName("ZG1")+" MAXZG1 " + CRLF
-    cQry += "                           where MAXZG1.ZG1_FILIAL = ZG1.ZG1_FILIAL " + CRLF
-    cQry += "                             and MAXZG1.ZG1_COD    = ZG1.ZG1_COD " + CRLF
-    cQry += "                             and MAXZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
-    cQry += "                             and MAXZG1.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "                          ) ZG1 " + CRLF
-    cQry += "                   ) " + CRLF
-    cQry += "               and ZG1.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "          group by ZG1.ZG1_COD, ZG1.ZG1_COMP " + CRLF
-    cQry += "       ) " + CRLF
-    cQry += "       , ZG1 as ( " + CRLF
-    cQry += "            select ZG1.ZG1_COD, ZG1.ZG1_COMP, ZG1_QUANT " + CRLF
-    cQry += "              from "+RetSqlName("ZG1")+" ZG1 " + CRLF
-    cQry += "              join MAXSEQ " + CRLF
-    cQry += "                on ZG1.ZG1_COD    = MAXSEQ.ZG1_COD " + CRLF
-    cQry += "               and ZG1.ZG1_COMP   = MAXSEQ.ZG1_COMP " + CRLF
-    cQry += "               and ZG1.ZG1_SEQ    = MAXSEQ.ZG1_SEQ " + CRLF
-    cQry += "             where ZG1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
-    cQry += "               and ZG1.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "               and ZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
-    cQry += "               and ZG1.ZG1_COD in ( " + CRLF
-    cQry += "                       select distinct Z06_DIETA " + CRLF
-    cQry += "                         from "+RetSqlName("Z06")+" Z06 " + CRLF
-    cQry += "                        where Z06.Z06_FILIAL = '"+FwXFilial("Z06")+"' " + CRLF
-    cQry += "                          and Z06.Z06_DATA   = '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
-    cQry += "                          and Z06.Z06_VERSAO = '0001' " + CRLF
-    cQry += "                          and Z06.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "                   ) " + CRLF
-    cQry += "       ) " + CRLF
-    cQry += "       , CARREGAMENTO as ( " + CRLF
-    cQry += "            select Z0S.Z0S_EQUIP " + CRLF
-    cQry += "                 , isnull(ZV0.ZV0_IDENT, '          ') ZV0_IDENT " + CRLF
-    cQry += "                 , Z0S.Z0S_OPERAD " + CRLF
-    cQry += "                 , isnull(Z0U.Z0U_NOME, '                                                                                                    ') Z0U_NOME " + CRLF
-    cQry += "                 , Z0T.Z0T_ROTA " + CRLF
-    cQry += "                 , Z06.Z06_TRATO " + CRLF
-    cQry += "                 , Z06.Z06_DIETA " + CRLF
-    cQry += "                 , case  " + CRLF
-    cQry += "                        when log10(ZV0.ZV0_DIVISA) - floor(log10(ZV0.ZV0_DIVISA)) = 0  " + CRLF
-    cQry += "                        then round(sum((100*Z06.Z06_KGMSTR*ZG1.ZG1_QUANT*Z05.Z05_CABECA)/(QBASE.QUANT*Z0V.Z0V_INDMS)), -1*log10(ZV0.ZV0_DIVISA)) " + CRLF
-    cQry += "                        else round(sum((100*Z06.Z06_KGMSTR*ZG1.ZG1_QUANT*Z05.Z05_CABECA)/(QBASE.QUANT*Z0V.Z0V_INDMS))*2, -1*round(log10(ZV0.ZV0_DIVISA*2), 0))/2 " + CRLF
-    cQry += "                    end  QTDMNCOMP " + CRLF
-    cQry += "              from "+RetSqlName("Z0T")+" Z0T " + CRLF
-    cQry += "              join "+RetSqlName("Z05")+" Z05 " + CRLF
-    cQry += "                on Z05.Z05_FILIAL = '"+FwXFilial("Z05")+"' " + CRLF
-    cQry += "               and Z05.Z05_DATA   = Z0T.Z0T_DATA " + CRLF
-    cQry += "               and Z05.Z05_VERSAO = Z0T.Z0T_VERSAO " + CRLF
-    cQry += "               and Z05.Z05_CURRAL = Z0T.Z0T_CURRAL " + CRLF
-    cQry += "               and Z05.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "              join "+RetSqlName("Z06")+" Z06 " + CRLF
-    cQry += "                on Z06.Z06_FILIAL = '"+FwXFilial("Z06")+"' " + CRLF
-    cQry += "               and Z06.Z06_DATA   = Z05.Z05_DATA " + CRLF
-    cQry += "               and Z06.Z06_VERSAO = Z05.Z05_VERSAO " + CRLF
-    cQry += "               and Z06.Z06_LOTE   = Z05.Z05_LOTE " + CRLF
-    cQry += "               and Z06.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "              join ZG1 " + CRLF
-    cQry += "                on ZG1.ZG1_COD    = Z06.Z06_DIETA " + CRLF
-    cQry += "              join QBASE " + CRLF
-    cQry += "                on QBASE.ZG1_COD = Z06.Z06_DIETA " + CRLF
-    cQry += "              join Z0V010 Z0V " + CRLF
-    cQry += "                on Z0V.Z0V_FILIAL = '"+FwXFilial("Z0V")+"' " + CRLF
-    cQry += "               and Z0V.Z0V_COMP   = ZG1.ZG1_COMP " + CRLF
-    cQry += "               and Z0V.Z0V_DATA   = Z0T.Z0T_DATA " + CRLF
-    cQry += "               and Z0V_VERSAO     = Z0T.Z0T_VERSAO " + CRLF
-    cQry += "               and Z0V.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "         left join "+RetSqlName("Z0S")+" Z0S " + CRLF
-    cQry += "                on Z0S.Z0S_FILIAL = '"+FwXFilial("Z0S")+"' " + CRLF
-    cQry += "               and Z0S.Z0S_DATA   = Z0T.Z0T_DATA " + CRLF
-    cQry += "               and Z0S.Z0S_VERSAO = Z0T.Z0T_VERSAO " + CRLF
-    cQry += "               and Z0S.Z0S_ROTA   = Z0T.Z0T_ROTA " + CRLF
-    cQry += "               and Z0S.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "         left join "+RetSqlName("ZV0")+" ZV0 " + CRLF
-    cQry += "                on ZV0.ZV0_FILIAL = ' ' " + CRLF
-    cQry += "               and ZV0.ZV0_CODIGO = Z0S.Z0S_EQUIP " + CRLF
-    cQry += "               and ZV0.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "         left join "+RetSqlName("Z0U")+" Z0U " + CRLF
-    cQry += "                on Z0U.Z0U_FILIAL = '"+FwXFilial("Z0U")+"' " + CRLF
-    cQry += "               and Z0U.Z0U_CODIGO = Z0S.Z0S_OPERAD " + CRLF
-    cQry += "               and Z0U.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "             where Z0T.Z0T_FILIAL = '"+FwXFilial("Z0T")+"' " + CRLF
-    cQry += "               and Z0T.Z0T_DATA   = '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
-    cQry += "               and Z0T.Z0T_VERSAO = '"+Z0R->Z0R_VERSAO+"' " + CRLF
-    cQry += "               and Z0T.Z0T_ROTA   <> '      ' " + CRLF
-    cQry += "               and Z0T.D_E_L_E_T_ = ' ' " + CRLF
-    cQry += "          group by Z0S.Z0S_EQUIP " + CRLF
-    cQry += "                 , ZV0.ZV0_IDENT " + CRLF
-    cQry += "                 , Z0S.Z0S_OPERAD " + CRLF
-    cQry += "                 , Z0U.Z0U_NOME " + CRLF
-    cQry += "                 , Z0T.Z0T_ROTA " + CRLF
-    cQry += "                 , Z06.Z06_TRATO " + CRLF
-    cQry += "                 , Z06.Z06_DIETA " + CRLF
-    cQry += "                 , ZV0.ZV0_DIVISA " + CRLF
-    cQry += "        ) " + CRLF
-    cQry += "             select Z0T_ROTA " + CRLF
-    cQry += "                  , Z06_TRATO " + CRLF
-    cQry += "                  , sum(QTDMNCOMP) Z06_KGMNT " + CRLF
-    cQry += "               from CARREGAMENTO " + CRLF
-    cQry += "               WHERE Z0T_ROTA = ?" + CRLF
-    cQry += "           group by Z0T_ROTA " + CRLF
-    cQry += "                  , Z06_TRATO " + CRLF
-    cQry += "                  , Z06_DIETA " + CRLF
-                                        
+	//cQry := " with QBASE as (
+    //cQry += "            select ZG1_COD, sum(ZG1_QUANT) QUANT " + CRLF
+    //cQry += "              from "+RetSqlName("ZG1")+" ZG1 " + CRLF
+    //cQry += "             where ZG1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
+    //cQry += "               and ZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+    //cQry += "               and ZG1.ZG1_SEQ    = ( " + CRLF
+    //cQry += "                   select max(ZG1_SEQ) " + CRLF
+    //cQry += "                     from ( " + CRLF
+    //cQry += "                          select max(ZG1_SEQ) ZG1_SEQ " + CRLF
+    //cQry += "                            from "+RetSqlName("ZG1")+" MAXZG1 " + CRLF
+    //cQry += "                           where MAXZG1.ZG1_FILIAL = ZG1.ZG1_FILIAL " + CRLF
+    //cQry += "                             and MAXZG1.ZG1_COD    = ZG1.ZG1_COD " + CRLF
+    //cQry += "                             and MAXZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+    //cQry += "                             and MAXZG1.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "                          ) ZG1 " + CRLF
+    //cQry += "                   ) " + CRLF
+    //cQry += "               and ZG1.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "          group by ZG1_COD " + CRLF
+    //cQry += "       ) " + CRLF
+    //cQry += "       , MAXSEQ as ( " + CRLF
+    //cQry += "            select ZG1.ZG1_COD, ZG1.ZG1_COMP, max(ZG1.ZG1_SEQ) ZG1_SEQ " + CRLF
+    //cQry += "              from "+RetSqlName("ZG1")+" ZG1 " + CRLF
+    //cQry += "             where ZG1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
+    //cQry += "               and ZG1.ZG1_COD    = ZG1.ZG1_COD " + CRLF
+    //cQry += "               and ZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+    //cQry += "               and ZG1.ZG1_SEQ    = ( " + CRLF
+    //cQry += "                   select max(ZG1_SEQ) " + CRLF
+    //cQry += "                     from ( " + CRLF
+    //cQry += "                          select max(ZG1_SEQ) ZG1_SEQ " + CRLF
+    //cQry += "                            from "+RetSqlName("ZG1")+" MAXZG1 " + CRLF
+    //cQry += "                           where MAXZG1.ZG1_FILIAL = ZG1.ZG1_FILIAL " + CRLF
+    //cQry += "                             and MAXZG1.ZG1_COD    = ZG1.ZG1_COD " + CRLF
+    //cQry += "                             and MAXZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+    //cQry += "                             and MAXZG1.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "                          ) ZG1 " + CRLF
+    //cQry += "                   ) " + CRLF
+    //cQry += "               and ZG1.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "          group by ZG1.ZG1_COD, ZG1.ZG1_COMP " + CRLF
+    //cQry += "       ) " + CRLF
+    //cQry += "       , ZG1 as ( " + CRLF
+    //cQry += "            select ZG1.ZG1_COD, ZG1.ZG1_COMP, ZG1_QUANT " + CRLF
+    //cQry += "              from "+RetSqlName("ZG1")+" ZG1 " + CRLF
+    //cQry += "              join MAXSEQ " + CRLF
+    //cQry += "                on ZG1.ZG1_COD    = MAXSEQ.ZG1_COD " + CRLF
+    //cQry += "               and ZG1.ZG1_COMP   = MAXSEQ.ZG1_COMP " + CRLF
+    //cQry += "               and ZG1.ZG1_SEQ    = MAXSEQ.ZG1_SEQ " + CRLF
+    //cQry += "             where ZG1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
+    //cQry += "               and ZG1.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "               and ZG1.ZG1_DTALT  <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+    //cQry += "               and ZG1.ZG1_COD in ( " + CRLF
+    //cQry += "                       select distinct Z06_DIETA " + CRLF
+    //cQry += "                         from "+RetSqlName("Z06")+" Z06 " + CRLF
+    //cQry += "                        where Z06.Z06_FILIAL = '"+FwXFilial("Z06")+"' " + CRLF
+    //cQry += "                          and Z06.Z06_DATA   = '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+    //cQry += "                          and Z06.Z06_VERSAO = '"+Z0R->Z0R_VERSAO+"' " + CRLF
+    //cQry += "                          and Z06.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "                   ) " + CRLF
+    //cQry += "       ) " + CRLF
+    //cQry += "       , CARREGAMENTO as ( " + CRLF
+    //cQry += "            select Z0S.Z0S_EQUIP " + CRLF
+    //cQry += "                 , isnull(ZV0.ZV0_IDENT, '          ') ZV0_IDENT " + CRLF
+    //cQry += "                 , Z0S.Z0S_OPERAD " + CRLF
+    //cQry += "                 , isnull(Z0U.Z0U_NOME, '                                                                                                    ') Z0U_NOME " + CRLF
+    //cQry += "                 , Z0T.Z0T_ROTA " + CRLF
+    //cQry += "                 , Z06.Z06_TRATO " + CRLF
+    //cQry += "                 , Z06.Z06_DIETA " + CRLF
+    //cQry += "                 , case  " + CRLF
+    //cQry += "                        when log10(ZV0.ZV0_DIVISA) - floor(log10(ZV0.ZV0_DIVISA)) = 0  " + CRLF
+    //cQry += "                        then round(sum((100*Z06.Z06_KGMSTR*ZG1.ZG1_QUANT*Z05.Z05_CABECA)/(QBASE.QUANT*Z0V.Z0V_INDMS)), -1*log10(ZV0.ZV0_DIVISA)) " + CRLF
+    //cQry += "                        else round(sum((100*Z06.Z06_KGMSTR*ZG1.ZG1_QUANT*Z05.Z05_CABECA)/(QBASE.QUANT*Z0V.Z0V_INDMS))*2, -1*round(log10(ZV0.ZV0_DIVISA*2), 0))/2 " + CRLF
+    //cQry += "                    end  QTDMNCOMP " + CRLF
+    //cQry += "              from "+RetSqlName("Z0T")+" Z0T " + CRLF
+    //cQry += "              join "+RetSqlName("Z05")+" Z05 " + CRLF
+    //cQry += "                on Z05.Z05_FILIAL = '"+FwXFilial("Z05")+"' " + CRLF
+    //cQry += "               and Z05.Z05_DATA   = Z0T.Z0T_DATA " + CRLF
+    //cQry += "               and Z05.Z05_VERSAO = Z0T.Z0T_VERSAO " + CRLF
+    //cQry += "               and Z05.Z05_CURRAL = Z0T.Z0T_CURRAL " + CRLF
+    //cQry += "               and Z05.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "              join "+RetSqlName("Z06")+" Z06 " + CRLF
+    //cQry += "                on Z06.Z06_FILIAL = '"+FwXFilial("Z06")+"' " + CRLF
+    //cQry += "               and Z06.Z06_DATA   = Z05.Z05_DATA " + CRLF
+    //cQry += "               and Z06.Z06_VERSAO = Z05.Z05_VERSAO " + CRLF
+    //cQry += "               and Z06.Z06_LOTE   = Z05.Z05_LOTE " + CRLF
+    //cQry += "               and Z06.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "              join ZG1 " + CRLF
+    //cQry += "                on ZG1.ZG1_COD    = Z06.Z06_DIETA " + CRLF
+    //cQry += "              join QBASE " + CRLF
+    //cQry += "                on QBASE.ZG1_COD = Z06.Z06_DIETA " + CRLF
+    //cQry += "              join "+RetSqlName("Z0V")+" Z0V " + CRLF
+    //cQry += "                on Z0V.Z0V_FILIAL = '"+FwXFilial("Z0V")+"' " + CRLF
+    //cQry += "               and Z0V.Z0V_COMP   = ZG1.ZG1_COMP " + CRLF
+    //cQry += "               and Z0V.Z0V_DATA   = Z0T.Z0T_DATA " + CRLF
+    //cQry += "               and Z0V_VERSAO     = Z0T.Z0T_VERSAO " + CRLF
+    //cQry += "               and Z0V.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "         left join "+RetSqlName("Z0S")+" Z0S " + CRLF
+    //cQry += "                on Z0S.Z0S_FILIAL = '"+FwXFilial("Z0S")+"' " + CRLF
+    //cQry += "               and Z0S.Z0S_DATA   = Z0T.Z0T_DATA " + CRLF
+    //cQry += "               and Z0S.Z0S_VERSAO = Z0T.Z0T_VERSAO " + CRLF
+    //cQry += "               and Z0S.Z0S_ROTA   = Z0T.Z0T_ROTA " + CRLF
+    //cQry += "               and Z0S.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "         left join "+RetSqlName("ZV0")+" ZV0 " + CRLF
+    //cQry += "                on ZV0.ZV0_FILIAL = ' ' " + CRLF
+    //cQry += "               and ZV0.ZV0_CODIGO = Z0S.Z0S_EQUIP " + CRLF
+    //cQry += "               and ZV0.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "         left join "+RetSqlName("Z0U")+" Z0U " + CRLF
+    //cQry += "                on Z0U.Z0U_FILIAL = '"+FwXFilial("Z0U")+"' " + CRLF
+    //cQry += "               and Z0U.Z0U_CODIGO = Z0S.Z0S_OPERAD " + CRLF
+    //cQry += "               and Z0U.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "             where Z0T.Z0T_FILIAL = '"+FwXFilial("Z0T")+"' " + CRLF
+    //cQry += "               and Z0T.Z0T_DATA   = '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+    //cQry += "               and Z0T.Z0T_VERSAO = '"+Z0R->Z0R_VERSAO+"' " + CRLF
+    //cQry += "               and Z0T.Z0T_ROTA   <> '      ' " + CRLF
+    //cQry += "               and Z0T.D_E_L_E_T_ = ' ' " + CRLF
+    //cQry += "          group by Z0S.Z0S_EQUIP " + CRLF
+    //cQry += "                 , ZV0.ZV0_IDENT " + CRLF
+    //cQry += "                 , Z0S.Z0S_OPERAD " + CRLF
+    //cQry += "                 , Z0U.Z0U_NOME " + CRLF
+    //cQry += "                 , Z0T.Z0T_ROTA " + CRLF
+    //cQry += "                 , Z06.Z06_TRATO " + CRLF
+    //cQry += "                 , Z06.Z06_DIETA " + CRLF
+    //cQry += "                 , ZV0.ZV0_DIVISA " + CRLF
+    //cQry += "        ) " + CRLF
+    //cQry += "             select Z0T_ROTA " + CRLF
+    //cQry += "                  , Z06_TRATO " + CRLF
+    //cQry += "                  , sum(QTDMNCOMP) Z06_KGMNT " + CRLF
+    //cQry += "               from CARREGAMENTO " + CRLF
+    //cQry += "               WHERE Z0T_ROTA = ?" + CRLF
+    //cQry += "           group by Z0T_ROTA " + CRLF
+    //cQry += "                  , Z06_TRATO " + CRLF
+    //cQry += "                  , Z06_DIETA " + CRLF
+	
+	cQry := " WITH ROTA_FILTER AS ( " + CRLF
+	cQry += "     -- 1. Filtra Rota, Data e Filial primeiro " + CRLF
+	cQry += "     SELECT  " + CRLF
+	cQry += "         Z0T.Z0T_FILIAL, Z0T.Z0T_ROTA, Z0T.Z0T_DATA, Z0T.Z0T_VERSAO, Z0T.Z0T_CURRAL, " + CRLF
+	cQry += "         Z05.Z05_LOTE, Z05.Z05_CABECA, " + CRLF
+	cQry += "         Z06.Z06_TRATO, Z06.Z06_DIETA, Z06.Z06_KGMSTR " + CRLF
+	cQry += "     FROM "+RetSqlName("Z0T")+" Z0T " + CRLF
+	cQry += "     JOIN "+RetSqlName("Z05")+" Z05  " + CRLF
+	cQry += "       ON Z05.Z05_FILIAL = Z0T.Z0T_FILIAL  " + CRLF
+	cQry += "      AND Z05.Z05_DATA   = Z0T.Z0T_DATA  " + CRLF
+	cQry += "      AND Z05.Z05_VERSAO = Z0T.Z0T_VERSAO  " + CRLF
+	cQry += "      AND Z05.Z05_CURRAL = Z0T.Z0T_CURRAL  " + CRLF
+	cQry += "      AND Z05.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += "     JOIN "+RetSqlName("Z06")+" Z06  " + CRLF
+	cQry += "       ON Z06.Z06_FILIAL = Z0T.Z0T_FILIAL  " + CRLF
+	cQry += "      AND Z06.Z06_DATA   = Z05.Z05_DATA  " + CRLF
+	cQry += "      AND Z06.Z06_VERSAO = Z05.Z05_VERSAO  " + CRLF
+	cQry += "      AND Z06.Z06_LOTE   = Z05.Z05_LOTE  " + CRLF
+	cQry += "      AND Z06.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += "     WHERE Z0T.Z0T_FILIAL = '"+FwXFilial("Z0T")+"' " + CRLF
+	cQry += "       AND Z0T.Z0T_DATA   = '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+	cQry += "       AND Z0T.Z0T_VERSAO = '"+Z0R->Z0R_VERSAO+"' " + CRLF
+	cQry += "       AND Z0T.Z0T_ROTA   = ?  " + CRLF
+	cQry += "       AND Z0T.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += " ), " + CRLF
+	cQry += " DIETAS_DISTINTAS AS ( " + CRLF
+	cQry += "     SELECT DISTINCT Z06_DIETA FROM ROTA_FILTER " + CRLF
+	cQry += " ), " + CRLF
+	cQry += " ZG1_VERSAO_ATIVA AS ( " + CRLF
+	cQry += "     -- 2. Encontra a versão ativa das dietas " + CRLF
+	cQry += "     SELECT  " + CRLF
+	cQry += "         ZG1.ZG1_COD,  " + CRLF
+	cQry += "         MAX(ZG1.ZG1_SEQ) AS MAX_SEQ " + CRLF
+	cQry += "     FROM "+RetSqlName("ZG1")+" ZG1 " + CRLF
+	cQry += "     JOIN DIETAS_DISTINTAS D ON D.Z06_DIETA = ZG1.ZG1_COD " + CRLF
+	cQry += "     WHERE ZG1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
+	cQry += "       AND ZG1.ZG1_DTALT <= '"+DToS(Z0R->Z0R_DATA)+"' " + CRLF
+	cQry += "       AND ZG1.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += "     GROUP BY ZG1.ZG1_COD " + CRLF
+	cQry += " ), " + CRLF
+	cQry += " ZG1_DADOS AS ( " + CRLF
+	cQry += "     -- 3. Prepara os dados da composição " + CRLF
+	cQry += "     SELECT  " + CRLF
+	cQry += "         T1.ZG1_COD AS COD,  " + CRLF
+	cQry += "         T1.ZG1_COMP AS COMP,  " + CRLF
+	cQry += "         T1.ZG1_QUANT AS QUANT, " + CRLF
+	cQry += "         SUM(T1.ZG1_QUANT) OVER (PARTITION BY T1.ZG1_COD) as TOTAL_QUANT_DIETA " + CRLF
+	cQry += "     FROM "+RetSqlName("ZG1")+" T1 " + CRLF
+	cQry += "     INNER JOIN ZG1_VERSAO_ATIVA V  " + CRLF
+	cQry += "        ON T1.ZG1_COD = V.ZG1_COD  " + CRLF
+	cQry += "       AND T1.ZG1_SEQ = V.MAX_SEQ " + CRLF
+	cQry += "     WHERE T1.ZG1_FILIAL = '"+FwXFilial("ZG1")+"' " + CRLF
+	cQry += "       AND T1.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += " ), " + CRLF
+	cQry += " CARREGAMENTO AS ( " + CRLF
+	cQry += "     SELECT  " + CRLF
+	cQry += "           Z0S.Z0S_EQUIP " + CRLF
+	cQry += "         , ISNULL(ZV0.ZV0_IDENT, '          ') AS ZV0_IDENT " + CRLF
+	cQry += "         , Z0S.Z0S_OPERAD " + CRLF
+	cQry += "         , ISNULL(Z0U.Z0U_NOME, REPLICATE(' ', 60)) AS Z0U_NOME " + CRLF
+	cQry += "         , RF.Z0T_ROTA " + CRLF
+	cQry += "         , RF.Z06_TRATO " + CRLF
+	cQry += "         , RF.Z06_DIETA " + CRLF
+	cQry += "         , ZV0.ZV0_DIVISA " + CRLF
+	cQry += "         -- AQUI ESTAVA O ERRO: " + CRLF
+	cQry += "         -- Movi o SUM() para DENTRO do CASE, mas envolvendo a fórmula matemática crua. " + CRLF
+	cQry += "         -- O ROUND fica POR FORA do SUM, garantindo que o arredondamento seja feito apenas no total final. " + CRLF
+	cQry += "         , CASE   " + CRLF
+	cQry += "             WHEN ZV0.ZV0_DIVISA IS NULL THEN 0  " + CRLF
+	cQry += "             WHEN LOG10(ZV0.ZV0_DIVISA) - FLOOR(LOG10(ZV0.ZV0_DIVISA)) = 0   " + CRLF
+	cQry += "             THEN ROUND( " + CRLF
+	cQry += "                     SUM( (100 * RF.Z06_KGMSTR * ZG1.QUANT * RF.Z05_CABECA) / (NULLIF(ZG1.TOTAL_QUANT_DIETA * Z0V.Z0V_INDMS, 0)) ) " + CRLF
+	cQry += "                  , -1 * LOG10(ZV0.ZV0_DIVISA))  " + CRLF
+	cQry += "             ELSE ROUND( " + CRLF
+	cQry += "                     SUM( (100 * RF.Z06_KGMSTR * ZG1.QUANT * RF.Z05_CABECA) / (NULLIF(ZG1.TOTAL_QUANT_DIETA * Z0V.Z0V_INDMS, 0)) ) * 2 " + CRLF
+	cQry += "                  , -1 * ROUND(LOG10(ZV0.ZV0_DIVISA * 2), 0)) / 2  " + CRLF
+	cQry += "           END AS QTDMNCOMP " + CRLF
+	cQry += "     FROM ROTA_FILTER RF " + CRLF
+	cQry += "     JOIN ZG1_DADOS ZG1 ON ZG1.COD = RF.Z06_DIETA " + CRLF
+	cQry += "     JOIN "+RetSqlName("Z0V")+" Z0V " + CRLF
+	cQry += "       ON Z0V.Z0V_FILIAL = '"+FwXFilial("Z0V")+"' " + CRLF
+	cQry += "      AND Z0V.Z0V_COMP   = ZG1.COMP " + CRLF
+	cQry += "      AND Z0V.Z0V_DATA   = RF.Z0T_DATA " + CRLF
+	cQry += "      AND Z0V.Z0V_VERSAO = RF.Z0T_VERSAO " + CRLF
+	cQry += "      AND Z0V.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += "     LEFT JOIN "+RetSqlName("Z0S")+" Z0S " + CRLF
+	cQry += "       ON Z0S.Z0S_FILIAL = '"+FwXFilial("Z0S")+"' " + CRLF
+	cQry += "      AND Z0S.Z0S_DATA   = RF.Z0T_DATA " + CRLF
+	cQry += "      AND Z0S.Z0S_VERSAO = RF.Z0T_VERSAO " + CRLF
+	cQry += "      AND Z0S.Z0S_ROTA   = RF.Z0T_ROTA " + CRLF
+	cQry += "      AND Z0S.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += "     LEFT JOIN "+RetSqlName("ZV0")+" ZV0 " + CRLF
+	cQry += "       ON ZV0.ZV0_FILIAL = '  '  " + CRLF
+	cQry += "      AND ZV0.ZV0_CODIGO = Z0S.Z0S_EQUIP " + CRLF
+	cQry += "      AND ZV0.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += "     LEFT JOIN "+RetSqlName("Z0U")+" Z0U " + CRLF
+	cQry += "       ON Z0U.Z0U_FILIAL = '"+FwXFilial("Z0U")+"' " + CRLF
+	cQry += "      AND Z0U.Z0U_CODIGO = Z0S.Z0S_OPERAD " + CRLF
+	cQry += "      AND Z0U.D_E_L_E_T_ = ' ' " + CRLF
+	cQry += "      " + CRLF
+	cQry += "     GROUP BY  " + CRLF
+	cQry += "           Z0S.Z0S_EQUIP " + CRLF
+	cQry += "         , ZV0.ZV0_IDENT " + CRLF
+	cQry += "         , Z0S.Z0S_OPERAD " + CRLF
+	cQry += "         , Z0U.Z0U_NOME " + CRLF
+	cQry += "         , RF.Z0T_ROTA " + CRLF
+	cQry += "         , RF.Z06_TRATO " + CRLF
+	cQry += "         , RF.Z06_DIETA " + CRLF
+	cQry += "         , ZV0.ZV0_DIVISA " + CRLF
+	cQry += " ) " + CRLF
+	cQry += " SELECT  " + CRLF
+	cQry += "     Z0T_ROTA, " + CRLF
+	cQry += "     Z06_TRATO, " + CRLF
+	cQry += "     SUM(QTDMNCOMP) AS Z06_KGMNT " + CRLF
+	cQry += " FROM CARREGAMENTO " + CRLF
+	cQry += " GROUP BY  " + CRLF
+	cQry += "     Z0T_ROTA, " + CRLF
+	cQry += "     Z06_TRATO " + CRLF
+	cQry += " ORDER BY " + CRLF
+	cQry += "     Z0T_ROTA, Z06_TRATO  " + CRLF
+
 	oExecRotaD := FwExecStatement():New(cQry)
 
 	cQry := " SELECT * " + CRLF
@@ -2902,7 +3031,7 @@ static function AtuMatSec()
 				if !Empty(oGridZ06D:GetValue("Z06_DIETA", nI)) .and. !AllTrim(oGridZ06D:GetValue("Z06_DIETA", nI))$cDieta
 					cDieta += Iif(Empty(cDieta), "", ",") +  AllTrim(oGridZ06D:GetValue("Z06_DIETA", nI)) 
 				endif
-				oGridZ06D:SetValue("Z06_KGMSTR", aKgMS[nI])
+				oGridZ06D:LoadValue("Z06_KGMSTR", aKgMS[nI])
 				oGridZ06D:SetValue("Z06_KGMNTR", U_CalcQtMN(cDieta, aKgMS[nI]))
 				oGridZ06D:SetValue("Z06_MEGCAL", U_GetMegaCal(cDieta) * aKgMS[nI])
 				oGridZ06D:SetValue("Z06_KGMNT" , u_CalcQtMN(cDieta, aKgMS[nI]) * oGridZ06G:GetValue("Z05_CABECA"))
@@ -2977,6 +3106,33 @@ Static Function AltQtdCab()
    Z05->(RestArea(aAreaZ05))
 
 Return
+
+User Function AlteraQuantidadeCabeca()
+	local aAreaZ05  := Z05->(GetArea()) as Array
+	Local oModel	:= FWModelActive() 	as Object
+	LOcal oGridZ06G	:= oModel:GetModel("MdGridZ06G") as Object
+	Local _cMsg     := "" as character
+	Local nQuant 	:= oGridZ06G:GetValue("Z05_CABECA")
+	Local lRet		:= .F.
+
+	if nQuant > 0
+		lRet := .T.
+
+		Z05->(DbGoTo(oGridZ06G:GetValue("Z05_RECNO"))) 
+
+		_cMsg := cValToChar(Z05->Z05_CABECA) + " para " + cValToChar(nQuant)
+		RecLock("Z05")
+			Z05->Z05_CABECA := nQuant
+		Z05->(MsUnLock())
+		
+		MsgInfo("Atualização de cabeças realizada com sucesso: " + _cMsg , "Atenção")
+	else
+		Help(,, "Quantidade Inválida",, "A quantidade de cabeças deve ser maior que zero.", 1, 0,,,,,, {"Por favor, digite uma quantidade válida."})
+		lRet := .F.
+	Endif
+
+   	Z05->(RestArea(aAreaZ05))
+Return lRet 
 
 Static Function GeraX1(cPerg)
 

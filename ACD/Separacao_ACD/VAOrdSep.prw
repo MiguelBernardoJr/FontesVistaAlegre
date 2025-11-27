@@ -95,7 +95,7 @@ private aBipados := {}
 					exit
 				EndIf
 
-				IF STL->(DbSeek(CB8->CB8_FILIAL+CB8->CB8_NUMSA+CB8->CB8_ITEMSA))
+				IF STL->(DbSeek(CB8->CB8_FILIAL+CB8->CB8_NUMSA+alltrim(CB8->CB8_ITEMSA)))
 					aAdd( aBipados, { SB1->B1_COD, SB1->B1_LOCPAD, 0 , alltrim( SB1->B1_DESC ), SB1->B1_UM , STL->TL_ORDEM, CB8->CB8_NUMSA} )
 					nPos := len( aBipados )
 				ELSE

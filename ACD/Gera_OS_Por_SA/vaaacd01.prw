@@ -1724,7 +1724,8 @@ static function GeraOSepRequisicao( cMarca, lInverte )
                 CB8->CB8_FILIAL := FWxFilial( "CB8" )
                 CB8->CB8_ORDSEP := cOrdSep
                 CB8->CB8_NUMSA	:= SCP->CP_NUM
-                CB8->CB8_ITEM   := SCP->CP_ITEM
+                CB8->CB8_ITEM   := StrZero(nJ,2)
+                CB8->CB8_ITEMSA := SCP->CP_ITEM
                 CB8->CB8_PROD   := SCP->CP_PRODUTO
                 CB8->CB8_LOCAL  := SCP->CP_LOCAL
                 CB8->CB8_QTDORI := SCP->CP_QUANT

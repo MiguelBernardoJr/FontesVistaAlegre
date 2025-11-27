@@ -1319,7 +1319,7 @@ User Function CurPastoOuBaia( cCurral )
 	Local oModel:= nil
 	Local cLote := ''
 
-	If (lRet := Existcpo("Z08", cCurral))  
+	If (lRet := Existcpo("Z08", cCurral))
 		If 	FWFldGet("Z0C_TPMOV") == "2" .AND. ;
 				( cRet:=Posicione('Z08', 1, FWxFilial('Z08')+cCurral, 'Z08_TIPO') ) == "4" // 1=BAIA | 4=PASTO
 

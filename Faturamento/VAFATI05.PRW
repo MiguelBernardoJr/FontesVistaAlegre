@@ -821,6 +821,16 @@ Static Function FI05QT()
                                 
                                 nQtSoma += nQtDigit - nQtSoma
                                 exit
+                            elseif (nQtSoma + aLotes[nPosBov][2][nJ][2]) == nQtDigit
+
+                                aAdd(aBovs[nPosBLot][2][nPosBItem][2],{ aLotes[nPosBov][2][nJ][1]  ,; // BOV
+                                                                                    nQtDigit - nQtSoma         ,; // Quantidade
+                                                                                    nJ                         })
+
+                                aLotes[nPosBov][2][nJ][2] := aLotes[nPosBov][2][nJ][2] - (nQtDigit - nQtSoma)
+                                
+                                nQtSoma += nQtDigit - nQtSoma
+                                exit
                             EndIf
                         EndIf
 

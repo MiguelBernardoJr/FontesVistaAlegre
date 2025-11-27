@@ -157,6 +157,7 @@ Static Function fQuadro1(cPerg)
 	_cQry += "			AND SRA.RA_CC BETWEEN '"+MV_PAR07+"' AND '"+MV_PAR08+"' " + CRLF
 	_cQry += "				AND QB_DEPTO BETWEEN '"+MV_PAR05+"' AND '"+MV_PAR06+"' " + CRLF
 	_cQry += "			AND P8_TPMCREP <> 'D' --AND P8_FLAG <> 'I'   " + CRLF
+	_cQry += "			AND SP8.P8_TPMARCA = '1E' " + CRLF
 	_cQry += "			AND SP8.D_E_L_E_T_ = ' '  " + CRLF
 	_cQry += " 		GROUP BY SP8.P8_FILIAL,SRA.RA_NASC, QB_DESCRIC, RA1.RA_NOME, SRA.RA_CC, CTT_DESC01, SRA.RA_MAT,SRA.RA_CIC, SRA.RA_NOME, SRA.RA_CARGO, RJ_DESC, SRA.RA_VALORDI,P8_DATA " + CRLF
 	_cQry += " )   " + CRLF
@@ -165,7 +166,7 @@ Static Function fQuadro1(cPerg)
 	_cQry += " GROUP BY P8_FILIAL, QB_DESCRIC, RA_NASC,NOME_GESTOR, RA_CC, CTT_DESC01, RA_MAT,RA_CIC, RA_NOME, RJ_DESC,RA_VALORDI     " + CRLF
 	_cQry += " ORDER BY  RA_NOME " + CRLF
 	
-	if cUsername $ "Administrador,admin,wmiccoli"
+	if lower(cUsername) $ "administrador,admin,wmiccoli"
 		MemoWrite(StrTran(cArquivo,".xml","")+"Conferencia_ponto_vale_combu1.sql" , _cQry)
 	endif
 
@@ -246,7 +247,7 @@ Static Function fQuadro2(cPerg)
 	_cQry += CRLF
 	_cQry += "    SELECT * FROM PONTO" +CRLF
 
-	if cUsername $ "Administrador,admin,wmiccoli"
+	if lower(cUsername) $ "administrador,admin,wmiccoli"
 		MemoWrite(StrTran(cArquivo,".xml","")+"Conferencia_ponto_vale_combu2.sql" , _cQry)
 	endif
 
