@@ -71,8 +71,7 @@ Local _cAlias    := CriaTrab(,.F.)
             nQtMov  := (_cAlias)->ZCQ_NUM
         EndIf
 
-
-        nSaldo := (aEstAux := Calcest( (_cAlias)->ZCQ_PROD, (_cAlias)->ZCQ_LOCAL, dDataBase ))[1]
+        nSaldo := (aEstAux := xCalcest( (_cAlias)->ZCQ_PROD, (_cAlias)->ZCQ_LOCAL, dDataBase ))[1]
         //nQuant := (aAuxPrd := CalcEstL( (cAliaQTD)->B1_COD, (cAliaQTD)->B2_LOCAL, MV_PAR01+1, (cAliaQTD)->B8_LOTECTL))[1]
         If nSaldo > nQtMov .AND. nSaldo > 0
             Begin Transaction

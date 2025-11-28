@@ -742,7 +742,7 @@ User Function LIBeFaturar( cFilEnt, cPedVen, cE1HIST )
 	Local cCurFil  	:= SM0->M0_CODFIL 
 	Local lFatAuto := GetMV("VA_FATAUTO",, .T. ) // Define o faturamento automatico, executado pela função de leitura webservice das liberacoes do pedido enviada pelo Site.
 	
-	u_MudaFilial( cFilEnt )	
+	u_MudaFilial( cFilEnt )
 
 	cE1HIST += Iif(!Empty(cE1HIST), "," , "") + SubStr(cFilEnt,5) +'-'+ cPedVen //+ ' / ' + xLibPedVen[nPosPedImp][2] 
 
@@ -775,7 +775,7 @@ User Function LIBeFaturar( cFilEnt, cPedVen, cE1HIST )
 		// Parametro: VA_FATAUTO, define Faturamento Automatico
 		If lFatAuto 
 			lErro := !u_cFatA00A( cPedVen ) // Faturamento Automatico - Inverte a logica pois a funcao retorna se a operacao foi bem sucedida
-		EndIf 
+		EndIf
 	Endif
 	
 	// Voltar filial anterior

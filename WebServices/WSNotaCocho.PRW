@@ -13,7 +13,7 @@ STATIC _ENTER_    := (Chr(13)+Chr(10))
 
 // User Function WSNotaCocho(); Return '20240325'
 
-WSRESTFUL WSNotaCocho DESCRIPTION "WebService REST para NotaCocho"
+WSRESTFUL WSNotaCocho DESCRIPTION "WebServ REST para NotaCocho"
 
     WsMethod GET CadastroDasNotas;
         DESCRIPTION "Listagem do cadastro de notas com a percentagem de ajustes";
@@ -323,7 +323,7 @@ WsMethod POST NotasDasBaias WSSERVICE WSNotaCocho
 
             cQry := "SELECT MAX(ZWS_CODIGO) AS ZWS_CODIGO FROM "+RetSqlName("ZWS")+" (nolock) WHERE D_E_L_E_T_ = ' '"
             cCod := StrZero(Val(MpSySExecScalar( cQry , "ZWS_CODIGO")) + 1,TamSx3("ZWS_CODIGO")[1])
-            // Gravao dos dados
+            // Gravacao dos dados
             RecLock("ZWS", .T.)
                 ZWS->ZWS_CODIGO := cCod
                 ZWS->ZWS_TIPO   := "J"

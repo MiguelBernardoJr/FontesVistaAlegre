@@ -13,7 +13,7 @@ Função para percorrer a ZCQ - Configuração de QUebras e executar movimentações e
 User Function VAESTT04()  // U_VAESTT04()
 Local _cQry      := ""
 Local cTM        := "518"//GetMV("VA_CTMBX",,"518") // Código de TM utulizada nas movimentações de baixa de estoque
-Local cObs       :=    "BAIXA REF. QUEBRA TECNICA DE ESTOQUE "
+Local cObs       := "BAIXA REF. QUEBRA TECNICA DE ESTOQUE "
 Local nQtMov     := 0
 Local cCC        := ""
 Local cItemCta   := ""
@@ -29,7 +29,7 @@ Local _cAlias    := CriaTrab(,.F.)
             ConOut("Setando ambiente")
             cEmpAnt:= FWCodEmp()
         endif
-    ENDIF 
+    ENDIF
     ConOut("Empresa logada: " + cEmpAnt)
     _cQry += "SELECT ZCQ_FILIAL, ZCQ_DATA, ZCQ_PROD, ZCQ_LOCAL, ZCQ_NUM, ZCQ_ORIGEM, ZCQ_TIPO  " + CRLF
     _cQry += "	   , ISNULL((SELECT SUM(CASE WHEN Z0Y_PESDIG > 0 THEN Z0Y_PESDIG ELSE Z0Y_QTDREA END) FROM "+RetSqlName("Z0Y")+" Z0Y WHERE Z0Y_FILIAL = ZCQ_FILIAL AND Z0Y_COMP = ZCQ_PROD AND Z0Y_DATA = '"+DtoS(dDataBase)+"' AND Z0Y.D_E_L_E_T_ = ' ' ),0)  CONSUMO" + CRLF
@@ -61,12 +61,10 @@ Local _cAlias    := CriaTrab(,.F.)
         ZLQ->(DbSetOrder(1)) //ZLQ_FILIAL+ZLQ_DATA+ZLQ_PRODUT+ZLQ_LOCAL
         //MsgInfo("FILIAL: "+(_cAlias)->ZCQ_FILIAL+ " DATA: "+DToC(SToD((_cAlias)->ZCQ_DATA))+ " PRODUTO : " +(_cAlias)->ZCQ_PROD, "TESTE ")
         
-
-
-        nSaldo := (aEstAux := Calcest( (_cAlias)->ZCQ_PROD, (_cAlias)->ZCQ_LOCAL, dDataBase ))[1]
+        nSaldo := (aEstAux := xCalcest( (_cAlias)->ZCQ_PROD, (_cAlias)->ZCQ_LOCAL, dDataBase ))[1]
         //nQuant := (aAuxPrd := CalcEstL( (cAliaQTD)->B1_COD, (cAliaQTD)->B2_LOCAL, MV_PAR01+1, (cAliaQTD)->B8_LOTECTL))[1]
         If   nSaldo > 0
-        nQtMov :=0
+            nQtMov :=0
 
         If (_cAlias)->ZCQ_ORIGEM == 'T' .and. (_cAlias)->ZCQ_TIPO = 'P'
             nQtMov := (_cAlias)->CONSUMO * ((_cAlias)->ZCQ_NUM / 100) 
@@ -100,8 +98,8 @@ Local _cAlias    := CriaTrab(,.F.)
                     // Fazer Movimentação na SD3.
                     U_LanClassif( (_cAlias)->ZCQ_FILIAL, "E", cTM, (_cAlias)->ZCQ_PROD, (_cAlias)->ZCQ_LOCAL, nQtMov, 0.01, dDataBase, cObs, cCC, cItemCta, cClvlr )
                 EndIf
-            End Transaction 
-            EndIf 
+            End Transaction
+            EndIf
         EndIf
         (_cAlias)->(DbSkip())
     end

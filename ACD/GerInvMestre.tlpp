@@ -1,0 +1,104 @@
+#include "totvs.ch"
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} GerInvMestre()
+rotina de Atualização de Inventário Mestre
+@author Cristiam
+@since 11/10/2025
+/*/
+//-------------------------------------------------------------------
+user function GerInvMestre()
+local   aArea      := getArea()
+local   aParamBox  := {}
+local   aRetParam  := {}
+local   cLocal     := "01"
+local   cProduto   := ""
+local   cEndDe     := space( len( SBE->BE_LOCALIZ ) )
+local   cEndAte    := space( len( SBE->BE_LOCALIZ ) )
+local   cAlias     := getNextAlias()
+local   nRegs      := 0
+private nContagens := SuperGetMV( "FS_GERINVC",, 1)
+
+    if ! msgYesNo( "Rotina de Geracao/Atualizacao de Inventario Mestre, deseja continuar", "Gera/Atualiza Inventario Mestre" )
+        return nil
+    endif
+
+    aAdd( aParamBox , { 1 , "Local:"       , cLocal , "", 'ExistCpo("NNR",MV_PAR01)', "NNR", "", 50, .T.} )
+    aAdd( aParamBox , { 1 , "Endereco de:" , cEndDe , "", ""                        , "SBE", "", 50, .T.} )
+    aAdd( aParamBox , { 1 , "Endereco ate:", cEndAte, "", ""                        , "SBE", "", 50, .T.} )
+    if ! paramBox( aParamBox, "Informe parametros", aRetParam)
+        return nil
+    endif
+
+    cLocal  := aRetParam[1]
+    cEndDe  := aRetParam[2]
+    cEndAte := aRetParam[3]
+
+    beginSql alias cAlias
+        select 
+            B1_COD, 
+            CBA.R_E_C_N_O_ RECCBA
+        from %table:SB1% SB1
+        left join %table:CBA% CBA
+            on  CBA_FILIAL = %xFilial:CBA%
+            and CBA_LOCAL  = %exp:cLocal%
+            and CBA_TIPINV = '1'
+            and CBA_PROD   = B1_COD
+            and CBA.%notdel%
+        where B1_FILIAL = %xFilial:SB1%
+        and   B1_MSBLQL <> '1'
+        and   B1_LOCALI between %exp:cEndDe% and %exp:cEndAte%
+        and  SB1.%notdel%
+    endSql
+
+    while ! (cAlias)->( eof() )
+        nRegs++
+        cProduto := (cAlias)->B1_COD
+        lExist   := .F.
+        if (cAlias)->RECCBA > 0
+            lExist   := .T.
+            CBA->( dbGoto( (cAlias)->RECCBA ) )
+        endif
+        a030GrvCBA( cProduto, cLocal, lExist )
+
+        (cAlias)->( dbSkip() )
+    endDo
+
+    msgInfo( "Rotina finalizada" + CRLF + "Registros processados: " + cValToChar(nRegs), "Geracao Inventario Mestre" )
+
+    restArea( aArea )
+return nil
+
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} a030GrvCBA()
+rotina de gravação na tabela CBA - inventario mestre
+@author Cristiam
+@since 11/10/2025
+/*/
+//-------------------------------------------------------------------
+static function a030GrvCBA( cProduto, cLocal, lExist )
+local cCodInv
+
+    if lExist
+	    recLock("CBA",.F.)
+    else
+        cCodInv := GetSXENum("CBA","CBA_CODINV")
+	    recLock("CBA",.T.)
+        CBA->CBA_Filial := xFilial("CBA")
+        CBA->CBA_CODINV := cCodInv
+    endif
+	CBA->CBA_DATA   := dDataBase
+	CBA->CBA_CONTS  := nContagens
+	CBA->CBA_STATUS := "0"          // 0=Não iniciado;1=Em andamento;2=Em pausa;3=contado;4=Finalizado;5=Processado
+	CBA->CBA_TIPINV := "1"          // 1=Produto;2=Endereço
+	CBA->CBA_PROD   := cProduto
+	CBA->CBA_LOCAL  := cLocal
+	CBA->CBA_CLASSA := "2"          // 1=Sim;2=Não
+	CBA->CBA_CLASSB := "2"          // 1=Sim;2=Não
+	CBA->CBA_CLASSC := "2"          // 1=Sim;2=Não
+    CBA->CBA_INVGUI := "2"          // 1=Sim;2=Não
+    CBA->CBA_RECINV := "2"          // 1=Sim;2=Não
+	msUnlock()	
+    confirmSx8()
+return nil

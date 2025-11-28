@@ -48,15 +48,15 @@ private aBipados := {}
 			nQtde     := 1
 
 			vtClear()
-			@ 0,0 VtSay "-= Transferencia =-"
-			@ 1,0 VTsay cArmOri + " --> " + cArmDes
+				@ 0,0 VtSay "-= Transferencia =-"
+				@ 1,0 VTsay cArmOri + " --> " + cArmDes
 
-			@ 3,0 VTsay "Qtde:"
-			@ 3,6 VTGet nQtde Picture "9999" valid nQtde > 0
+				@ 3,0 VTsay "Qtde:"
+				@ 3,6 VTGet nQtde Picture "@E 9999.999" valid nQtde > 0
 
-			@ 4,0 VTsay "Etiqueta:"
-			@ 5,0 VTGet cEtiqueta Picture "@!" valid valEtiq(@cEtiqueta, nQtde, cArmOri)
-			VTkeyboard( chr(13) )
+				@ 4,0 VTsay "Etiqueta:"
+				@ 5,0 VTGet cEtiqueta Picture "@!" valid valEtiq(@cEtiqueta, nQtde, cArmOri)
+				VTkeyboard( chr(13) )
 			vtRead
 			If VTLastKey() == 27 .or. empty( cEtiqueta )
 				if len( aBipados ) > 0 .and. ! VTYesNo( "Terminou a coleta?", "Confirmacao", .T.)
@@ -164,32 +164,32 @@ local cCusto1    := cCUSTO
 	AADD( aAux , { "ITEM", strZero( nI, len( SD3->D3_ITEM ) ), nil } )
 
 	// Produto Origem
-	AADD( aAux , {"D3_COD"    , aBipados[nI,1], nil } )
-	AADD( aAux , {"D3_DESCRI" , aBipados[nI,4], nil } )
-	AADD( aAux , {"D3_UM"     , aBipados[nI,5], nil } )
-	AADD( aAux , {"D3_LOCAL"  , aBipados[nI,2], nil } )
-	AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+	AADD( aAux , {"D3_COD"    , aBipados[nI,1]				, nil } )
+	AADD( aAux , {"D3_DESCRI" , aBipados[nI,4]				, nil } )
+	AADD( aAux , {"D3_UM"     , aBipados[nI,5]				, nil } )
+	AADD( aAux , {"D3_LOCAL"  , aBipados[nI,2]				, nil } )
+	AADD( aAux , {"D3_LOCALIZ", ""            				, nil } )
 	// Produto Destino
-	AADD( aAux , {"D3_COD"    , aBipados[nI,1], nil } )
-	AADD( aAux , {"D3_UM"     , aBipados[nI,5], nil } )
-	AADD( aAux , {"D3_LOCAL"  , cArmDest      , nil } )
-	AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+	AADD( aAux , {"D3_COD"    , aBipados[nI,1]				, nil } )
+	AADD( aAux , {"D3_UM"     , aBipados[nI,5]				, nil } )
+	AADD( aAux , {"D3_LOCAL"  , cArmDest      				, nil } )
+	AADD( aAux , {"D3_LOCALIZ", ""            				, nil } )
 	//
-	AADD( aAux , {"D3_NUMSERI", ""            , nil } )
-	AADD( aAux , {"D3_LOTECTL", ""            , nil } )
-	AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
-	AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
-	AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI"), nil } )
-	AADD( aAux , {"D3_QUANT"  , aBipados[nI,3]       , nil } )	// Qtde
-	AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM"), nil } )
-	AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO"), nil } )
-	AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") , nil } )
-	AADD( aAux , {"D3_LOTECTL", ""            , nil } )
-	AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
-	AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
-	AADD( aAux , {"D3_ITEMGRD", ""            , nil } )
-	AADD( aAux , {"D3_OBSERVA", "S.A.: " + CB7->CB7_NUMSA, nil } )
-	AADD( aAux , {"D3_CC"     , cCusto1       , nil } )
+	AADD( aAux , {"D3_NUMSERI", ""            				, nil } )
+	AADD( aAux , {"D3_LOTECTL", ""            				, nil } )
+	AADD( aAux , {"D3_NUMLOTE", ""            				, nil } )
+	AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     		, nil } )
+	AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI")		, nil } )
+	AADD( aAux , {"D3_QUANT"  , aBipados[nI,3]       		, nil } )	// Qtde
+	AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM")		, nil } )
+	AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO")		, nil } )
+	AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") 		, nil } )
+	AADD( aAux , {"D3_LOTECTL", ""            				, nil } )
+	AADD( aAux , {"D3_NUMLOTE", ""            				, nil } )
+	AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")    		, nil } )
+	AADD( aAux , {"D3_ITEMGRD", ""            				, nil } )
+	//AADD( aAux , {"D3_OBSERVA", "S.A.: " + CB7->CB7_NUMSA, nil } )
+	AADD( aAux , {"D3_CC"     , cCusto1       				, nil } )
 	aAdd( aRotAuto, aClone( aAux ) )
 
 	MSExecAuto( {|x,y| Mata261(x,y)}, aRotAuto, 3)

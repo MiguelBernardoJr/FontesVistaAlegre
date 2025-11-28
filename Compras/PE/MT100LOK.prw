@@ -25,10 +25,16 @@ User Function MT100LOK()
 	// EndIf
 	if lAtivo
 		lRet := U_GTPE004()
-	endif 
+	endif
 	// Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e, 
 	// mantendo a chamada apenas no final do processo, quando a variável l103Auto estiver .F.
 	If lRet .And. !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
+			
+			If IsInCallStack("MATA910")
+				RestArea(aArea)
+				Return .T.
+			EndIf
+
 		/* Se a linha estiver apagada, entao nao precisa realizar a FRENTE, NENHUMA validacao; */
 			If aCols[ n, Len( aCols[ 1 ] ) ]
 				Return .T.
@@ -81,9 +87,9 @@ User Function MT100LOK()
 				EndIf
 
 				if lContinua
-					If Empty( GdFieldGet('D1_X_PESCH', nI) )
-						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
-					EndIf
+					//If Empty( GdFieldGet('D1_X_PESCH', nI) )
+					//	cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
+					//EndIf
 
 					If Empty( GdFieldGet('D1_X_EMBDT', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Data Embarque"
@@ -113,6 +119,7 @@ User Function MT100LOK()
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra/Animal"
 					EndIf
 					*/
+					
 					If Empty( GdFieldGet('D1_X_KM', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Distância"
 					EndIf
@@ -330,6 +337,11 @@ User Function M103CALC() // Funcao para recalcular pesos de milho na entrada de 
 									 	cPCNume,;
 	 									iIf(Type("M->D1_X_UMIDA")<>"U",M->D1_X_UMIDA,aCols[n,nPosUmida]),,;
 										@cZBCDESIMP, @cZBCDESAVA )
+
+	If IsInCallStack("MATA910")
+		RestArea(aArea)
+		Return .T.
+	EndIf
 
 	If IsInCallStack("A103DEVOL") .OR. cTipo=="D"
 		RestArea(aArea)

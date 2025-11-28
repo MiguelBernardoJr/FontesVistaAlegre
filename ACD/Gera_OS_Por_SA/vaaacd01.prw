@@ -404,9 +404,9 @@ return nil
 
 
 user function lokmoacd01()
-local lRet := .f.
-local lPreSep :=("09*" $ CB7->CB7_TIPEXP)
-local nPosDel := Len(aHeader)+1
+    local lRet := .f.
+    local lPreSep :=("09*" $ CB7->CB7_TIPEXP)
+    local nPosDel := Len(aHeader)+1
 
     if aCols[n,nPosDel] //item deletado...
         lRet := .f.
@@ -437,10 +437,10 @@ return lRet
 
 
 user function TOKMOACD01()
-local nX
-local nLinhas := 0
-local nPosDel := Len(aHeader)+1
-local lRet := .t.
+    local nX
+    local nLinhas := 0
+    local nPosDel := Len(aHeader)+1
+    local lRet := .t.
 
     for nX:= 1 to Len(aCols)
         if ! aCols[nX,nPosDel]
@@ -456,21 +456,21 @@ return lRet
 
 
 user function macd01es(cAlias,nReg,nOpcx)
-local oDlg
-local oGet
-local cSeekCB8 := xFilial("CB8") + CB7->CB7_ORDSEP
-local nI
-local nOpca := 0
+    local oDlg
+    local oGet
+    local cSeekCB8 := xFilial("CB8") + CB7->CB7_ORDSEP
+    local nI
+    local nOpca := 0
 
-local aSize := {}
-local aInfo := {}
-local aObjects := {}
+    local aSize := {}
+    local aInfo := {}
+    local aObjects := {}
 
-private Altera := .f.
-private Inclui := .f.
-private aHeader := {}
-private aCols := {}
-private aTela := {}, aGets := {}
+    private Altera := .f.
+    private Inclui := .f.
+    private aHeader := {}
+    private aCols := {}
+    private aTela := {}, aGets := {}
 
     CB8->(DbSetOrder(1)) // Forca a utilizacao do indice de ordem 1, pois o programa estava se perdendo (by Erike)
     CB9->(DbSetOrder(1))
@@ -532,6 +532,7 @@ private aTela := {}, aGets := {}
     
         SC9->(DbSetOrder(1))
         CB8->(DbSetOrder(1))
+        SCP->(DbSetOrder(1))
         DbSelectArea("CB7")
         for nI := 1 to Len(aCols)
             CB8->(DbGoto(aRecno[nI]))
@@ -596,10 +597,18 @@ private aTela := {}, aGets := {}
                 if CB8->(DbSeek(xFilial("CB8")+CB7->CB7_PRESEP+CB8_ITEM+CB8_SEQUEN+CB8_PROD))
                     if CB8->CB8_SLDPRE == 0
                         CB8->(RecLock( "CB8",.f.))
-                        CB8->CB8_SLDPRE := CB8->CB8_QTDORI
+                            CB8->CB8_SLDPRE := CB8->CB8_QTDORI
                         CB8->(MsUnLock())
                         CB8->(DbSkip())
                     endif
+                endif
+            endif
+            
+            if !empty( CB8->CB8_NUMSA )
+                if SCP->( dbSeek( xFilial("SCP") + CB8->CB8_NUMSA ) )
+                    recLock( "SCP", .F. )
+                        SCP->CP_ORDSEP := ""
+                    msUnlock()
                 endif
             endif
     
@@ -613,14 +622,14 @@ private aTela := {}, aGets := {}
         CB7->(dbDelete())
         CB7->(MsUnlock())
 
-        if ! empty( CB7->CB7_NUMSA )
-            SCP->( dbSetOrder(1) )
-            if SCP->( dbSeek( xFilial("SCP") + CB7->CB7_NUMSA ) )
-                recLock( "SCP", .F. )
-                SCP->CP_ORDSEP := ""
-                msUnlock()
-            endif
-        endif
+        //if ! empty( CB7->CB7_NUMSA )
+        //SCP->( dbSetOrder(1) )
+        //if SCP->( dbSeek( xFilial("SCP") + CB7->CB7_NUMSA ) )
+        //    recLock( "SCP", .F. )
+        //        SCP->CP_ORDSEP := ""
+        //    msUnlock()
+        //endif
+        //endif
 
         End Transaction
     
@@ -629,16 +638,16 @@ private aTela := {}, aGets := {}
 return nil
 
 user function macd01gr( )
-local aRotBack := {}
-local cArqInd := ""
-local cChaveInd := ""
-local cCondicao := ""
-local lMark := .f.
-//local cFilSC2 := ".t."
-local cSerie
+    local aRotBack := {}
+    local cArqInd := ""
+    local cChaveInd := ""
+    local cCondicao := ""
+    local lMark := .f.
+    //local cFilSC2 := ".t."
+    local cSerie
 
-private nOrigExp := ""
-private cSeparador := Space(6) 
+    private nOrigExp := ""
+    private cSeparador := Space(6) 
 
  //   if Pergunte("VAAACD0101",.t.)
  //       nOrigExp := mv_par01
@@ -924,10 +933,10 @@ private aLogOS := {}
             CB7->CB7_ORDSEP := cOrdSep
             CB7->CB7_PEDIDO := cPedido
             CB7->CB7_CLIENT := cCliente
-            CB7->CB7_LOJA := cLoja
-            CB7->CB7_COND := cCondPag
+            CB7->CB7_LOJA   := cLoja
+            CB7->CB7_COND   := cCondPag
             CB7->CB7_LOJENT := cLojaEnt
-            CB7->CB7_local := cArm
+            CB7->CB7_local  := cArm
             CB7->CB7_DTEMIS := dDataBase
             CB7->CB7_HREMIS := Time()
             CB7->CB7_STATUS := " "
@@ -960,10 +969,10 @@ private aLogOS := {}
                 CB8->(RecLock("CB8",.t.))
                 CB8->CB8_FILIAL := xFilial("CB8")
                 CB8->CB8_ORDSEP := CB7->CB7_ORDSEP
-                CB8->CB8_ITEM := SC9->C9_ITEM
+                CB8->CB8_ITEM   := SC9->C9_ITEM
                 CB8->CB8_PEDIDO := SC9->C9_PEDIDO
-                CB8->CB8_PROD := SDC->DC_PRODUTO
-                CB8->CB8_local := SDC->DC_local
+                CB8->CB8_PROD   := SDC->DC_PRODUTO
+                CB8->CB8_local  := SDC->DC_local
                 CB8->CB8_QTDORI := SDC->DC_QUANT
                 if "09*" $ cTipExp
                     CB8->CB8_SLDPRE := SDC->DC_QUANT
@@ -990,10 +999,10 @@ private aLogOS := {}
             CB8->(RecLock("CB8",.t.))
             CB8->CB8_FILIAL := xFilial("CB8")
             CB8->CB8_ORDSEP := CB7->CB7_ORDSEP
-            CB8->CB8_ITEM := SC9->C9_ITEM
+            CB8->CB8_ITEM   := SC9->C9_ITEM
             CB8->CB8_PEDIDO := SC9->C9_PEDIDO
-            CB8->CB8_PROD := SC9->C9_PRODUTO
-            CB8->CB8_local := SC9->C9_local
+            CB8->CB8_PROD   := SC9->C9_PRODUTO
+            CB8->CB8_local  := SC9->C9_local
             CB8->CB8_QTDORI := SC9->C9_QTDLIB
             if "09*" $ cTipExp
                 CB8->CB8_SLDPRE := SC9->C9_QTDLIB
@@ -1041,106 +1050,137 @@ return nil
 
 
 static function GeraOSepNota( cMarca, lInverte, cNotaSerie)
-local cChaveDB
-local cTipExp
-local nI
-local cCodOpe
-local aRecSD2 := {}
-local aOrdSep := {}
+    local cChaveDB
+    local cTipExp
+    local nI
+    local cCodOpe
+    local aRecSD2 := {}
+    local aOrdSep := {}
 
-private aLogOS:= {}
+    private aLogOS:= {}
 
-    // analisar a pergunta '00-Separcao,01-Separacao/Embalagem,02-Embalagem,03-Gera Nota,04-Imp.Nota,05-Imp.Volume,06-embarque'
-    if nEmbSimuNF == 1
-        cTipExp := "01*"
-    else
-        cTipExp := "00*"
-    EndIF
-    if nEmbalagNF == 1
-        cTipExp += "02*"
-    EndIF
-    if nImpNotaNF == 1
-        cTipExp += "04*"
-    EndIF
-    if nImpVolNF == 1
-        cTipExp += "05*"
-    EndIF
-    if nEmbarqNF == 1
-        cTipExp += "06*"
-    EndIF
-    
-    SF2->(DbSetOrder(1))
-    SD2->(DbSetOrder(3))
-    SD2->( dbGoTop() )
-    
-    if cNotaSerie == nil
+        // analisar a pergunta '00-Separcao,01-Separacao/Embalagem,02-Embalagem,03-Gera Nota,04-Imp.Nota,05-Imp.Volume,06-embarque'
+        if nEmbSimuNF == 1
+            cTipExp := "01*"
+        else
+            cTipExp := "00*"
+        EndIF
+        if nEmbalagNF == 1
+            cTipExp += "02*"
+        EndIF
+        if nImpNotaNF == 1
+            cTipExp += "04*"
+        EndIF
+        if nImpVolNF == 1
+            cTipExp += "05*"
+        EndIF
+        if nEmbarqNF == 1
+            cTipExp += "06*"
+        EndIF
+        
+        SF2->(DbSetOrder(1))
+        SD2->(DbSetOrder(3))
+        SD2->( dbGoTop() )
+        
+        if cNotaSerie == nil
+            ProcRegua( SD2->( LastRec() ), "oook" )
+            cCodOpe := cSeparador
+        else
+            SD2->(DbSetOrder(3))
+            SD2->(DbSeek(xFilial("SD2")+cNotaSerie))
+            cCodOpe := Space(06)
+        endif
+        
         ProcRegua( SD2->( LastRec() ), "oook" )
         cCodOpe := cSeparador
-    else
-        SD2->(DbSetOrder(3))
-        SD2->(DbSeek(xFilial("SD2")+cNotaSerie))
-        cCodOpe := Space(06)
-    endif
-    
-    ProcRegua( SD2->( LastRec() ), "oook" )
-    cCodOpe := cSeparador
-    
-    while !SD2->( Eof() ) .and. (cNotaSerie == nil .or. cNotaSerie == SD2->(D2_DOC+D2_SERIE))
-        if (cNotaSerie==nil) .and. ! (SD2->(IsMark("D2_OK",ThisMark(),ThisInv())))
-            SD2->( dbSkip() )
-            IncProc()
-            loop
-        endif
-        cChaveDB :=xFilial("SDB")+SD2->(D2_COD+D2_local+D2_NUMSEQ+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA)
-        if localiza(SD2->D2_COD)
-            SDB->(DbSetOrder(1))
-            if ! SDB->(DbSeek( cChaveDB ))
-                // neste caso nao existe composicao de empenho
-                //Grava o historico das geracoes:
-                AAdd(aLogOS,{"2","Nota",SD2->D2_DOC,SD2->D2_SERIE,SD2->D2_CLIENTE,SD2->D2_LOJA,"Inconsistencia de base, nao existe registro de movimento (SDB)",    "NAO_GEROU_OS"})
-                SD2->(DbSkip())
-                if cNotaSerie==nil
-                    IncProc()
-                endif
+        
+        while !SD2->( Eof() ) .and. (cNotaSerie == nil .or. cNotaSerie == SD2->(D2_DOC+D2_SERIE))
+            if (cNotaSerie==nil) .and. ! (SD2->(IsMark("D2_OK",ThisMark(),ThisInv())))
+                SD2->( dbSkip() )
+                IncProc()
                 loop
             endif
-        endif
-    
-        CB7->(DbSetOrder(4))
-        if ! CB7->(DbSeek(xFilial("CB7")+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_local+" "))
-            CB7->(RecLock( "CB7", .t. ))
-            CB7->CB7_FILIAL := xFilial( "CB7" )
-            CB7->CB7_ORDSEP := GetSX8Num( "CB7", "CB7_ORDSEP" )
-            CB7->CB7_NOTA := SD2->D2_DOC
-            //CB7->CB7_SERIE := SD2->D2_SERIE
-            SerieNfId ("CB7",1,"CB7_SERIE",,,,SD2->D2_SERIE)
-            CB7->CB7_CLIENT := SD2->D2_CLIENTE
-            CB7->CB7_LOJA := SD2->D2_LOJA
-            CB7->CB7_local := SD2->D2_local
-            CB7->CB7_DTEMIS := dDataBase
-            CB7->CB7_HREMIS := Time()
-            CB7->CB7_STATUS := " "   // gravar STATUS de nao iniciada somente depois do processo
-            CB7->CB7_CODOPE := cCodOpe
-            CB7->CB7_PRIORI := "1"
-            CB7->CB7_ORIGEM := "2"
-            CB7->CB7_TIPEXP := cTipExp
-            if SF2->(DbSeek(xFilial("SF2")+SD2->(D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA)))
-                CB7->CB7_TRANSP := SF2->F2_TRANSP
-            endif
-            CB7->(MsUnLock())
-            ConfirmSX8()
-            //Grava o historico das geracoes:
-            AAdd(aLogOS,{"1","Nota",SD2->D2_DOC,SD2->D2_SERIE,SD2->D2_CLIENTE,SD2->D2_LOJA,"",CB7->CB7_ORDSEP})
-            AAdd(aOrdSep,CB7->CB7_ORDSEP)
-        endif
-        if localiza(SD2->D2_COD)
-            while SDB->(!Eof() .And. cChaveDB == DB_FILIAL+DB_PRODUTO+DB_local+DB_NUMSEQ+DB_DOC+DB_SERIE+DB_CLIFOR+DB_LOJA)
-                if SDB->DB_ESTORNO == "S"
-                    SDB->(dbSkip())
+            cChaveDB :=xFilial("SDB")+SD2->(D2_COD+D2_local+D2_NUMSEQ+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA)
+            if localiza(SD2->D2_COD)
+                SDB->(DbSetOrder(1))
+                if ! SDB->(DbSeek( cChaveDB ))
+                    // neste caso nao existe composicao de empenho
+                    //Grava o historico das geracoes:
+                    AAdd(aLogOS,{"2","Nota",SD2->D2_DOC,SD2->D2_SERIE,SD2->D2_CLIENTE,SD2->D2_LOJA,"Inconsistencia de base, nao existe registro de movimento (SDB)",    "NAO_GEROU_OS"})
+                    SD2->(DbSkip())
+                    if cNotaSerie==nil
+                        IncProc()
+                    endif
                     loop
                 endif
+            endif
+        
+            CB7->(DbSetOrder(4))
+            if ! CB7->(DbSeek(xFilial("CB7")+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_local+" "))
+                CB7->(RecLock( "CB7", .t. ))
+                CB7->CB7_FILIAL := xFilial( "CB7" )
+                CB7->CB7_ORDSEP := GetSX8Num( "CB7", "CB7_ORDSEP" )
+                CB7->CB7_NOTA := SD2->D2_DOC
+                //CB7->CB7_SERIE := SD2->D2_SERIE
+                SerieNfId ("CB7",1,"CB7_SERIE",,,,SD2->D2_SERIE)
+                CB7->CB7_CLIENT := SD2->D2_CLIENTE
+                CB7->CB7_LOJA := SD2->D2_LOJA
+                CB7->CB7_local := SD2->D2_local
+                CB7->CB7_DTEMIS := dDataBase
+                CB7->CB7_HREMIS := Time()
+                CB7->CB7_STATUS := " "   // gravar STATUS de nao iniciada somente depois do processo
+                CB7->CB7_CODOPE := cCodOpe
+                CB7->CB7_PRIORI := "1"
+                CB7->CB7_ORIGEM := "2"
+                CB7->CB7_TIPEXP := cTipExp
+                if SF2->(DbSeek(xFilial("SF2")+SD2->(D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA)))
+                    CB7->CB7_TRANSP := SF2->F2_TRANSP
+                endif
+                CB7->(MsUnLock())
+                ConfirmSX8()
+                //Grava o historico das geracoes:
+                AAdd(aLogOS,{"1","Nota",SD2->D2_DOC,SD2->D2_SERIE,SD2->D2_CLIENTE,SD2->D2_LOJA,"",CB7->CB7_ORDSEP})
+                AAdd(aOrdSep,CB7->CB7_ORDSEP)
+            endif
+            if localiza(SD2->D2_COD)
+                while SDB->(!Eof() .And. cChaveDB == DB_FILIAL+DB_PRODUTO+DB_local+DB_NUMSEQ+DB_DOC+DB_SERIE+DB_CLIFOR+DB_LOJA)
+                    if SDB->DB_ESTORNO == "S"
+                        SDB->(dbSkip())
+                        loop
+                    endif
+                    CB8->(DbSetOrder(4))
+                    if ! CB8->(DbSeek(xFilial("CB8")+CB7->CB7_ORDSEP+SD2->(D2_ITEM+D2_COD+D2_local+SDB->DB_localIZ+D2_LOTECTL+D2_NUMLOTE+D2_NUMSERI)))
+                        CB8->(RecLock( "CB8", .t. ))
+                        CB8->CB8_FILIAL := xFilial( "CB8" )
+                        CB8->CB8_ORDSEP := CB7->CB7_ORDSEP
+                        CB8->CB8_ITEM := SD2->D2_ITEM
+                        CB8->CB8_PEDIDO := SD2->D2_PEDIDO
+                        CB8->CB8_NOTA := SD2->D2_DOC
+                        //CB8->CB8_SERIE := SD2->D2_SERIE
+                        SerieNfId ("CB8",1,"CB8_SERIE",,,,SD2->D2_SERIE)
+                        CB8->CB8_PROD := SD2->D2_COD
+                        CB8->CB8_local := SD2->D2_local
+                        CB8->CB8_LCALIZ := SDB->DB_localIZ
+                        CB8->CB8_SEQUEN := SDB->DB_ITEM
+                        CB8->CB8_LOTECT := SD2->D2_LOTECTL
+                        CB8->CB8_NUMLOT := SD2->D2_NUMLOTE
+                        CB8->CB8_NUMSER := SD2->D2_NUMSERI
+                        CB8->CB8_CFLOTE := "1"
+                        AAdd(aRecSD2,{SD2->(Recno()),CB7->CB7_ORDSEP})
+                    else
+                        CB8->(RecLock( "CB8", .f. ))
+                    endif
+                    CB8->CB8_QTDORI += SDB->DB_QUANT
+                    CB8->CB8_SALDOS += SDB->DB_QUANT
+                    if nEmbalagem == 1
+                        CB8->CB8_SALDOE += SDB->DB_QUANT
+                    endif
+                    CB8->(MsUnLock())
+                    SDB->(dbSkip())
+                end
+            else
                 CB8->(DbSetOrder(4))
-                if ! CB8->(DbSeek(xFilial("CB8")+CB7->CB7_ORDSEP+SD2->(D2_ITEM+D2_COD+D2_local+SDB->DB_localIZ+D2_LOTECTL+D2_NUMLOTE+D2_NUMSERI)))
+                if ! CB8->(DbSeek(xFilial("CB8")+CB7->CB7_ORDSEP+SD2->(D2_ITEM+D2_COD+D2_local+Space(15)+D2_LOTECTL+D2_NUMLOTE+D2_NUMSERI)))
                     CB8->(RecLock( "CB8", .t. ))
                     CB8->CB8_FILIAL := xFilial( "CB8" )
                     CB8->CB8_ORDSEP := CB7->CB7_ORDSEP
@@ -1151,8 +1191,8 @@ private aLogOS:= {}
                     SerieNfId ("CB8",1,"CB8_SERIE",,,,SD2->D2_SERIE)
                     CB8->CB8_PROD := SD2->D2_COD
                     CB8->CB8_local := SD2->D2_local
-                    CB8->CB8_LCALIZ := SDB->DB_localIZ
-                    CB8->CB8_SEQUEN := SDB->DB_ITEM
+                    CB8->CB8_LCALIZ := Space(15)
+                    CB8->CB8_SEQUEN := SD2->D2_ITEM
                     CB8->CB8_LOTECT := SD2->D2_LOTECTL
                     CB8->CB8_NUMLOT := SD2->D2_NUMLOTE
                     CB8->CB8_NUMSER := SD2->D2_NUMSERI
@@ -1161,95 +1201,64 @@ private aLogOS:= {}
                 else
                     CB8->(RecLock( "CB8", .f. ))
                 endif
-                CB8->CB8_QTDORI += SDB->DB_QUANT
-                CB8->CB8_SALDOS += SDB->DB_QUANT
+                CB8->CB8_QTDORI += SD2->D2_QUANT
+                CB8->CB8_SALDOS += SD2->D2_QUANT
                 if nEmbalagem == 1
-                    CB8->CB8_SALDOE += SDB->DB_QUANT
+                    CB8->CB8_SALDOE += SD2->D2_QUANT
                 endif
                 CB8->(MsUnLock())
-                SDB->(dbSkip())
-            end
-        else
-            CB8->(DbSetOrder(4))
-            if ! CB8->(DbSeek(xFilial("CB8")+CB7->CB7_ORDSEP+SD2->(D2_ITEM+D2_COD+D2_local+Space(15)+D2_LOTECTL+D2_NUMLOTE+D2_NUMSERI)))
-                CB8->(RecLock( "CB8", .t. ))
-                CB8->CB8_FILIAL := xFilial( "CB8" )
-                CB8->CB8_ORDSEP := CB7->CB7_ORDSEP
-                CB8->CB8_ITEM := SD2->D2_ITEM
-                CB8->CB8_PEDIDO := SD2->D2_PEDIDO
-                CB8->CB8_NOTA := SD2->D2_DOC
-                //CB8->CB8_SERIE := SD2->D2_SERIE
-                SerieNfId ("CB8",1,"CB8_SERIE",,,,SD2->D2_SERIE)
-                CB8->CB8_PROD := SD2->D2_COD
-                CB8->CB8_local := SD2->D2_local
-                CB8->CB8_LCALIZ := Space(15)
-                CB8->CB8_SEQUEN := SD2->D2_ITEM
-                CB8->CB8_LOTECT := SD2->D2_LOTECTL
-                CB8->CB8_NUMLOT := SD2->D2_NUMLOTE
-                CB8->CB8_NUMSER := SD2->D2_NUMSERI
-                CB8->CB8_CFLOTE := "1"
-                AAdd(aRecSD2,{SD2->(Recno()),CB7->CB7_ORDSEP})
-            else
-                CB8->(RecLock( "CB8", .f. ))
             endif
-            CB8->CB8_QTDORI += SD2->D2_QUANT
-            CB8->CB8_SALDOS += SD2->D2_QUANT
-            if nEmbalagem == 1
-                CB8->CB8_SALDOE += SD2->D2_QUANT
+        
+            if cNotaSerie==nil
+                IncProc()
             endif
-            CB8->(MsUnLock())
+            SD2->( dbSkip() )
+        end
+        
+        CB7->(DbSetOrder(1))
+        for nI := 1 to len(aOrdSep)
+            CB7->(DbSeek(xFilial("CB7")+aOrdSep[nI]))
+            CB7->(RecLock("CB7"))
+            CB7->CB7_STATUS := "0"  // nao iniciado
+            CB7->(MsUnlock())
+        next
+        for nI := 1 to len(aRecSD2)
+            SD2->(DbGoto(aRecSD2[nI,1]))
+            SD2->(RecLock("SD2",.f.))
+            SD2->D2_ORDSEP := aRecSD2[nI,2]
+            SD2->(MsUnlock())
+        next
+        if !Empty(aLogOS)
+            lgvaaacd01()
         endif
-    
-        if cNotaSerie==nil
-            IncProc()
-        endif
-        SD2->( dbSkip() )
-    end
-    
-    CB7->(DbSetOrder(1))
-    for nI := 1 to len(aOrdSep)
-        CB7->(DbSeek(xFilial("CB7")+aOrdSep[nI]))
-        CB7->(RecLock("CB7"))
-        CB7->CB7_STATUS := "0"  // nao iniciado
-        CB7->(MsUnlock())
-    next
-    for nI := 1 to len(aRecSD2)
-        SD2->(DbGoto(aRecSD2[nI,1]))
-        SD2->(RecLock("SD2",.f.))
-        SD2->D2_ORDSEP := aRecSD2[nI,2]
-        SD2->(MsUnlock())
-    next
-    if !Empty(aLogOS)
-        lgvaaacd01()
-    endif
 return nil
 
 
 static function GeraOSepProducao( cMarca, lInverte )
-local cOrdSep,aOrdSep := {},nI
-local cCodOpe
-local aRecSC2 := {}
-local cTipExp
-local aItemCB8 := {}
-local lSai := .f.
-local cArm := Space(Tamsx3("B1_LOCPAD")[1])
-local cTM := GetMV("MV_CBREQD3")
-local lConsEst := SuperGetMV("MV_CBRQEST",,.f.)  //Considera a Estrutura do Produto x Saldo na geracao da Ordem de Separacao
-local lParcial := SuperGetMV("MV_CBOSPRC",,.f.)  //Permite ou nao gerar Ordens de Separacoes parciais
-local lGera := .t.
-local nSalTotIt := 0
-local nSaldoEmp := 0
-local aSaldoSBF := {}
-local aSaldoSDC := {}
-local nSldGrv := 0
-local nRetSldEnd:= 0
-local nRetSldSDC:= 0
-local nSldAtu := 0
-local nQtdEmpOS := 0
-local nPosEmp
-local nX
-private aLogOS := {}
-private aEmp := {}
+    local cOrdSep,aOrdSep := {},nI
+    local cCodOpe
+    local aRecSC2 := {}
+    local cTipExp
+    local aItemCB8 := {}
+    local lSai := .f.
+    local cArm := Space(Tamsx3("B1_LOCPAD")[1])
+    local cTM := GetMV("MV_CBREQD3")
+    local lConsEst := SuperGetMV("MV_CBRQEST",,.f.)  //Considera a Estrutura do Produto x Saldo na geracao da Ordem de Separacao
+    local lParcial := SuperGetMV("MV_CBOSPRC",,.f.)  //Permite ou nao gerar Ordens de Separacoes parciais
+    local lGera := .t.
+    local nSalTotIt := 0
+    local nSaldoEmp := 0
+    local aSaldoSBF := {}
+    local aSaldoSDC := {}
+    local nSldGrv := 0
+    local nRetSldEnd:= 0
+    local nRetSldSDC:= 0
+    local nSldAtu := 0
+    local nQtdEmpOS := 0
+    local nPosEmp
+    local nX
+    private aLogOS := {}
+    private aEmp := {}
 
     // analisar a pergunta '00-Separcao,01-Separacao/Embalagem,02-Embalagem,03-Gera Nota,04-Imp.Nota,05-Imp.Volume,06-embarque,07-Requisita'
     cTipExp := "00*"
@@ -1568,109 +1577,189 @@ private aEmp := {}
 return nil
 
 static function GeraOSepRequisicao( cMarca, lInverte )
-Local cTipExp := ""
-local cCodOpe := ""
-local aRecSCP := {}
-local aOrdSep := {}
-local nI
+    Local cTipExp := ""
+    local cCodOpe := ""
+    local aRecSCP := {}
+    local aOrdSep := {}
+    local nI,nJ
+    local aSTL    := {} // Solicitações originarias da Ordem de serviço - Frotas
+    local aSCP    := {} // Solicitações originarias do Módulo estoque
+    local aLogSA  := {} // Solicitações originarias do Módulo estoque
 
-//Local lParcial  := SuperGetMV("MV_CBOSPRC",,.F.)  //Permite ou nao gerar Ordens de Separacoes parciais
+    //Local lParcial  := SuperGetMV("MV_CBOSPRC",,.F.)  //Permite ou nao gerar Ordens de Separacoes parciais
 
-cTipExp := "00*01*"
+    cTipExp := "00*01*"
 
-If nReqMatSA == 1
-	cTipExp += "07*" //Requisicao
-EndIf
+    If nReqMatSA == 1
+        cTipExp += "07*" //Requisicao
+    EndIf
 
-If nAglutArmSA == 1 // Aglutina armazem
-	cTipExp +="08*"
-EndIf
+    If nAglutArmSA == 1 // Aglutina armazem
+        cTipExp +="08*"
+    EndIf
 
-SCP->( dbGoTop() )
-ProcRegua( SCP->( LastRec() ), "oook" )
-cCodOpe	 := cSeparador
+    SCP->( dbGoTop() )
+    ProcRegua( SCP->( LastRec() ), "oook" )
+    cCodOpe	 := cSeparador
 
-while !SCP->(Eof())
+    STL->(DbSetOrder(15))
 
-    if SCP->(IsMark("CP_OK",ThisMark(),ThisInv()))
-    
-        //CB8->(DbOrderNickname("CB8SCP"))
-        CB8->(DbSetOrder(10))
-        if CB8->(DbSeek(FWxFilial("CB8")+SCP->CP_NUM+SCP->CP_ITEM))
-            if CB7->(DbSeek(FWxFilial("CB7")+CB8->CB8_ORDSEP)) .and. CB7->CB7_STATUS != "9"
-                AAdd(aLogSA, {"2", "SA", SCP->CP_NUM+SCP->CP_ITEM, "", "", "Existe uma Ordem de Separacao em aberto para esta Solicitação ao Armazém", "NAO_GEROU_OS"})
-                IncProc()
-                SCP->(DbSkip())
-                loop
+    while !SCP->(Eof())
+
+        if SCP->(IsMark("CP_OK",ThisMark(),ThisInv()))
+        
+            //CB8->(DbOrderNickname("CB8SCP"))
+            CB8->(DbSetOrder(10))
+            if CB8->(DbSeek(FWxFilial("CB8")+SCP->CP_NUM+SCP->CP_ITEM))
+                if CB7->(DbSeek(FWxFilial("CB7")+CB8->CB8_ORDSEP)) .and. CB7->CB7_STATUS != "9"
+                    AAdd(aLogSA, {"2", "SA", SCP->CP_NUM+SCP->CP_ITEM, "", "", "Existe uma Ordem de Separacao em aberto para esta Solicitação ao Armazém", "NAO_GEROU_OS"})
+                    IncProc()
+                    SCP->(DbSkip())
+                    loop
+                endif
             endif
+
+            If STL->(DbSeek(xFilial("STL")+SCP->CP_NUM+SCP->CP_ITEM))
+                if (nPos := aScan(aSTL, {|x| x[1] == STL->TL_ORDEM } )) > 0
+                    aAdd(aSTL[nPos][2], { SCP->CP_NUM , SCP->CP_ITEM } )
+                else
+                    aAdd(aSTL, { STL->TL_ORDEM , { {SCP->CP_NUM , SCP->CP_ITEM} } })
+                endif
+            else
+                if (nPos := aScan(aSCP, {|x| x[1] == SCP->CP_NUM } )) > 0
+                    aAdd(aSCP[nPos][2], SCP->CP_ITEM)
+                else
+                    aAdd(aSCP, { SCP->CP_NUM , { SCP->CP_ITEM }})
+                endif
+            Endif
+            
         endif
 
-        // Grava CB7, caso não exista
-        //CB7->(DbOrderNickname("CB7SCP"))
-        CB7->(DbSetOrder(10))
-        if !CB7->(DbSeek(FWxFilial("CB7")+SCP->CP_NUM))
-            cOrdSep := GetSX8Num( "CB7", "CB7_ORDSEP" )
-		    RecLock( "CB7", .t. )
-		    CB7->CB7_FILIAL := xFilial( "CB7" )
-		    CB7->CB7_ORDSEP := cOrdSep
-            CB7->CB7_NUMSA  := SCP->CP_NUM
-		    CB7->CB7_LOCAL  := SCP->CP_LOCAL  
-		    CB7->CB7_DTEMIS := dDataBase
-		    CB7->CB7_HREMIS := Time()
-		    CB7->CB7_STATUS := " "   // gravar STATUS de nao iniciada somente depois do processo
-		    CB7->CB7_CODOPE := cCodOpe
-		    CB7->CB7_PRIORI := "1"
-		    CB7->CB7_ORIGEM := "4"
-		    CB7->CB7_TIPEXP := cTipExp
-		    CB7->(MsUnLock())
-		    ConfirmSX8()
-		    //Grava o historico das geracoes:
-		    aadd(aLogOS,{"1","SA",SCP->CP_NUM,"",CB7->CB7_ORDSEP})
-		    aadd(aOrdSep,CB7->CB7_ORDSEP)
-        endif
+        IncProc()
+        SCP->(DbSkip())
+    endDo
 
-		cOrdSep   := CB7->CB7_ORDSEP
-		CB8->(RecLock( "CB8", .T. ))
-		CB8->CB8_FILIAL := FWxFilial( "CB8" )
-		CB8->CB8_ORDSEP := cOrdSep
-		CB8->CB8_NUMSA	:= SCP->CP_NUM
-		CB8->CB8_ITEM   := SCP->CP_ITEM
-		CB8->CB8_PROD   := SCP->CP_PRODUTO
-		CB8->CB8_LOCAL  := SCP->CP_LOCAL
-		CB8->CB8_QTDORI := SCP->CP_QUANT
-		CB8->CB8_SALDOS := SCP->CP_QUANT
-		CB8->CB8_LCALIZ := Space(15)
-		CB8->CB8_SEQUEN := ""
-		CB8->CB8_LOTECT := SCP->CP_LOTE
-		CB8->CB8_CFLOTE := If("10*" $ cTipExp,"1","2")
-		If CB8->(ColumnPos("CB8_TRT")) > 0
-			CB8->CB8_TRT	:= SCP->CP_TRT
-		EndIf
-		CB8->(MsUnLock())
+    For nI := 1 To Len(aSTL)    
+        cOrdSep := GetSX8Num( "CB7", "CB7_ORDSEP" )
+        RecLock( "CB7", .t. )
+            CB7->CB7_FILIAL := FWxFilial( "CB7" )
+            CB7->CB7_ORDSEP := cOrdSep
+            CB7->CB7_DTEMIS := dDataBase
+            CB7->CB7_HREMIS := Time()
+            CB7->CB7_STATUS := " "   // gravar STATUS de nao iniciada somente depois do processo
+            CB7->CB7_CODOPE := cCodOpe
+            CB7->CB7_PRIORI := "1"
+            CB7->CB7_ORIGEM := "4"
+            CB7->CB7_TIPEXP := cTipExp
+        CB7->(MsUnLock())
+        ConfirmSX8()
+        
+        cOrdSep   := CB7->CB7_ORDSEP
 
-        recLock("SCP", .F.)
-        SCP->CP_ORDSEP := cOrdSep
-        SCP->CP_OK     := ""
-        msUnlock()
+        For nJ := 1 To Len(aSTL[nI][2])
+            SCP->(DbSeek(FWxFilial("SCP")+aSTL[nI][2][nJ][1]+aSTL[nI][2][nJ][2]))
+            
+            aadd(aLogOS,{"1","SA",SCP->CP_NUM,"",CB7->CB7_ORDSEP})
+            
+            if aScan(aOrdSep, {|x| x == CB7->CB7_ORDSEP}) == 0
+                aadd(aOrdSep,CB7->CB7_ORDSEP)
+            Endif
 
-		aadd(aRecSCP,{SCP->(Recno()),cOrdSep})
-    endif
+            CB8->(RecLock( "CB8", .T. ))
+                CB8->CB8_FILIAL := FWxFilial( "CB8" )
+                CB8->CB8_ORDSEP := cOrdSep
+                CB8->CB8_NUMSA	:= SCP->CP_NUM
+                CB8->CB8_ITEM   := StrZero(nJ,2)
+                CB8->CB8_ITEMSA := SCP->CP_ITEM
+                CB8->CB8_PROD   := SCP->CP_PRODUTO
+                CB8->CB8_LOCAL  := SCP->CP_LOCAL
+                CB8->CB8_QTDORI := SCP->CP_QUANT
+                CB8->CB8_SALDOS := SCP->CP_QUANT
+                CB8->CB8_LCALIZ := Space(15)
+                CB8->CB8_SEQUEN := ""
+                CB8->CB8_LOTECT := SCP->CP_LOTE
+                CB8->CB8_CFLOTE := If("10*" $ cTipExp,"1","2")
+                If CB8->(ColumnPos("CB8_TRT")) > 0
+                    CB8->CB8_TRT	:= SCP->CP_TRT
+                EndIf
+            CB8->(MsUnLock())
 
-    IncProc()
-    SCP->(DbSkip())
-endDo
+            recLock("SCP", .F.)
+                SCP->CP_ORDSEP := cOrdSep
+                SCP->CP_OK     := ""
+            SCP->(msUnlock())
+
+            aadd(aRecSCP,{SCP->(Recno()),cOrdSep})
+        Next nJ
+        
+    Next nI
+    
+    For nI := 1 To Len(aSCP)    
+        cOrdSep := GetSX8Num( "CB7", "CB7_ORDSEP" )
+        RecLock( "CB7", .t. )
+            CB7->CB7_FILIAL := FWxFilial( "CB7" )
+            CB7->CB7_ORDSEP := cOrdSep
+            CB7->CB7_DTEMIS := dDataBase
+            CB7->CB7_HREMIS := Time()
+            CB7->CB7_STATUS := " "   // gravar STATUS de nao iniciada somente depois do processo
+            CB7->CB7_CODOPE := cCodOpe
+            CB7->CB7_PRIORI := "1"
+            CB7->CB7_ORIGEM := "4"
+            CB7->CB7_TIPEXP := cTipExp
+        CB7->(MsUnLock())
+        ConfirmSX8()
+        
+        cOrdSep   := CB7->CB7_ORDSEP
+
+        For nJ := 1 To Len(aSCP[nI][2])
+            SCP->(DbSeek(FWxFilial("SCP")+aSCP[nI][1]+aSCP[nI][2][nJ]))
+            
+            aadd(aLogOS,{"1","SA",SCP->CP_NUM,"",CB7->CB7_ORDSEP})
+            
+            if aScan(aOrdSep, {|x| x == CB7->CB7_ORDSEP}) == 0
+                aadd(aOrdSep,CB7->CB7_ORDSEP)
+            Endif
+
+            CB8->(RecLock( "CB8", .T. ))
+                CB8->CB8_FILIAL := FWxFilial( "CB8" )
+                CB8->CB8_ORDSEP := cOrdSep
+                CB8->CB8_NUMSA	:= SCP->CP_NUM
+                CB8->CB8_ITEM   := StrZero(nJ,2)
+                CB8->CB8_ITEMSA := SCP->CP_ITEM
+                CB8->CB8_PROD   := SCP->CP_PRODUTO
+                CB8->CB8_LOCAL  := SCP->CP_LOCAL
+                CB8->CB8_QTDORI := SCP->CP_QUANT
+                CB8->CB8_SALDOS := SCP->CP_QUANT
+                CB8->CB8_LCALIZ := Space(15)
+                CB8->CB8_SEQUEN := ""
+                CB8->CB8_LOTECT := SCP->CP_LOTE
+                CB8->CB8_CFLOTE := If("10*" $ cTipExp,"1","2")
+                If CB8->(ColumnPos("CB8_TRT")) > 0
+                    CB8->CB8_TRT	:= SCP->CP_TRT
+                EndIf
+            CB8->(MsUnLock())
+
+            recLock("SCP", .F.)
+                SCP->CP_ORDSEP := cOrdSep
+                SCP->CP_OK     := ""
+            SCP->(msUnlock())
+
+            aadd(aRecSCP,{SCP->(Recno()),cOrdSep})
+        Next nJ
+        
+    Next nI
 
 CB7->(DbSetOrder(1))
 For nI := 1 to len(aOrdSep)
     CB7->(DbSeek(FWxFilial("CB7")+aOrdSep[nI]))
     CB7->(RecLock("CB7"))
-    CB7->CB7_STATUS := "0"  // nao iniciado
+        CB7->CB7_STATUS := "0"  // nao iniciado
     CB7->(MsUnlock())
 Next
 For nI := 1 to len(aRecSCP)
     SCP->(DbGoto(aRecSCP[nI][1]))
     SCP->(RecLock("SCP", .F.))
-    SCP->CP_ORDSEP := aRecSCP[nI][2]
+        SCP->CP_ORDSEP := aRecSCP[nI][2]
     SCP->(MsUnlock())
 Next
 

@@ -97,6 +97,7 @@ Return aRotina
  | Desc:     Funcao: X3_VLDUSER, chamada no campo ZBC_PEDIDO, ZBC_ITEMPC, responsa- |
  |         vel por validar o pedido e preenchiar alguns campos automaticamente;     |
  | Obs.:     -                                                                      |
+ 
  '----------------------------------------------------------------------------------*/
 User Function fChvITEM(cTab, cCpoSlc, cCpoMAX, cWhreCpo, cInfo, cNotNull, __cFilial )
 	Local cCod        := StrZero( 1, TamSX3(cCpoMAX)[1] )
@@ -108,7 +109,7 @@ User Function fChvITEM(cTab, cCpoSlc, cCpoMAX, cWhreCpo, cInfo, cNotNull, __cFil
 	Default cNotNull  := ""
 	Default __cFilial := xFilial(cTab)
 
-	MBSaveLog():FULLWrite(, .F., "Inicio: U_fChvITEM('"+cTab+"', '"+cCpoSlc+"', '"+cCpoMAX+"', '"+cWhreCpo+"', '"+cInfo+"', '"+cNotNull+"', '"+__cFilial+"')")
+	oMBSaveLog:FULLWrite(, .F., "Inicio: U_fChvITEM('"+cTab+"', '"+cCpoSlc+"', '"+cCpoMAX+"', '"+cWhreCpo+"', '"+cInfo+"', '"+cNotNull+"', '"+__cFilial+"')")
 
 	_cQry := " SELECT " + cAlias + "_FILIAL, "
 
@@ -599,7 +600,7 @@ ElseIf nOpc == 5 .and. !Empty(cVersao:= U_fVldVersao(ZCC->ZCC_CODIGO, ZCC->ZCC_V
 
 ElseIf nOpc == 5 .and. !U_fCanDel(ZCC->ZCC_CODIGO, ZCC->ZCC_VERSAO)
 	Aviso("Aviso", 'O contrato No.: ' + ZCC->ZCC_CODIGO + ' na versao selecionada: ' + ZCC->ZCC_VERSAO + ' nao pode ser excluida.' + CRLF+;
-				   'Existem pedidos de compra vinculados ja a este contrato.' , ;
+				   'Existem pedidos de compra vinculados a este contrato.' , ;
 				   {"Sair"})
 	Return nil
 EndIf
@@ -1171,18 +1172,19 @@ If nOpc == 3
 	oGrpF1Q2:Disable()
 EndIf
 
-Aadd( aButtons, { "AUTOM", { || u_BaseConh()  }, "Base de Conhecimento" } )
-AAdd( aButtons, { "AUTOM", { || fMenuAux(1)  }, "Antecipacao"  		   	} )
-AAdd( aButtons, { "AUTOM", { || fMenuAux(2)  }, "Gerar Titulo" 	   		} )
-//AAdd( aButtons, { "AUTOM", { ||  ZBDRepli()   }, "Replicar Datas (F4)" } )
+Aadd( aButtons, { "AUTOM", { || u_BaseConh()  }, "Base de Conhecimento" 			} )
+AAdd( aButtons, { "AUTOM", { || fMenuAux(1)   }, "Antecipacao"  					} )
+AAdd( aButtons, { "AUTOM", { || fMenuAux(2)   }, "Gerar Titulo" 	    			} )
+//AAdd( aButtons, { "AUTOM", { ||  ZBDRepli()   }, "Replicar Datas (F4)" 			} )
 AAdd( aButtons, { "AUTOM", { || U_COMM11JR( &( "o" + cValToChar( oTFoldeG:nOption ) + "ZBCGDad"):oBrowse:nAt) }, "Informar Juros (F6)" } )
-AAdd( aButtons, { "AUTOM", { || U_COMM11PE( &( "o" + cValToChar( oTFoldeG:nOption ) + "ZBCGDad"):oBrowse:nAt) }, "Informar Peso (F7)" } )
-AAdd( aButtons, { "AUTOM", { || M7SlvCrt( )  }, "Salvar Contrato (F8)" 	} )
-// AAdd( aButtons, { "AUTOM", { ||  M7GerarPrd() }, "Gerar Produto"    	} )
-AAdd( aButtons, { "AUTOM", { || xAltSC7()   } , "Alterar Pedido (F9)"   } )
-AAdd( aButtons, { "AUTOM", { || xAutoSC7()   }, "Gerar Pedido (F10)"   	} )
-AAdd( aButtons, { "AUTOM", { || fGerarCompl() }, "Gerar ComplementoPedido (F11)"  } )
-AAdd( aButtons, { "AUTOM", { || Pergunte("COMM11VA", .T.) }, "Configuração (F12)"  } )
+AAdd( aButtons, { "AUTOM", { || U_COMM11PE( &( "o" + cValToChar( oTFoldeG:nOption ) + "ZBCGDad"):oBrowse:nAt) }, "Informar Peso (F7)"  } )
+AAdd( aButtons, { "AUTOM", { || M7SlvCrt( )   }, "Salvar Contrato (F8)"				} )
+// AAdd( aButtons, { "AUTOM", { ||  M7GerarPrd() }, "Gerar Produto"    				} )
+AAdd( aButtons, { "AUTOM", { || xAltSC7()     }, "Alterar Pedido (F9)"  			} )
+AAdd( aButtons, { "AUTOM", { || xAutoSC7()    }, "Gerar Pedido (F10)"  				} )
+AAdd( aButtons, { "AUTOM", { || xExcSC7()     }, "Excluir Pedido"   				} )
+AAdd( aButtons, { "AUTOM", { || fGerarCompl() }, "Gerar ComplementoPedido (F11)"  	} )
+AAdd( aButtons, { "AUTOM", { || Pergunte("COMM11VA", .T.) }, "Configuração (F12)"  	} )
 
 //Set Key VK_F4  To ZBDRepli()
 Set Key VK_F5  To F5FldChang(nOpc)
@@ -1339,7 +1341,7 @@ If nOpc == 3 .or. nOpc == 4 .or. nOpc == 6 .or. nOpc == 7 .or. nOpc == 8
 	EndIf
 
 ElseIf nOpc == 5
-
+	
 	MBSaveLog():FULLWrite(, .F., "Inicio Exclusão da linha")
 
 	DbSelectArea(cAlias)
@@ -2670,20 +2672,6 @@ Local nI	:= 0
 	MBSaveLog():FULLWrite(, .F., "Inicio: VldOk()")
 
 	If M->ZCC_PAGFUT == "N"
-		// For nI:=1 to Len(oZICGDad:aCols)
-		// 	If Empty( oZICGDad:aCols[ nI, aScan( aZICHead, {|x| AllTrim(x[2])=="ZIC_VLAROB"}) ] ) .and. ;
-		// 		!Empty( oZICGDad:aCols[ nI, aScan( aZICHead, {|x| AllTrim(x[2])=="ZIC_QUANT"}) ] )
-		// 			Exit
-		// 	EndIf
-		// Next nI
-		// If nI <= Len(oZICGDad:aCols)
-		// 	Aviso("Aviso", ;
-		// 		  "Valor de @ nao informado na linha: " + AllTrim(Str(nI)) + ;
-		// 		  " na tabela dos ITENS DO CONTRATO / COMISSÃO.", ;
-		// 		  {"Sair"} )
-		// 	lRet 	:= .F.
-		// EndIf
-
 		If lRet
 			For nI:=1 to Len(o1ZBCGDad:aCols)
 				If !Empty( o1ZBCGDad:aCols[ nI, aScan( a1ZBCHead, {|x| AllTrim(x[2])=="ZBC_ITEM"}) ] )
@@ -2726,6 +2714,18 @@ Local nI	:= 0
 			lRet 	:= .F.
 		EndIf
 	EndIf
+
+	if nOpc == 5
+		For nI := 1 to Len(o1ZBCGDad:aCols)
+			IF !empty(o1ZBCGDad:aCols[ nI, nPZBCPed])
+				Aviso("Aviso", ;
+					"Pedido vinculado na linha: " + AllTrim(Str(nI)) + ;
+					", Exclua o Pedido antes de excluir o contrato!" + CRLF + "Esta Operação sera cancelada.", ;
+					{"Sair"} )
+				lRet 	:= .F.
+			ENDIF
+		Next nI
+	Endif
 	MBSaveLog():FULLWrite(, .F., "Fim: VldOk()")
 Return lRet
 
@@ -2890,6 +2890,131 @@ Static Function xAutoSC7()
 	RestArea(aArea)
 Return nil
 
+Static Function xExcSC7()
+	MBSaveLog():FULLWrite(, .F., "Inicio: xExcSC7()")
+	Local aArea			 := GetArea()
+	Local nI := nX := nJ := nZ := 0
+	Local lOk
+	Local aCab			 := {}
+	Local aItens		 := {}
+	Local aItem			 := {}
+	Local aPedidos		 := {}
+
+	MBSaveLog():FULLWrite(, .F., "xExcSC7() - 1")
+
+	lOk := .T.
+	For nI := 1 to Len(o1ZBCGDad:aCols)
+		If o1ZBCGDad:aCols[ nI, nPMrkZBC] == 'LBTIK'
+			if Empty(&( "o" + cPFoBCQtd + "ZBCGDad"):aCols[ nI, nPZBCPed ])
+				Alert("Não existe pedido para essa linha ["+o1ZBCGDad:aCols[ nI, nPZBCITE]+"]")
+				RestArea(aArea)
+				return nil
+			endIf
+		EndIf
+	Next nI
+
+	For nI := 1 to Len(o1ZBCGDad:aCols)
+		If o1ZBCGDad:aCols[ nI, nPMrkZBC] == 'LBTIK'
+			if aScan(aPedidos, {|x| x[1] == o1ZBCGDad:aCols[ nI, nPZBCPed] } ) == 0
+				aAdd( aPedidos, {o1ZBCGDad:aCols[ nI, nPZBCPed],.F.})
+			endif
+		EndIf
+	Next nI
+
+	SC7->(DbSetOrder(1))
+
+	//C7_FILIAL+C7_NUM+C7_ITEM+C7_SEQUEN
+	Begin Transaction
+		For nI := 1 to Len(aPedidos)
+			aCab := {}
+			If SC7->(DbSeek(FWxFilial('SC7')+aPedidos[nI,1]+"0001"))
+				While !SC7->(EOF()) .and. SC7->C7_NUM == aPedidos[nI,1]
+						
+					if Len(aCab) == 0
+						aAdd( aCab, { "C7_FILIAL"  , SC7->C7_FILIAL  , nil})
+						aadd( aCab, { "C7_EMISSAO" , SC7->C7_EMISSAO , nil})
+						aAdd( aCab, { "C7_NUM"     , SC7->C7_NUM	 , nil})
+						aAdd( aCab, { "C7_FORNECE" , SC7->C7_FORNECE , nil})
+						aAdd( aCab, { "C7_LOJA"    , SC7->C7_LOJA	 , nil})
+						aadd( aCab, { "C7_COND"    , SC7->C7_COND	 , nil})
+					endif
+
+					aItem := {}
+					aAdd( aItem, { "C7_ITEM"   		, SC7->C7_ITEM  	, nil } )
+					aAdd( aItem, { "C7_PRODUTO"		, SC7->C7_PRODUTO	, nil } )
+					aAdd( aItem, { "C7_QUANT" 		, SC7->C7_QUANT		, nil } )
+					aAdd( aItem, { "C7_PRECO" 		, SC7->C7_PRECO		, nil } )
+					aAdd( aItem, { "C7_TOTAL" 		, SC7->C7_TOTAL		, nil } )
+					
+					aAdd( aItens, aItem)
+
+					SC7->(DbSkip())
+				EndDo
+				
+				if Len(aCab) > 0 
+					lMsErroAuto := .F.
+					MBSaveLog():FULLWrite(, .F., "Inicio: MATA120() - Exclusão")
+
+					MSExecAuto({|a,b,c,d,e| MATA120(a,b,c,d,e)}, 1, aCab, aItens, 5)
+					If lErro := lMsErroAuto
+						cErro := MostraErro()
+						MBSaveLog():FULLWrite(, .F., "MATA120() - Exclusão - Erro")
+						DisarmTransaction()
+						Return Nil
+					else
+						aPedidos[nI,2] := .T. // PEDIDO EXCLUIDO
+					EndIf
+				EndIf
+			EndIf
+		Next nI
+	End Transaction
+
+	For nI := 1 to Len(aPedidos)
+		if aPedidos[nI,2]
+			For nJ := 1 to Len(o1ZBCGDad:aCols)
+				If o1ZBCGDad:aCols[ nJ, nPZBCPed] == aPedidos[nI,1]
+					For nX := 1 to Len(aZBD)
+						if aZBD[nX][1] == o1ZBCGDad:aCols[nJ][nPZBCPed]
+							aZBD[nX][1] := ""
+							For nZ := 1 to Len(aZBD[nX][2])
+								aZBD[nX][2][nZ][3] := ""
+							Next nZ
+						endif
+					Next nX
+				endif
+			next nJ
+
+			o8ZBCGDad:Refresh()
+
+			For nX := 1 to Len(o1ZBCGDad:aCols)
+				If o1ZBCGDad:aCols[ nX, nPZBCPed] == aPedidos[nI,1]
+					nPZIC := nX
+
+					SB1->( DbSetOrder(1) )
+					If SB1->( DbSeek( FWxFilial('SB1')+ &( "o" + cPFoBCPRD + "ZBCGDad"):aCols[ nX, nPZBCPRD ] ) )
+						RecLock('SB1', .F.)
+							SB1->B1_XLOTCOM := ""
+						SB1->( MsUnlock() )
+					EndIf
+
+					&( "o" + cPFoBCPed + "ZBCGDad"):aCols[ nX, nPZBCPRD ] := ""
+					RepeatFolder( 'ZBC_PRODUT', "", 1, nX)
+
+					&( "o" + cPFoBCPed + "ZBCGDad"):aCols[ nX, nPZBCPed ] := ""
+					RepeatFolder( 'ZBC_PEDIDO', "", 1, nX)
+
+					&( "o" + cPFoBCPIt + "ZBCGDad"):aCols[ nX, nPZBCPIt ] := "" // SC7->C7_ITEM
+					RepeatFolder( 'ZBC_ITEMPC', "", 1, nX)
+
+					o1ZBCGDad:aCols[ nX, nPMrkZBC] := "LBNO"
+				EndIf
+			Next nX
+		endif
+	Next nI
+	MBSaveLog():FULLWrite(, .F., "Fim: xExcSC7()")
+
+	RestArea(aArea)
+Return nil
 
 /* MJ : 08.11.2017 */
 Static Function M7GerarPrd( /* nPZIC, */ nPZBC)
@@ -3018,6 +3143,15 @@ endIf
 		DisarmTransaction()
 		lRet := .F.
 		MBSaveLog():FULLWrite(, .F., "Fim: MATA010() - Inclusao - Erro ")
+	else	
+		NCR->(DbSetOrder(1))
+
+		RecLock( "NCR", lRecLock := !(NCR->(DbSeek( FWxFilial("NCR") + SB1->B1_COD ))))
+			NCR->NCR_FILIAL := FWxFilial("NCR")
+			NCR->NCR_PROD 	:= SB1->B1_COD
+			NCR->NCR_EMREC 	:= "2"
+			NCR->NCR_EMGUIA := "1"
+		NCR->(MsUnlock())
 	EndIf
 
 	MBSaveLog():FULLWrite(, .F., "Fim: MATA010() - Inclusao")

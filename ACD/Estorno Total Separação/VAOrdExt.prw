@@ -9,14 +9,14 @@ Rotina de estorno de ordem de separação - ACD
 @type function
 /*/
 user function VAOrdExt()
-local   cCodOpe  := CBRetOpe()
-local   cOrdSep
-local   aRegs
-local   nI
-local   cMotivo  := ""
-private aMotivos := {}
-private cCUSTO   := superGetMV( "FS_ORDSEPC",, "A0240" )
-private cArmDest := superGetMV( "FS_ORDSEPA",, "EX" )
+	local   cCodOpe  := CBRetOpe()
+	local   cOrdSep
+	local   aRegs
+	local   nI
+	local   cMotivo  := ""
+	private aMotivos := {}
+	private cCUSTO   := superGetMV( "FS_ORDSEPC",, "A0240" )
+	private cArmDest := superGetMV( "FS_ORDSEPA",, "EX" )
 
 	SB1->( dbSetOrder(1) )
 
@@ -56,7 +56,7 @@ private cArmDest := superGetMV( "FS_ORDSEPA",, "EX" )
 
 		@ 5,0 VtSay "estornando..."
 
-		cQry :=	" SELECT CB9.R_E_C_N_O_ REG, CB9_PROD, CB9_QTESEP"
+		cQry :=	" SELECT CB9.R_E_C_N_O_ REG, CB9_PROD, CB9_QTESEP, CB9_NUMSA"
 		cQry +=	" FROM " + RetSqlName('CB9') + " CB9 "
 		cQry +=	" WHERE CB9_FILIAL = '"+xFilial("CB9")+"'"
 		cQry +=	" AND CB9_ORDSEP = '"+cOrdSep+"'"
@@ -65,7 +65,7 @@ private cArmDest := superGetMV( "FS_ORDSEPA",, "EX" )
 		cAlias := MpSysOpenQuery(cQry)
 
 		While ! (cAlias)->( eof() )
-			aAdd( aRegs, { "CB9", (cAlias)->REG, (cAlias)->CB9_PROD, (cAlias)->CB9_QTESEP } )
+			aAdd( aRegs, { "CB9", (cAlias)->REG, (cAlias)->CB9_PROD, (cAlias)->CB9_QTESEP, (cAlias)->CB9_NUMSA } )
 			(cAlias)->( dbSkip() )
 		endDo
 		(cAlias)->( dbCloseArea() )
@@ -92,20 +92,22 @@ private cArmDest := superGetMV( "FS_ORDSEPA",, "EX" )
 				recLock( aRegs[nI,1], .F. )
 				dbDelete()
 				msUnlock()
+				
+				IF aRegs[nI,1] == "CB8"
+					SCP->( dbSetOrder(1) )
+					SCP->( dbSeek( xFilial("SCP") + CB8->CB8_NUMSA ) )
+					while ! SCP->( eof() ) .and. SCP->CP_NUM == CB8->CB8_NUMSA
+						recLock( "SCP", .F. )
+							SCP->CP_ORDSEP := ""
+						msUnlock()
+						SCP->( dbSkip() )
+					endDo
+				Endif
 			next
 
 			recLock( "CB7", .F. )
 			dbDelete()
 			msUnlock()
-
-			SCP->( dbSetOrder(1) )
-			SCP->( dbSeek( xFilial("SCP") + CB7->CB7_NUMSA ) )
-			while ! SCP->( eof() ) .and. SCP->CP_NUM == CB7->CB7_NUMSA
-				recLock( "SCP", .F. )
-				SCP->CP_ORDSEP := ""
-				msUnlock()
-				SCP->( dbSkip() )
-			endDo
 		endif
 	endDo
 
@@ -153,83 +155,171 @@ return .T.
 	@type function
 /*/
 Static Function movEstoque( aRegs, cMotivo )
-local aRotAuto  := {}
-local cDocumento := Criavar("D3_DOC")
-local nI
-local aAux
-local nItem     := 0
-local cCusto1   := cCUSTO
+	local aRotAuto  	:= {}
+	local cDocumento 	:= Criavar("D3_DOC")
+	local nI
+	local aAux
+	local nItem     	:= 0
+	local cCusto1   	:= cCUSTO
+	Local lOrdemSevico := .F. 
 
 	SCP->( dbSetOrder(1) )
-	if ! empty( CB7->CB7_NUMSA ) .and. SCP->( dbSeek( xFilial("SCP") + CB7->CB7_NUMSA ) ) .and. ! empty( SCP->CP_CC )
-		cCusto1 := SCP->CP_CC 
-	endif
-
-	lMsHelpAuto := .T.
-	lMsErroAuto := .F.
-
-	cDocumento	:= IIf( Empty(cDocumento) , NextNumero("SD3",2,"D3_DOC",.T.) , cDocumento)
-	cDocumento	:= A261RetINV(cDocumento)
-
-	aAdd(aRotAuto, {cDocumento, dDataBase})
-
-	for nI := 1 to len( aRegs )
+	STL->(DbSetOrder(15))
+	For nI := 1 to len( aRegs )
 		if aRegs[nI,1] != "CB9"
 			loop
 		endif
 
-		aAux := {}
-		AADD( aAux , { "ITEM", strZero( ++nItem, len( SD3->D3_ITEM ) ), nil } )
+		if ! empty( aRegs[nI,5] ) .and. SCP->( dbSeek( xFilial("SCP") + aRegs[nI,5] ) )
+			if STL->(DbSeek(SCP->CP_FILIAL+SCP->CP_NUM+SCP->CP_ITEM))
+				lOrdemSevico := .T. 
+				exit
+			endif
+		endif
+	Next
+	
+	lMsHelpAuto := .T.
+	lMsErroAuto := .F.
 
-		SB1->( dbSeek( xFilial("SB1") + aRegs[nI,3] ))
+	if !lOrdemSevico
 
-		// Produto Origem
-		AADD( aAux , {"D3_COD"    , SB1->B1_COD   , nil } )
-		AADD( aAux , {"D3_DESCRI" , SB1->B1_DESC  , nil } )
-		AADD( aAux , {"D3_UM"     , SB1->B1_UM    , nil } )
-		AADD( aAux , {"D3_LOCAL"  , cArmDest      , nil } )
-		AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
-		// Produto Destino
-		AADD( aAux , {"D3_COD"    , SB1->B1_COD   , nil } )
-		AADD( aAux , {"D3_UM"     , SB1->B1_UM    , nil } )
-		AADD( aAux , {"D3_LOCAL"  , SB1->B1_LOCPAD, nil } )
-		AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
-		//
-		AADD( aAux , {"D3_NUMSERI", ""            , nil } )
-		AADD( aAux , {"D3_LOTECTL", ""            , nil } )
-		AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
-		AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
-		AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI"), nil } )
-		AADD( aAux , {"D3_QUANT"  , aRegs[nI,4]   , nil } )	// Qtde
-		AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM"), nil } )
-		AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO"), nil } )
-		AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") , nil } )
-		AADD( aAux , {"D3_LOTECTL", ""            , nil } )
-		AADD( aAux , {"D3_NUMLOTE", ""            , nil } )
-		AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     , nil } )
-		AADD( aAux , {"D3_ITEMGRD", ""            , nil } )
-		AADD( aAux , {"D3_OBSERVA", "Ext S.A.: " + CB7->CB7_NUMSA, nil } )
-		AADD( aAux , {"D3_CC"     , cCusto1       , nil } )
-		aAdd( aRotAuto, aClone( aAux ) )
-	next
+		cDocumento	:= IIf( Empty(cDocumento) , NextNumero("SD3",2,"D3_DOC",.T.) , cDocumento)
+		cDocumento	:= A261RetINV(cDocumento)
 
-	if len( aRotAuto ) > 1
-		MSExecAuto( {|x,y| Mata261(x,y)}, aRotAuto, 3)
-		If lMsErroAuto
-			MostraErro()
-		else
-			SD3->(DbSetOrder(2))
-			SD3->(DbSeek(xFilial("SD3")+cDocumento))
-			while ! SD3->( eof() ) .and. SD3->D3_FILIAL == xFilial("SD3") .and. SD3->D3_DOC == cDocumento
-				recLock("SD3",.F.)
-				SD3->D3_XMOTIV := cMotivo
-				SD3->D3_NUMSA    := CB7->CB7_NUMSA
-				SD3->D3_XSEPSA    := CB7->CB7_ORDSEP
-				msUnlock()
-				SD3->( dbSkip() )
-			endDo
+		aAdd(aRotAuto, {cDocumento, dDataBase})
+
+		for nI := 1 to len( aRegs )
+			if aRegs[nI,1] != "CB9"
+				loop
+			endif
+
+			if ! empty( aRegs[nI,5] ) .and. SCP->( dbSeek( xFilial("SCP") + aRegs[nI,5] ) ) .and. ! empty( SCP->CP_CC )
+				cCusto1 := SCP->CP_CC
+			endif
+
+			aAux := {}
+			AADD( aAux , { "ITEM", strZero( ++nItem, len( SD3->D3_ITEM ) ), nil } )
+
+			SB1->( dbSeek( xFilial("SB1") + aRegs[nI,3] ))
+
+			//Produto Origem
+			AADD( aAux , {"D3_COD"    , SB1->B1_COD   , nil } )
+			AADD( aAux , {"D3_DESCRI" , SB1->B1_DESC  , nil } )
+			AADD( aAux , {"D3_UM"     , SB1->B1_UM    , nil } )
+			AADD( aAux , {"D3_LOCAL"  , cArmDest      , nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+			//Produto Destino
+			AADD( aAux , {"D3_COD"    , SB1->B1_COD   , nil } )
+			AADD( aAux , {"D3_UM"     , SB1->B1_UM    , nil } )
+			AADD( aAux , {"D3_LOCAL"  , SB1->B1_LOCPAD, nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+			//
+			AADD( aAux , {"D3_NUMSERI", ""            				, nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            				, nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            				, nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     		, nil } )
+			AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI")		, nil } )
+			AADD( aAux , {"D3_QUANT"  , aRegs[nI,4]   				, nil } )	// Qtde
+			AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM")		, nil } )
+			AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO")		, nil } )
+			AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") 		, nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            				, nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            				, nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     		, nil } )
+			AADD( aAux , {"D3_ITEMGRD", ""            				, nil } )
+			AADD( aAux , {"D3_OBSERVA", "Ext S.A.: " + aRegs[nI,5]	, nil } )
+			AADD( aAux , {"D3_CC"     , cCusto1       				, nil } )
+			aAdd( aRotAuto, aClone( aAux ) )
+		next
+
+		if len( aRotAuto ) > 1
+			MSExecAuto( {|x,y| Mata261(x,y)}, aRotAuto, 3)
+			If lMsErroAuto
+				MostraErro()
+			else
+				SD3->(DbSetOrder(2))
+				SD3->(DbSeek(xFilial("SD3")+cDocumento))
+				while ! SD3->( eof() ) .and. SD3->D3_FILIAL == xFilial("SD3") .and. SD3->D3_DOC == cDocumento
+					recLock("SD3",.F.)
+						SD3->D3_XMOTIV 		:= cMotivo
+						SD3->D3_NUMSA    	:= SCP->CP_NUM
+						//SD3->D3_XSEPSA    	:= CB7->CB7_ORDSEP
+					msUnlock()
+					SD3->( dbSkip() )
+				endDo
+			EndIf
 		EndIf
-	EndIf
+	else
+		for nI := 1 to len( aRegs )
+
+			if aRegs[nI,1] != "CB9"
+				loop
+			endif
+
+			cDocumento	:= NextNumero("SD3",2,"D3_DOC",.T.)
+			cDocumento	:= A261RetINV(cDocumento)
+			
+			aRotAuto := {}
+			aAdd(aRotAuto, {cDocumento, dDataBase})
+
+			if ! empty( aRegs[nI,5] ) .and. SCP->( dbSeek( xFilial("SCP") + aRegs[nI,5] ) ) .and. ! empty( SCP->CP_CC )
+				cCusto1 := SCP->CP_CC
+			endif
+
+			aAux := {}
+			AADD( aAux , { "ITEM", strZero( ++nItem, len( SD3->D3_ITEM ) ), nil } )
+
+			SB1->( dbSeek( xFilial("SB1") + aRegs[nI,3] ))
+
+			//Produto Origem
+			AADD( aAux , {"D3_COD"    , SB1->B1_COD   , nil } )
+			AADD( aAux , {"D3_DESCRI" , SB1->B1_DESC  , nil } )
+			AADD( aAux , {"D3_UM"     , SB1->B1_UM    , nil } )
+			AADD( aAux , {"D3_LOCAL"  , cArmDest      , nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+			//Produto Destino
+			AADD( aAux , {"D3_COD"    , SB1->B1_COD   , nil } )
+			AADD( aAux , {"D3_UM"     , SB1->B1_UM    , nil } )
+			AADD( aAux , {"D3_LOCAL"  , SB1->B1_LOCPAD, nil } )
+			AADD( aAux , {"D3_LOCALIZ", ""            , nil } )
+			//
+			AADD( aAux , {"D3_NUMSERI", ""            			, nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            			, nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            			, nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     	, nil } )
+			AADD( aAux , {"D3_POTENCI", CriaVar("D3_POTENCI")	, nil } )
+			AADD( aAux , {"D3_QUANT"  , aRegs[nI,4]   			, nil } )	// Qtde
+			AADD( aAux , {"D3_QTSEGUM", CriaVar("D3_QTSEGUM")	, nil } )
+			AADD( aAux , {"D3_ESTORNO", CriaVar("D3_ESTORNO")	, nil } )
+			AADD( aAux , {"D3_NUMSEQ" , CriaVar("D3_NUMSEQ") 	, nil } )
+			AADD( aAux , {"D3_LOTECTL", ""            			, nil } )
+			AADD( aAux , {"D3_NUMLOTE", ""            			, nil } )
+			AADD( aAux , {"D3_DTVALID", CtoD("  /  /  ")     	, nil } )
+			AADD( aAux , {"D3_ITEMGRD", ""            			, nil } )
+			AADD( aAux , {"D3_OBSERVA", "Ext S.A.: " + SCP->CP_NUM, nil } )
+			AADD( aAux , {"D3_CC"     , cCusto1       , nil } )
+			aAdd( aRotAuto, aClone( aAux ) )
+		
+			if len( aRotAuto ) > 1
+				MSExecAuto( {|x,y| Mata261(x,y)}, aRotAuto, 3)
+				If lMsErroAuto
+					MostraErro()
+				else
+					SD3->(DbSetOrder(2))
+					SD3->(DbSeek(xFilial("SD3")+cDocumento))
+					while ! SD3->( eof() ) .and. SD3->D3_FILIAL == xFilial("SD3") .and. SD3->D3_DOC == cDocumento
+						recLock("SD3",.F.)
+							SD3->D3_XMOTIV 		:= cMotivo
+							SD3->D3_NUMSA    	:= SCP->CP_NUM
+							//SD3->D3_XSEPSA    	:= CB7->CB7_ORDSEP
+						msUnlock()
+						SD3->( dbSkip() )
+					endDo
+				EndIf
+			EndIf
+		next
+
+	EndIf 
 
 return ! lMsErroAuto
 
@@ -273,3 +363,4 @@ local cTabela := "E-"
 		SX5->( dbSkip() )
 	endDo
 return nil
+

@@ -127,6 +127,8 @@ Static Function VAPCPA09A(lPShwZer, lPShwGer)
 	Local nCrAux := 1
 	Local aInSQL := {}
 
+	MontaQuery(lShwZer, lShwGer)
+
 	cQry := " SELECT Z08_CONFNA FROM "+RetSqlName("Z08")+"   " + CRLF
  	cQry += "WHERE Z08_FILIAL = '"+FwXFilial("Z08")+"' " + CRLF
  	cQry += "AND D_E_L_E_T_ = ' '  " + CRLF
@@ -185,8 +187,6 @@ Static Function VAPCPA09A(lPShwZer, lPShwGer)
 		EndIf
 		ZRT->(DBSkip())
 	EndDo
-
-	MontaQuery(lShwZer, lShwGer)
 
 	//oCorDie 
 	oCorDie:SetIn(1,aInSQL)
@@ -546,7 +546,7 @@ Static Function VAPCPA09B(lPShwZer, lPShwGer)
 	
 		tButton():New(010, (aPObjs[1][4]/2) - 280, "Sugerir Rotas"      , oDlgRotas, {|| nOpcRotas := 3, SugRotas(), oDlgRotas:End()}, 60, 15,,,, .T.) // "Cria\Recria Trato"
 		tButton():New(010, (aPObjs[1][4]/2) - 220, "Zerar Rota"       , oDlgRotas, {|| nOpcRotas := 3, ZERROT(), oDlgRotas:End()}, 60, 15,,,, .T.) // "Cria\Recria Trato"
-		tButton():New(010, (aPObjs[1][4]/2) - 160, "Operador Pá"       , oDlgRotas, {|| nOpcRotas := 3, U_AltOpePC(), oDlgRotas:End()}, 60, 15,,,, .T.) // "Cria\Recria Trato"
+		tButton():New(010, (aPObjs[1][4]/2) - 160, "Operador Pá"       , oDlgRotas, {|| nOpcRotas := 3, U_ALTOPER(), oDlgRotas:End()}, 60, 15,,,, .T.) // "Cria\Recria Trato"
 		tButton():New(010, (aPObjs[1][4]/2) - 100, cShwZer            , oDlgRotas, {|| nOpcRotas := 1, oDlgRotas:End()}          , 60, 15,,,, .T.) // "Mostra Zerados ?" "Esconde Zerados ?"
 		tButton():New(010, (aPObjs[1][4]/2) - 040, "Fechar"           , oDlgRotas, {|| nOpcRotas := 0, oDlgRotas:End()}          , 32, 15,,,,.T.) // "Fechar"
 

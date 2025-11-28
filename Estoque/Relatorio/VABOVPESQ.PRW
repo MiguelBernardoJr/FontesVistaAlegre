@@ -220,25 +220,25 @@ User Function zVid46Ok()
     ProcRegua(nTotal)
     
     aLotes := {}
-    aAdd(aLotes, {})
+    //aAdd(aLotes, {})
 
     //Percorrendo os registros
     (cAliasTmp)->(DbGoTop())
     While ! (cAliasTmp)->(EoF())
         //Caso esteja marcado
         If oMarkBrowse:IsMark(cMarca)
-            aAdd(aLotes[1], (cAliasTmp)->B8_LOTECTL )
+            aAdd(aLotes, (cAliasTmp)->B8_LOTECTL )
         else
             if (nPos := aScan(aLotes, {|x| alltrim(x) == alltrim((cAliasTmp)->B8_LOTECTL)})) > 0 
-                aDel(aLotes[1], nPos )
-                aSize(aLotes[1], Len(aLotes)-1 )
+                aDel(aLotes, nPos )
+                aSize(aLotes, Len(aLotes)-1 )
             EndIf
         EndIf
         
         (cAliasTmp)->(DbSkip())
     EndDo
     
-    if Len(aLotes[1]) > 0
+    if Len(aLotes) > 0
         FWMsgRun(,{|aLotes| U_bovr01Print(aLotes) },'Por Favor Aguarde...' , 'Processando Banco de Dados') 
     else
         msgInfo("Nenhum lote informado. Operação cancelada pelo usuário.")

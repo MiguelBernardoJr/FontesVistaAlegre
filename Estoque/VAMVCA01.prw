@@ -804,9 +804,9 @@ User Function TgLotZ0E() // trigger
 		If nRegistros == 1
 			oGridZ0E:LoadValue('Z0E_PESTOT', (cAlias)->B8_XPESTOT       )
 			oGridZ0E:LoadValue('Z0E_DATACO', sToD((cAlias)->B8_XDATACO) )
-			//oGridZ0E:LoadValue('Z0E_GMD'   , (cAlias)->B8_GMD           )
+			//oGridZ0E:LoadValue('Z0E_GMD'   , (cAlias)->B8_GMD         )
 			//oGridZ0E:LoadValue('Z0E_DIASCO', (cAlias)->B8_DIASCO 	    )
-			//oGridZ0E:LoadValue('Z0E_RENESP', (cAlias)->B8_XRENESP 	    )
+			//oGridZ0E:LoadValue('Z0E_RENESP', (cAlias)->B8_XRENESP 	)
 			oGridZ0E:LoadValue('Z0E_PESO'  , (cAlias)->B8_XPESOCO       )
 			
 			// MB : 30.03.2021 => pega lote de origem para gatilhar os campos no destino
@@ -945,6 +945,39 @@ User Function TgPrdZ0E()
 	oGridZ0E:LoadValue('Z0E_RACA'  , SB1->B1_XRACA )
 	oGridZ0E:LoadValue('Z0E_SEXO'  , SB1->B1_X_SEXO )
 Return cRetorno
+ /*--------------------------------------------------------------------------------,
+ | Analista : Igor Gomes Oliveira			                                       |
+ | Data		: 19.09.2025                                                           |
+ | Cliente  : V@                                                                   |
+ | Desc		: Regra para pegar o mesmo XDataCo caso o manejo seja de Recepção 	   |
+ | para Recepção                                                                   |
+ |---------------------------------------------------------------------------------|
+ | Regras   :                                                                      |
+ |                                                                                 |
+ |---------------------------------------------------------------------------------|
+ | Obs.     :                                                                      |
+ '--------------------------------------------------------------------------------*/
+
+User Function TgCurZ0E()
+	local oModel    := FWModelActive()
+	Local oGridZ0D  := oModel:GetModel( 'Z0DDETAIL' )
+	Local oGridZ0E  := oModel:GetModel( 'Z0EDETAIL' )
+	Local dRetorno  := oGridZ0E:GetValue("Z0E_DATACO")
+	Local cQry 		:= ""
+
+	IF "RP" $ Alltrim(oGridZ0D:GetValue("Z0D_CURRAL")) .and. "RP" $ Alltrim(oGridZ0E:GetValue("Z0E_CURRAL")) 
+		cQry := "SELECT TOP 1 B8_XDATACO FROM "+RetSqlName("SB8")+""  + CRLF
+		cQry +=	"WHERE B8_LOTECTL = '"+oGridZ0D:GetValue("Z0D_LOTE")+"' " + CRLF
+		cQry +=	"AND B8_X_CURRA = '"+oGridZ0D:GetValue("Z0D_CURRAL")+"' " + CRLF
+		cQry +=	"AND B8_FILIAL = '"+FWxFilial("SB8")+"' " + CRLF
+		cQry +=	"AND B8_SALDO > 0  " + CRLF
+		cQry +=	"AND D_E_L_E_T_ = '' " + CRLF
+		cQry +=	"GROUP BY B8_XDATACO"  + CRLF
+
+		dRetorno := sToD(MPSysExecScalar(cQry,"B8_XDATACO"))
+		
+	ENDIF
+Return dRetorno
 
 // ======================================================================================= //
 Static Function ModelDef()
@@ -965,9 +998,10 @@ Static Function ModelDef()
 	Next nI 
 
 	aTrigger := {}
-	aAdd(aTrigger, FwStruTrigger("Z0E_LOTE" ,"Z0E_LOTE" ,"U_TgLotZ0E()",.F.,"" ,0 ,"" ,NIL,"04" )) 
-	aAdd(aTrigger, FwStruTrigger("Z0E_RACA" ,"Z0E_RACA" ,"U_TgRacZ0E()",.F.,"" ,0 ,"" ,NIL,"03" )) 
-	aAdd(aTrigger, FwStruTrigger("Z0E_PROD" ,"Z0E_DESC" ,"U_TgPrdZ0E()",.F.,"" ,0 ,"" ,NIL,"05" ))
+	aAdd(aTrigger, FwStruTrigger("Z0E_LOTE"   ,"Z0E_LOTE"   ,"U_TgLotZ0E()",.F.,"" ,0 ,"" ,NIL,"04" )) 
+	aAdd(aTrigger, FwStruTrigger("Z0E_RACA"   ,"Z0E_RACA"   ,"U_TgRacZ0E()",.F.,"" ,0 ,"" ,NIL,"03" )) 
+	aAdd(aTrigger, FwStruTrigger("Z0E_PROD"   ,"Z0E_DESC"   ,"U_TgPrdZ0E()",.F.,"" ,0 ,"" ,NIL,"05" ))
+	aAdd(aTrigger, FwStruTrigger("Z0E_CURRAL" ,"Z0E_DATACO" ,"U_TgCurZ0E()",.F.,"" ,0 ,"" ,NIL,"05" ))
 	
 	For nI := 1 To Len(aTrigger)
 		oStruZ0E:AddTrigger(aTrigger[nI,1], aTrigger[nI,2], aTrigger[nI,3], aTrigger[nI,4])
@@ -999,9 +1033,9 @@ Static Function ModelDef()
 	//oStruZ0E:SetProperty('Z0E_LOTE'  , MODEL_FIELD_WHEN, bVldAUX)
 	oStruZ0E:SetProperty('Z0E_CURRAL', MODEL_FIELD_WHEN, bVldAUX)
 	
-	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
-		"iif(FwFldGet('Z0C_TPMOV') $ '14',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
-	oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
+	//bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
+	//	"iif(FwFldGet('Z0C_TPMOV') $ '14',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
+	//oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
 	
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
 		"FwFldGet('Z0C_TPMOV')$'5'" )
@@ -1285,7 +1319,7 @@ User Function CurPastoOuBaia( cCurral )
 	Local oModel:= nil
 	Local cLote := ''
 
-	If (lRet := Existcpo("Z08", cCurral))  
+	If (lRet := Existcpo("Z08", cCurral))
 		If 	FWFldGet("Z0C_TPMOV") == "2" .AND. ;
 				( cRet:=Posicione('Z08', 1, FWxFilial('Z08')+cCurral, 'Z08_TIPO') ) == "4" // 1=BAIA | 4=PASTO
 
@@ -5082,12 +5116,12 @@ Static Function getSaldoLote(cLote, cProduto)
 	cQry := "select sum(B8_SALDO) SALDO " + CRLF 
 	cQry += "  from "+RetSQLName("SB8")+" B8 " + CRLF 
 	cQry += " where B8_FILIAL='"+FwxFilial("SB8")+"' " + CRLF 
-	cQry += "   and B8_LOTECTL = '"+cLote+"' " + CRLF 
-	cQry += "   and B8.D_E_L_E_T_ = '' " + CRLF 
+	cQry += "   and B8_LOTECTL = '"+cLote+"' " + CRLF
+	cQry += "   and B8.D_E_L_E_T_ = '' " + CRLF
 	if cFiltro != ''
-		cQry += cFiltro + CRLF 
+		cQry += cFiltro + CRLF
 	endif
-	cQry += "   and B8_SALDO > 0 " + CRLF 
+	cQry += "   and B8_SALDO > 0 " + CRLF
 
 	nRet := MPSysExecScalar(cQry,"SALDO")
 
@@ -5456,6 +5490,16 @@ User Function SB1Create( __aProd, lCriaSaldoSB9 )
 
 			lErro := U_SB9Create(aProd) // Saldo Inicial
 		EndIf
+
+		NCR->(DbSetOrder(1))
+
+		RecLock( "NCR", lRecLock := !(NCR->(DbSeek( FWxFilial("NCR") + SB1->B1_COD ))))
+			NCR->NCR_FILIAL := FWxFilial("NCR")
+			NCR->NCR_PROD 	:= SB1->B1_COD
+			NCR->NCR_EMREC 	:= "2"
+			NCR->NCR_EMGUIA := "1"
+		NCR->(MsUnlock())
+
 	EndIf
 
 	ConOut('Fim: SB1Create: ' + AllTrim(SB1->B1_COD) + ' - ' + Time())

@@ -4,6 +4,7 @@
 
 static oCellHorAlign    := FwXlsxCellAlignment():Horizontal()
 static oCellVertAlign   := FwXlsxCellAlignment():Vertical()
+
 Static cTitulo := "Fechamento de Frete"
 /*/{Protheus.doc} nomeFunction
     (long_description)
@@ -28,6 +29,9 @@ User Function VAFATI04()
 	Private cBakFil 	:= cFilAnt
 	Private __cRet
 
+	Private cF3CodCFPes  := ""
+    Private cF3LojCFPes  := ""
+    Private cF3NomCFPes  := ""
 	Private oFileW      := nil
     Private oExcel      := NIL
     Private jFormatTit,jFormatTot,jFormatHead,jFormatGD,JFLeft,JFRight,jFData,jFNum,jFMoeda //Formato de Celula
@@ -45,9 +49,9 @@ Return
 
 Static Function ModelDef()
 	Local oModel 		:= nil
-	Local oStru   		:= FWFormStruct(1, 'ZFF')
-	Local oGrid 		:= FWFormStruct(1, 'ZFF')
-	Local oCte 			:= FWFormStruct(1, 'ZFI')
+	Local oStrCab   	:= FWFormStruct(1, 'ZFF')
+	Local oStrGrid 		:= FWFormStruct(1, 'ZFF')
+	Local oStrCte 		:= FWFormStruct(1, 'ZFI')
 	Local bPos 			:= {|| U_FATI04S()}
 	Local nI
 	Local aGatilhos		:= {}
@@ -57,7 +61,7 @@ Static Function ModelDef()
 	aAdd(aGatilhos, FWStruTriggger( "ZFI_LOJA"	,"ZFI_NFOR","SA2->A2_NOME"		,.T.,"SA2"	,1	,'FWxFilial("SA2")+M->ZFI_FORNEC+M->ZFI_LOJA',NIL,"001"))
 
     For nI := 1 To Len(aGatilhos)
-        oCte:AddTrigger(  aGatilhos[nI][01],; 	//Campo Origem
+        oStrCte:AddTrigger(  aGatilhos[nI][01],; 	//Campo Origem
                             aGatilhos[nI][02],; //Campo Destino
                             aGatilhos[nI][03],; //Bloco de código na validação da execução do gatilho
                             aGatilhos[nI][04])  //Bloco de código de execução do gatilho
@@ -66,52 +70,44 @@ Static Function ModelDef()
 	aGatilhos := {}
 	aAdd(aGatilhos, FWStruTriggger( "ZFF_FLOJA"	,"ZFF_MUN"    ,"SA2->A2_COD_MUN",.T.,"SA2"	,1	,'FWxFilial("SA2")+M->ZFF_FORNEC+M->ZFF_FLOJA',NIL,"002"))
 	aAdd(aGatilhos, FWStruTriggger( "ZFF_FLOJA"	,"ZFF_EST"    ,"SA2->A2_EST"	,.T.,"SA2"	,1	,'FWxFilial("SA2")+M->ZFF_FORNEC+M->ZFF_FLOJA',NIL,"003"))
-	aAdd(aGatilhos, FWStruTriggger( "ZFF_PLCVL"	,"ZFF_CODIGO"  ,"u_I04PLC()"		,.F.,""		,nil,NIL,"002"))
-	aAdd(aGatilhos, FWStruTriggger( "ZFF_CONTRA","ZFF_FILCON"  ,"u_I04CTN()"		,.F.,""		,nil,NIL,"001"))
+	aAdd(aGatilhos, FWStruTriggger( "ZFF_CONTRA","ZFF_FILCON"  ,"u_I04CTN()"	,.F.,""		,nil,NIL,"001"))
 
 	For nI := 1 To Len(aGatilhos)
-        oStru:AddTrigger(  aGatilhos[nI][01],;  //Campo Origem
+        oStrCab:AddTrigger(  aGatilhos[nI][01],;  //Campo Origem
                             aGatilhos[nI][02],; //Campo Destino
                             aGatilhos[nI][03],; //Bloco de código na validação da execução do gatilho
                             aGatilhos[nI][04])  //Bloco de código de execução do gatilho
     Next
 
 	aGatilhos := {}
-	aAdd(aGatilhos, FWStruTriggger( "ZFF_KM"	,"ZFF_VFRETE" ,"U_I04KMG()"	 	,.F.,""		,NIL,NIL,"01"))
+	aAdd(aGatilhos, FWStruTriggger( "ZFF_KM"	,"ZFF_VFRETE" ,"U_I04KMG()"	,.F.,""		,NIL,NIL,"01"))
+	aAdd(aGatilhos, FWStruTriggger( "ZFF_PLCVL"	,"ZFF_CODIGO" ,"U_I04PLC()"	,.F.,""		,nil,NIL,"01"))
 	For nI := 1 To Len(aGatilhos)
-        oGrid:AddTrigger(  aGatilhos[nI][01],;  //Campo Origem
+        oStrGrid:AddTrigger(  aGatilhos[nI][01],;  //Campo Origem
                             aGatilhos[nI][02],; //Campo Destino
                             aGatilhos[nI][03],; //Bloco de código na validação da execução do gatilho
                             aGatilhos[nI][04])  //Bloco de código de execução do gatilho
     Next
 
-    //oStru:SetProperty('ZFF_CONTRA'	, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID , 'ExistCpo("ZCC", &(ReadVar())) .and. M->ZFF_COMBO != "T"'))//Iniciador de Campo
-    oStru:SetProperty('ZFF_CONTRA'	, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID , 'U_I04VCON()'))//Iniciador de Campo
-    oStru:SetProperty('ZFF_NMUN'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'Iif(!Inclui,Posicione("CC2",1,FWxFilial("CC2")+ZFF->ZFF_EST+ZFF->ZFF_MUN,"CC2_MUN"),"")'))//Iniciador de Campo
+    oStrCab:SetProperty('ZFF_CONTRA'	, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID , 'U_I04VCON()'))//Iniciador de Campo
+    oStrCab:SetProperty('ZFF_NMUN'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'Iif(!Inclui,Posicione("CC2",1,FWxFilial("CC2")+ZFF->ZFF_EST+ZFF->ZFF_MUN,"CC2_MUN"),"")'))//Iniciador de Campo
     
-    oGrid:SetProperty('ZFF_KM'		, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oGrid:SetProperty('ZFF_VFRETE'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oGrid:SetProperty('ZFF_VLKM'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oGrid:SetProperty('ZFF_ADICIO'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oGrid:SetProperty('ZFF_PEDAGI'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oGrid:SetProperty('ZFF_ICMSF'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oGrid:SetProperty('ZFF_VCOMP'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oGrid:SetProperty('ZFF_DOC'		, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID , 'U_I04ZDOC()'))//Iniciador de Campo
+    oStrGrid:SetProperty('ZFF_DOC'		, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID , 'U_I04ZDOC()'))//Iniciador de Campo
     
-	oCte:SetProperty('ZFI_FORNEC'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-	oCte:SetProperty('ZFI_LOJA'		, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-	oCte:SetProperty('ZFI_CODIGO'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-	oCte:SetProperty('ZFI_PLACA'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-	oCte:SetProperty('ZFI_ZFFITE'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
-    oCte:SetProperty('ZFI_DOC'		, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID	, 'U_I04DOC()'))//Validação de Campo
-    oCte:SetProperty('ZFI_VALOR'	, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID	, 'U_I04VAL()'))//Validação de Campo
-    oCte:SetProperty('ZFI_FILDOC'	, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID	, 'U_I04FIL()'))//Validação de Campo
+	//oStrCte:SetProperty('ZFI_FORNEC'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
+	//oStrCte:SetProperty('ZFI_LOJA'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
+	//oStrCte:SetProperty('ZFI_CODIGO'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
+	//oStrCte:SetProperty('ZFI_PLACA'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
+	//oStrCte:SetProperty('ZFI_ZFFITE'	, MODEL_FIELD_INIT	,   FwBuildFeature(STRUCT_FEATURE_INIPAD, 'U_I04INI()'))//Iniciador de Campo
+    oStrCte:SetProperty('ZFI_DOC'		, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID	, 'U_I04DOC()'))//Validação de Campo
+    oStrCte:SetProperty('ZFI_VALOR'		, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID	, 'U_I04VAL()'))//Validação de Campo
+    oStrCte:SetProperty('ZFI_FILDOC'	, MODEL_FIELD_VALID	,   FwBuildFeature(STRUCT_FEATURE_VALID	, 'U_I04FIL()'))//Validação de Campo
 
 	oModel := MPFormModel():New("FATI04M",,,bPos)
 
-	oModel:AddFields("ZFFMASTER",/*cOwner*/  ,oStru, /*bPreValidacao*/, {|| U_I04PREM()}/*bPosValidacao*/, /*bCarga*/)///* ,/*cOwner*/ ,oStPai  */ )
-	oModel:AddGrid('ZFFDETAIL', 'ZFFMASTER'	, oGrid, /*bLinePre*/, {|| U_I04PREG()}/*bLinePos*/,/* bPre */,/* bPos */, /* {|| U_I04LOAD()} */)
-	oModel:AddGrid('ZFIDETAIL', 'ZFFDETAIL'	, oCte , /*bLinePre*/, /*bLinePos*/,/* bPre */,/* bPos */,/*  {|| U_I04LOAD()} */)
+	oModel:AddFields("ZFFMASTER",/*cOwner*/  ,oStrCab, /*bPreValidacao*/, {|| U_I04PREM()}/*bPosValidacao*/, /*bCarga*/)///* ,/*cOwner*/ ,oStPai  */ )
+	oModel:AddGrid('ZFFDETAIL', 'ZFFMASTER'	, oStrGrid, /*bLinePre*/, {|| U_I04PREG()}/*bLinePos*/,/* bPre */,/* bPos */, /* {|| U_I04LOAD()} */)
+	oModel:AddGrid('ZFIDETAIL', 'ZFFDETAIL'	, oStrCte , /*bLinePre*/, /*bLinePos*/,/* bPre */,/* bPos */,/*  {|| U_I04LOAD()} */)
 
 	aAdd(aZFFRel, {'ZFF_FILIAL'	, 'Iif(!INCLUI, ZFF->ZFF_FILIAL	 , FWxFilial("ZFF"))'})
 	aAdd(aZFFRel, {'ZFF_CODIGO' , 'Iif(!INCLUI, ZFF->ZFF_CODIGO	 , ZFF->ZFF_CODIGO)'})
@@ -139,20 +135,19 @@ Return oModel
 
 Static Function ViewDef()
 	Local oModel     	:= FWLoadModel("VAFATI04")
-    Local oStru     	:= FWFormStruct(2, "ZFF" /* , {|cCampo| (AllTrim(cCampo) $ "ZFF_FILIAL|ZFF_CODIGO|ZFF_CONTRA|ZFF_FILCON|ZFF_FORNEC|ZFF_FLOJA|ZFF_FNOME|ZFF_DESTIN|ZFF_DLOJA|ZFF_NDEST|ZFF_MUN|ZFF_EST|ZFF_NMUN")} */ )
-    Local oGrid     	:= FWFormStruct(2, "ZFF" /* , {|cCampo| !(AllTrim(cCampo) $ "ZFF_FILIAL|ZFF_CODIGO|ZFF_CONTRA|ZFF_FILCON|ZFF_FORNEC|ZFF_FLOJA|ZFF_FNOME|ZFF_DESTIN|ZFF_DLOJA|ZFF_NDEST|ZFF_MUN|ZFF_EST|ZFF_NMUN" )} */)
-	Local oCte 			:= FWFormStruct(2, 'ZFI')
+    Local oStrCab     	:= FWFormStruct(2, "ZFF" /* , {|cCampo| (AllTrim(cCampo) $ "ZFF_FILIAL|ZFF_CODIGO|ZFF_CONTRA|ZFF_FILCON|ZFF_FORNEC|ZFF_FLOJA|ZFF_FNOME|ZFF_DESTIN|ZFF_DLOJA|ZFF_NDEST|ZFF_MUN|ZFF_EST|ZFF_NMUN")} */ )
+    Local oStrGrid     	:= FWFormStruct(2, "ZFF" /* , {|cCampo| !(AllTrim(cCampo) $ "ZFF_FILIAL|ZFF_CODIGO|ZFF_CONTRA|ZFF_FILCON|ZFF_FORNEC|ZFF_FLOJA|ZFF_FNOME|ZFF_DESTIN|ZFF_DLOJA|ZFF_NDEST|ZFF_MUN|ZFF_EST|ZFF_NMUN" )} */)
+	Local oStrCte 		:= FWFormStruct(2, 'ZFI')
 	Local oView
 	Local nI 
 	Local cStru 		:= "ZFF_FILIAL|ZFF_CODIGO|ZFF_COMBO|ZFF_CONTRA|ZFF_FILCON|ZFF_FORNEC|ZFF_FLOJA|ZFF_FNOME|ZFF_DESTIN|ZFF_DLOJA|ZFF_NDEST|ZFF_MUN|ZFF_EST|ZFF_NMUN"
-	//oCte := GetVGridCte(oModel, oCte)
 	
 	oView := FWFormView():New()
 	oView:SetModel(oModel)
 
-	oView:AddField("VIEW_ZFF"	, oStru 		, "ZFFMASTER")
-	oView:AddGrid("VIEW_GRID"	, oGrid 		, "ZFFDETAIL")
-	oView:AddGrid("GRID_CTE" 	, oCte 			, "ZFIDETAIL")
+	oView:AddField("VIEW_ZFF"	, oStrCab 		, "ZFFMASTER")
+	oView:AddGrid("VIEW_GRID"	, oStrGrid 		, "ZFFDETAIL")
+	oView:AddGrid("GRID_CTE" 	, oStrCte 		, "ZFIDETAIL")
 	
 	oView:CreateHorizontalBox('CABEC', 35)
 	oView:CreateHorizontalBox('GRID' , 45)
@@ -163,31 +158,32 @@ Static Function ViewDef()
 	oView:CreateFolder('ABA03','RODAP')
 
 	oView:SetOwnerView("VIEW_ZFF"	 , "CABEC")
-	oView:SetOwnerView("VIEW_GRID"	 , "GRID")
+	oView:SetOwnerView("VIEW_GRID"	 , "GRID" )
 	oView:SetOwnerView("GRID_CTE"	 , "RODAP")
 	
 	oView:EnableTitleView('VIEW_ZFF' , cTitulo)
 	oView:EnableTitleView('GRID_CTE' , "CTE")
 	oView:EnableTitleView('VIEW_GRID', "Dados")
  	
-	aFields   	:= OSTRU:AFIELDS
+	aFields   	:= OSTRCAB:AFIELDS
 	aCamZFF 	:= aClone(aFields)
 	
 	For nI := 1 to Len(aCamZFF)
 		if !(aCamZFF[nI][1] $ cStru)
-			oStru:RemoveField(aCamZFF[nI][1])
+			oStrCab:RemoveField(aCamZFF[nI][1])
 		endif
 	Next nI
 	For nI := 1 to Len(aCamZFF)
 		if aCamZFF[nI][1] $ cStru /* .and. (aCamZFF[nI][1] != "ZFF_CODIGO") */
-			oGrid:RemoveField(aCamZFF[nI][1])
+			oStrGrid:RemoveField(aCamZFF[nI][1])
 		endif
 	next nI
 	
 	oView:AddIncrementField( 'VIEW_GRID', 'ZFF_ITEM')
 	oView:AddIncrementField( 'GRID_CTE' , 'ZFI_ITEM')
 	
-	oView:AddUserButton( 'Salvar Frete (F8)','', {|oView| SlvCont()} )
+	oStrCte:RemoveField("ZFI_CODIGO")
+	//oStrCte:RemoveField("ZFI_ZFFITE")
 
 	oView:SetCloseOnOk( { |oView| .F. } )
 Return oView
@@ -206,14 +202,11 @@ Return aRot
 User Function FATI04M()
 	Local aParam 	:= PARAMIXB
 	Local xRet 		:= .T.
-	Local oModel 	:= nil
-	Local oCab		:= nil
 	Local oObj 		:= ''
 	Local cIdPonto 	:= ''
 	Local cIdModel 	:= ''
 	Local cIdIXB5	:= ''
 	Local cIdIXB4	:= '' 
-	Local nI
 
 	If aParam <> NIL
 		oObj := aParam[1]
@@ -269,7 +262,7 @@ User Function FAT04DT()
 		endif
 	else
 		if cDt > dDataBase
-			lRet := .F. 
+			lRet := .F.
 			oModel:SetErrorMessage("","","","","Data Inválida", 'Data de Desembarque não pode ser maior que a data atual!', "")
 		elseif !EMPTY(oGrid:GetValue("ZFF_DATA"))
 			if cDt < oGrid:GetValue("ZFF_DATA")
@@ -279,68 +272,6 @@ User Function FAT04DT()
 		endif
 	endif
 Return lRet
-//Carga do submodelo ZFIDETAIL
-User Function I04LOAD()
-	Local oModel	:= FWModelActive()
-	Local oStruct 	:= oModel:GetModel("ZFFMASTER")
-	Local aArea		:= GetArea()
-	Local aRet 		:= {}
-	Local cQry 		:= ''
-	Local nValor	:= 0
-	Local cAlias 	:= GetNextAlias()
-
-	cQry := " SELECT *  " + CRLF 
-	cQry += " FROM "+RetSqlName("ZFI")+"  " + CRLF
-	cQry += " WHERE ZFI_FILIAL 	= '"+FWxFilial("ZFI")+"' " + CRLF 
-	cQry += " AND ZFI_CODIGO	= '"+oStruct:GetValue("ZFF_CODIGO")+"' " + CRLF 
-	cQry += " AND D_E_L_E_T_	= '' " + CRLF
-
-	mpSysOpenQuery(cQry,cALias)
-
-	DBSELECTAREA( "SF1" )
-	DBSETORDER( 2 )
-	
-	while !(cALias)->(EOF())
-
-		IF DbSeek((cALias)->ZFI_FILDOC+;
-			(cALias)->ZFI_FORNEC+;
-			(cALias)->ZFI_LOJA+;
-			(cALias)->ZFI_DOC )
-			
-			nValor := SF1->F1_VALBRUT
-		else 
-			nValor := 0 
-		ENDIF
-		aAdd(aRet,{Val((cALias)->ZFI_ITEM),{	(cALias)->ZFI_ITEM,;
-										(cALias)->ZFI_FORNEC,;
-										(cALias)->ZFI_LOJA,;
-										iif(!Empty((cALias)->ZFI_FORNEC),Posicione("SA2",1,FwxFilial("SA2")+(cALias)->ZFI_FORNEC+(cALias)->ZFI_LOJA,"A2_NOME"),"")	,;
-										(cALias)->ZFI_FILDOC,;
-										(cALias)->ZFI_DOC,;
-										(cALias)->ZFI_SERIE,;
-										nValor,;
-										(cALias)->ZFI_CODIGO,;
-										(cALias)->ZFI_ZFFITE}})
-		
-		(cALias)->(DbSkip())
-	end
-
-	if Len(aRet) == 0
-		aAdd(aRet,{1,{	'01',;
-						oStruct:GetValue("ZFF_FORNEC"),;
-						oStruct:GetValue("ZFF_FLOJA"),;
-						Posicione("SA2",1,FwxFilial("SA2")+oStruct:GetValue("ZFF_FORNEC")+oStruct:GetValue("ZFF_FLOJA"),"A2_NOME"),;
-						,;
-						,;
-						,;
-						0,;
-						"000000",;
-						'01'}})
-	endif
-	SF1->(DBCLOSEAREA())
-	(cALias)->(DBCLOSEAREA())
-	RestArea(aArea)
-Return aRet
 //Validação dos campos ZFF_HREMB e ZFF_HRDESE
 User Function FAT04HR()
 	Local oModel		:= FWModelActive()
@@ -579,7 +510,9 @@ User Function I04IFOR()
 	
 	if oGrid:GetQtdLine() == 0
 		if !EMPTY(oStruct:GetValue("ZFF_FORNEC"))
-			IF cCampo == 'ZFI_FORNEC'	
+			IF cCampo == 'ZFI_CODIGO'
+				cRet := oStruct:GetValue("ZFF_CODIGO")
+			ELSEIF cCampo == 'ZFI_FORNEC'
 				cRet := oStruct:GetValue("ZFF_FORNEC")
 			elseif cCampo == 'ZFI_LOJA'
 				cRet := oStruct:GetValue("ZFF_FLOJA")
@@ -588,7 +521,13 @@ User Function I04IFOR()
 			endif
 		endif
 	else
-		IF cCampo == 'ZFI_FORNEC'
+		IF cCampo == 'ZFI_CODIGO'
+			cRet := oGrid:GetValue("ZFF_CODIGO")
+		ELSEIF cCampo == 'ZFI_ZFFITE'
+			cRet := oGrid:GetValue("ZFF_ITEM")
+		elseIF cCampo == 'ZFI_PLACA'
+			cRet := oGrid:GetValue("ZFF_PLCVL")
+		elseIF cCampo == 'ZFI_FORNEC'
 			cRet := oGrid:GetValue("ZFF_ORIGEM")
 		elseif cCampo == 'ZFI_LOJA'
 			cRet := oGrid:GetValue("ZFF_RLOJA")
@@ -602,13 +541,13 @@ User Function I04INC()
 	Local oModel	 := FWModelActive()
 	Local oCte 	 	 := oModel:GetModel("ZFIDETAIL")
 	Local cRet 		 := ""
-	Local aSaveLines := FWSaveRows()	
+	Local aSaveLines := FWSaveRows()
 
 	if oCte:GetQtdLine() == 0
 		cRet := StrZero(oCte:GetQtdLine() + 1,2)
-	else 
+	else
 		cRet := StrZero(Val(oCte:GetValue("ZFI_ITEM"))+1,2)
-	endif 
+	endif
 	FWRestRows( aSaveLines )
 Return cRet := StrZero(oCte:GetQtdLine() + 1,2)
 
@@ -671,7 +610,7 @@ User Function I04FORN()
 	Local oCTE 		:= oModel:GetModel("ZFIDETAIL")
 	Local cRet 		:= ''
 
-	cRet := Posicione("SA2",1,FwXFilial("SA2")+oGrid:GetValue("ZFF_ORIGEM")+oGrid:GetValue("ZFF_RLOJA"),"A2_NOME")
+	cRet := Alltrim(Posicione("SA2",1,FwXFilial("SA2")+oGrid:GetValue("ZFF_ORIGEM")+oGrid:GetValue("ZFF_RLOJA"),"A2_NOME"))
 
 	if oCTE:GetQtdLine() == 1
 		if EMPTY(oCTE:GetValue("ZFI_DOC"))
@@ -704,7 +643,7 @@ User Function I04VCOMP()
 				oGrid:GetValue("ZFF_PEDAGI") +;
 				oGrid:GetValue("ZFF_ADICIO") +;
 				oGrid:GetValue("ZFF_ICMSF")
-	endif 
+	endif
 
 Return nRet := nSomaF - nSomaCte
 //Gatilho para pegar valor do frete
@@ -774,8 +713,8 @@ User FUnction FATI04P()
 	Local cPerg 	:= "FATI04P"
 	Local cQry 		:= ''
 	Local nVlrUnit  := 0
-	Local cALias 	:= GetNextAlias()
-	Local _cAliasG 	:= GetNextAlias()
+	Local cALias 	:= ""
+	Local _cAliasG 	:= ""
 
 	GeraX1(cPerg)	
 
@@ -803,7 +742,7 @@ User FUnction FATI04P()
 		cQry += " GROUP BY ZFF_CODIGO, ZFF_FORNEC,ZFF_CONTRA, ZFF_FILCON "+ CRLF
 		cQry += " ORDER BY ZFF_FILCON,ZFF_CONTRA "+ CRLF
 		
-		MpSysOpenQry(cQry,cALias)
+		cALias := MpSysOpenQry(cQry)
 		
 		_cQry := "" + CRLF
 		_cQry += "SELECT * FROM "+RetSqlName("ZBC")+" ZBC WHERE ZBC_CODIGO+ZBC_FILIAL IN ( " + CRLF
@@ -822,14 +761,13 @@ User FUnction FATI04P()
 		_cQry += "									 and ZBC.D_E_L_E_T_ = ''" + CRLF
 		_cQry += "									 ORDER BY ZBC_FILIAL,ZBC_CODIGO, ZBC_ITEM "+ CRLF 
 
-		MpSysOpenQry(_cQry,_cAliasG)
+		_cAliasG := MpSysOpenQry(_cQry)
 
-	    memowrite("C:\TOTVS_RELATORIOS\Processar Fretes.sql", cQry+_cQry)
+		if cUserName $ "Administrador,ioliveira,admin"
+	    	memowrite("C:\TOTVS_RELATORIOS\Processar Fretes.sql", cQry+_cQry)
+		endif
 
-		DBSelectArea("ZCC")
 		ZCC->(DBSetOrder(2)) // ZCC_FILIAL + ZCC_CODIGO
-		
-		DBSelectArea("ZBC")
 		ZBC->(DBSetOrder(3)) // ZBC_FILIAL+ZBC_CODIGO+ZBC_VERSAO+ZBC_ITEM
 		
 		FWMsgRun(, {|| GeraRel(@_cAliasG,@cAlias ) },;
@@ -837,25 +775,23 @@ User FUnction FATI04P()
                             'Processando Banco de Dados - Recebimento')
 
 		if MSGYESNO("Confira o relatório antes de prosseguir!","Prosseguir?")
-			Begin Transaction
-				While !(cALias)->(EOF())
+			While !(cALias)->(EOF())
 
-					If ZCC->(DBSeek((cALias)->ZFF_FILCON+(cALias)->ZFF_CONTRA))
-						nVlrUnit := ( (cALias)->FRETE + (cALias)->ADICIONAL + (cALias)->PEDAGIO ) / ZCC->ZCC_QTTTAN
+				If ZCC->(DBSeek((cALias)->ZFF_FILCON+(cALias)->ZFF_CONTRA))
+					nVlrUnit := ( (cALias)->FRETE + (cALias)->ADICIONAL + (cALias)->PEDAGIO ) / ZCC->ZCC_QTTTAN
 
-						WHILE (_cAliasG)->ZBC_FILIAL == (cALias)->ZFF_FILCON .AND. (_cAliasG)->ZBC_CODIGO == (cALias)->ZFF_CONTRA 
-							ZBC->(DBSeek((_cAliasG)->ZBC_FILIAL+(_cAliasG)->ZBC_CODIGO+(_cAliasG)->ZBC_VERSAO+(_cAliasG)->ZBC_ITEM))
-								RecLock("ZBC",.F.)
-									ZBC->ZBC_VLFRPG := Round(nVlrUnit * ZBC->ZBC_QUANT,2)
-								ZBC->(MsUnlock())
-							(_cAliasG)->(DBSKIP())
-						ENDDO
-					else
-						ConOut( "Contrato: " +(cALias)->ZFF_CONTRA+ " não encontrado" )
-					Endif
-					(cALias)->(DBSkip())
-				EndDo
-			End Transaction
+					WHILE (_cAliasG)->ZBC_FILIAL == (cALias)->ZFF_FILCON .AND. (_cAliasG)->ZBC_CODIGO == (cALias)->ZFF_CONTRA 
+						ZBC->(DBSeek((_cAliasG)->ZBC_FILIAL+(_cAliasG)->ZBC_CODIGO+(_cAliasG)->ZBC_VERSAO+(_cAliasG)->ZBC_ITEM))
+							RecLock("ZBC",.F.)
+								ZBC->ZBC_VLFRPG := Round(nVlrUnit * ZBC->ZBC_QUANT,2)
+							ZBC->(MsUnlock())
+						(_cAliasG)->(DBSKIP())
+					ENDDO
+				else
+					ConOut( "Contrato: " +(cALias)->ZFF_CONTRA+ " não encontrado" )
+				Endif
+				(cALias)->(DBSkip())
+			EndDo
 			MSGALERT( "Fretes Processados!", "Atenção")
 		endif
 
@@ -866,99 +802,98 @@ User FUnction FATI04P()
 	EndIf
 
 	FwRestArea(aArea)
-Return 
+Return
 
 Static Function GeraRel(_cAliasG,cAlias)
-		Local cWorkSheet := "Processamento"
-		Local nRow := 1
-		Local nCol := 1
-		Local nRowIni
-		Local nRowFim
-	    Local cPerg			:= SubS(ProcName(),3)
-    	Local cPath 	 	:= "C:\totvs_relatorios\"
-    	Local cArquivo   	:= cPath + cPerg +; // __cUserID+"_"+;
-                                DtoS(dDataBase)+; 
-                                "_"+;
-                                StrTran(SubS(Time(),1,5),":","")+;
-                                ".rel"
-		DefinirFormatacao()
+	Local cWorkSheet := "Processamento"
+	Local nRow := 1
+	Local nCol := 1
+	Local nRowIni
+	Local nRowFim
+	Local cPerg			:= SubS(ProcName(),3)
+	Local cPath 	 	:= "C:\totvs_relatorios\"
+	Local cArquivo   	:= cPath + cPerg +; // __cUserID+"_"+;
+							DtoS(dDataBase)+; 
+							"_"+;
+							StrTran(SubS(Time(),1,5),":","")+;
+							".rel"
+	DefinirFormatacao()
 
-		oExcel := FwPrinterXlsx():New()
-		oExcel:Activate(cArquivo)
-		oExcel:AddSheet(cWorkSheet)
+	oExcel := FwPrinterXlsx():New()
+	oExcel:Activate(cArquivo)
+	oExcel:AddSheet(cWorkSheet)
 
-		oExcel:SetCellsFormatConfig(jFormatTit)
-		oExcel:SetFontConfig(jFontTitulo)
-		oExcel:MergeCells(nRow, nCol, nRow, 5)
+	oExcel:SetCellsFormatConfig(jFormatTit)
+	oExcel:SetFontConfig(jFontTitulo)
+	oExcel:MergeCells(nRow, nCol, nRow, 5)
 
-		oExcel:SetText(nRow, nCol, "Processamento de Fretes")
-		
-		oExcel:SetCellsFormatConfig(jFormatHead)
-		oExcel:SetFontConfig(jFontHeader)
-		nRow += 1
-		//Printando Cabeçalho
-		oExcel:SetValue(nRow, nCol	, "Filial")
-		oExcel:SetValue(nRow, ++nCol, "Fornecedor")
-		oExcel:SetValue(nRow, ++nCol, "Contrato")
-		oExcel:SetValue(nRow, ++nCol, "Quantidade")
-		oExcel:SetValue(nRow, ++nCol, "Valor Frete")
+	oExcel:SetText(nRow, nCol, "Processamento de Fretes")
+	
+	oExcel:SetCellsFormatConfig(jFormatHead)
+	oExcel:SetFontConfig(jFontHeader)
+	nRow += 1
+	//Printando Cabeçalho
+	oExcel:SetValue(nRow, nCol	, "Filial")
+	oExcel:SetValue(nRow, ++nCol, "Fornecedor")
+	oExcel:SetValue(nRow, ++nCol, "Contrato")
+	oExcel:SetValue(nRow, ++nCol, "Quantidade")
+	oExcel:SetValue(nRow, ++nCol, "Valor Frete")
 
+	While !(cALias)->(EOF())
+		If ZCC->(DBSeek((cALias)->ZFF_FILCON+(cALias)->ZFF_CONTRA))
+			nVlrUnit := ( (cALias)->FRETE + (cALias)->ADICIONAL + (cALias)->PEDAGIO ) / ZCC->ZCC_QTTTAN
 
-		While !(cALias)->(EOF())
-			If ZCC->(DBSeek((cALias)->ZFF_FILCON+(cALias)->ZFF_CONTRA))
-				nVlrUnit := ( (cALias)->FRETE + (cALias)->ADICIONAL + (cALias)->PEDAGIO ) / ZCC->ZCC_QTTTAN
-
-				nRowIni := nRow + 1
-				WHILE (_cAliasG)->ZBC_FILIAL == (cALias)->ZFF_FILCON .AND. (_cAliasG)->ZBC_CODIGO == (cALias)->ZFF_CONTRA 
-					nCol := 1
-					nRow += 1
-
-					oExcel:SetFontConfig(jFontText)
-					oExcel:SetCellsFormatConfig(JFLeft)
-					oExcel:SetBorderConfig(jNoBorder)
-
-					oExcel:SetValue(nRow, nCol	, ALLTRIM(ZCC->ZCC_FILIAL))
-					oExcel:SetValue(nRow, ++nCol, ALLTRIM(ZCC->ZCC_NOMFOR))
-					oExcel:SetValue(nRow, ++nCol, ALLTRIM(ZCC->ZCC_CODIGO))
-
-					oExcel:SetCellsFormatConfig(jFNum)
-					oExcel:SetValue(nRow, ++nCol, (_cAliasG)->ZBC_QUANT)
-					oExcel:SetValue(nRow, ++nCol, Round((_cAliasG)->ZBC_QUANT * nVlrUnit,2))
-					
-					(_cAliasG)->(DBSkip())
-				ENDDO
-				nRowFim := nRow
-				
+			nRowIni := nRow + 1
+			WHILE (_cAliasG)->ZBC_FILIAL == (cALias)->ZFF_FILCON .AND. (_cAliasG)->ZBC_CODIGO == (cALias)->ZFF_CONTRA 
+				nCol := 1
 				nRow += 1
-				oExcel:SetCellsFormatConfig(jFormatHead)
-				oExcel:SetFontConfig(jFontHeader)
+
+				oExcel:SetFontConfig(jFontText)
+				oExcel:SetCellsFormatConfig(JFLeft)
 				oExcel:SetBorderConfig(jNoBorder)
-				oExcel:SetValue(nRow, 3	, "Total")
 
-				oExcel:SetCellsFormatConfig(jFormatTot)
-				oExcel:SetFormula(nRow, 4, "=SUBTOTAL(9,D"+AllTrim(cValToChar(nRowIni))+":D"+AllTrim(cValToChar(nRowFim))+")" ) // Frete + Pedagio 
-				oExcel:SetFormula(nRow, 5, "=SUBTOTAL(9,E"+AllTrim(cValToChar(nRowIni))+":E"+AllTrim(cValToChar(nRowFim))+")" ) // ICMS
+				oExcel:SetValue(nRow, nCol	, ALLTRIM(ZCC->ZCC_FILIAL))
+				oExcel:SetValue(nRow, ++nCol, ALLTRIM(ZCC->ZCC_NOMFOR))
+				oExcel:SetValue(nRow, ++nCol, ALLTRIM(ZCC->ZCC_CODIGO))
+
+				oExcel:SetCellsFormatConfig(jFNum)
+				oExcel:SetValue(nRow, ++nCol, (_cAliasG)->ZBC_QUANT)
+				oExcel:SetValue(nRow, ++nCol, Round((_cAliasG)->ZBC_QUANT * nVlrUnit,2))
 				
-			else
-				ConOut( "Contrato: " +(cALias)->ZFF_CONTRA+ " não encontrado" )
-			Endif
-			(cALias)->(DBSkip())
-		EndDo
+				(_cAliasG)->(DBSkip())
+			ENDDO
+			nRowFim := nRow
+			
+			nRow += 1
+			oExcel:SetCellsFormatConfig(jFormatHead)
+			oExcel:SetFontConfig(jFontHeader)
+			oExcel:SetBorderConfig(jNoBorder)
+			oExcel:SetValue(nRow, 3	, "Total")
 
-		lRet := oExcel:toXlsx() 
+			oExcel:SetCellsFormatConfig(jFormatTot)
+			oExcel:SetFormula(nRow, 4, "=SUBTOTAL(9,D"+AllTrim(cValToChar(nRowIni))+":D"+AllTrim(cValToChar(nRowFim))+")" ) // Frete + Pedagio 
+			oExcel:SetFormula(nRow, 5, "=SUBTOTAL(9,E"+AllTrim(cValToChar(nRowIni))+":E"+AllTrim(cValToChar(nRowFim))+")" ) // ICMS
+			
+		else
+			ConOut( "Contrato: " +(cALias)->ZFF_CONTRA+ " não encontrado" )
+		Endif
+		(cALias)->(DBSkip())
+	EndDo
 
-		nRet := ShellExecute("open", SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx", "", "", 1)
+	lRet := oExcel:toXlsx() 
 
-		//Se houver algum erro
-		If nRet <= 32
-			MsgStop("Não foi possível abrir o arquivo "+SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx"+ "!", "Atenção")
-		EndIf 
+	nRet := ShellExecute("open", SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx", "", "", 1)
 
-		oExcel:DeActivate()
+	//Se houver algum erro
+	If nRet <= 32
+		MsgStop("Não foi possível abrir o arquivo "+SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx"+ "!", "Atenção")
+	EndIf 
 
-		(cALias)->(DBGoTop())
-		(_cAliasG)->(DBGoTop())
-Return 
+	oExcel:DeActivate()
+
+	(cALias)->(DBGoTop())
+	(_cAliasG)->(DBGoTop())
+Return
 
 Static Function DefinirFormatacao()
     Local cCVerde       := '00A85A'
@@ -1081,7 +1016,7 @@ Static Function DefinirFormatacao()
     jBorderRight['border_color'] := "000000"
     jBorderRight['style'] := FwXlsxBorderStyle():Thick()
 
-Return 
+Return
 
 Static Function GeraX1(cPerg)
 	Local _aArea	:= GetArea()
@@ -1145,13 +1080,13 @@ User Function I04CTN()
 	Local aArea			:= FWGetArea()
 	Local oModel		:= FWModelActive()
 	Local nOpc			:= oModel:GetOperation()
-	Local oStru 		:= oModel:GetModel("ZFFMASTER")
+	Local oStrCab 		:= oModel:GetModel("ZFFMASTER")
 	Local oGrid 		:= oModel:GetModel("ZFFDETAIL")
 	Local oCte 			:= oModel:GetModel("ZFIDETAIL")
 	Local oView			:= FWViewActive()
 	Local cQry 			:= ''
 	Local cRet 			:= ""
-	Local cAlias 		:= GetNextAlias()
+	Local cAlias 		:= ""
 
 	if nOpc == 3
 		IF "ZFF_CONTRA" $ ReadVar()
@@ -1162,16 +1097,16 @@ User Function I04CTN()
 			if !(oCte:IsEmpty())
 				oCte:ClearData()
 				oView:Refresh()
-			endif 
+			endif
 			if AllTrim(&(ReadVar())) != ""
 				cQry := " select ISNULL(CAST(CAST(ZFF_OBS AS VARBINARY(8000)) AS VARCHAR(8000)),'') AS OBS,* from "+RetSqlName("ZFF")+" ZFF " + CRLF 
 				cQry += " WHERE ZFF_CONTRA = '"+&(ReadVar())+"' " + CRLF 
-				cQry += " AND ZFF_FILCON =  '"+fwxFilial("ZFF")+"' " + CRLF
+				cQry += " AND ZFF_FILCON =  '"+oStrCab:GetValue("ZFF_FILCON")+"' " + CRLF
 				cQry += " AND ZFF_CODIGO <>  '' " + CRLF
 				cQry += " AND ZFF.D_E_L_E_T_ = '' " + CRLF
 				cQry += " order by ZFF_ITEM  " + CRLF
 
-				MpSysOpenQry(cQry, cAlias)
+				cAlias := MpSysOpenQry(cQry)
 
 				ZFI->(DBSETORDER(3))
 				cRet := cFilcont
@@ -1179,64 +1114,64 @@ User Function I04CTN()
 					if (cAlias)->ZFF_FILIAL != cFilAnt
 						cFilAnt := (cAlias)->ZFF_FILIAL
 					ENDIF
-					oStru:SetValue("ZFF_CODIGO"	, (cAlias)->ZFF_CODIGO)
-					oStru:SetValue("ZFF_FILCON"	, (cAlias)->ZFF_FILCON)
-					oStru:SetValue("ZFF_FORNEC"	, (cAlias)->ZFF_FORNEC)
-					oStru:SetValue("ZFF_FLOJA"	, (cAlias)->ZFF_FLOJA)
-					oStru:SetValue("ZFF_DESTIN"	, (cAlias)->ZFF_DESTIN)
-					oStru:SetValue("ZFF_DLOJA"	, (cAlias)->ZFF_DLOJA)
-					oStru:SetValue("ZFF_MUN"	, (cAlias)->ZFF_MUN)
-					oStru:SetValue("ZFF_EST"	, (cAlias)->ZFF_EST)
+					lRet := oStrCab:SetValue("ZFF_CODIGO"	, (cAlias)->ZFF_CODIGO)
+					lRet := oStrCab:SetValue("ZFF_FILCON"	, (cAlias)->ZFF_FILCON)
+					lRet := oStrCab:SetValue("ZFF_FORNEC"	, (cAlias)->ZFF_FORNEC)
+					lRet := oStrCab:SetValue("ZFF_FLOJA"	, (cAlias)->ZFF_FLOJA)
+					lRet := oStrCab:SetValue("ZFF_DESTIN"	, (cAlias)->ZFF_DESTIN)
+					lRet := oStrCab:SetValue("ZFF_DLOJA"	, (cAlias)->ZFF_DLOJA)
+					lRet := oStrCab:SetValue("ZFF_MUN"		, (cAlias)->ZFF_MUN)
+					lRet := oStrCab:SetValue("ZFF_EST"		, (cAlias)->ZFF_EST)
 
-					oGrid:SetValue("ZFF_ITEM"	,(cAlias)->ZFF_ITEM)
-					oGrid:SetValue("ZFF_PLCVL"	,(cAlias)->ZFF_PLCVL)
-					oGrid:SetValue("ZFF_ICTA1"	,(cAlias)->ZFF_ICTA1)
-					oGrid:SetValue("ZFF_PLCC1"	,(cAlias)->ZFF_PLCC1)
-					oGrid:SetValue("ZFF_ICTA2"	,(cAlias)->ZFF_ICTA2)
-					oGrid:SetValue("ZFF_PLCC2"	,(cAlias)->ZFF_PLCC2)
-					oGrid:SetValue("ZFF_ICTA3"	,(cAlias)->ZFF_ICTA3)
-					oGrid:SetValue("ZFF_NUMMIN"	,(cAlias)->ZFF_NUMMIN)
-					oGrid:SetValue("ZFF_TIPVEI"	,(cAlias)->ZFF_TIPVEI)
-					oGrid:SetValue("ZFF_MOTOR"	,(cAlias)->ZFF_MOTOR)
-					oGrid:SetValue("ZFF_ORIGEM"	,(cAlias)->ZFF_ORIGEM)
-					oGrid:SetValue("ZFF_RLOJA"	,(cAlias)->ZFF_RLOJA)
-					oGrid:SetValue("ZFF_DATA"	,sToD((cAlias)->ZFF_DATA))
-					oGrid:SetValue("ZFF_HREMB"	,(cAlias)->ZFF_HREMB)
-					oGrid:SetValue("ZFF_BOIS"	,(cAlias)->ZFF_BOIS)
-					oGrid:SetValue("ZFF_VACAS"	,(cAlias)->ZFF_VACAS)
-					oGrid:SetValue("ZFF_BUFALO" ,(cAlias)->ZFF_BUFALO)
-					oGrid:SetValue("ZFF_TOURO"	,(cAlias)->ZFF_TOURO)
-					oGrid:SetValue("ZFF_NOVILH" ,(cAlias)->ZFF_NOVILH)
-					oGrid:SetValue("ZFF_DTDESE" ,sToD((cAlias)->ZFF_DTDESE))
-					oGrid:SetValue("ZFF_EMPE"	,(cAlias)->ZFF_EMPE)
-					oGrid:SetValue("ZFF_CAIDOS"	,(cAlias)->ZFF_CAIDOS)
-					oGrid:SetValue("ZFF_EMERGE"	,(cAlias)->ZFF_EMERGE)
-					oGrid:SetValue("ZFF_MORTO"	,(cAlias)->ZFF_MORTO)
-					oGrid:SetValue("ZFF_QTDE"	,(cAlias)->ZFF_QTDE)
-					oGrid:SetValue("ZFF_KM"		,(cAlias)->ZFF_KM)
-					oGrid:SetValue("ZFF_VFRETE"	,(cAlias)->ZFF_VFRETE)
-					oGrid:SetValue("ZFF_VLKM"	,(cAlias)->ZFF_VLKM )
-					oGrid:SetValue("ZFF_ADICIO"	,(cAlias)->ZFF_ADICIO)
-					oGrid:SetValue("ZFF_PEDAGI"	,(cAlias)->ZFF_PEDAGI)
-					oGrid:SetValue("ZFF_ICMSF"	,(cAlias)->ZFF_ICMSF)
-					oGrid:SetValue("ZFF_VCOMP"	,(cAlias)->ZFF_VCOMP)
-					oGrid:SetValue("ZFF_OBS"	,(cAlias)->OBS)
-					oGrid:SetValue("ZFF_DOC"	,(cAlias)->ZFF_DOC)
-					oGrid:SetValue("ZFF_SERIE"	,(cAlias)->ZFF_SERIE)
+					lRet := oGrid:SetValue("ZFF_ITEM"	, (cAlias)->ZFF_ITEM )
+					lRet := oGrid:SetValue("ZFF_PLCVL"	, (cAlias)->ZFF_PLCVL)
+					lRet := oGrid:SetValue("ZFF_ICTA1"	, (cAlias)->ZFF_ICTA1)
+					lRet := oGrid:SetValue("ZFF_PLCC1"	, (cAlias)->ZFF_PLCC1)
+					lRet := oGrid:SetValue("ZFF_ICTA2"	, (cAlias)->ZFF_ICTA2)
+					lRet := oGrid:SetValue("ZFF_PLCC2"	, (cAlias)->ZFF_PLCC2)
+					lRet := oGrid:SetValue("ZFF_ICTA3"	, (cAlias)->ZFF_ICTA3)
+					lRet := oGrid:SetValue("ZFF_NUMMIN"	, (cAlias)->ZFF_NUMMIN)
+					lRet := oGrid:SetValue("ZFF_TIPVEI"	, (cAlias)->ZFF_TIPVEI)
+					lRet := oGrid:SetValue("ZFF_MOTOR"	, (cAlias)->ZFF_MOTOR)
+					lRet := oGrid:SetValue("ZFF_ORIGEM"	, (cAlias)->ZFF_ORIGEM)
+					lRet := oGrid:SetValue("ZFF_RLOJA"	, (cAlias)->ZFF_RLOJA)
+					lRet := oGrid:SetValue("ZFF_DATA"	, sToD((cAlias)->ZFF_DATA))
+					lRet := oGrid:SetValue("ZFF_HREMB"	, (cAlias)->ZFF_HREMB)
+					lRet := oGrid:SetValue("ZFF_BOIS"	, (cAlias)->ZFF_BOIS)
+					lRet := oGrid:SetValue("ZFF_VACAS"	, (cAlias)->ZFF_VACAS)
+					lRet := oGrid:SetValue("ZFF_BUFALO" , (cAlias)->ZFF_BUFALO)
+					lRet := oGrid:SetValue("ZFF_TOURO"	, (cAlias)->ZFF_TOURO)
+					lRet := oGrid:SetValue("ZFF_NOVILH" , (cAlias)->ZFF_NOVILH)
+					lRet := oGrid:SetValue("ZFF_DTDESE" , sToD((cAlias)->ZFF_DTDESE))
+					lRet := oGrid:SetValue("ZFF_EMPE"	, (cAlias)->ZFF_EMPE)
+					lRet := oGrid:SetValue("ZFF_CAIDOS"	, (cAlias)->ZFF_CAIDOS)
+					lRet := oGrid:SetValue("ZFF_EMERGE"	, (cAlias)->ZFF_EMERGE)
+					lRet := oGrid:SetValue("ZFF_MORTO"	, (cAlias)->ZFF_MORTO)
+					lRet := oGrid:SetValue("ZFF_QTDE"	, (cAlias)->ZFF_QTDE)
+					lRet := oGrid:SetValue("ZFF_KM"		, (cAlias)->ZFF_KM)
+					lRet := oGrid:SetValue("ZFF_VFRETE"	, (cAlias)->ZFF_VFRETE)
+					lRet := oGrid:SetValue("ZFF_VLKM"	, (cAlias)->ZFF_VLKM )
+					lRet := oGrid:SetValue("ZFF_ADICIO"	, (cAlias)->ZFF_ADICIO)
+					lRet := oGrid:SetValue("ZFF_PEDAGI"	, (cAlias)->ZFF_PEDAGI)
+					lRet := oGrid:SetValue("ZFF_ICMSF"	, (cAlias)->ZFF_ICMSF)
+					lRet := oGrid:SetValue("ZFF_VCOMP"	, (cAlias)->ZFF_VCOMP)
+					lRet := oGrid:SetValue("ZFF_OBS"	, (cAlias)->OBS)
+					lRet := oGrid:SetValue("ZFF_DOC"	, (cAlias)->ZFF_DOC)
+					lRet := oGrid:SetValue("ZFF_SERIE"	, (cAlias)->ZFF_SERIE)
 					
 					IF ZFI->(DBSEEK((cAlias)->ZFF_FILIAL+(cAlias)->ZFF_CODIGO+(cAlias)->ZFF_ITEM))
 						WHILE ZFI->ZFI_ZFFITE == (cAlias)->ZFF_ITEM
-							oCte:SetValue("ZFI_CODIGO"	,ZFI->ZFI_CODIGO)
-							oCte:SetValue("ZFI_ITEM"	,ZFI->ZFI_ITEM)
-							oCte:SetValue("ZFI_ZFFITE"	,ZFI->ZFI_ZFFITE)
-							oCte:SetValue("ZFI_PLACA"	,ZFI->ZFI_PLACA)
-							oCte:SetValue("ZFI_DOC"		,ZFI->ZFI_DOC)
-							oCte:SetValue("ZFI_SERIE"	,ZFI->ZFI_SERIE)
-							oCte:SetValue("ZFI_FORNEC"	,ZFI->ZFI_FORNEC)
-							oCte:SetValue("ZFI_LOJA"	,ZFI->ZFI_LOJA)
-							oCte:SetValue("ZFI_NFOR"	,ZFI->ZFI_NFOR)
-							oCte:SetValue("ZFI_FILDOC"	,ZFI->ZFI_FILDOC)
-							oCte:SetValue("ZFI_VALOR"	,ZFI->ZFI_VALOR)
+							lRet := oCte:SetValue("ZFI_CODIGO"	,ZFI->ZFI_CODIGO)
+							lRet := oCte:SetValue("ZFI_FILDOC"	,ZFI->ZFI_FILDOC)
+							lRet := oCte:SetValue("ZFI_ITEM"	,ZFI->ZFI_ITEM	)
+							lRet := oCte:SetValue("ZFI_ZFFITE"	,ZFI->ZFI_ZFFITE)
+							lRet := oCte:SetValue("ZFI_PLACA"	,ZFI->ZFI_PLACA	)
+							lRet := oCte:SetValue("ZFI_DOC"		,ZFI->ZFI_DOC	)
+							lRet := oCte:SetValue("ZFI_SERIE"	,ZFI->ZFI_SERIE	)
+							lRet := oCte:SetValue("ZFI_FORNEC"	,ZFI->ZFI_FORNEC)
+							lRet := oCte:SetValue("ZFI_LOJA"	,ZFI->ZFI_LOJA	)
+							lRet := oCte:SetValue("ZFI_NFOR"	,ZFI->ZFI_NFOR	)
+							lRet := oCte:SetValue("ZFI_VALOR"	,ZFI->ZFI_VALOR	)
 
 							ZFI->(DBSKIP())
 							IF ZFI->ZFI_ZFFITE == (cAlias)->ZFF_ITEM
@@ -1251,13 +1186,12 @@ User Function I04CTN()
 						oGrid:AddLine()
 					ENDIF 
 				ENDDO
-				//ZFI->(DBCLOSEAREA(  ))
 				(cAlias)->(DBCLOSEAREA())
 			Endif 
 		ELSE
-			if oStru:GetValue("ZFF_COMBO") == 'T'
-				oStru:SetValue("ZFF_CONTRA", '')
-				oStru:SetValue("ZFF_FILCON", '')
+			if oStrCab:GetValue("ZFF_COMBO") == 'T'
+				oStrCab:SetValue("ZFF_CONTRA", '')
+				oStrCab:SetValue("ZFF_FILCON", '')
 			endif 
 		endif
 	else
@@ -1269,55 +1203,26 @@ User Function I04CTN()
 Return cRet
 //INICIADOR DE CAMPOS NAS DUAS GRIDS
 User Function I04INI()
-	Local cCampo  	:= Substr( ReadVar(), At('->', ReadVar())+2 )
-	Local oModel 	:= FWModelActive()
-	Local oGrid  	:= oModel:GetModel("ZFFDETAIL")
-	Local oStru  	:= oModel:GetModel("ZFFMASTER")
-	Local ogZFI 	:= oModel:GetModel("ZFIDETAIL")
-	Local cRet 		
-	Local nLine 	:= oGrid:GetQtdLine()
-	Local aSaveRows := FWSaveRows()
+    Local cCampo    := Substr( ReadVar(), At('->', ReadVar())+2 )
+    Local oModel    := FWModelActive()
+    Local oGrid     := oModel:GetModel("ZFFDETAIL")
+    Local oStrCab   := oModel:GetModel("ZFFMASTER")
+    Local cRet
+    Local aSaveRows := FWSaveRows()
 
-	if SubStr(cCampo,1,3) == 'ZFF'
-		if nLine > 0
-			if cCampo == 'ZFF_VCOMP'
-				IF oGrid:GetValue("ZFF_ORIGEM") != '000025'
-					cRet := oGrid:GetValue("ZFF_VFRETE") +;
-							oGrid:GetValue("ZFF_PEDAGI") +;
-							oGrid:GetValue("ZFF_ADICIO") +;
-							oGrid:GetValue("ZFF_ICMSF")
-				ELSE 
-					cRet := 0 
-				ENDIF 
-			else
-				cRet := oGrid:GetValue(cCampo)
-			endif 
-		else
-			if TamSX3(cCampo)[3] == 'C'
-				cRet := ""
-			elseif TamSX3(cCampo)[3] == 'D'
-				cRet := sToD("")
-			elseif TamSX3(cCampo)[3] == 'N'
-				cRet := 0
-			endif
-		endif
-	else
-		if cCampo == 'ZFI_CODIGO'
-			cRet := oStru:GetValue("ZFF_CODIGO")
-		elseif cCampo == 'ZFI_ZFFITE'
-			cRet := oGrid:GetValue("ZFF_ITEM")
-		elseif cCampo == 'ZFI_PLACA'
-			cRet := oGrid:GetValue("ZFF_PLCVL")
-		elseif cCampo == 'ZFI_FORNEC'
-			cRet := oGrid:GetValue("ZFF_ORIGEM")
-		elseif cCampo == 'ZFI_LOJA'
-			cRet := oGrid:GetValue("ZFF_RLOJA")
-		//elseif cCampo == 'ZFI_NFOR'
-		//	cRet := ogZFI:GetValue("ZFI_FORNEC")
-		endif
+	if cCampo == 'ZFI_CODIGO'
+		cRet := oStrCab:GetValue("ZFF_CODIGO")
+	elseif cCampo == 'ZFI_ZFFITE'
+		cRet := oGrid:GetValue("ZFF_ITEM")
+	elseif cCampo == 'ZFI_PLACA'
+		cRet := oGrid:GetValue("ZFF_PLCVL")
+	elseif cCampo == 'ZFI_FORNEC'
+		cRet := oGrid:GetValue("ZFF_ORIGEM")
+	elseif cCampo == 'ZFI_LOJA'
+		cRet := oGrid:GetValue("ZFF_RLOJA")
 	endif
 
-	FWRestRows(aSaveRows)
+    FWRestRows(aSaveRows)
 Return cRet
 //INICIADOR DO CODIGO
 User Function I04CDI()
@@ -1326,7 +1231,7 @@ User Function I04CDI()
 	Local cRet 		:= ''
 	Local cALias 	:= GetNextAlias()
 	Local oModel 	:= NIL
-	Local oStru 	:= NIL
+	Local oStrCab 	:= NIL
 
 	if ProcName(5) != "U_I04CTN"
 		cQry := "SELECT MAX(ZFF_CODIGO) as CODIGO FROM "+RetSqlName("ZFF")+""
@@ -1338,21 +1243,20 @@ User Function I04CDI()
 		FWRestArea(aArea)
 	else
 		oModel		:= FWModelActive()
-		oStru 		:= oModel:GetModel("ZFFMASTER")
+		oStrCab 		:= oModel:GetModel("ZFFMASTER")
 
-		cRet := oStru:GetValue("ZFF_CODIGO")
+		cRet := oStrCab:GetValue("ZFF_CODIGO")
 	endif 
 Return cRet
 //PRE VALIDACAO DO MODEL
 User Function I04PREM()
-	Local lRet := .T.
-	Local oModel 	 	:= FwModelActivate()
-	Local oCab 			:= oModel:GetModel("ZFFMASTER")
+	Local lRet 		:= .T.
+	Local oModel 	:= FwModelActivate()
+	Local oCab 		:= oModel:GetModel("ZFFMASTER")
 	Local aCCab		:= StrTokArr("ZFF_FORNEC|ZFF_FLOJA|ZFF_DESTIN|ZFF_DLOJA|ZFF_MUN|ZFF_EST","|")
 	Local nI
 	Local cTitulo	:= ''
 	
-	//DbSelectArea("SX3")
 	SX3->(DbSetOrder(2))
 	for nI := 1 To Len(aCCab)
 		if Empty(oCab:GetValue(aCCab[nI]))
@@ -1364,7 +1268,6 @@ User Function I04PREM()
 			EXIT
 		endif
 	next nI
-	//SX3->(DBCLOSEAREA(  ))
 
 	if lRet
 		if oCab:GetValue("ZFF_COMBO") == "T" .AND. !Empty(oCab:GetValue("ZFF_CONTRA"))
@@ -1391,7 +1294,7 @@ User Function I04PREG()
 	SX3->(DbSetOrder(2)) //X3_CAMPO
 	for nI := 1 To Len(aCGrid)
 		if Empty(oGrid:GetValue(aCGrid[nI]))
-			if DbSeek(aCGrid[nI])
+			if SX3->(DbSeek(aCGrid[nI]))
 				cTitulo := AllTrim(X3Titulo())
 			endif
 			oModel:SetErrorMessage("","","","","Campo vazio", 'Preencha o campo '+cTitulo+'!', "") 
@@ -1407,10 +1310,9 @@ User Function I04PREG()
 				lRet := .F.
 			endif 
 		endif
-	endif 
+	endif
 	RestArea(aArea)
 Return lRet
-
 // VALIDACAO DA CTE
 User Function I04FIL()
 	Local oModel 	:= FwModelActivate()
@@ -1451,7 +1353,7 @@ User Function I04DOC()
 		oCte:SetValue("ZFI_FILDOC", SF1->F1_FILIAL)
 		oCte:SetValue("ZFI_VALOR" , SF1->F1_VALBRUT)
 	else
-		lRet := .F. 
+		lRet := .F.
 		oModel:SetErrorMessage("","","","","Valor Invalido", 'CTE não existe para esse fornecedor, Ou Filial está incorreta!', "") 
 	EndIf
 	SF1->(DBCLOSEAREA())
@@ -1488,7 +1390,7 @@ User Function I04VAL()
 Return lRet
 // VALIDACAO DO DOC NA ZFF
 User Function I04ZDOC()
-	Local lRet 		:= .T. 
+	Local lRet 		:= .T.
 	//Local oModel 	:= FwModelActivate()
 	//Local oGrid		:= oModel:GetModel("ZFFDETAIL")
 	
@@ -1534,7 +1436,7 @@ User Function I04PLC()
 		oGrid:SetValue("ZFF_ORIGEM" ,(cALias)->ZFF_ORIGEM)
 		oGrid:SetValue("ZFF_EST" 	,(cALias)->ZFF_EST)
 		oGrid:SetValue("ZFF_RLOJA"  ,(cALias)->ZFF_RLOJA)
-		oGrid:SetValue("ZFF_NORIG"  ,Posicione("SA2",1,FWXFILIAL("SA2") + (cALias)->ZFF_ORIGEM + (cALias)->ZFF_RLOJA,ALLTRIM("A2_NOME")))
+		oGrid:SetValue("ZFF_NORIG"  ,Alltrim(Posicione("SA2",1,FWXFILIAL("SA2") + (cALias)->ZFF_ORIGEM + (cALias)->ZFF_RLOJA,ALLTRIM("A2_NOME"))))
 		oGrid:SetValue("ZFF_TIPVEI" ,(cALias)->ZFF_TIPVEI)
 		IF oGrid:GetValue("ZFF_KM") != 0
 			cQry := " -- USADO NA FUNÇÃO I04PLC() PARA ALTERAR VALOR DO KM" + CRLF
@@ -1565,6 +1467,18 @@ User Function I04PLC()
 		endif
 	endif
 	(cALias)->(DBCLOSEAREA())
+
+	if oGrid:GetLine() > 1
+		oGrid:SetValue("ZFF_KM"		,oGrid:GetValue("ZFF_KM"	,oGrid:GetLine()-1))
+		oGrid:SetValue("ZFF_VFRETE"	,oGrid:GetValue("ZFF_VFRETE",oGrid:GetLine()-1))
+		oGrid:SetValue("ZFF_VLKM"	,oGrid:GetValue("ZFF_VLKM"	,oGrid:GetLine()-1))
+		oGrid:SetValue("ZFF_ADICIO"	,oGrid:GetValue("ZFF_ADICIO",oGrid:GetLine()-1))
+		oGrid:SetValue("ZFF_PEDAGI"	,oGrid:GetValue("ZFF_PEDAGI",oGrid:GetLine()-1))
+		oGrid:SetValue("ZFF_ICMSF"	,oGrid:GetValue("ZFF_ICMSF"	,oGrid:GetLine()-1))
+		oGrid:SetValue("ZFF_VCOMP"	,oGrid:GetValue("ZFF_VCOMP"	,oGrid:GetLine()-1))
+		oGrid:SetValue("ZFF_VLKM"	,oGrid:GetValue("ZFF_VLKM"	,oGrid:GetLine()-1))
+	endif
+
 	RestArea(aArea)
 Return cRet
 
@@ -1598,7 +1512,7 @@ User Function I04ZCC()
 	cQry += " and A2.D_E_L_E_T_ = '' " + CRLF
 	cQry += " where --ZCC_FILIAL = '"+FwxFilial("ZCC")+"' " + CRLF
 	//cQry += " --AND ZCC_DTCONT > DATEADD(DAY, -60, GETDATE()) " + CRLF
-	cQry += " ZCC_DTCONT > DATEADD(DAY, -60, GETDATE()) " + CRLF
+	cQry += " ZCC_DTCONT > DATEADD(DAY, -120, GETDATE()) " + CRLF
 	cQry += " AND ZCC.D_E_L_E_T_ = '' " + CRLF
 
 	cCodCon 	:= "CODIGO"
@@ -1676,8 +1590,8 @@ Static Function PesqZCC(cQry,nQry)
 	    @ 004, 065 MSGET oTxtBusca VAR cTxtBusca 			SIZE 155, 010 OF oDlg COLORS 0,16777215 PIXEL //Valid(Filtro(3))
 	    
 	    @ 004, 228 BUTTON oBtnPesq PROMPT "Filtrar" 		SIZE 040, 012 OF oDlg PIXEL ACTION Processa({|| Filtro(1) }, "Aguarde...") 
-	    @ 004, 278 BUTTON oBtnLimp PROMPT "&Limpar (F4)"	SIZE 040, 012 OF oDlg PIXEL ACTION Limpar(1) 	    
-		SetKey( VK_F4, {|| Limpar(1)} )
+	    @ 004, 278 BUTTON oBtnLimp PROMPT "&Limpar (F4)"	SIZE 040, 012 OF oDlg PIXEL ACTION Limpar() 	    
+		SetKey( VK_F4, {|| Limpar()} )
 		//@ 004, 328 BUTTON oBtnSelC PROMPT "Selecionar"	    SIZE 040, 012 OF oDlg ACTION (SetRetor(1), lRet := .T.) PIXEL
     	@ 004, 428 BUTTON oBtnSair PROMPT "Sair" 			SIZE 040, 012 OF oDlg ACTION (oDlg:End(), lRet := .F.) PIXEL    	
 
@@ -1767,7 +1681,7 @@ Static Function Filtro(nOPFil)
 			Else
 				If !(Upper(AllTrim(cTxtLike))$cFiltro)
 					cFiltro := " AND UPPER(A2_CGC) LIKE '%" + Upper(AllTrim(cTxtLike)) + "%'"
-				Endif	
+				Endif
 			Endif
 		Else
 			cFiltro := " AND UPPER(ZCC_DTCONT) LIKE '%" + Upper(AllTrim(cTxtBusca)) + "%'"
@@ -1777,7 +1691,7 @@ Static Function Filtro(nOPFil)
 			cOrdem :=  " ORDER BY ZCC_DTCONT DESC "
 		endif
 
-	else 
+	else
 	    cFiltro := " "
 		cOrdem  := " "
 	endif
@@ -1922,7 +1836,67 @@ User Function I04VCON()
 			oModel:SetErrorMessage("","","","","Contrato invalido", 'Preencha o contrato pela consulta', "") 
 			lRet := .F.
 		endif
-	endif 
+	endif
 
 	RestArea(aArea)
 Return lRet
+
+
+User Function zVld04Ven()
+	Local lRet   := .T.
+	Local oModel := FWModelActive()
+	Local oCab 	 := oModel:GetModel("ZFFMASTER")
+
+	if oCab:GetValue("ZFF_COMBO") == "V"
+		SA2->(DbSetOrder(1))
+		if SA2->(DbSeek(FwXFilial("SA2")+oCab:GetValue("ZFF_FORNEC")+oCab:GetValue("ZFF_FLOJA")))
+			if SA2->A2_FILTRF != cFilAnt
+				oModel:SetErrorMessage("","","","","Fornecedor Inválido", 'Quando o Tipo de cadastro é VENDA, o fornecedor tem que ser a própria V@. Verifique no cadastro de fornecedores' +;
+																		   ' se o campo Fil. Transf. está preenchido para o fornecedor digitado.', "") 
+
+				lRet := .F.
+			endif 
+		else
+			lRet := .F.
+		endif
+	endif
+
+Return lRet
+
+ User Function F3FatI04()
+	Local lRet   := .F.
+	//Local oModel := FWModelActive()
+	//Local oCab 	 := oModel:GetModel("ZFFMASTER")
+
+	/* If oCab:GetValue("ZFF_COMBO") == "V"
+		If lRet := U_PesqCli()
+			cF3CodCFPes := SA1->A1_COD
+			cF3LojCFPes := SA1->A1_LOJA
+			cF3NomCFPes := SA1->A1_NOME
+		EndIf
+	Else */
+	//IF oCab:GetValue("ZFF_COMBO") != "V"
+		If lRet := U_PesqFor()
+			cF3CodCFPes := SA2->A2_COD
+			cF3LojCFPes := SA2->A2_LOJA
+			cF3NomCFPes := SA2->A2_NOME
+		EndIf
+	//Else
+	//	Alert("Por favor selecione o campo Tipo !!!")
+	//EndIf
+Return lRet
+
+/* User Function zFatIFor()
+	Local cRet 	 := ""
+	Local oModel := FWModelActive()
+	Local oCab 	 := oModel:GetModel("ZFFMASTER")
+
+	if !INCLUI
+		if oCab:GetValue("ZFF_COMBO") == "V"
+			cRet := POSICIONE("SA1",1,XFILIAL("SA1")+oCab:GetValue("ZFF_FORNEC")+oCab:GetValue("ZFF_FLOJA"),"A1_NOME")
+		else
+			cRet := POSICIONE("SA2",1,XFILIAL("SA2")+oCab:GetValue("ZFF_FORNEC")+oCab:GetValue("ZFF_FLOJA"),"A2_NOME")
+		endif
+	endif
+Return cRet */
+

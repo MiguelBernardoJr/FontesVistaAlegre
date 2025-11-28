@@ -1,5 +1,4 @@
 #include "protheus.ch"
-#include "tbi.ch"
 #include "topconn.ch" //-- Adicionado para a função de e-mail
 
 //-------------------------------------------------------------------
@@ -10,7 +9,7 @@
 @version     4.0 - Adição de notificação de alteração por e-mail
 /*/
 //-------------------------------------------------------------------
-User Function U_MNTFINCC()
+User Function MNTFINCC()
 
     Private oTReport
     Private cTitulo := "Gestão de Centro de Custo de Documentos Obrigatórios"

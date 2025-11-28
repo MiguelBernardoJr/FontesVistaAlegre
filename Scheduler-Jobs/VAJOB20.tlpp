@@ -7,7 +7,6 @@
 #ENDIF
 
 Static cSEMAFORO := Upper("VAJOB20"+cValToChar(ThreadId()))
-Static cRunOnce := "RUNONCEJOB" 
 
 User Function VAJOB20() AS Logical
 
@@ -29,12 +28,18 @@ User Function JOB20VA() // U_JOB20VA()
 	Local cAlias 		:= "" as Character
 	Local cSSKey     	:= cEmpAnt+CHR(255)+cFilAnt+CHR(255) as Character
 	Local cIDThread		:= cValToChar(ThreadId()) as Character
-	local nThreads		:= 1 as Numeric
+	local nThreads		:= 3 as Numeric
 	Local nI,nJ			:= 0 as Numeric
 	Local nRecno 		:= 0 as Numeric
 	Local aSemaforos 	:= {} as Array
 	Local dDataAtual 	:= dDataBase
 	Local oZ0XQry		:= Nil
+
+	IF FindFunction("U_VATRTMB1")
+		ConOut("U_VATRTMB1 encontrada")
+			U_VATRTMB1()
+		ConOut("U_VATRTMB1 executada")
+	Endif
 
 	_cQry := "WITH DADOS AS ( " + CRLF
 	_cQry += "    SELECT Z0Y_CODEI, Z0Y_ROTA AS ROTAS, Z0Y_RECEIT AS RECEITA, Z0X.R_E_C_N_O_ RECNO, Z0X_OPERAC OPERACAO, ZV0_ORDEM ORDEM " + CRLF
@@ -92,7 +97,7 @@ User Function JOB20VA() // U_JOB20VA()
 			exit
 		endif
 
-		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) < 2 .and. ;
+		While !(cAlias)->(eof()) .and. !(Alltrim((cAlias)->RECEITA ) $ cDieta) .and. Len(aSemaforos) < 1 .and. ;
 			   iif("ADAPTACAO03" $ Alltrim((cAlias)->RECEITA), !("FINAL" $ cDieta), IIF("FINAL" $ Alltrim((cAlias)->RECEITA), !("ADAPTACAO03" $ cDieta), .T.))
 
 			aAdd(aSemaforos, {(cAlias)->RECNO,(cAlias)->ROTAS,cSemaforo+"_"+iif(Empty(Alltrim((cAlias)->ROTAS)),cValToChar((cAlias)->RECNO),Alltrim((cAlias)->ROTAS))})
@@ -268,9 +273,9 @@ Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, 
 		//EndIf
 		
 		nMinThread := 1 //Val(GetSrvProfString( "ThreadMinOrdem", cValToChar(nTotThread) ))
-		nMaxThread := 2 //Val(GetSrvProfString( "ThreadMaxOrdem", "30" ))
-		nFreeThread := 2
-		nIncThread := 2
+		nMaxThread := 5 //Val(GetSrvProfString( "ThreadMaxOrdem", "30" ))
+		nFreeThread := 5
+		nIncThread := 5
 	EndIf
 
 	// encerra o manualJob
@@ -301,7 +306,8 @@ Static Function A330JobManual(cStatus, cIdentificador, cJobConnect, nTotThread, 
 	EndIf
 
 Return .T.
-/*/{Protheus.doc} DownThread
+/*/
+	{Protheus.doc} DownThread
 	Baixa das working thread abertas, onde o controle é feito através de variaveis globais
 	@type  Function
 	@author reynaldo
@@ -312,7 +318,7 @@ Return .T.
 	@example
 	(examples)
 	@see (links_or_references)
-	/*/
+/*/
 Static Function DownThread(cIdentificador)
 	LOCAL lLoop
 	LOCAL nI
