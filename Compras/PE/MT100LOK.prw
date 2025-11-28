@@ -26,6 +26,7 @@ User Function MT100LOK()
 	if lAtivo
 		lRet := U_GTPE004()
 	endif
+<<<<<<< HEAD
 	
 	// Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e,
 	// mantendo a chamada apenas no final do processo, quando a variável l103Auto estiver .F.
@@ -33,6 +34,18 @@ User Function MT100LOK()
 	If !FwIsInCallStack('U_GATI001') .AND. !FwIsInCallStack('U_GATI002')
 		If lRet .And. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
 			/* Se a linha estiver apagada, entao nao precisa realizar a FRENTE, NENHUMA validacao; */
+=======
+	// Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e, 
+	// mantendo a chamada apenas no final do processo, quando a variável l103Auto estiver .F.
+	If lRet .And. !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
+			
+			If IsInCallStack("MATA910")
+				RestArea(aArea)
+				Return .T.
+			EndIf
+
+		/* Se a linha estiver apagada, entao nao precisa realizar a FRENTE, NENHUMA validacao; */
+>>>>>>> Igor
 			If aCols[ n, Len( aCols[ 1 ] ) ]
 				Return .T.
 			EndIf
@@ -335,6 +348,11 @@ User Function M103CALC() // Funcao para recalcular pesos de milho na entrada de 
 		cPCNume,;
 		iIf(Type("M->D1_X_UMIDA")<>"U",M->D1_X_UMIDA,aCols[n,nPosUmida]),,;
 		@cZBCDESIMP, @cZBCDESAVA )
+
+	If IsInCallStack("MATA910")
+		RestArea(aArea)
+		Return .T.
+	EndIf
 
 	If IsInCallStack("A103DEVOL") .OR. cTipo=="D"
 		RestArea(aArea)

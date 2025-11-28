@@ -264,7 +264,7 @@ ElseIf cTipo=="Resumo"
 EndIf
 
 
-If lower(cUserName) $ 'ioliveira,bernardo,mbernardo,atoshio,admin,administrador'
+If lower(cUserName) $ 'ioliveira,bernardo,mbernardo,atoshio,admin,administrador,lsilva'
 	MemoWrite(StrTran(cArquivo,".xml","")+"_Quadro_" + cTipo + ".sql" , _cQry)
 EndIf
 
@@ -291,9 +291,9 @@ User function deAToC(pArray)
 	local cInObj := ""
 	for nI := 1 to len(pArray)
 		if nI == 1
-			cInObj := "'"+pArray[nI,1]+"'"
+			cInObj := "'"+pArray[nI]+"'"
 		else
-			cInObj += ",'"+pArray[nI,1]+"'"
+			cInObj += ",'"+pArray[nI]+"'"
 		endIf
 	next
 return cInObj

@@ -127,6 +127,8 @@ Static Function VAPCPA09A(lPShwZer, lPShwGer)
 	Local nCrAux := 1
 	Local aInSQL := {}
 
+	MontaQuery(lShwZer, lShwGer)
+
 	cQry := " SELECT Z08_CONFNA FROM "+RetSqlName("Z08")+"   " + CRLF
  	cQry += "WHERE Z08_FILIAL = '"+FwXFilial("Z08")+"' " + CRLF
  	cQry += "AND D_E_L_E_T_ = ' '  " + CRLF
@@ -185,8 +187,6 @@ Static Function VAPCPA09A(lPShwZer, lPShwGer)
 		EndIf
 		ZRT->(DBSkip())
 	EndDo
-
-	MontaQuery(lShwZer, lShwGer)
 
 	//oCorDie 
 	oCorDie:SetIn(1,aInSQL)

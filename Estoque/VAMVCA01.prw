@@ -1033,9 +1033,9 @@ Static Function ModelDef()
 	//oStruZ0E:SetProperty('Z0E_LOTE'  , MODEL_FIELD_WHEN, bVldAUX)
 	oStruZ0E:SetProperty('Z0E_CURRAL', MODEL_FIELD_WHEN, bVldAUX)
 	
-	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
-		"iif(FwFldGet('Z0C_TPMOV') $ '14',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
-	oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
+	//bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
+	//	"iif(FwFldGet('Z0C_TPMOV') $ '14',.T.,.F.)" ) // "FwFldGet('Z0C_TPMOV')$'123'" )
+	//oStruZ0E:SetProperty('Z0E_DATACO', MODEL_FIELD_WHEN, bVldAUX)
 	
 	bVldAUX := FWBuildFeature( STRUCT_FEATURE_WHEN,;
 		"FwFldGet('Z0C_TPMOV')$'5'" )
@@ -1319,7 +1319,7 @@ User Function CurPastoOuBaia( cCurral )
 	Local oModel:= nil
 	Local cLote := ''
 
-	If (lRet := Existcpo("Z08", cCurral))  
+	If (lRet := Existcpo("Z08", cCurral))
 		If 	FWFldGet("Z0C_TPMOV") == "2" .AND. ;
 				( cRet:=Posicione('Z08', 1, FWxFilial('Z08')+cCurral, 'Z08_TIPO') ) == "4" // 1=BAIA | 4=PASTO
 

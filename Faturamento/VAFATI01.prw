@@ -139,7 +139,7 @@ User Function FATI01()
 	Local xRet 		:= .T.
 	Local oObj 		:= ''
 	Local cIdPonto 	:= ''
-	Local lUser		:= cUserName $ GETMV("MV_FATI01A")
+	Local lUser		:= lower(cUserName) $ GETMV("MV_FATI01A")
 	Local cIdModel	:= ''
     Local nOper     := 0
     Local cCampo    := ''
@@ -999,15 +999,24 @@ User Function fX3RELI01()
 	Local cTabDesc   := ""
 	Local cCampo 	 := SubS( ReadVar(), At(">", ReadVar())+1 )
 
-	nLinha := oModelGrid:GetQtdLine()
-	if nLinha > 1
-		oModelGrid:Goline(nLinha-1)
-		cTabDesc :=	oModelGrid:GetValue(cCampo)
+	if oModelDad:GetOperation() == 3
+		if TamSX3(cCampo)[3] == 'N'
+			cTabDesc := 0
+		elseif TamSX3(cCampo)[3] == 'D'
+			cTabDesc := cToD("//")
+		endif
 	else
-		oModelGrid:Goline(nLinha)
-		cTabDesc :=	oModelGrid:GetValue(cCampo)
-		//cTabDesc := ""
-	ENDIf
+		nLinha := oModelGrid:GetQtdLine()
+		if nLinha > 1
+			oModelGrid:Goline(nLinha-1)
+			cTabDesc :=	oModelGrid:GetValue(cCampo)
+		else
+			oModelGrid:Goline(nLinha)
+			cTabDesc :=	oModelGrid:GetValue(cCampo)
+			//cTabDesc := ""
+		ENDIf
+	endif
+	
 
 Return cTabDesc
 

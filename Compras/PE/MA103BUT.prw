@@ -15,7 +15,7 @@ User Function MA103BUT() //DOCUMENTO DE ENTRADA
 
     if lAtivo
         aBut := U_GTPE014()
-    endif 
+    endif
     
     aAdd(aBut,{ "NOTE"		, {||u_FSTelaObs("SF1")}, "Observacoes", "Obs.NF"}) 
     aAdd(aBut,{ "NOTE"		, {||u_vacomm16()}, "Pesagem", "Sel. Pesagens"})

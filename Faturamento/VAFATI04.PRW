@@ -183,8 +183,7 @@ Static Function ViewDef()
 	oView:AddIncrementField( 'GRID_CTE' , 'ZFI_ITEM')
 	
 	oStrCte:RemoveField("ZFI_CODIGO")
-	oStrCte:RemoveField("ZFI_ITEM")
-	oStrCte:RemoveField("ZFI_ZFFITE")
+	//oStrCte:RemoveField("ZFI_ZFFITE")
 
 	oView:SetCloseOnOk( { |oView| .F. } )
 Return oView
@@ -1513,7 +1512,7 @@ User Function I04ZCC()
 	cQry += " and A2.D_E_L_E_T_ = '' " + CRLF
 	cQry += " where --ZCC_FILIAL = '"+FwxFilial("ZCC")+"' " + CRLF
 	//cQry += " --AND ZCC_DTCONT > DATEADD(DAY, -60, GETDATE()) " + CRLF
-	cQry += " ZCC_DTCONT > DATEADD(DAY, -60, GETDATE()) " + CRLF
+	cQry += " ZCC_DTCONT > DATEADD(DAY, -120, GETDATE()) " + CRLF
 	cQry += " AND ZCC.D_E_L_E_T_ = '' " + CRLF
 
 	cCodCon 	:= "CODIGO"
@@ -1682,7 +1681,7 @@ Static Function Filtro(nOPFil)
 			Else
 				If !(Upper(AllTrim(cTxtLike))$cFiltro)
 					cFiltro := " AND UPPER(A2_CGC) LIKE '%" + Upper(AllTrim(cTxtLike)) + "%'"
-				Endif	
+				Endif
 			Endif
 		Else
 			cFiltro := " AND UPPER(ZCC_DTCONT) LIKE '%" + Upper(AllTrim(cTxtBusca)) + "%'"
@@ -1692,7 +1691,7 @@ Static Function Filtro(nOPFil)
 			cOrdem :=  " ORDER BY ZCC_DTCONT DESC "
 		endif
 
-	else 
+	else
 	    cFiltro := " "
 		cOrdem  := " "
 	endif

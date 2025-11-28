@@ -41,7 +41,6 @@ Static Function ModelDef()
     Local oGridZVB  := FWFormStruct(1, 'ZVB', {|cCampo| (AllTrim(cCampo) $ "ZVB_COD|ZVB_ITEM|ZVB_ITEMZA|ZVB_NUMSC5|ZVB_LOTE|ZVB_BOV|ZVB_DESC|ZVB_QUANT|ZVB_PRECO|ZVB_TOTAL") })
     Local aZVBRel   := {}
     Local aZVARel   := {}
-    Local bCommit   := {|| bSaveCom()}
 
     oGridZVA:SetProperty('ZVA_LOTE'   ,   MODEL_FIELD_VALID, {|| FI05LT()})
     oGridZVA:SetProperty('ZVA_QUANT'  ,   MODEL_FIELD_VALID, {|| FI05QT()})
@@ -241,14 +240,14 @@ User Function FATI05M()
 									ConOut(cLogErro)
 									Alert(cLogErro)
 								Next nI
-							ENDIF 
+							ENDIF
 
 						RECLOCK( "ZVA", .F. )
                             ZVA->ZVA_STATUS := "C"
 						ZVA->(MSUNLOCK())
 
 						MsgAlert( "A linha com o pedido [ "+ZVA->ZVA_NUMSC5+" ] teve o status alterado para [CANCELADO], pois a nota foi excluida.", "Atenção...")
-						TMP->(DBSKIP())
+						(cAlias)->(DBSKIP())
 					Endif
 				ENDDO
 
@@ -801,7 +800,7 @@ Static Function FI05QT()
                     
                     For nJ := 1 to Len(aLotes[nPosBov][2])
                         if aLotes[nPosBov][2][nJ][2] != 0
-                            if (nQtSoma + aLotes[nPosBov][2][nJ][2]) <= nQtDigit
+                            if (nQtSoma + aLotes[nPosBov][2][nJ][2]) < nQtDigit
                                 
 
                                 aAdd(aBovs[nPosBLot][2][nPosBItem][2], {aLotes[nPosBov][2][nJ][1]  ,; // BOV
@@ -812,7 +811,7 @@ Static Function FI05QT()
                                 
                                 aLotes[nPosBov][2][nJ][2] := 0
                             
-                            elseif (nQtSoma + aLotes[nPosBov][2][nJ][2]) >= nQtDigit
+                            elseif (nQtSoma + aLotes[nPosBov][2][nJ][2]) > nQtDigit
 
                                 aAdd(aBovs[nPosBLot][2][nPosBItem][2],{ aLotes[nPosBov][2][nJ][1]  ,; // BOV
                                                                                     nQtDigit - nQtSoma         ,; // Quantidade
@@ -821,7 +820,17 @@ Static Function FI05QT()
                                 aLotes[nPosBov][2][nJ][2] := aLotes[nPosBov][2][nJ][2] - (nQtDigit - nQtSoma)
                                 
                                 nQtSoma += nQtDigit - nQtSoma
-                                exit 
+                                exit
+                            elseif (nQtSoma + aLotes[nPosBov][2][nJ][2]) == nQtDigit
+
+                                aAdd(aBovs[nPosBLot][2][nPosBItem][2],{ aLotes[nPosBov][2][nJ][1]  ,; // BOV
+                                                                                    nQtDigit - nQtSoma         ,; // Quantidade
+                                                                                    nJ                         })
+
+                                aLotes[nPosBov][2][nJ][2] := aLotes[nPosBov][2][nJ][2] - (nQtDigit - nQtSoma)
+                                
+                                nQtSoma += nQtDigit - nQtSoma
+                                exit
                             EndIf
                         EndIf
 

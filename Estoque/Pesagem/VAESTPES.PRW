@@ -423,7 +423,19 @@ User Function ESTPESV()
 							lRet := .F.
 						endif
 					endif
-				endif 
+				endif
+
+				if lRet .and. ( "(" $ oMdl3:GetValue("ZPB_OBSERV") .or. ;
+								")" $ oMdl3:GetValue("ZPB_OBSERV") .or. ;
+								"[" $ oMdl3:GetValue("ZPB_OBSERV") .or. ;
+								"]" $ oMdl3:GetValue("ZPB_OBSERV") .or. ;
+								"{" $ oMdl3:GetValue("ZPB_OBSERV") .or. ;
+								"}" $ oMdl3:GetValue("ZPB_OBSERV"))
+					
+					oModel:SetErrorMessage("","","","","HELP", 'Caracter Inválido', "Os caracteres <font color='#ff0000ff' size='12'> ( ) { } [ ] </font> não são permitidos no campo Observações.  [ABA 03] ")
+					lRet := .F.
+
+				endif
 			endif 			
 		endif 			
 	endif 
@@ -1782,7 +1794,7 @@ User Function zWhenMl()
 				lRet := .T.
 			else
 				lRet := .F.
-			endif 
+			endif
 		else
 			lRet := .F.
 		endif

@@ -5,7 +5,7 @@ User Function UPDATESRA()
     Local nLin      := 0
     Local nUpdated  := 0
     Local cMat      := ""
-    Local aDados    := {}
+    Local aDados    := {} as Array 
     Local nI        := 0
 
     Private lMsHelp := .T.

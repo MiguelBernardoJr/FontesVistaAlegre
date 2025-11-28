@@ -29,6 +29,9 @@ User Function MT100TOK()
 	Local nI		:= 0                             
 	Local nPosPeCh	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESCH'} )
 	Local nPosPesa	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESAG'} )
+	Local nPosPed	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_PEDIDO'} )
+	Local nPItPc	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_ITEMPC'} )
+	//Local nPosProd	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_COD'} )
 	//Local nPosProd	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_COD'} )
 	//Local nPosCC 		:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_CC'} )
 	//Local nPosTES 	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_TES'} )
@@ -56,12 +59,39 @@ User Function MT100TOK()
 	If !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
 		//Validar se Acols Está aberto aqui.
 		IF ALLTRIM(SB1->B1_GRUPO) $ "01|BOV"
+
+			cQry := " SELECT ZCC.*, ZBC.*  " + CRLF
+			cQry += " FROM "+RetSqlNAme("ZBC")+" ZBC " + CRLF
+			cQry += " JOIN "+RetSqlNAme("ZCC")+" ZCC ON ZCC_FILIAL = ZBC_FILIAL " + CRLF
+			cQry += " AND ZCC_CODIGO = ZBC_CODIGO " + CRLF
+			cQry += " AND ZCC.D_E_L_E_T_ = ''  " + CRLF
+			cQry += " WHERE ZBC_PEDIDO = ? " + CRLF
+			cQry += " AND ZBC_ITEMPC = ? " + CRLF
+			cQry += " AND ZBC_FILIAL = ? " + CRLF
+			cQry += " AND ZBC.D_E_L_E_T_ = '' " + CRLF
+
+			oExecZCC := FWExecStatement():New(cQry)
+
 			For nI := 1 To Len(aCols)
-				if Empty(aCols[nI,nPosPeCh]) .or. Empty(aCols[nI,nPosPesa]) 
-					FWAlertInfo("O Item [ "+aCols[nI,nPosItem]+" ] não possui pesagem vinculada. Para o produto selecionado, é obrigatório informar a pesagem relacionada a esse item. (Outras Ações -> Sel.Pesagens )", "Atenção!")
-					Return .F.
+				if !aCols[nI][Len(aCols[nI])]
+					oExecZCC:SetString(1,aCols[nI][nPosPed])
+					oExecZCC:SetString(2,aCols[nI][nPItPc])
+					oExecZCC:SetString(3,FWxFilial("ZBC"))
+					
+					cAlias := oExecZCC:OpenAlias()
+
+					if !(cAlias)->(EOF()) .and. (cAlias)->ZCC_GORDO != 'S' .and. (cAlias)->ZBC_TPNEG != "Q" // apenas valida pesagem se não for boi gordo e negociação não por por cabeça
+						if Empty(aCols[nI,nPosPeCh]) .or. Empty(aCols[nI,nPosPesa]) 
+							FWAlertInfo("O Item [ "+aCols[nI,nPosItem]+" ] não possui pesagem vinculada. Para o produto selecionado, é obrigatório informar a pesagem relacionada a esse item. (Outras Ações -> Sel.Pesagens )", "Atenção!")
+							Return .F.
+						Endif
+					Endif
+					(cAlias)->(DbCloseArea())
 				Endif
 			Next nI
+
+			oExecZCC:Destroy()
+			oExecZCC := nil
 		Endif
 		
 		cQryChv := " SELECT  F1_FILIAL, F1_CHVNFE, F1_DOC, F1_SERIE "
