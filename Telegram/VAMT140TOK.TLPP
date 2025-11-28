@@ -174,50 +174,50 @@ Static Function MontaMensagemPortaria(cStep as character,cFornece as character, 
 
 Return _cMsg
 
-//User Function () //U_VAMT140TOK()
-//    Local lRet := .T.   as logical
-//    Local oBotAlmoxarifado     as object
-//    Local _cMsg         as character
-//    Local cTokenAlmoxarifado   := GetMV("MV_AMXURLC") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
-//    Local cIdAlmoxarifado     := GetMV("MV_AMXIDC") as character//"-4974016224" as character
-//    Local cUrlEtiquetas := "https://t.me/webappvistabot/Etiquetas"
-//
-//    oBotAlmoxarifado := Telegram():New(cTokenAlmoxarifado,cIdAlmoxarifado)
-//
-//    If ValType(oBotAlmoxarifado) == "O"
-//        _cMsg := '<b><i> Nova Pré-Nota Recebida na Portaria!</i></b>' + CRLF
-//        _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> às <b>'+Time()+'</b></i>' + CRLF
-//        _cMsg += CRLF
-//        _cMsg += '<b><i> Dados do Documento:</i></b>' + CRLF
-//        _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ CRLF
-//        _cMsg += CRLF
-//        _cMsg += '<b>Código</b>: <pre>'+cA100For+'</pre>'+ CRLF
-//        _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ CRLF
-//        _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ CRLF
-//        _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + CRLF
-//        _cMsg += '<b>Data de Emissão</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + CRLF
-//        _cMsg += CRLF
-//        _cMsg += CRLF
-//        _cMsg += '<b>Dados da Compra</b>' + CRLF
-//        _cMsg += CRLF
-//        _cMsg += '<b>Pedido de Compra</b>: <pre>Teste</pre>' + CRLF
-//        _cMsg += '<b>Comprador</b>: <pre>Teste</pre>' + CRLF
-//        _cMsg += CRLF
-//
-//        cButtons := '{'
-//        cButtons += '"inline_keyboard": ['
-//        cButtons += '    ['
-//        cButtons += '      {"text": "Imprimir Etiquetas", "url": "' + cUrlEtiquetas + '"}'
-//        cButtons += '    ]'
-//        cButtons += ']'
-//        cButtons += '}'
-//
-//        //oBotAlmoxarifado:SendMessage( _cMsg, .T. /* lHtml */ )
-//        oBotAlmoxarifado:SendMessageWithButtons(_cMsg,cButtons, .T. /* lHtml */ )
-//        
-//    endif
-//
-//    oBotAlmoxarifado := nil
-//
-//Return lRet
+User Function () //U_VAMT140TOK()
+    Local lRet := .T.   as logical
+    Local oBotAlmoxarifado     as object
+    Local _cMsg         as character
+    Local cTokenAlmoxarifado   := GetMV("MV_AMXURLC") as character//"7657595246:AAHBqu18wSKanhUJxnuy0nE8GSAr_p2hsZo" as character
+    Local cIdAlmoxarifado     := GetMV("MV_AMXIDC") as character//"-4974016224" as character
+    Local cUrlEtiquetas := "https://t.me/webappvistabot/Etiquetas"
+
+    oBotAlmoxarifado := Telegram():New(cTokenAlmoxarifado,cIdAlmoxarifado)
+
+    If ValType(oBotAlmoxarifado) == "O"
+        _cMsg := '<b><i> Nova Pré-Nota Recebida na Portaria!</i></b>' + CRLF
+        _cMsg += '<i>Recebido em: <b>'+dToC(Date())+'</b> às <b>'+Time()+'</b></i>' + CRLF
+        _cMsg += CRLF
+        _cMsg += '<b><i> Dados do Documento:</i></b>' + CRLF
+        _cMsg += '<b>Fornecedor</b>: '+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_NOME"))+''+ CRLF
+        _cMsg += CRLF
+        _cMsg += '<b>Código</b>: <pre>'+cA100For+'</pre>'+ CRLF
+        _cMsg += '<b>Loja</b>: <pre>'+cLoja+'</pre>'+ CRLF
+        _cMsg += '<b>CNPJ/CPF</b>: <pre>'+Alltrim(Posicione("SA2",1,FwXFilial("SA2")+cA100For+cLoja,"A2_CGC"))+'</pre>'+ CRLF
+        _cMsg += '<b>Nota Fiscal</b>: <pre>' + cNFiscal + '</pre>' + CRLF
+        _cMsg += '<b>Data de Emissão</b>: <pre>'+dToC(dDEmissao)+ '</pre>' + CRLF
+        _cMsg += CRLF
+        _cMsg += CRLF
+        _cMsg += '<b>Dados da Compra</b>' + CRLF
+        _cMsg += CRLF
+        _cMsg += '<b>Pedido de Compra</b>: <pre>Teste</pre>' + CRLF
+        _cMsg += '<b>Comprador</b>: <pre>Teste</pre>' + CRLF
+        _cMsg += CRLF
+
+        cButtons := '{'
+        cButtons += '"inline_keyboard": ['
+        cButtons += '    ['
+        cButtons += '      {"text": "Imprimir Etiquetas", "url": "' + cUrlEtiquetas + '"}'
+        cButtons += '    ]'
+        cButtons += ']'
+        cButtons += '}'
+
+        //oBotAlmoxarifado:SendMessage( _cMsg, .T. /* lHtml */ )
+        oBotAlmoxarifado:SendMessageWithButtons(_cMsg,cButtons, .T. /* lHtml */ )
+        
+    endif
+
+    oBotAlmoxarifado := nil
+
+Return lRet
 

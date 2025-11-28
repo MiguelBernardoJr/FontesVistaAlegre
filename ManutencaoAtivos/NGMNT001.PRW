@@ -14,6 +14,9 @@ User Function NGMNT001()
 // Foi preciso ler o aCols inteiro a cada passagem aqui. E a chamada deste PE é o FOR do aCols.
 // Sabemos que assim fica redundante, mas é a única forma, pois não existe acesso ao nro da linha do aCols.
 
+// igor oliveira 01.10.2025
+// Utilizando a variável privada NW como acesso a linha do aCols
+
 // Local aChaveSTL := ParamIXB[1]
 // Local cFilial   := aChaveSTL[1]
 // Local cOrdem    := aChaveSTL[2]
@@ -25,7 +28,8 @@ User Function NGMNT001()
 // Local cSeqTare  := aChaveSTL[8]
 
 Local cQuery     := ""
-Local nCntFor    := 0
+Local cAlias     := ""
+//Local nCntFor    := 0
 Local nPOSNRABA  := 0
 Local nPOSVUABA  := 0
 Local nPOSTTABA  := 0
@@ -35,16 +39,19 @@ Local nPOSCOABA  := 0
 Local nRecSavSTL := 0
 
 If FunName() == "MNTA656" .and. nLanca == "Produto"
+	
+	if Type("aHeader") == "A"
 
-	nPOSNRABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_NRABAS"})
-	nPOSVUABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VUNABA"})
-	nPOSTTABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VTTABA"})
-	nPOSFORT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_FORST9"})
-	nPOSLOJT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_LOJST9"})
-	nPOSCOABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_COBABA"})
-	nRecSavSTL := STL->(Recno())
+		nPOSFROTA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TQN_FROTA"})
+		nPOSNRABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_NRABAS"})
+		nPOSVUABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VUNABA"})
+		nPOSTTABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_VTTABA"})
+		nPOSFORT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_FORST9"})
+		nPOSLOJT9 := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_LOJST9"})
+		nPOSCOABA := aSCAN(aHeader,{|x| Trim(Upper(x[2])) == "TL_COBABA"})
+		nRecSavSTL := STL->(Recno())
 
-	For nCntFor := 1 to Len(acols)
+		//For nCntFor := 1 to Len(acols)
 
 		cQuery := "SELECT STL.R_E_C_N_O_ RECSTL FROM " + RetSQLName( "STL" ) + " STL"
 		cQuery += "	 JOIN "+RetSqlName("STJ")+" STJ ON "
@@ -53,29 +60,28 @@ If FunName() == "MNTA656" .and. nLanca == "Produto"
 		cQuery += "	 AND STJ.TJ_PLANO = STL.TL_PLANO AND STJ.D_E_L_E_T_ = ' '"
 		cQuery += " WHERE STL.TL_FILIAL = '"+xFilial("STL")+"' 
 		cQuery += "  AND STL.TL_CODIGO = '130011' AND STL.D_E_L_E_T_ = ' ' 
-		cQuery += " AND STJ.TJ_CODBEM   = '" + aCols[nCntFor,nPOSFROTA] + "' "
+		cQuery += " AND STJ.TJ_CODBEM   = '" + aCols[nW][nPOSFROTA] + "' "
 		cQuery += " AND STJ.D_E_L_E_T_ = ' ' "
 		cQuery += " AND STJ.TJ_SERVICO = 'C00014' "
 		cQuery += " ORDER BY 1 DESC"
-		DbUseArea(.t., "TOPCONN", TCGenQry(,,cQuery), "TMPSTL", .f., .f.)
-
-		If TMPSTL->( !EoF() )
-			STL->(DbGoTo(TMPSTL->(RECSTL)))
+		
+		cAlias := MpSysOpenQuery(cQuery)
+		If (cAlias)->( !EoF() )
+			STL->(DbGoTo((cAlias)->(RECSTL)))
 			RecLock("STL",.f.)
-			STL->TL_NRABAS := aCols[nCntFor][nPOSNRABA]
-			STL->TL_VUNABA := aCols[nCntFor][nPOSVUABA]
-			STL->TL_VTTABA := aCols[nCntFor][nPOSTTABA]
-			STL->TL_FORST9 := aCols[nCntFor][nPOSFORT9]
-			STL->TL_LOJST9 := aCols[nCntFor][nPOSLOJT9]
-			STL->TL_COBABA := aCols[nCntFor][nPOSCOABA]
-			MsUnlock()
+				STL->TL_NRABAS := aCols[nW][nPOSNRABA]
+				STL->TL_VUNABA := aCols[nW][nPOSVUABA]
+				STL->TL_VTTABA := aCols[nW][nPOSTTABA]
+				STL->TL_FORST9 := aCols[nW][nPOSFORT9]
+				STL->TL_LOJST9 := aCols[nW][nPOSLOJT9]
+				STL->TL_COBABA := aCols[nW][nPOSCOABA]
+			STL->(MsUnlock())
 		EndIf
-		TMPSTL->( dbCloseArea() )
+		(cAlias)->( dbCloseArea() )
+		//Next
 
-	Next
-
+		STL->(DbGoTo(nRecSavSTL))
+	EndIf
 Endif
-
-STL->(DbGoTo(nRecSavSTL))
 
 Return .T.

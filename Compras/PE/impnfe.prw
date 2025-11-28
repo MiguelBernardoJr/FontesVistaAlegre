@@ -321,12 +321,16 @@ User Function MT140SAI()
     if lAtivo
         // Ponto de chamada ConexãoNF-e sempre como primeira instrução.
         U_GTPE016()
-    endif 
+    endif
     
-    if Type("oGetDados") == "O".and. oGetDados:nOpc == 3 .or.  oGetDados:nOpc == 4
+    if Type("oGetDados") == "O" .and. (oGetDados:nOpc == 3 .or.  oGetDados:nOpc == 4)
         U_VAMT140TOK(1)
     elseif Type("oGetDados") == "O".and. oGetDados:nOpc == 5 
         U_VAMT140TOK(99)
     endif
 
 Return Nil
+
+/*
+https://ajuda.qive.com.br/pt-BR/articles/7874832-manual-de-instalacao-do-monitor-dfe-para-protheus#h_66c8f2d9ff
+*/

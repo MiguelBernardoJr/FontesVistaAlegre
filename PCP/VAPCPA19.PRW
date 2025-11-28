@@ -8,7 +8,7 @@ STATIC _ENTER_    := (Chr(13)+Chr(10))
 WSRESTFUL VAPCPA19 DESCRIPTION "WebService REST para Roterização de Confinamento"
     WsMethod GET ConfinamentoGeral;
         DESCRIPTION "Listagem do cadastro de notas com a percentagem de ajustes";
-        Path "/ConfinamentoGeral" ; // Path "/baias || /baias/{id}" ; WsSyntax "/CadastroDasNotas" ; // Path "/baias || /baias/{id}" ;
+        Path "/ConfinamentoGeral" ; // Path "/baias || /baia//s/{id}" ; WsSyntax "/CadastroDasNotas" ; // Path "/baias || /baias/{id}" ;
         Produces APPLICATION_JSON // ; TTalk "v1"
 
     WsMethod GET RotasDasBaias;

@@ -247,13 +247,17 @@ Method PrintDetails(oXmlData, nVias, cIdEnt) CLASS PrtDanfeCom
 	Private oDestino   := oNF:_INFNFCOM:_Dest
 	Private oTotal     := oNF:_INFNFCOM:_Total
 	Private oDet       := oNF:_INFNFCOM:_Det
-	Private oFatura    := oNF:_INFNFCOM:_gFat
 	Private oAssinante := oNF:_INFNFCOM:_assinante
+	Private oFatura    := Nil
 	Private oImposto   := Nil
 
 	Default oXmlData    := Nil
 	Default nVias       := 1
 	Default cIdEnt      := ""
+
+	If Type("oNF:_INFNFCOM:_gFat") <> "U"
+		oFatura := oNF:_INFNFCOM:_gFat
+	EndIf
 
 	If (ValType(oDet) == "O")
 		oDet := {oDet}
@@ -1033,10 +1037,10 @@ User Function DANFCOMPrc( lEnd, cIdEnt, cAmbiente )
     Local cIndex	 := ""
     Local lQuery     := .F.
     Local lImpDir	:= GetNewPar("MV_IMPDIR",.F.)
-    Local lSdoc  	:= TamSx3("F3_SERIE")[1] == 14
+	
     Local cSerie 	:= ""
     Local cSerId 	:= ""
-    Local cCampos	:= ""
+    
     local lPossuiNota	:= .F.
 	Local cPathPDF    := SuperGetMV('MV_RELT',,"\SPOOL\")
 	Local aPergs	:= {}
@@ -1083,11 +1087,11 @@ User Function DANFCOMPrc( lEnd, cIdEnt, cAmbiente )
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³Campos que serao adicionados a query somente se existirem na base³
 			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-			If Empty(cCampos)
-				cCampos := "%%"
-			Else
-				cCampos := "% " + cCampos + " %"
-			Endif
+			
+			
+			
+			
+			
 
 			If oQry == nil
 				cQry := "SELECT F3_FILIAL,F3_ENTRADA,F3_NFELETR,F3_CFO,F3_FORMUL,F3_NFISCAL,F3_SERIE,F3_CLIEFOR,F3_LOJA,F3_ESPECIE,F3_DTCANC "
@@ -1111,6 +1115,7 @@ User Function DANFCOMPrc( lEnd, cIdEnt, cAmbiente )
 
 				cQry += "AND F3_DTCANC = ? "
 				cQry += "ORDER BY F3_NFISCAL "
+				cQry := ChangeQuery(cQry)
 				oQry := FWExecStatement():New(cQry)
 			EndIf
 			
@@ -1127,11 +1132,11 @@ User Function DANFCOMPrc( lEnd, cIdEnt, cAmbiente )
 			oQry:GetFixQuery()
 			cAliasSF3 := oQry:OpenAlias()
 			
-			If lSdoc
-				cSerId := (cAliasSF3)->F3_SDOC
-			Else
-				cSerId := (cAliasSF3)->F3_SERIE
-			EndIf
+			
+			
+			
+			cSerId := (cAliasSF3)->F3_SERIE
+			
 
 			While !Eof() .And. xFilial("SF3") == (cAliasSF3)->F3_FILIAL .And.;
 				cSerId == MV_PAR03 .And.;
@@ -1165,11 +1170,11 @@ User Function DANFCOMPrc( lEnd, cIdEnt, cAmbiente )
 				dbSelectArea(cAliasSF3)
 				dbSkip()
 
-				If lSdoc
-					cSerId := (cAliasSF3)->F3_SDOC
-				Else
-					cSerId := (cAliasSF3)->F3_SERIE
-				EndIf
+				
+				
+				
+				cSerId := (cAliasSF3)->F3_SERIE
+				
 
 				If lEnd
 					Exit
@@ -1195,16 +1200,16 @@ User Function DANFCOMPrc( lEnd, cIdEnt, cAmbiente )
 				Aviso(STR0010,STR0011,{STR0012},3)
 			EndIf
 
-			if lQuery
-				(cAliasSF3)->(dbCloseArea())
-				oQry:Destroy()
-				FreeObj(oQry)     
-				oQry := nil
-			else
-				DBClearFilter()
-				Ferase(cIndex+OrdBagExt())
-			endif
 		EndIf
+		if lQuery
+			(cAliasSF3)->(dbCloseArea())
+			oQry:Destroy()
+			FreeObj(oQry)     
+			oQry := nil
+		else
+			DBClearFilter()
+			Ferase(cIndex+OrdBagExt())
+		endif
 	EndIf
 	fwFreeObj(oDanfcom)
 	oDanfcom := Nil

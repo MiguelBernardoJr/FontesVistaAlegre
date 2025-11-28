@@ -2,14 +2,14 @@
 #include "protheus.ch"
 #include "rwmake.ch"
 
-/* 
+/*
 	MJ : 20.02.2018
-		# Forçar o preenchimento de campos na entrada da Nota Fiscal. 
+		# Forçar o preenchimento de campos na entrada da Nota Fiscal.
 */
 User Function MT100LOK()
 	Local lRet 		 := .T.
 	Local cCampos 	 := ""
-// Local cFilVld	 := GetMV("VA_C100LOK",,"01,12")
+	// Local cFilVld	 := GetMV("VA_C100LOK",,"01,12")
 	Local lContinua	 := .T.
 	Local cSB1Milhos := GetMV("VA_SB1MILHO",, "020017") // separar por virgula se tiver mais de um produto
 	Local cSB1Insumo := GetMv("MV_X_PRDMI",,"020017;020080;020079;") // Indica códigos de prudutos que NÃO deverão passar pela regra de
@@ -25,23 +25,39 @@ User Function MT100LOK()
 	// EndIf
 	if lAtivo
 		lRet := U_GTPE004()
-	endif 
+	endif
+<<<<<<< HEAD
+	
+	// Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e,
+	// mantendo a chamada apenas no final do processo, quando a variável l103Auto estiver .F.
+	// If lRet .And. !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
+	If !FwIsInCallStack('U_GATI001') .AND. !FwIsInCallStack('U_GATI002')
+		If lRet .And. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
+			/* Se a linha estiver apagada, entao nao precisa realizar a FRENTE, NENHUMA validacao; */
+=======
 	// Restrição para validações não serem chamadas duas vezes ao utilizar o importador da ConexãoNF-e, 
 	// mantendo a chamada apenas no final do processo, quando a variável l103Auto estiver .F.
 	If lRet .And. !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
+			
+			If IsInCallStack("MATA910")
+				RestArea(aArea)
+				Return .T.
+			EndIf
+
 		/* Se a linha estiver apagada, entao nao precisa realizar a FRENTE, NENHUMA validacao; */
+>>>>>>> Igor
 			If aCols[ n, Len( aCols[ 1 ] ) ]
 				Return .T.
 			EndIf
 
-		/* REGRA SOMENTE SERA EXECUTADA NA FILIAL 01 */
+			/* REGRA SOMENTE SERA EXECUTADA NA FILIAL 01 */
 			If xFilial('SF1') <> '01'
 				Return .T.
 			EndIf
 
-		/* Chamado: 237 : https://agropecuriavistaalegre.freshdesk.com/a/tickets/237
-			Solicitante: jessica silva 
-			Descri: Validacao Inclusao MILHO; Obrigatoriedade de campos; 
+			/* Chamado: 237 : https://agropecuriavistaalegre.freshdesk.com/a/tickets/237
+			Solicitante: jessica silva
+			Descri: Validacao Inclusao MILHO; Obrigatoriedade de campos;
 			REGRA PARA MILHO
 			*/
 			cCampos := ""
@@ -81,9 +97,9 @@ User Function MT100LOK()
 				EndIf
 
 				if lContinua
-					If Empty( GdFieldGet('D1_X_PESCH', nI) )
-						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
-					EndIf
+					//If Empty( GdFieldGet('D1_X_PESCH', nI) )
+					//	cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Chegada"
+					//EndIf
 
 					If Empty( GdFieldGet('D1_X_EMBDT', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Data Embarque"
@@ -108,11 +124,12 @@ User Function MT100LOK()
 					If Empty( GdFieldGet('D1_X_QUEKG', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra"
 					EndIf
-					
+
 					If Empty( GdFieldGet('D1_X_QUECA', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Quebra/Animal"
 					EndIf
 					*/
+
 					If Empty( GdFieldGet('D1_X_KM', nI) )
 						cCampos += Iif( Empty(cCampos), "", ",<br>") + "Distância"
 					EndIf
@@ -132,15 +149,16 @@ User Function MT100LOK()
 				/* REGRA DOS INSUMOS */
 
 				If AllTrim(Posicione("SB1", 1, xFilial("SB1")+Alltrim(GdFieldGet('D1_COD')), 'B1_GRUPO')) $ cGrpAju ;
-				.and. !Alltrim(GdFieldGet('D1_COD')) $ cSB1Insumo ;
-				.and. cTipo == "N";
-				.and. Empty(GdFieldGet('D1_X_PESOB')) ;
-				.and. SF4->F4_TRANFIL == "2" // 2 = NÃO
+						.and. !Alltrim(GdFieldGet('D1_COD')) $ cSB1Insumo ;
+						.and. cTipo == "N";
+						.and. Empty(GdFieldGet('D1_X_PESOB')) ;
+						.and. SF4->F4_TRANFIL == "2" // 2 = NÃO
 					cCampos += Iif( Empty(cCampos), "", ",<br>") + "Peso Bruto"
 					MsgInfo('Não foi localizado informação na linha: <b>' + AllTrim(Str(N)) + '</b> para o(s) campo(s): <br> <b>'+cCampos+'</b>.')
 					lRet := .F.
 				EndIf
 			EndIf
+		EndIf
 	EndIf
 
 Return lRet
@@ -151,18 +169,18 @@ Return lRet
 	±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
 	±±³Função    ³ MT100LOK Autor ³ Henrique Magalhaes   ³ Data ³ 19.06.2015³ ±±
 	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-	±±³ Descrição ³  Validacao na linha do documento de enttrada              ³±±  
+	±±³ Descrição ³  Validacao na linha do documento de enttrada              ³±±
 	±±³ ** Utilizado para tratar obrigatoriedade de campos					  ³±±
 	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
 	±±³Uso       ³ validar campos de digitacao no item do documento de entrada ±±
 	±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
 	±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-	ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
-/*   
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+/*
 	Descrição:
 	utilizacao para validar as entidade de Centro de Custo / Item Contabil / Classe valor  na digitacao de itens no Documento de Entrada
 	Tratamentos diferenciados para Empresa 01 (Vista Alegre com CC/Item/Classe Valor) e Empresa 05 (Quintas, apenas CC)
-	*/  
+*/
 /*
 	User Function MT100LOK()
 	Local aArea		:= GetArea()
@@ -177,20 +195,20 @@ Return lRet
 
 		If !Alltrim(cEmpAnt)$'01;05' // Efetua Validacao apenas para empresa 01 - fazendas
 		RestArea(aArea)
-		Return lRet 
+		Return lRet
 		Endif
 
 
 		If !Empty(aCols[n,nPosTES]) // Somente valida após Preenchimento ds TES
-		cCtrEst := Posicione('SF4',1,xFilial('SF4') +aCols[n,nPosTES],'F4_ESTOQUE')	
-		cCtrFin := Posicione('SF4',1,xFilial('SF4') +aCols[n,nPosTES],'F4_DUPLIC')	
+		cCtrEst := Posicione('SF4',1,xFilial('SF4') +aCols[n,nPosTES],'F4_ESTOQUE')
+		cCtrFin := Posicione('SF4',1,xFilial('SF4') +aCols[n,nPosTES],'F4_DUPLIC')
 			If cCtrEst == 'S'
 			// Se Controlar Estoque nao permite o preenchimento das entidades CC / Item Contabil / Classe Valor
 
 				If  Alltrim(cEmpAnt)$'05'
 					If  !Empty(aCols[n,nPosCC])
 					aCols[n,nPosCC]		:= Space(TamSX3('D1_CC')[1])
-					Aviso('AVISO', 'Itens para Estoque nao devem ter o camp Centro de Custo preenchido!!! Verifique!!!', {'Ok'})	
+					Aviso('AVISO', 'Itens para Estoque nao devem ter o camp Centro de Custo preenchido!!! Verifique!!!', {'Ok'})
 					lRet := .T.
 					Endif
 				Endif
@@ -199,24 +217,24 @@ Return lRet
 					If  !Empty(aCols[n,nPosCC]) .or. !Empty(aCols[n,nPosITCTA]) .or. !Empty(aCols[n,nPosCLVL])
 					aCols[n,nPosCC]		:= Space(TamSX3('D1_CC')[1])
 					aCols[n,nPosITCTA]	:= Space(TamSX3('D1_ITEMCTA')[1])
-					aCols[n,nPosCLVL]	:= Space(TamSX3('D1_CLVL')[1])    
-					Aviso('AVISO', 'Itens para Estoque nao devem ter os campos Centro de Custo / Item Contabil / Classe Valor preenchidos!!! Verifique!!!', {'Ok'})	
+					aCols[n,nPosCLVL]	:= Space(TamSX3('D1_CLVL')[1])
+					Aviso('AVISO', 'Itens para Estoque nao devem ter os campos Centro de Custo / Item Contabil / Classe Valor preenchidos!!! Verifique!!!', {'Ok'})
 					lRet := .T.
 					Endif
 				Endif
-				
+
 			Else // Se for Custo Direto (Nao controle estoque e deve obrigar os preenchimentos das entidades CC / Item Contabil / Classe Valor
 			// Se for Custo Diretro (Estoque NAO) obriga preencher as entidades CC / Item Contabil / Classe Valor
 				If  Alltrim(cEmpAnt)$'05'
 					If  cCtrFin='S' .and. ( Empty(aCols[n,nPosCC]))
-					Aviso('AVISO', 'Itens que nao controlam Estoque, devem ter o campo Centro de Custo preenchido!!! Verifique!!!', {'Ok'})	
+					Aviso('AVISO', 'Itens que nao controlam Estoque, devem ter o campo Centro de Custo preenchido!!! Verifique!!!', {'Ok'})
 					lRet := .F.
 					Endif
 				Endif
-					
+
 				If  Alltrim(cEmpAnt)$'01'
 					If  cCtrFin='S' .and. ( Empty(aCols[n,nPosCC]) .or. Empty(aCols[n,nPosITCTA]) .or. Empty(aCols[n,nPosCLVL]) )
-					Aviso('AVISO', 'Itens que nao controlam Estoque, devem ter os campos Centro de Custo / Item Contabil / Classe Valor preenchidos!!! Verifique!!!', {'Ok'})	
+					Aviso('AVISO', 'Itens que nao controlam Estoque, devem ter os campos Centro de Custo / Item Contabil / Classe Valor preenchidos!!! Verifique!!!', {'Ok'})
 					lRet := .F.
 					Endif
 				Endif
@@ -232,58 +250,58 @@ Return lRet
 */
 
 User Function PegaUmidade( _cFilial, _cPedido, nUmidade, lTemContrato, cZBCDESIMP, cZBCDESAVA )
-Local nRetorno       := 0
-Local _cQry          := ""
-Local _ZBCAlias      := GetNextAlias()
-Local _ZDMAlias      := "" // GetNextAlias()
-Default nUmidade     := 0
-Default lTemContrato := .F.
+	Local nRetorno       := 0
+	Local _cQry          := ""
+	Local _ZBCAlias      := GetNextAlias()
+	Local _ZDMAlias      := "" // GetNextAlias()
+	Default nUmidade     := 0
+	Default lTemContrato := .F.
 
-lTemContrato := .F.
-If Empty(_cPedido)
-	ConOut("[MT100LOK] Funcao PegaUmidade: " + cValToChar(nRetorno))
-	Return nRetorno
-EndIf
-
-_cQry := " SELECT ZBC_TABDES, ZBC_DESIMP, ZBC_DESAVA " + CRLF
-_cQry += " FROM	  ZBC010 " + CRLF
-_cQry += " WHERE  ZBC_FILIAL='" + _cFilial + "' " + CRLF
-_cQry += "    AND ZBC_PEDIDO='" + _cPedido + "' " + CRLF
-_cQry += " 	  AND D_E_L_E_T_=' '"
-
-dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_ZBCAlias),.F.,.F.)
-
-If !(_ZBCAlias)->(Eof())
-	lTemContrato := .T.
-	
-	cZBCDESIMP := Iif(Empty((_ZBCAlias)->ZBC_DESIMP), "B", (_ZBCAlias)->ZBC_DESIMP)
-	cZBCDESAVA := Iif(Empty((_ZBCAlias)->ZBC_DESAVA), "B", (_ZBCAlias)->ZBC_DESAVA)
-
-	If nUmidade >= 0
-		_cQry := " SELECT  R_E_C_N_O_ RecnoZDM, ZDM_DESCON" + CRLF
-		_cQry += " FROM	ZDM010" + CRLF
-		_cQry += " WHERE   ZDM_CODIGO = '" + (_ZBCAlias)->ZBC_TABDES + "'" + CRLF
-		_cQry += "     AND ZDM_UMIDAD = (" + CRLF
-		_cQry += "   		SELECT	MIN(ZDM_UMIDAD) " + CRLF
-		_cQry += "   		FROM	ZDM010" + CRLF
-		_cQry += "   		WHERE	ZDM_CODIGO = '" + (_ZBCAlias)->ZBC_TABDES + "'" + CRLF
-		_cQry += "   			AND ZDM_UMIDAD >= " + cValToChar(nUmidade) + CRLF
-		_cQry += "   			AND ZDM_MSBLQL<>'1'" + CRLF
-		_cQry += "   			AND D_E_L_E_T_=' '" + CRLF
-		_cQry += "     )" + CRLF
-		_cQry += " AND D_E_L_E_T_=' '" + CRLF
-		_cQry += " ORDER BY ZDM_UMIDAD"
-		
-		_ZDMAlias := GetNextAlias()
-		dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_ZDMAlias),.F.,.F.)
-		
-		If !(_ZDMAlias)->(Eof())
-			nRetorno := (_ZDMAlias)->ZDM_DESCON
-		EndIf
-		(_ZDMAlias)->(DbCloseArea())
+	lTemContrato := .F.
+	If Empty(_cPedido)
+		ConOut("[MT100LOK] Funcao PegaUmidade: " + cValToChar(nRetorno))
+		Return nRetorno
 	EndIf
-EndIf
-(_ZBCAlias)->(DbCloseArea())
+
+	_cQry := " SELECT ZBC_TABDES, ZBC_DESIMP, ZBC_DESAVA " + CRLF
+	_cQry += " FROM	  ZBC010 " + CRLF
+	_cQry += " WHERE  ZBC_FILIAL='" + _cFilial + "' " + CRLF
+	_cQry += "    AND ZBC_PEDIDO='" + _cPedido + "' " + CRLF
+	_cQry += " 	  AND D_E_L_E_T_=' '"
+
+	dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_ZBCAlias),.F.,.F.)
+
+	If !(_ZBCAlias)->(Eof())
+		lTemContrato := .T.
+
+		cZBCDESIMP := Iif(Empty((_ZBCAlias)->ZBC_DESIMP), "B", (_ZBCAlias)->ZBC_DESIMP)
+		cZBCDESAVA := Iif(Empty((_ZBCAlias)->ZBC_DESAVA), "B", (_ZBCAlias)->ZBC_DESAVA)
+
+		If nUmidade >= 0
+			_cQry := " SELECT  R_E_C_N_O_ RecnoZDM, ZDM_DESCON" + CRLF
+			_cQry += " FROM	ZDM010" + CRLF
+			_cQry += " WHERE   ZDM_CODIGO = '" + (_ZBCAlias)->ZBC_TABDES + "'" + CRLF
+			_cQry += "     AND ZDM_UMIDAD = (" + CRLF
+			_cQry += "   		SELECT	MIN(ZDM_UMIDAD) " + CRLF
+			_cQry += "   		FROM	ZDM010" + CRLF
+			_cQry += "   		WHERE	ZDM_CODIGO = '" + (_ZBCAlias)->ZBC_TABDES + "'" + CRLF
+			_cQry += "   			AND ZDM_UMIDAD >= " + cValToChar(nUmidade) + CRLF
+			_cQry += "   			AND ZDM_MSBLQL<>'1'" + CRLF
+			_cQry += "   			AND D_E_L_E_T_=' '" + CRLF
+			_cQry += "     )" + CRLF
+			_cQry += " AND D_E_L_E_T_=' '" + CRLF
+			_cQry += " ORDER BY ZDM_UMIDAD"
+
+			_ZDMAlias := GetNextAlias()
+			dbUseArea(.T.,'TOPCONN',TCGENQRY(,, _cQry ),(_ZDMAlias),.F.,.F.)
+
+			If !(_ZDMAlias)->(Eof())
+				nRetorno := (_ZDMAlias)->ZDM_DESCON
+			EndIf
+			(_ZDMAlias)->(DbCloseArea())
+		EndIf
+	EndIf
+	(_ZBCAlias)->(DbCloseArea())
 
 Return nRetorno
 
@@ -322,14 +340,19 @@ User Function M103CALC() // Funcao para recalcular pesos de milho na entrada de 
 	Local cPCItem		:= 	Iif(Type("M->D1_ITEMPC")<>"U", M->D1_ITEMPC, aCols[n,nPosPCIte])
 	Local cC7Obs		:= ""
 	Local lRet			:= .T.
-	
+
 	Local lFormProp		:= If(Type("cFormul")<>"U",IIF(cFormul=="S",.T.,.F.),.F.)
 	Local cZBCDESIMP	:= ""
 	Local cZBCDESAVA	:= ""
 	Local nDesconto     := U_PegaUmidade( xFilial("SD1"),;
-									 	cPCNume,;
-	 									iIf(Type("M->D1_X_UMIDA")<>"U",M->D1_X_UMIDA,aCols[n,nPosUmida]),,;
-										@cZBCDESIMP, @cZBCDESAVA )
+		cPCNume,;
+		iIf(Type("M->D1_X_UMIDA")<>"U",M->D1_X_UMIDA,aCols[n,nPosUmida]),,;
+		@cZBCDESIMP, @cZBCDESAVA )
+
+	If IsInCallStack("MATA910")
+		RestArea(aArea)
+		Return .T.
+	EndIf
 
 	If IsInCallStack("A103DEVOL") .OR. cTipo=="D"
 		RestArea(aArea)
@@ -396,8 +419,8 @@ User Function M103CALC() // Funcao para recalcular pesos de milho na entrada de 
 			// Avalia se vai descontar ou nao, as Impurezas
 			If iif(Type("M->D1_X_IMPUR")<>"U",M->D1_X_IMPUR,aCols[n,nPosImpur]) > nLimImpur .and. lDescImpu
 				nValImpur := NoRound( __nPeso *;
-							( (Iif(Type("M->D1_X_IMPUR")<>"U",M->D1_X_IMPUR,aCols[n,nPosImpur]) - nLimImpur)/ 100),;
-							TamSX3("D1_X_KGIMP")[2])
+					( (Iif(Type("M->D1_X_IMPUR")<>"U",M->D1_X_IMPUR,aCols[n,nPosImpur]) - nLimImpur)/ 100),;
+					TamSX3("D1_X_KGIMP")[2])
 			Else
 				nValImpur := 0
 			Endif
@@ -408,8 +431,8 @@ User Function M103CALC() // Funcao para recalcular pesos de milho na entrada de 
 			*/
 			If iif(Type("M->D1_X_IMPUR")<>"U",M->D1_X_IMPUR,aCols[n,nPosImpur]) > 1
 				nValImpur := NoRound( (__nPeso /* -nValUmida */) *;
-							 	( (iif(Type("M->D1_X_IMPUR")<>"U",M->D1_X_IMPUR,aCols[n,nPosImpur])-1) / 100),;
-							  TamSX3("D1_X_KGIMP")[2])
+					( (iif(Type("M->D1_X_IMPUR")<>"U",M->D1_X_IMPUR,aCols[n,nPosImpur])-1) / 100),;
+					TamSX3("D1_X_KGIMP")[2])
 			EndIf
 		Endif
 
@@ -440,20 +463,20 @@ User Function M103CALC() // Funcao para recalcular pesos de milho na entrada de 
 		If lFormProp
 			If Type("M->D1_QUANT")<>"U"
 				M->D1_QUANT			:= NoRound( Iif( Type("M->D1_X_PESOL")<>"U", M->D1_X_PESOL, aCols[n,nPosPesoL] ) , TamSX3("D1_QUANT")[2])
-//				M->D1_TOTAL			:= NoRound( Iif(Type("M->D1_QUANT")<>"U", M->D1_QUANT, aCols[n,nPosQuant]) *  Iif(Type("M->D1_VUNIT")<>"U", M->D1_VUNIT, aCols[n,nPosVUnit]), TamSX3("D1_TOTAL")[2]) 
-//				M->D1_TOTAL 		:= IF(A103Trigger("D1_TOTAL"),M->D1_TOTAL,0) 
+				//				M->D1_TOTAL			:= NoRound( Iif(Type("M->D1_QUANT")<>"U", M->D1_QUANT, aCols[n,nPosQuant]) *  Iif(Type("M->D1_VUNIT")<>"U", M->D1_VUNIT, aCols[n,nPosVUnit]), TamSX3("D1_TOTAL")[2])
+				//				M->D1_TOTAL 		:= IF(A103Trigger("D1_TOTAL"),M->D1_TOTAL,0)
 				If A103TOLER() .And. A100SegUm() .And. MaFisRef("IT_QUANT","MT100",M->D1_QUANT) .and. MTA103OPER(n)
 				Endif
 			Else
 				aCols[n,nPosQuant] 	:= NoRound( Iif( Type("M->D1_X_PESOL")<>"U", M->D1_X_PESOL, aCols[n,nPosPesoL] ) , TamSX3("D1_QUANT")[2])
-//				aCols[n,nPosTotal] 	:= NoRound( Iif(Type("M->D1_QUANT")<>"U", M->D1_QUANT, aCols[n,nPosQuant]) *  Iif(Type("M->D1_VUNIT")<>"U", M->D1_VUNIT, aCols[n,nPosVUnit]), TamSX3("D1_TOTAL")[2]) 
-//				aCols[n,nPosTotal]	:= IF(A103Trigger("D1_TOTAL"),aCols[n,nPosTotal],0) 
+				//				aCols[n,nPosTotal] 	:= NoRound( Iif(Type("M->D1_QUANT")<>"U", M->D1_QUANT, aCols[n,nPosQuant]) *  Iif(Type("M->D1_VUNIT")<>"U", M->D1_VUNIT, aCols[n,nPosVUnit]), TamSX3("D1_TOTAL")[2])
+				//				aCols[n,nPosTotal]	:= IF(A103Trigger("D1_TOTAL"),aCols[n,nPosTotal],0)
 				If A103TOLER() .And. A100SegUm() .And. MaFisRef("IT_QUANT","MT100",aCols[n,nPosQuant])  .and. MTA103OPER(n)
 				Endif
 
-			//A103TOLER().And.Positivo().And.A100SegUm().And.MaFisRef("IT_QUANT","MT100",M->D1_QUANT)                                         
-			//A103TOLER().And.NaoVazio().AND.Positivo().And.MaFisRef("IT_PRCUNI","MT100",M->D1_VUNIT)                                         
-			//A103Total(M->D1_TOTAL) .and. MaFisRef("IT_VALMERC","MT100",M->D1_TOTAL) .AND. MTA103OPER(n)  
+				//A103TOLER().And.Positivo().And.A100SegUm().And.MaFisRef("IT_QUANT","MT100",M->D1_QUANT)
+				//A103TOLER().And.NaoVazio().AND.Positivo().And.MaFisRef("IT_PRCUNI","MT100",M->D1_VUNIT)
+				//A103Total(M->D1_TOTAL) .and. MaFisRef("IT_VALMERC","MT100",M->D1_TOTAL) .AND. MTA103OPER(n)
 
 			Endif
 
@@ -465,9 +488,9 @@ User Function M103CALC() // Funcao para recalcular pesos de milho na entrada de 
 
 	Endif
 
-	//M->D1_TOTAL := NoRound(M->D1_VUNIT*M->D1_QUANT,TamSX3("D1_TOTAL")[2])                               
-	//M->D1_TOTAL := IF(A103Trigger("D1_TOTAL"),M->D1_TOTAL,0) 
-	//A103Total(M->D1_TOTAL) .and. MaFisRef("IT_VALMERC","MT100",M->D1_TOTAL) .AND. MTA103OPER(n)                                           
+	//M->D1_TOTAL := NoRound(M->D1_VUNIT*M->D1_QUANT,TamSX3("D1_TOTAL")[2])
+	//M->D1_TOTAL := IF(A103Trigger("D1_TOTAL"),M->D1_TOTAL,0)
+	//A103Total(M->D1_TOTAL) .and. MaFisRef("IT_VALMERC","MT100",M->D1_TOTAL) .AND. MTA103OPER(n)
 
 	RestArea(aArea)
 Return lRet

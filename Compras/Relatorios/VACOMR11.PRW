@@ -263,7 +263,7 @@ Static Function fQuadro( nQuadro )
 	oPrinter:SayAlign ( nRow            , nPosCod        , "CEP:"                                    , oFLabel,  (nPosCod + 20 ), 10, , PAD_RIGHT,  )
 	oPrinter:SayAlign ( nRow            , nPosProd +100  , cTxtAux                                   , oFInfoBold ,  (nPosUnit - (nPosProd +80) ), 10, , PAD_LEFT, 1 )
 
-	cTxtAux := ""
+	cTxtAux := AllTrim(SC7->C7_OBSFOR)
 	oPrinter:SayAlign ( nRow+=nTamLin   , nPosSeq, "Observação:"                                    , oFLabel,  (nPosUnd - nPosSeq ), 10, , PAD_RIGHT,  )
 	oPrinter:SayAlign ( nRow            , nPosUnd , cTxtAux                                         , oFInfoBold ,  (nPosUnit - nPosUnd ), 10, , PAD_LEFT, 1 )
 

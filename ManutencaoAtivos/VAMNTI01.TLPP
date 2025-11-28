@@ -1,0 +1,561 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "FWMVCDEF.CH"
+
+namespace VAMNTI01
+
+static aCpoSE2  := { "E2_NUM","E2_TIPO","E2_PARCELA","E2_PREFIXO","E2_FORNECE","E2_LOJA","E2_NOMFOR","E2_EMISSAO",;
+                     "E2_VENCTO","E2_VENCREA", "E2_VALOR","E2_SALDO","E2_ITEMD","E2_CCD","CTT_DESC01","E2_RECNO"}
+static aCpoST9  := { "T9_CODBEM","T9_NOME","T9_PLACA"}
+
+User Function FwExecVamnti01()
+    local aArea   := GetArea()
+    local aEnButt := {{.F., nil},;      // 1 - Copiar
+                    {.F., nil},;        // 2 - Recortar
+                    {.F., nil},;        // 3 - Colar
+                    {.F., nil},;        // 4 - Calculadora
+                    {.F., nil},;        // 5 - Spool
+                    {.F., nil},;        // 6 - Imprimir
+                    {.f., nil},;   // 7 - Confirmar
+                    {.T., "Fechar"},;   // 8 - Cancelar
+                    {.F., nil},;        // 9 - WalkTrhough
+                    {.F., nil},;        // 10 - Ambiente
+                    {.F., nil},;        // 11 - Mashup
+                    {.T., nil},;        // 12 - Help
+                    {.F., nil},;        // 13 - Formulário HTML
+                    {.F., nil},;        // 14 - ECM
+                    {.F., nil}}         // 15 - Salvar e Criar novo
+    
+    FWExecView('Manutenção', 'VAMNTI01.VAMNTI01', MODEL_OPERATION_UPDATE,, { || .T. },,,aEnButt )
+    
+    if !Empty(aArea)
+        RestArea(aArea)
+    endif
+Return
+
+USER FUNCTION VAMNTI01()
+	Private oBrowse as object
+	
+	oBrowse := FWLoadBrw("VAMNTI01.VAMNTI01")
+	oBrowse:Activate()
+	oBrowse:DeActivate()
+	oBrowse:Destroy()
+	FreeObj(oBrowse)
+	oBrowse := nil
+
+Return
+
+user function ModelDef() as object
+	local oModel   := nil as object
+    local oStrST9  := ST9GrdMStr() as object
+	local oStrSE2  := SE2GrdMStr() as object
+
+	local bLoadHide  := {|oModel, lCopia| LoadHide(oModel, lCopia) } as codeblock
+	local bLoadSE2   := {|oModel, lCopia| LoadGrid(oModel, lCopia) } as codeblock
+	
+    Local aGatilhos		:= {} as array
+	local nI as numeric
+    
+    aAdd(aGatilhos, FWStruTrigger( "E2_CCD"  , "CTT_DESC01"   ,"Posicione('CTT',1,fwxFilial('CTT')+&(ReadVar()),'CTT_DESC01')",.F.,"",0,"",NIL,"01"))
+
+	For nI := 1 To Len(aGatilhos)
+		oStrSE2:AddTrigger(  aGatilhos[nI][01],; //Campo Origem
+						    aGatilhos[nI][02],; //Campo Destino
+						    aGatilhos[nI][03],; //Bloco de código na validação da execução do gatilho
+						    aGatilhos[nI][04])  //Bloco de código de execução do gatilho
+	Next
+
+	oModel := MPFormModel():New( "I01VAMNT", /*bPre*/ ,/*bPos*/, /* bCommit */, /* Fechatela()  */)
+	oModel:SetDescription("Documentos")
+	
+    oModel:AddFields("MdFieldST9" ,""           , oStrST9,/*bPreValid*/		,/* bPosValid */, bLoadHide)
+    oModel:AddGrid("MdGridSE2"   ,"MdFieldST9", oStrSE2,/* bBlocoAtu */		,/* bLineROT *//*bLinePost*/,/*bPre */,/*bPost*/, bLoadSE2)
+
+	oModel:GetModel("MdGridSE2"):SetDescription("Documentos")
+    oModel:GetModel("MdFieldST9"):SetDescription("Veículo")
+
+	oModel:SetPrimaryKey({})
+
+    oModel:GetModel('MdFieldST9' ):SetOnlyView(.T.)
+
+	oModel:getModel("MdGridSE2"):SetNoInsertLine(.T.)
+    oModel:getModel("MdGridSE2"):SetNoDeleteLine(.T.)
+
+	oModel:SetOptional("MdGridSE2"	, .T.)
+
+return oModel
+
+user function ViewDef() as object
+	local oView 	as object
+	local oModel 	as object
+    local oStrSE2 	:= nil as object
+    local oStrST9 	:= nil as object
+
+	oModel 	:= FwLoadModel("VAMNTI01.VAMNTI01")
+
+	oStrST9 := ST9GrdVStr()
+	oStrSE2 := SE2GrdVStr()
+
+	oView 	:= FwFormView():New()
+	oView:SetModel(oModel)
+	
+	oView:AddField("VwFieldST9", oStrST9 	, "MdFieldST9"	)
+	oView:AddGrid("VwGridSE2" 	, oStrSE2 	, "MdGridSE2"	)
+
+	oView:CreateHorizontalBox("CABEC"   , 20)
+	oView:CreateHorizontalBox("ITENS"   , 80)
+
+	oView:SetOwnerView("VwFieldST9"  	, "CABEC")
+	oView:SetOwnerView("VwGridSE2"    	, "ITENS") 
+
+	oView:EnableTitleView('VwFieldST9' , "Veículo"           )   
+	oView:EnableTitleView('VwGridSE2'  , "Titulos a Pagar"   )
+
+    oView:AddUserButton( 'Salvar' ,'', {|| ExecSE2()} )
+
+	oView:SetAfterViewActivate({|oView| xAtivar(oView)})
+
+return oView
+
+Static Function xAtivar(oView)
+	oView:AVIEWS[2][3]:oBrowse:oBrowseUi:oGrid:SetSelectionMode(0) 
+Return nil
+
+Static Function ExecSE2()
+    Local aArea  := FwGetArea() as Array
+    Local oModel := FwModelActive()
+    Local oCab   := oModel:GetModel("MdFieldST9")  as object
+    Local oGrid  := oModel:GetModel("MdGridSE2")  as object
+    Local nI as numeric
+    Local aVetSE2  := {} as Array
+    Local aTitulos := {} as Array
+    Local nPos as numeric
+    Local lEnvMail := .F. as Logical
+
+    SE2->(DbSetOrder(1))
+    //E2_FILIAL+E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA
+    For nI := 1 To oGrid:Length()
+        oGrid:GoLine(nI)
+        
+        aVetSE2 := {}
+        
+        If oGrid:IsUpdated()
+            if SE2->(DbSeek(FWxFilial("SE2")+oGrid:GetValue("E2_PREFIXO")+oGrid:GetValue("E2_NUM")+;
+                            oGrid:GetValue("E2_PARCELA")+oGrid:GetValue("E2_TIPO")+;
+                            oGrid:GetValue("E2_FORNECE")+oGrid:GetValue("E2_LOJA")))
+                
+                aAdd(aVetSE2, {"E2_FILIAL"  , SE2->E2_FILIAL            ,Nil})
+                aAdd(aVetSE2, {"E2_NUM"     , SE2->E2_NUM               ,Nil})
+                aAdd(aVetSE2, {"E2_PREFIXO" , SE2->E2_PREFIXO           ,Nil})
+                aAdd(aVetSE2, {"E2_TIPO"    , SE2->E2_TIPO              ,Nil})
+                aAdd(aVetSE2, {"E2_FORNECE" , SE2->E2_FORNECE           ,Nil})
+                aAdd(aVetSE2, {"E2_LOJA"    , SE2->E2_LOJA              ,Nil})
+                aAdd(aVetSE2, {"E2_NATUREZ" , SE2->E2_NATUREZ           ,Nil})
+                aAdd(aVetSE2, {"E2_VENCTO"  , SE2->E2_VENCTO            ,Nil})
+                aAdd(aVetSE2, {"E2_VALOR"   , SE2->E2_VALOR             ,Nil})
+                aAdd(aVetSE2, {"E2_PARCELA" , SE2->E2_PARCELA           ,Nil})
+                aAdd(aVetSE2, {"E2_CCD"     , oGrid:GetValue("E2_CCD")  ,Nil})
+                
+                aAdd(aTitulos, {Alltrim(oCab:GetValue("T9_CODBEM")),;
+                                Alltrim(oCab:GetValue("T9_PLACA")),;
+                                SE2->E2_NUM,;
+                                SE2->E2_PREFIXO,;
+                                SE2->E2_PARCELA,;
+                                SE2->E2_VENCTO,;
+                                SE2->E2_VALOR,;
+                                SE2->E2_CCD,;
+                                oGrid:GetValue("E2_CCD"),;
+                                .F.;
+                                })
+
+                //Inicia o controle de transação
+                Begin Transaction
+                    //Chama a rotina automática
+                    lMsErroAuto := .F.
+
+                    MSExecAuto({|x,y,z| FINA050(x,y,z)}, aVetSE2,, 4)
+                    
+                    //Se houve erro, mostra o erro ao usuário e desarma a transação
+                    If lMsErroAuto
+                        MostraErro()
+                        DisarmTransaction()
+                    Else
+                        nPos := Len(aTitulos)
+                        aTitulos[nPos,Len(aTitulos[nPos])] := .T.
+                    EndIf
+                    //Finaliza a transação
+                End Transaction
+            Endif
+        Endif
+    Next nI 
+    SE2->(DbCloseArea())
+
+    For nI := 1 to Len(aTitulos)
+        if aTitulos[ni][10]
+            lEnvMail := .T.
+            exit
+        endif
+    Next nI
+    
+    if lEnvMail
+        EnviaEmailAlteracaoCC(aTitulos)
+        FWAlertSuccess("Documentos alterados!")
+    endif
+    
+    FwRestArea(aArea)
+Return .T.
+
+static function SE2GrdMStr() as Object
+	local aArea   := GetArea() as Array
+	local oStruct := FWFormModelStruct():New() as Object
+	local nI, nLen as Numeric
+	Local aCampos := { } as array
+    Local cValid as Character
+
+    aCampos := aClone(aCpoSE2)
+
+    nLen := Len(aCampos)
+    for nI := 1 to nLen
+        if aCampos[nI]$"E2_RECNO"
+            oStruct:AddField(;
+                 "Registro    ",;               // [01]  C   Titulo do campo
+                 "Número do registro no ban",;  // [02]  C   ToolTip do campo
+                 aCampos[nI],;                  // [03]  C   Id do Field
+                 "N",;                          // [04]  C   Tipo do campo
+                  14,;                          // [05]  N   Tamanho do campo
+                  0,;                           // [06]  N   Decimal do campo
+                 nil,;                          // [07]  B   Code-block de validação do campo
+                 nil,;                          // [08]  B   Code-block de validação When do campo
+                 nil,;                          // [09]  A   Lista de valores permitido do campo
+                 .F.,;                          // [10]  L   Indica se o campo tem preenchimento obrigatório
+                 nil,;                          // [11]  B   Code-block de inicializacao do campo
+                 .F.,;                          // [12]  L   Indica se trata-se de um campo chave
+                 .F.,;                          // [13]  L   Indica se o campo pode receber valor em uma operação de update.
+                 .T.)                           // [14]  L   Indica se o campo é virtual
+        else
+            SX3->(DbSetOrder(2))
+            if SX3->(DbSeek(Padr(aCampos[nI], Len(SX3->X3_CAMPO))))
+                cValid := ""
+                if "E2_CCD" $ SX3->X3_CAMPO
+					cValid := "VAMNTI01.U_VALIDARCTT()"
+                endif
+
+                oStruct:AddField(X3Titulo() ,;                  // [01]  C Titulo do campo
+                                 X3Descric(),;                  // [02]  C ToolTip do campo
+                                 AllTrim(SX3->X3_CAMPO),;       // [03]  C Id do Field
+                                 TamSX3(SX3->X3_CAMPO)[3],;     // [04]  C Tipo do campo
+                                 TamSX3(SX3->X3_CAMPO)[1],;     // [05]  N Tamanho do campo
+                                 TamSX3(SX3->X3_CAMPO)[2],;     // [06]  N Decimal do campo
+                                 Iif(!Empty(cValid), FWBuildFeature(STRUCT_FEATURE_VALID, cValid), nil),; // [07]  B   Code-block de validação do campo
+                                 Iif(!Empty(SX3->X3_WHEN), FWBuildFeature(STRUCT_FEATURE_WHEN, SX3->X3_WHEN), nil),; // [08]  B   Code-block de validação When do campo
+                                 Iif(!Empty(X3CBox()),StrToKArr(X3CBox(), ";"),nil),; // [09]  A   Lista de valores permitido do campo
+                                 X3Obrigat(SX3->X3_CAMPO),;     // [10]  L   Indica se o campo tem preenchimento obrigatório
+                                 FwBuildFeature( STRUCT_FEATURE_INIPAD, "Iif(!Inclui," + SX3->X3_ARQUIVO + "->" + AllTrim(SX3->X3_CAMPO) + ",CriaVar('" + AllTrim(SX3->X3_CAMPO) + "',.T.))" ),; // [11]  B   Code-block de inicializacao do campo
+                                 .F.,;                          // [12]  L   Indica se trata-se de um campo chave
+                                 ;//IIF(AllTrim(SX3->X3_CAMPO)$"Z06_MEGCAL|Z06_KGMSTR|Z06_KGMNTR|Z06_KGMNT",.F.,.T.),;//(SX3->X3_VISUAL == 'A'),;        // [13]  L   Indica se o campo pode receber valor em uma operação de update.
+                                 .F.,;//(SX3->X3_VISUAL == 'A'),;        // [13]  L   Indica se o campo não pode receber valor em uma operação de update.
+                                 SX3->X3_CONTEXT == 'V')	    // [14]  L   Indica se o campo é virtual
+            else
+                Help(/*Descontinuado*/,/*Descontinuado*/,"CAMPO NAO ENCONTRADO",/**/,"O campo " + aCampos[nI] + " não foi encontrado no banco de dados. ", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, entre em contato com o TI." })
+            endif
+        endif
+    next
+
+	RestArea(aArea)
+return oStruct
+static function SE2GrdVStr() as Object
+	local aArea   := GetArea() as Array
+	local oStruct := FWFormViewStruct():New() as Object
+	local nI, nLen as Numeric
+	Local aCampos := {}	as Array
+    Local nOrdem := 0
+    aCampos := aClone(aCpoSE2)
+	
+	DbSelectArea("SX3")
+	DbSetOrder(2)//X3_CAMPO
+
+	nLen := Len(aCampos)
+	for nI := 1 to nLen
+		SX3->(DbSetOrder(2))
+		if !(aCampos[nI]$"E2_RECNO") .AND. SX3->(DbSeek(Padr(aCampos[nI], Len(SX3->X3_CAMPO))))
+			oStruct:AddField(;
+				AllTrim(aCampos[nI]),;        // [01]  C   Nome do Campo
+				cValToChar(++nOrdem),; // [02]  C   Ordem
+			 	X3Titulo(),;
+				X3Descric(),;                   // [04]  C   Descricao do campo
+				{"Help"},;                      // [05]  A   Array com Help
+				TamSX3(SX3->X3_CAMPO)[3],;      // [06]  C   Tipo do campo
+				Iif(!Empty(SX3->X3_CAMPO), AllTrim(X3Picture(SX3->X3_CAMPO)), nil),;      // [07]  C   Picture
+				nil,;                           // [08]  B   Bloco de PictTre Var
+				SX3->X3_F3,;                    // [09]  C   Consulta F3
+				iif(AllTrim(SX3->X3_CAMPO)$"E2_CCD",.T.,.F.),;// [10]  L   Indica se o campo é alteravel
+				nil,;                           // [11]  C   Pasta do campo
+				nil,;                           // [12]  C   Agrupamento do campo
+				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
+				nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
+				nil,;                           // [15]  C   Inicializador de Browse
+				SX3->X3_CONTEXT == 'V',;		// [16]  L   Indica se o campo é virtual
+				nil,;                           // [17]  C   Picture Variável
+				nil;                            // [18]  L   Indica pulo de linha após o campo
+			)
+		endif
+	next
+
+	if !Empty(aArea)
+		RestArea(aArea)
+	endif
+return oStruct
+
+static function ST9GrdMStr() AS Object
+   local aArea   := GetArea() as Array
+	local oStruct := FWFormModelStruct():New() as Object
+	local nI, nLen as Numeric
+	Local aCampos := { } as array
+
+    aCampos := aClone(aCpoST9)
+
+    SX3->(DbSetOrder(2))
+    nLen := Len(aCampos)
+    for nI := 1 to nLen
+        if SX3->(DbSeek(Padr(aCampos[nI], Len(SX3->X3_CAMPO))))
+            oStruct:AddField(X3Titulo() ,;                  // [01]  C Titulo do campo
+                            X3Descric(),;                  // [02]  C ToolTip do campo
+                            AllTrim(SX3->X3_CAMPO),;       // [03]  C Id do Field
+                            TamSX3(SX3->X3_CAMPO)[3],;     // [04]  C Tipo do campo
+                            TamSX3(SX3->X3_CAMPO)[1],;     // [05]  N Tamanho do campo
+                            TamSX3(SX3->X3_CAMPO)[2],;     // [06]  N Decimal do campo
+                            nil,; // [07]  B   Code-block de validação do campo
+                            Iif(!Empty(SX3->X3_WHEN), FWBuildFeature(STRUCT_FEATURE_WHEN, SX3->X3_WHEN), nil),; // [08]  B   Code-block de validação When do campo
+                            Iif(!Empty(X3CBox()),StrToKArr(X3CBox(), ";"),nil),; // [09]  A   Lista de valores permitido do campo
+                            X3Obrigat(SX3->X3_CAMPO),;     // [10]  L   Indica se o campo tem preenchimento obrigatório
+                            FwBuildFeature( STRUCT_FEATURE_INIPAD, "Iif(!Inclui," + SX3->X3_ARQUIVO + "->" + AllTrim(SX3->X3_CAMPO) + ",CriaVar('" + AllTrim(SX3->X3_CAMPO) + "',.T.))" ),; // [11]  B   Code-block de inicializacao do campo
+                            .F.,;                          // [12]  L   Indica se trata-se de um campo chave
+                            ;//IIF(AllTrim(SX3->X3_CAMPO)$"Z06_MEGCAL|Z06_KGMSTR|Z06_KGMNTR|Z06_KGMNT",.F.,.T.),;//(SX3->X3_VISUAL == 'A'),;        // [13]  L   Indica se o campo pode receber valor em uma operação de update.
+                            .T.,;//(SX3->X3_VISUAL == 'A'),;        // [13]  L   Indica se o campo não pode receber valor em uma operação de update.
+                            SX3->X3_CONTEXT == 'V')	    // [14]  L   Indica se o campo é virtual
+    else
+            Help(/*Descontinuado*/,/*Descontinuado*/,"CAMPO NAO ENCONTRADO",/**/,"O campo " + aCampos[nI] + " não foi encontrado no banco de dados. ", 1, 1,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,/*Descontinuado*/,.F.,{"Por favor, entre em contato com o TI." })
+        endif
+    next
+
+	RestArea(aArea)
+Return oStruct
+
+static function ST9GrdVStr() as Object
+    local aArea   := GetArea() as Array
+	local oStruct := FWFormViewStruct():New() as Object
+	local nI, nLen as Numeric
+	Local aCampos := {}	as Array
+	local nOrdem  := 0 as numeric
+    
+    aCampos := aClone(aCpoST9)
+	
+	DbSelectArea("SX3")
+	DbSetOrder(2)//X3_CAMPO
+
+	nLen := Len(aCampos)
+	for nI := 1 to nLen
+		SX3->(DbSetOrder(2))
+		if SX3->(DbSeek(Padr(aCampos[nI], Len(SX3->X3_CAMPO))))
+			oStruct:AddField(;
+				AllTrim(aCampos[nI]),;        // [01]  C   Nome do Campo
+				cValToChar(++nOrdem),; // [02]  C   Ordem
+			 	X3Titulo(),;
+				X3Descric(),;                   // [04]  C   Descricao do campo
+				{"Help"},;                      // [05]  A   Array com Help
+				TamSX3(SX3->X3_CAMPO)[3],;      // [06]  C   Tipo do campo
+				Iif(!Empty(SX3->X3_CAMPO), AllTrim(X3Picture(SX3->X3_CAMPO)), nil),;      // [07]  C   Picture
+				nil,;                           // [08]  B   Bloco de PictTre Var
+				SX3->X3_F3,;                    // [09]  C   Consulta F3
+				.F.,;                           // [10]  L   Indica se o campo é alteravel
+				nil,;                           // [11]  C   Pasta do campo
+				nil,;                           // [12]  C   Agrupamento do campo
+				nil,;                           // [13]  A   Lista de valores permitido do campo (Combo)
+				nil,;                           // [14]  N   Tamanho máximo da maior opção do combo
+				nil,;                           // [15]  C   Inicializador de Browse
+				SX3->X3_CONTEXT == 'V',;		// [16]  L   Indica se o campo é virtual
+				nil,;                           // [17]  C   Picture Variável
+				nil;                            // [18]  L   Indica pulo de linha após o campo
+			)
+		endif
+	next
+
+	if !Empty(aArea)
+		RestArea(aArea)
+	endif
+return oStruct
+
+static function LoadGrid(oModel, lCopia) as Array
+    local aArea  := GetArea() as Array
+    local aRet   := {} as Array
+    Local cALias := "" as Character
+    Local nSeq   := 0  as Numeric
+    Local cQry   as Character
+
+    cQry := " SELECT " + CRLF
+    cQry += "     TS1.TS1_CODBEM, T9.T9_NOME, TS1.TS1_DOCTO,SE2.E2_TIPO " + CRLF
+    cQry += "       , TS1.TS1_VALPAG, T9.T9_PLACA " + CRLF
+    cQry += "       , SE2.E2_PREFIXO, SE2.E2_NUM, SE2.E2_NATUREZ " + CRLF
+    cQry += "       , SE2.E2_PARCELA, SE2.E2_VENCTO,SE2.E2_VENCREA " + CRLF
+    cQry += "       , SE2.E2_VALOR, SE2.E2_FORNECE " + CRLF
+    cQry += "       , SE2.E2_LOJA,A2.A2_NOME, SE2.E2_CCD " + CRLF
+    cQry += "       , CTT.CTT_DESC01, SE2.E2_SALDO,SE2.E2_ITEMD " + CRLF
+    cQry += "       , SE2.E2_EMISSAO, SE2.R_E_C_N_O_ AS RECNO_SE2 " + CRLF
+    cQry += " FROM " + RetSqlName("TS1") + " TS1                                                                 " + CRLF
+    cQry += " JOIN " + RetSqlName("SE2") + " SE2 ON ( SE2.E2_FILIAL = TS1.TS1_FILIAL AND                         " + CRLF
+    cQry += "                                      SE2.E2_PREFIXO = TS1.TS1_PREFIX AND                           " + CRLF
+    cQry += "                                      SE2.E2_NUM = TS1.TS1_NUMSE2 AND                               " + CRLF
+    cQry += "                                      SE2.E2_TIPO = TS1.TS1_TIPO AND                                " + CRLF
+    cQry += "                                      SE2.E2_FORNECE = TS1.TS1_FORNEC AND                           " + CRLF
+    cQry += "                                      SE2.E2_LOJA = TS1.TS1_LOJA AND                                " + CRLF
+    cQry += "                                      SE2.D_E_L_E_T_ = '' )                                         " + CRLF
+    cQry += " LEFT JOIN " + RetSqlName("ST9") + " T9 ON ( T9.T9_CODBEM = TS1.TS1_CODBEM AND T9.D_E_L_E_T_ = '' AND T9.T9_FILIAL = '" + ST9->T9_FILIAL + "' )" + CRLF
+    cQry += " LEFT JOIN " + RetSqlName("SA2") + " A2 ON ( A2.A2_COD = SE2.E2_FORNECE AND A2.A2_LOJA = SE2.E2_LOJA AND A2.D_E_L_E_T_ = '' AND A2.A2_FILIAL = '" + FWxFilial("SA2") + "' )" + CRLF
+    cQry += " LEFT JOIN " + RetSqlName("CTT") + " CTT ON ( CTT.CTT_CUSTO = SE2.E2_CCD AND CTT.D_E_L_E_T_ = '' AND CTT.CTT_FILIAL = '" + ST9->T9_FILIAL + "' )" + CRLF
+    cQry += " WHERE                                                                                               " + CRLF
+    cQry += "     TS1.TS1_FILIAL = '" + fwxFilial("TS1") + "' AND                                                   " + CRLF
+    cQry += "     TS1.D_E_L_E_T_ = '' AND                                                                         " + CRLF
+    cQry += "     SE2.E2_SALDO > 0    AND "  + CRLF
+    cQry += "     TS1.TS1_CODBEM = '"+ST9->T9_CODBEM+"'  " + CRLF
+
+    MemoWrite("C:\totvs_relatorios\loadGrid.sql", cQry)
+
+	cAlias := MpSysOpenQuery(cQry)
+
+	While !(cAlias)->(Eof())
+	    aAdd(aRet, {++nSeq,{(cALias)->E2_NUM,;
+                            (cALias)->E2_TIPO,;
+                            (cALias)->E2_PARCELA,;
+                            (cALias)->E2_PREFIXO,;
+                            (cALias)->E2_FORNECE,;
+                            (cALias)->E2_LOJA,;
+                            (cALias)->A2_NOME,;
+                            sToD((cALias)->E2_EMISSAO),;
+                            sToD((cALias)->E2_VENCTO),;
+                            sToD((cALias)->E2_VENCREA),;
+                            (cALias)->E2_VALOR,;
+                            (cALias)->E2_SALDO,;
+                            (cALias)->E2_ITEMD,;
+                            (cALias)->E2_CCD,;
+                            (cALias)->CTT_DESC01,;
+                            (cALias)->RECNO_SE2;
+                            }})
+	    (cAlias)->(DbSkip())
+	EndDo
+	(cAlias)->(DBCLOSEAREA())
+    
+    if Len(aRet) == 0
+        aAdd(aRet, {1,{"","","","","","",cToD("//"),cToD("//"),cToD("//"),0,0,0,"","","",""}})
+    endif
+    
+    RestArea(aArea)
+Return aRet
+
+static function LoadHide(oModel, lCopia) as Array
+    Local aRet   := {} as Array
+    local aArea  := GetArea() as Array
+    Local cALias := "" as Character
+    Local cQry   as Character
+
+    cQry := "SELECT * FROM "+RetSqlName("ST9")+" WHERE T9_FILIAL = '"+ST9->T9_FILIAL+"' AND T9_CODBEM = '5003408' AND D_E_L_E_T_ = ''" 
+
+    MemoWrite("C:\totvs_relatorios\loadcAB.sql", cQry)
+
+	cAlias := MpSysOpenQuery(cQry)
+
+	IF !(cAlias)->(Eof())
+        
+        aAdd(aRet, {(cALias)->T9_CODBEM,(cALias)->T9_NOME,(cALias)->T9_PLACA})
+        aAdd(aRet, {1})
+
+	Endif
+
+	(cAlias)->(DBCLOSEAREA())
+
+    IF Len(aRet) == 0
+        aAdd(aRet, {"","",""})
+        aAdd(aRet, {1})
+    endif 
+
+    RestArea(aArea)
+
+Return aRet
+
+User Function VALIDARCTT()
+    Local aArea  := FwGetArea() as Array
+    Local oModel := FwModelActive() as Object
+    Local lRet   := .T.
+    
+    CTT->(DbSetOrder(1))
+
+    IF CTT->(DbSeek(FWxFilial("CTT")+&(ReadVar())))
+        if CTT->CTT_BLOQ == '1'
+            lRet := .F.
+            oModel:SetErrorMessage("","","","","HELP", 'CUSTO INVÁLIDO', "Centro de de custo bloqueado!")
+        Endif
+    else
+        lRet := .F.
+        oModel:SetErrorMessage("","","","","HELP", 'CUSTO INVÁLIDO', "Centro de de custo não encontrado!")
+    Endif
+
+    CTT->(DbCloseArea())
+    FwRestArea(aArea)
+Return lRet
+
+Static Function EnviaEmailAlteracaoCC(aAlteracoes)
+
+    Local xAssunto  := "Alteração de Centro de Custo - Documentos Obrigatórios"
+    Local cTitulo   := "Notificação de Alteração de Centro de Custo"
+    Local xHTM		:= ""
+    Local nI        := 0
+
+    //-- Utiliza o mesmo parâmetro da rotina FECHAMES para centralizar os destinatários
+    Local xEmail	:= SuperGetMV("MV_T01MAIL",,"igor.oliveira@vistaalegre.agr.br")
+    Local xCC	    := SuperGetMV("MV_T01CC"  ,,"")
+
+    //-- Montagem do corpo do e-mail em HTML
+    xHTM := '<HTML><BODY style="font-family: Verdana, sans-serif; font-size: 10pt;">'
+    xHTM += '<p><b><font SIZE=3>' + SM0->M0_NOMECOM + '</b></p>'
+    xHTM += '<hr>'
+    xHTM += '<p><b><font SIZE=3>' + cTitulo + '</b></p>'
+    xHTM += '<hr>'
+    xHTM += '<p>Data: ' + dtoc(date()) + ' | Hora: ' + time() + '</p>'
+    xHTM += '<p>O(s) centro(s) de custo do(s) título(s) abaixo foram alterados por: <b>' + AllTrim(cUserName) + '</b></p>'
+    xHTM += '<br>'
+
+    //-- Tabela com os detalhes da alteração
+    xHTM += '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; font-size: 9pt;">'
+    xHTM += '<tr bgcolor="#f2f2f2">'
+    xHTM += '<th>Veículo</th>'
+    xHTM += '<th>Placa</th>'
+    xHTM += '<th>Documento</th>'
+    xHTM += '<th>Prefixo</th>'
+    xHTM += '<th>Parcela</th>'
+    xHTM += '<th>Vencimento</th>'
+    xHTM += '<th>Valor</th>'
+    xHTM += '<th>C.Custo Antigo</th>'
+    xHTM += '<th>C.Custo Novo</th>'
+    xHTM += '</tr>'
+
+    For nI := 1 to Len(aAlteracoes)
+        if aAlteracoes[nI][10]
+            xHTM += '<tr>'
+            xHTM += '<td>' + aAlteracoes[nI][1] + '</td>' // Veículo
+            xHTM += '<td>' + aAlteracoes[nI][2] + '</td>' // Placa
+            xHTM += '<td>' + aAlteracoes[nI][3] + '</td>' // Documento
+            xHTM += '<td>' + aAlteracoes[nI][4] + '</td>' // Prefixo
+            xHTM += '<td>' + aAlteracoes[nI][5] + '</td>' // Parcela
+            xHTM += '<td align="center">' + DtoC(aAlteracoes[nI][6]) + '</td>' // Vencimento
+            xHTM += '<td align="right">' + Transform(aAlteracoes[nI][7], "@E 999,999,999.99") + '</td>' // Valor
+            xHTM += '<td align="center">' + aAlteracoes[nI][8] + '</td>' // CC Antigo
+            xHTM += '<td align="center" style="background-color:#d4edda;"><b>' + aAlteracoes[nI][9] + '</b></td>' // CC Novo
+            xHTM += '</tr>'
+        endif 
+    Next nI
+
+    xHTM += '</table>'
+    xHTM += '</BODY></HTML>'
+
+    //-- Dispara o envio do e-mail em background
+    Processa({ || u_EnvMail(xEmail, xCC, "", xAssunto, {}, xHTM, .T.) }, "Enviando e-mail de notificação...")
+
+Return

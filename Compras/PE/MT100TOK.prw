@@ -26,11 +26,16 @@ User Function MT100TOK()
 	Local cf1Chvnfe	:= iif (Type("aNfeDanfe")<>"U",aNfeDanfe[13],'') 
 	Local cQryChv 	:= ''
 	Local lAtivo  := SuperGetMv("MV_DESQIVE",,.T.)
-	//Local nI		:= 0                             
+	Local nI		:= 0                             
+	Local nPosPeCh	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESCH'} )
+	Local nPosPesa	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESAG'} )
+	Local nPosPed	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_PEDIDO'} )
+	Local nPItPc	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_ITEMPC'} )
 	//Local nPosProd	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_COD'} )
-	//Local nPosCC 	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_CC'} )
+	//Local nPosProd	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_COD'} )
+	//Local nPosCC 		:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_CC'} )
 	//Local nPosTES 	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_TES'} )
-	//Local nPosItem	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_ITEM'} )
+	Local nPosItem	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_ITEM'} )
 	//Local nPosOS  	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_ORDEM'} )
 	//Local nPosOP  	:= aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_OP'} )
 	//Local cMsg 		:= ""
@@ -52,22 +57,57 @@ User Function MT100TOK()
 	// >> 24.08.2017
 	*/
 	If !FwIsInCallStack('U_GATI001') .Or. IIf(Type('l103Auto') == 'U',.T.,!l103Auto)
+		//Validar se Acols Está aberto aqui.
+		IF ALLTRIM(SB1->B1_GRUPO) $ "01|BOV"
+
+			cQry := " SELECT ZCC.*, ZBC.*  " + CRLF
+			cQry += " FROM "+RetSqlNAme("ZBC")+" ZBC " + CRLF
+			cQry += " JOIN "+RetSqlNAme("ZCC")+" ZCC ON ZCC_FILIAL = ZBC_FILIAL " + CRLF
+			cQry += " AND ZCC_CODIGO = ZBC_CODIGO " + CRLF
+			cQry += " AND ZCC.D_E_L_E_T_ = ''  " + CRLF
+			cQry += " WHERE ZBC_PEDIDO = ? " + CRLF
+			cQry += " AND ZBC_ITEMPC = ? " + CRLF
+			cQry += " AND ZBC_FILIAL = ? " + CRLF
+			cQry += " AND ZBC.D_E_L_E_T_ = '' " + CRLF
+
+			oExecZCC := FWExecStatement():New(cQry)
+
+			For nI := 1 To Len(aCols)
+				if !aCols[nI][Len(aCols[nI])]
+					oExecZCC:SetString(1,aCols[nI][nPosPed])
+					oExecZCC:SetString(2,aCols[nI][nPItPc])
+					oExecZCC:SetString(3,FWxFilial("ZBC"))
+					
+					cAlias := oExecZCC:OpenAlias()
+
+					if !(cAlias)->(EOF()) .and. (cAlias)->ZCC_GORDO != 'S' .and. (cAlias)->ZBC_TPNEG != "Q" // apenas valida pesagem se não for boi gordo e negociação não por por cabeça
+						if Empty(aCols[nI,nPosPeCh]) .or. Empty(aCols[nI,nPosPesa]) 
+							FWAlertInfo("O Item [ "+aCols[nI,nPosItem]+" ] não possui pesagem vinculada. Para o produto selecionado, é obrigatório informar a pesagem relacionada a esse item. (Outras Ações -> Sel.Pesagens )", "Atenção!")
+							Return .F.
+						Endif
+					Endif
+					(cAlias)->(DbCloseArea())
+				Endif
+			Next nI
+
+			oExecZCC:Destroy()
+			oExecZCC := nil
+		Endif
+		
 		cQryChv := " SELECT  F1_FILIAL, F1_CHVNFE, F1_DOC, F1_SERIE "
 		cQryChv += " FROM  "+RetSqlNAme('SF1')+"  "
 		cQryChv += " WHERE F1_CHVNFE = '" + cf1Chvnfe + "' AND D_E_L_E_T_<>'*' AND F1_FILIAL <> '"+cFilant+"' "  // executar apenas para produtos com o campo preenchido e que nao estejam bloqueados  
 
-		If Select("QRYCHV") <> 0
-			QRYCHV->(dbCloseArea())
-		Endif
-		TCQUERY cQryChv NEW ALIAS "QRYCHV"
-		dbSelectArea("QRYCHV")
-		QRYCHV->(DbGoTop())
+		cAlias := MpSysOpenQuery(cQryChv)
+		(cAlias)->(DbGoTop())
 		
-		If  !EMPTY(QRYCHV->F1_CHVNFE) .and. !Empty(cf1Chvnfe)
-			Alert('Chave da NF-e ja foi utilizada em outra filial! verifique!!!  ( Filial: '+QRYCHV->F1_FILIAL+' | Documento: '+QRYCHV->F1_DOC+'\'+QRYCHV->F1_SERIE+' ) ')
+		If  !EMPTY((cAlias)->F1_CHVNFE) .and. !Empty(cf1Chvnfe)
+			Alert('Chave da NF-e ja foi utilizada em outra filial! verifique!!!  ( Filial: '+(cAlias)->F1_FILIAL+' | Documento: '+(cAlias)->F1_DOC+'\'+(cAlias)->F1_SERIE+' ) ')
 				// aNfeDanfe[13] := space(tamsx3("F1_CHVNFE")[1])
+			(cAlias)->(DbCloseArea())
 			Return .F. 
 		Endif
+		(cAlias)->(DbCloseArea())
 		
 		If cDataDoc < cDataLim
 			MsgAlert("Data do documento menor que o limite definido em parametro MV_X_DTLIM!","Data do Documento")
@@ -86,9 +126,14 @@ User Function MT100TOK()
 			Endif
 		Endif
 
-		IF ALLTRIM(SB1->B1_GRUPO) $ "01|BOV"
-			Envmail()
-		ENDIF
+		//Função de envio de email quando der entrada de Gado foi passado para o telegram
+		//IF ALLTRIM(SB1->B1_GRUPO) $ "01|BOV"
+		//	Envmail()
+		//ENDIF
+
+		if l103Ret
+			U_VATEL01()
+		endif
 	ENDIF
 	
 	If lAtivo .and. l103Ret
@@ -98,99 +143,99 @@ User Function MT100TOK()
 	RestArea(aArea)
 Return l103Ret
 
-Static Function Envmail()
-	Local nI 		:= 0
-	Local cMsgAux 	:= ""
-	Local cMsg 		:= ""
-	Local cQry 		:= ""
-	Local nPosDoc   := 0
-	Local nPosFor   := 0
-	Local nPosPS    := 0
-	Local nPosPC    := 0
-	Local nPosQue   := 0
-	Local nPosKm    := 0
-	Local nPosProd  := 0
-	Local nPosPed   := 0
-	Local oExecZCC  := nil 
-	Local cPara 	:= GETMV("MV_EVM103L",,"luana.santana@vistaalegre.agr.br,carlos.silva@vistaalegre.agr.br")
-
-	cMsg := '<table style="width: 100%; border-collapse: collapse; border: 1px solid #000;"> ' + CRLF 
-	cMsg +=	'	<thead> ' + CRLF
-	cMsg +=	'		<tr style="background-color: #92D050; color: #000; font-family: Arial, sans-serif; font-size: 14px; text-align: left;"> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Contrato</th> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Corretor</th> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">NF</th> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Fornecedor</th> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Peso Gado (Saída)</th> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Peso Gado (Chegada)</th> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Quebra</th> ' + CRLF
-	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Km</th> ' + CRLF
-	cMsg +=	'		</tr> ' + CRLF
-	cMsg +=	'	</thead> ' + CRLF
-	cMsg +=	'<tbody> ' + CRLF
-	
-	nPosDoc  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_DOC'})
-	nPosFor  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_FORNECE'})
-	nPosPS   := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESO'})
-	nPosPC   := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESCH'})
-	nPosQue  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_QUEKG'})
-	nPosKm   := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_KM'})
-	nPosProd := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_COD'})
-	nPosPed  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_PEDIDO'})
-
-	cQry := "SELECT ZCC_CODIGO, ZCC_CODCOR,A3_NOME ,A2_NOME" + CRLF
-	cQry += " FROM "+RetSqlNAme("ZBC")+" ZBC " + CRLF
-	cQry += " JOIN "+RetSqlNAme("ZCC")+" ZCC ON " + CRLF
-	cQry += " ZCC_FILIAL = ZBC_FILIAL " + CRLF
-	cQry += " AND ZBC_CODIGO = ZCC_CODIGO " + CRLF
-	cQry += " AND ZCC.D_E_L_E_T_ = '' " + CRLF
-	cQry += " LEFT  JOIN "+RetSqlNAme("SA3")+" SA3 ON ZCC_CODCOR = A3_COD " + CRLF
-	cQry += " AND SA3.D_E_L_E_T_ = '' " + CRLF
-	cQry += " LEFT JOIN "+RetSqlNAme("SA2")+" SA2 ON A2_COD = ZCC_CODFOR " + CRLF
-	cQry += " AND A2_LOJA = ZCC_LOJFOR " + CRLF
-	cQry += " AND SA2.D_E_L_E_T_ = '' " + CRLF
-	cQry += " WHERE ZBC.D_E_L_E_T_ = '' " + CRLF
-	cQry += " AND ZBC_PEDIDO = ? " + CRLF
-
-	oExecZCC := FWExecStatement():New(cQry)
-	
-	cMsgAux := ""
-	For nI := 1 to Len(aCols)
-		if !aCols[nI][Len(aCols[nI])]
-		
-		oExecZCC:SetString(1,aCols[nI][nPosPed])
-		cAlias := oExecZCC:OpenAlias()
-
-		cMsgAux += '<tr style="font-family: Arial, sans-serif; font-size: 14px; text-align: left;"> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+(cAlias)->ZCC_CODIGO+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+ALLTRIM((cAlias)->A3_NOME)+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cNFiscal + "-" +cSerie+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+ALLTRIM((cAlias)->A2_NOME)+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosPS] )+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosPC] )+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosQue])+'</td> ' + CRLF
-		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosKm] )+'</td> ' + CRLF
-		cMsgAux += '</tr> ' + CRLF
-		
-		(cAlias)->(DbCloseArea())
-		
-		endif
-	Next nI
-	
-	if !Empty(cMsgAux)
-		cMsg += cMsgAux
-		cMsg += ' </tbody> ' + CRLF
-		cMsg += ' </table> ' + CRLF
-
-		Processa({ || u_EnvMail(/* cPara */"igor.oliveira@vistaalegre.agr.br"	,;			//_cPara
-			"" 					,;	//_cCc
-			""					,;	//_cBCC
-			"Entrada de Gado - "+ Alltrim(Posicione("SA2",1,FWxFilial("SA2")+ca100For+cLoja,"A2_NOME"))+" - "+dToC(dDEmissao)+"",;		//_cTitulo
-			nil					,;	//_aAnexo
-			cMsg				,;	//_cMsg
-			.T.)},"Enviando e-mail...")	//_lAudit
-	endif
-
-	oExecZCC:Destroy()
-	oExecZCC := nil
-Return 
+//Static Function Envmail()
+//	Local nI 		:= 0
+//	Local cMsgAux 	:= ""
+//	Local cMsg 		:= ""
+//	Local cQry 		:= ""
+//	Local nPosDoc   := 0
+//	Local nPosFor   := 0
+//	Local nPosPS    := 0
+//	Local nPosPC    := 0
+//	Local nPosQue   := 0
+//	Local nPosKm    := 0
+//	Local nPosProd  := 0
+//	Local nPosPed   := 0
+//	Local oExecZCC  := nil 
+//	Local cPara 	:= GETMV("MV_EVM103L",,"luana.santana@vistaalegre.agr.br,carlos.silva@vistaalegre.agr.br")
+//
+//	cMsg := '<table style="width: 100%; border-collapse: collapse; border: 1px solid #000;"> ' + CRLF 
+//	cMsg +=	'	<thead> ' + CRLF
+//	cMsg +=	'		<tr style="background-color: #92D050; color: #000; font-family: Arial, sans-serif; font-size: 14px; text-align: left;"> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Contrato</th> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Corretor</th> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">NF</th> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Fornecedor</th> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Peso Gado (Saída)</th> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Peso Gado (Chegada)</th> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Quebra</th> ' + CRLF
+//	cMsg +=	'		<th style="padding: 8px; border: 1px solid #000;">Km</th> ' + CRLF
+//	cMsg +=	'		</tr> ' + CRLF
+//	cMsg +=	'	</thead> ' + CRLF
+//	cMsg +=	'<tbody> ' + CRLF
+//	
+//	nPosDoc  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_DOC'})
+//	nPosFor  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_FORNECE'})
+//	nPosPS   := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESO'})
+//	nPosPC   := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_PESCH'})
+//	nPosQue  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_QUEKG'})
+//	nPosKm   := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_X_KM'})
+//	nPosProd := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_COD'})
+//	nPosPed  := aScan(aHeader, {|aMat| AllTrim(aMat[2]) == 'D1_PEDIDO'})
+//
+//	cQry := "SELECT ZCC_CODIGO, ZCC_CODCOR,A3_NOME ,A2_NOME" + CRLF
+//	cQry += " FROM "+RetSqlNAme("ZBC")+" ZBC " + CRLF
+//	cQry += " JOIN "+RetSqlNAme("ZCC")+" ZCC ON " + CRLF
+//	cQry += " ZCC_FILIAL = ZBC_FILIAL " + CRLF
+//	cQry += " AND ZBC_CODIGO = ZCC_CODIGO " + CRLF
+//	cQry += " AND ZCC.D_E_L_E_T_ = '' " + CRLF
+//	cQry += " LEFT  JOIN "+RetSqlNAme("SA3")+" SA3 ON ZCC_CODCOR = A3_COD " + CRLF
+//	cQry += " AND SA3.D_E_L_E_T_ = '' " + CRLF
+//	cQry += " LEFT JOIN "+RetSqlNAme("SA2")+" SA2 ON A2_COD = ZCC_CODFOR " + CRLF
+//	cQry += " AND A2_LOJA = ZCC_LOJFOR " + CRLF
+//	cQry += " AND SA2.D_E_L_E_T_ = '' " + CRLF
+//	cQry += " WHERE ZBC.D_E_L_E_T_ = '' " + CRLF
+//	cQry += " AND ZBC_PEDIDO = ? " + CRLF
+//
+//	oExecZCC := FWExecStatement():New(cQry)
+//	
+//	cMsgAux := ""
+//	For nI := 1 to Len(aCols)
+//		if !aCols[nI][Len(aCols[nI])]
+//		
+//		oExecZCC:SetString(1,aCols[nI][nPosPed])
+//		cAlias := oExecZCC:OpenAlias()
+//
+//		cMsgAux += '<tr style="font-family: Arial, sans-serif; font-size: 14px; text-align: left;"> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+(cAlias)->ZCC_CODIGO+'</td> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+ALLTRIM((cAlias)->A3_NOME)+'</td> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cNFiscal + "-" +cSerie+'</td> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+ALLTRIM((cAlias)->A2_NOME)+'</td> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosPS] )+'</td> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosPC] )+'</td> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosQue])+'</td> ' + CRLF
+//		cMsgAux += '<td style="padding: 8px; border: 1px solid #000;">'+cValToChar(aCols[nI][nPosKm] )+'</td> ' + CRLF
+//		cMsgAux += '</tr> ' + CRLF
+//		
+//		(cAlias)->(DbCloseArea())
+//		
+//		endif
+//	Next nI
+//	
+//	if !Empty(cMsgAux)
+//		cMsg += cMsgAux
+//		cMsg += ' </tbody> ' + CRLF
+//		cMsg += ' </table> ' + CRLF
+//
+//		Processa({ || u_EnvMail(/* cPara */"igor.oliveira@vistaalegre.agr.br"	,;			//_cPara
+//			"" 					,;	//_cCc
+//			""					,;	//_cBCC
+//			"Entrada de Gado - "+ Alltrim(Posicione("SA2",1,FWxFilial("SA2")+ca100For+cLoja,"A2_NOME"))+" - "+dToC(dDEmissao)+"",;		//_cTitulo
+//			nil					,;	//_aAnexo
+//			cMsg				,;	//_cMsg
+//			.T.)},"Enviando e-mail...")	//_lAudit
+//	endif
+//
+//	oExecZCC:Destroy()
+//	oExecZCC := nil
+//Return 

@@ -220,7 +220,7 @@ Static Function USIN11PG()
     cQry += "     WHERE ZAL.D_E_L_E_T_ = '' " + CRLF
     cQry += "     AND ZAL.ZAL_FORNEC = '"+oCab:GetValue("ZAC_FORNEC")+"' " + CRLF
     cQry += "     AND ZAL.ZAL_LOJA = '"+oCab:GetValue("ZAC_LOJA")+"' " + CRLF
-    cQry += "     AND ZAL.ZAL_DTPES BETWEEN '"+dToS(oCab:GetValue("ZAC_DTINI"))+"' AND '"+dToS(oCab:GetValue("ZAC_DTFIM"))+"' " + CRLF
+    cQry += "     AND ZAL.ZAL_DATA BETWEEN '"+dToS(oCab:GetValue("ZAC_DTINI"))+"' AND '"+dToS(oCab:GetValue("ZAC_DTFIM"))+"' " + CRLF
     cQry += "     AND ZAL.ZAL_TIPO = '1' " + CRLF
     cQry += "     AND ZAL.ZAL_PROC <> 'S' " + CRLF
     cQry += " ), " + CRLF
@@ -335,7 +335,7 @@ Static Function USIN11PG()
             oGrid:SetValue("ZAC_QTDNF"  ,(cAlias)->D1_QUANT  )//ok
             oGrid:SetValue("ZAC_PESOL"  ,(cAlias)->ZPB_PESOL )//ok
             
-            nPesoMedio := ((cAlias)->(D1_QUANT+ZPB_PESOL)) / 2 
+            nPesoMedio := ((cAlias)->(D1_QUANT+ZPB_PESOL)) / 2
             oGrid:SetValue("ZAC_PESOM"  , nPesoMedio )
 
             oGrid:SetValue("ZAC_DENSI"  ,(cAlias)->ZAL_KGM3   )
@@ -372,7 +372,7 @@ Static Function USIN11PG()
             // 251,05
             oGrid:SetValue("ZAC_RTOMS"  , Round(nTotTon / ( nMsMedia / 100 ),2)) 
             oGrid:SetValue("ZAC_RTODIF" , Round(nTotal - (cAlias)->F1_VALBRUT,2))
-            oGrid:SetValue("ZAC_RECZAL" , (cAlias)->RECNO ) 
+            oGrid:SetValue("ZAC_RECZAL" , (cAlias)->RECNO )
 
             (cAlias)->(DbSkip())
         enddo

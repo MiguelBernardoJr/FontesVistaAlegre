@@ -1,0 +1,386 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "TOPCONN.CH"  
+#INCLUDE "RWMAKE.CH"    
+#INCLUDE "TBICONN.CH"
+#INCLUDE "COLORS.CH"
+#INCLUDE "RPTDEF.CH"
+#INCLUDE "FWPrintSetup.ch"
+
+static oCellHorAlign    := FwXlsxCellAlignment():Horizontal()
+static oCellVertAlign   := FwXlsxCellAlignment():Vertical()
+
+USER Function VAMNTR03()//u_VAMNTR03()
+    Private cPerg := 'MNT790'
+    Private jFontHeader := nil
+	Private jFontTitulo := nil
+	Private jFontText 	:= nil
+    Private jFontCel    := nil
+	Private jBHeaderRight:= nil
+	Private jFHora      := nil
+	Private JFLeft 		:= nil
+	Private jFData 		:= nil
+	Private jFormatTit 	:= nil
+	Private jFormatTot 	:= nil
+	Private jFormatHead := nil
+	Private jNoBorder 	:= nil
+	Private jFMoeda 	:= nil
+	Private jFNum 		:= nil
+	If Pergunte(cPerg, .T.)
+		FWMsgRun(,{||ImprRel()},"Gerando Relatorio, Aguarde...","")
+    endif
+Return 
+
+
+
+Static Function ImprRel()
+    Local aArea         := FWGetArea()
+    Local cAba1         := "Aba 1"
+    Local cTable        := "Utilização da Equipe de Manutenção"   
+    Local lTemDados     := .f.
+    Local nRow          := 0
+    Local nCol          := 0
+    Local nX            := 0
+    Local nRet          := 0
+                           
+    Local aHeaderRel    :={ "Cod. Funcionario"  ,;
+                            "Nome"              ,;
+                            "O.S."              ,;			   
+                            "Centro de Custo"   ,; 
+                            "Desc. Custo"       ,;	   
+                            "Bem/Localização"   ,; 
+                            "Nome"              ,;			   
+                            "Tipo"              ,;		   
+                            "Plano"             ,;			
+                            "Serviço"           ,;		   
+                            "Seq."              ,;			   
+                            "Quant."            ,;			
+                            "Unid."             ,;			
+                            "Data Inicio"       ,;	   
+                            "Hora Inicio"       ,;	   
+                            "Data Fim"          ,;		   
+                            "Hora Fim"          ,;		   
+                            "Tempo de Execução" ,;		   
+                            "Termino"           }		   
+    Private oExcel
+    Private oExcelApp
+
+    Private cPath 	 	:= "C:\totvs_relatorios\"
+    Private cArquivo   	:= cPath + cPerg +; // __cUserID+"_"+;
+                                DtoS(dDataBase)+; 
+                                "_"+;
+                                StrTran(SubS(Time(),1,5),":","")+;
+                                ".rel"
+    Private cAlias := GetNextAlias()
+
+	FWMsgRun(,{||lTemDados := LoadDados(@cAlias)},"Buscando Dados, Aguarde...","")
+    DefinirFormatacao()
+    if !(cAlias)->(EOF())
+        oExcel := FwPrinterXlsx():New()
+        oExcel:Activate(cArquivo)
+        
+        oExcel:AddSheet(cAba1)
+        
+        nRow := 1
+        nCol := 1
+            
+    	oExcel:SetCellsFormatConfig(jFormatTit)
+		oExcel:SetFontConfig(jFontTitulo)
+		oExcel:MergeCells(nRow, nCol, nRow, Len(aHeaderRel))
+		
+        oExcel:SetText(nRow, nCol, cTable)
+        
+        oExcel:SetCellsFormatConfig(jFormatHead)
+		oExcel:SetFontConfig(jFontHeader)
+		oExcel:SetBorderConfig(jBHeaderRight)
+
+		nRow += 1
+		For nX := nCol to Len(aHeaderRel)
+			oExcel:SetValue(nRow, nX, aHeaderRel[nX])
+		Next nX
+
+		oExcel:SetBorderConfig(jNoBorder)
+
+        while !(cAlias)->(EOF())
+            nRow += 1
+			nCol := 1
+            if nRow%2==0
+                jFNum['background_color'] := "FFFFFF"
+                //jFontText['background_color'] := "FFFFFF"
+                JFLeft['background_color'] := "FFFFFF"
+                jFNum['background_color'] := "FFFFFF"
+                jFHora['background_color'] := "FFFFFF"
+
+            else
+                jFNum['background_color'] := "bef5c8"
+                //jFontText['background_color'] := "93F17C"
+                JFLeft['background_color'] := "bef5c8"
+                jFNum['background_color'] := "bef5c8"
+                jFHora['background_color'] := "bef5c8"
+            endif
+			oExcel:SetCellsFormatConfig(jFNum)
+			oExcel:SetValue(nRow,   nCol  , (cAlias)->TL_CODIGO)
+
+            oExcel:SetFontConfig(jFontText)
+			oExcel:SetCellsFormatConfig(JFLeft)
+		   // oExcel:SetBorderConfig(jNoBorder)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->RA_NOME)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TL_ORDEM)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TJ_CCUSTO)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->CTT_DESC01)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TJ_CODBEM)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->T9_NOME)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TL_PLANO)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TJ_SERVICO)
+            
+			
+            //cVal := iif(AllTrim((((cAlias)->T4_NOME))) == 'MANUTENCAO CORRETIVA',oExcel:SetCellsFormatConfig(jFontCel),oExcel:SetCellsFormatConfig(JFLeft))
+            
+           //If AllTrim((((cAlias)->T4_NOME))) == 'MANUTENCAO CORRETIVA'
+           //    oExcel:SetCellsFormatConfig(jFontCel)
+           //Else
+           //    oExcel:SetCellsFormatConfig(JFLeft)
+           //Endif
+            
+            // oExcel:SetCellsFormatConfig(jFontCel)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->T4_NOME)
+			oExcel:SetCellsFormatConfig(jFNum)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TL_SEQUENC)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TL_QUANTID)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TL_UNIDADE) 
+			oExcel:SetValue(nRow, ++nCol  , dToC(Stod((cAlias)->TL_DTINICI)))
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TL_HOINICI)
+			oExcel:SetValue(nRow, ++nCol  , dToC(Stod((cAlias)->TL_DTFIM)))
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TL_HOFIM)
+		    oExcel:SetCellsFormatConfig(jFHora)
+            oExcel:SetFormula(nRow,++nCol , "=(P"+AllTrim(cValToChar(nRow))+"+Q"+AllTrim(cValToChar(nRow))+")-("+("N"+AllTrim(cValToChar(nRow))+"+O"+AllTrim(cValToChar(nRow)+")")))
+                                               //=(P306+Q306)-(N306+O306)
+            oExcel:SetFontConfig(jFontText)
+			oExcel:SetCellsFormatConfig(JFLeft)
+			oExcel:SetValue(nRow, ++nCol  , (cAlias)->TJ_TERMINO)
+        
+            (cAlias)->(dbSkip())
+
+        enddo
+            (cAlias)->(dbCloseArea())
+
+            oExcel:ApplyAutoFilter(2,1,nRow,Len(aHeaderRel))
+            nRowTotal := nRow
+            nRow += 1
+            oExcel:SetCellsFormatConfig(jFNum)
+            oExcel:SetFormula(nRow,  1, "=SUBTOTAL(3,A3:A"+AllTrim(cValToChar(nRowTotal))+")" )
+            oExcel:SetFormula(nRow, 12, "=SUBTOTAL(9,L3:L"+AllTrim(cValToChar(nRowTotal))+")" )
+            oExcel:SetCellsFormatConfig(jFHora)
+            oExcel:SetFormula(nRow, 18, "=SUBTOTAL(9,R3:R"+AllTrim(cValToChar(nRowTotal))+")" )
+
+		    oExcel:toXlsx()
+
+            nRet := ShellExecute("open", SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx", "", "", 1)
+        
+            If nRet <= 32
+                MsgStop("Não foi possível abrir o arquivo "+SubStr(cArquivo,1,Len(cArquivo)-3) + "xlsx"+ "!", "Atenção")
+            EndIf
+
+            oExcel:DeActivate()
+        
+    endif
+
+    FWRestArea(aArea)
+Return 
+
+Static Function DefinirFormatacao()
+    Local cCVerde       := '00A85A'
+    Local cCCinza       := "A0A0A0"
+    Local cCAmarelo     := "FFFF00"
+
+    jFontHeader := FwXlsxPrinterConfig():MakeFont()
+    jFontHeader['font'] := FwPrinterFont():Calibri()
+    jFontHeader['size'] := 14
+    jFontHeader['bold'] := .T.
+    
+    jFontTitulo := FwXlsxPrinterConfig():MakeFont()
+    jFontTitulo['font'] := FwPrinterFont():Calibri()
+    jFontTitulo['size'] := 20
+    jFontTitulo['bold'] := .T.
+
+    jFontText := FwXlsxPrinterConfig():MakeFont()
+    jFontText['font'] := FwPrinterFont():Calibri()
+    jFontText['size'] := 12
+    jFontText['italic'] := .F.
+    
+    jFormatTit := FwXlsxPrinterConfig():MakeFormat()
+    jFormatTit['hor_align']         := oCellHorAlign:Center()
+    jFormatTit['vert_align']        := oCellVertAlign:Center()
+    jFormatTit['bold']  := .T.
+    jFormatTit['text_color'] = 'FFFFFF'
+    jFormatTit['background_color']  := '034700'
+
+    jFontCel := FwXlsxPrinterConfig():MakeFormat()
+    jFontCel['hor_align']        := oCellHorAlign:Left()
+    jFontCel['vert_align']       := oCellVertAlign:Center()
+    jFontCel['text_wrap']        := .F.
+    //jFontCel['text_color']       := "000000"
+    jFontCel['background_color'] := "D8DB04"
+    jFontCel['custom_format']    := ""
+
+
+    JFLeft := FwXlsxPrinterConfig():MakeFormat()
+    JFLeft['hor_align']        := oCellHorAlign:Left()
+    JFLeft['vert_align']       := oCellVertAlign:Center()
+
+    JFRight := FwXlsxPrinterConfig():MakeFormat()
+    JFRight['hor_align']        := oCellHorAlign:RIGHT()
+    JFRight['vert_align']       := oCellVertAlign:Center()
+    
+    jFData := FwXlsxPrinterConfig():MakeFormat()
+    jFData['custom_format']    := "dd/mm/yyyy"
+    jFData['hor_align']        := oCellHorAlign:Left()
+    jFData['vert_align']       := oCellVertAlign:Center()
+    
+    jFHora := FwXlsxPrinterConfig():MakeFormat()
+    jFHora['custom_format']    := "[h]:mm:ss"
+    jFHora['hor_align']        := oCellHorAlign:Left()
+    jFHora['vert_align']       := oCellVertAlign:Center()
+
+
+    jFormatGD := FwXlsxPrinterConfig():MakeFormat()
+    jFormatGD['hor_align']         := oCellHorAlign:Center()
+    jFormatGD['vert_align']        := oCellVertAlign:Center()
+    jFormatGD['background_color']  := cCAmarelo
+    
+    jFormatTot := FwXlsxPrinterConfig():MakeFormat()
+    jFormatTot['custom_format']     := "\R$ ###,##0.00"
+    jFormatTot['hor_align']         := oCellHorAlign:Center()
+    jFormatTot['vert_align']        := oCellVertAlign:Center()
+    jFormatTot['background_color']  := cCCinza
+
+    jFormatHead := FwXlsxPrinterConfig():MakeFormat()
+    jFormatHead['hor_align']         := oCellHorAlign:Center()
+    jFormatHead['vert_align']        := oCellVertAlign:Center()
+    jFormatHead['background_color']  := "034700"
+    jFormatHead['text_color'] = 'FFFFFF'
+
+
+    jFMoeda := FwXlsxPrinterConfig():MakeFormat()
+    jFMoeda['custom_format']    := "\R$ ###,##0.00"
+    jFMoeda['hor_align']        := oCellHorAlign:RIGHT()
+    jFMoeda['vert_align']       := oCellVertAlign:Center()
+
+    jFNum := FwXlsxPrinterConfig():MakeFormat()
+    jFNum['hor_align']  := oCellHorAlign:Left()
+    jFNum['vert_align'] := oCellVertAlign:Center()
+
+    // Bordas para o header
+    jNoBorder := FwXlsxPrinterConfig():MakeBorder()
+    jNoBorder['top']    := .F.
+    jNoBorder['bottom'] := .F.
+    jNoBorder['left']   := .F.
+    jNoBorder['right']  := .F.
+    jNoBorder['border_color'] := "000000"
+    jNoBorder['style'] := FwXlsxBorderStyle():none()
+
+    jBHeaderLeft := FwXlsxPrinterConfig():MakeBorder()
+    jBHeaderLeft['top']    := .T.
+    jBHeaderLeft['bottom'] := .F.
+    jBHeaderLeft['left']   := .T.
+    jBHeaderLeft['right']  := .F.
+    jBHeaderLeft['border_color'] := "000000"
+    jBHeaderLeft['style'] := FwXlsxBorderStyle():Thick()
+
+    jBHeaderRight := FwXlsxPrinterConfig():MakeBorder()
+    jBHeaderRight['top']    := .T.
+    jBHeaderRight['bottom'] := .T.
+    jBHeaderRight['left']   := .T.
+    jBHeaderRight['right']  := .T.
+    jBHeaderRight['border_color'] := "FFFFFF"
+    jBHeaderRight['style'] := FwXlsxBorderStyle():Thin()
+    
+    jBottomLeft := FwXlsxPrinterConfig():MakeBorder()
+    jBottomLeft['top']    := .F.
+    jBottomLeft['bottom'] := .T.
+    jBottomLeft['left']   := .T.
+    jBottomLeft['right']  := .F.
+    jBottomLeft['border_color'] := "000000"
+    jBottomLeft['style'] := FwXlsxBorderStyle():Thick()
+
+    jBottomRight := FwXlsxPrinterConfig():MakeBorder()
+    jBottomRight['top']    := .F.
+    jBottomRight['bottom'] := .T.
+    jBottomRight['left']   := .F.
+    jBottomRight['right']  := .T.
+    jBottomRight['border_color'] := "000000"
+    jBottomRight['style'] := FwXlsxBorderStyle():Thick()
+
+    jBorderLeft := FwXlsxPrinterConfig():MakeBorder()
+    jBorderLeft['left'] := .T.
+    jBorderLeft['border_color'] := "000000"
+    jBorderLeft['style'] := FwXlsxBorderStyle():Thick()
+    
+    jBorderCenter := FwXlsxPrinterConfig():MakeBorder()
+    jBorderCenter['left'] := .T.
+    jBorderCenter['right'] := .T.
+    jBorderCenter['border_color'] := "#000000"
+    jBorderCenter['style'] := FwXlsxBorderStyle():Thick()
+    
+    jBorderRight := FwXlsxPrinterConfig():MakeBorder()
+    jBorderRight['right'] := .T.
+    jBorderRight['border_color'] := "#000000"
+    jBorderRight['style'] := FwXlsxBorderStyle():Thick()
+
+Return
+
+Static function LoadDados(cAlias)
+    Local aArea  := FWGetArea()
+    Local cQuery := ''
+
+  
+    cQuery += "   select TL_ORDEM" + CRLF
+    cQuery += "   ,TL_PLANO" + CRLF
+    cQuery += "   ,TJ_CODBEM" + CRLF
+    cQuery += "   ,T9_NOME" + CRLF
+    cQuery += "   ,TJ_SERVICO" + CRLF
+    cQuery += "   ,T4_NOME" + CRLF
+    cQuery += "   ,TL_SEQUENC" + CRLF
+    cQuery += "   ,TL_QUANTID" + CRLF
+    cQuery += "   ,TL_UNIDADE" + CRLF
+    cQuery += "   ,TL_DTINICI" + CRLF
+    cQuery += "   ,TL_HOINICI" + CRLF
+    cQuery += "   ,TL_DTFIM" + CRLF
+    cQuery += "   ,TL_HOFIM" + CRLF
+    cQuery += "   ,TJ_TERMINO" + CRLF
+    cQuery += "   ,TJ_CCUSTO" + CRLF
+    cQuery += "   ,CTT_DESC01" + CRLF
+    cQuery += "   ,TL_CODIGO" + CRLF
+    cQuery += "   ,RA_NOME" + CRLF
+    cQuery += "   from "+RETSqlName('STL')+" STL" + CRLF
+    cQuery += "   JOIN "+RETSqlName('STJ')+" STJ ON " + CRLF
+    cQuery += "   		TL_FILIAL = TJ_FILIAL" + CRLF
+    cQuery += "   	AND TL_ORDEM = TJ_ORDEM" + CRLF
+    cQuery += "   	AND TJ_CCUSTO BETWEEN '"+MV_PAR01+"' AND '"+MV_PAR02+"' " + CRLF
+    cQuery += "   	AND STJ.D_E_L_E_T_ = ''" + CRLF
+    cQuery += "   LEFT JOIN "+RETSqlName('ST9')+" ST9 ON" + CRLF
+    cQuery += "   		TJ_FILIAL = T9_FILIAL " + CRLF
+    cQuery += "   	and TJ_CODBEM = T9_CODBEM" + CRLF
+    cQuery += "   	and ST9.D_E_L_E_T_ = ''" + CRLF
+    cQuery += "   JOIN "+RETSqlName('ST4')+" ST4 ON " + CRLF
+    cQuery += "   	TJ_SERVICO = T4_SERVICO" + CRLF
+    cQuery += "   	AND ST4.D_E_L_E_T_ = ''" + CRLF
+    cQuery += "   LEFT JOIN "+RETSqlName('SRA')+" SRA ON " + CRLF
+    cQuery += "   		 RA_FILIAL = '0101001'" + CRLF
+    cQuery += "   	AND TL_CODIGO = RA_MAT" + CRLF
+    cQuery += "   	AND SRA.D_E_L_E_T_ = ''" + CRLF
+    cQuery += "   LEFT JOIN "+RETSqlName('CTT')+" CTT ON" + CRLF
+    cQuery += "   		TJ_FILIAL = CTT_FILIAL" + CRLF
+    cQuery += "   	AND TJ_CCUSTO = CTT_CUSTO" + CRLF
+    cQuery += "   	AND CTT.D_E_L_E_T_ = ''" + CRLF
+    cQuery += "   where TL_TIPOREG = 'M'	" + CRLF
+    cQuery += "   and STL.D_E_L_E_T_ = ''" + CRLF
+    cQuery += "   AND TL_DTINICI >= '"+DtoS(MV_PAR03)+"' AND TL_DTFIM <= '"+DtoS(MV_PAR04)+"' " + CRLF
+
+    If lower(cUserName) $ 'lsilva,bernardo,mbernardo,atoshio,admin,administrador'
+	    MemoWrite("C:\totvs_relatorios\SQL_VAMNTR03.sql" , cQuery)
+    EndIf
+
+    MPSysOpenQuery(cQuery,cAlias)
+
+    FWRestArea(aArea)
+Return !(cAlias)->(eof())

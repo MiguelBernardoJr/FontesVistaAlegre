@@ -94,11 +94,11 @@ if lContinua
    EndIf
    
    If lContinua
-       // aLibera ::={ <C9_PEDIDO>, <C9_ITEM>, <C9_SEQUEN>, <C9_QTDLIB>, <C9_PRCVEN>, <C9_PRODUTO>, <F4_ISS=="S">, <SC9->(RecNo())>,;
+	// aLibera ::={ <C9_PEDIDO>, <C9_ITEM>, <C9_SEQUEN>, <C9_QTDLIB>, <C9_PRCVEN>, <C9_PRODUTO>, <F4_ISS=="S">, <SC9->(RecNo())>,;
    	//              <SC5->(RecNo())>, <SC6->(RecNo())>, <SE4->(RecNo())>, <SB1->(RecNo())>, <SB2->(RecNo())>, <SF4->(RecNo())>,
-       //              <C9_LOCAL>, 0, <C9_QTDLIB2> }
-       // aBloqueio ::= { <C9_PEDIDO>, <C9_ITEM>, <C9_SEQUEN>, <C9_PRODUTO>, <C9_QTDLIB>, <C9_BLCRED>, <C9_BLEST>, <C9_BLWMS> }
-   
+	//              <C9_LOCAL>, 0, <C9_QTDLIB2> }
+	// aBloqueio ::= { <C9_PEDIDO>, <C9_ITEM>, <C9_SEQUEN>, <C9_PRODUTO>, <C9_QTDLIB>, <C9_BLCRED>, <C9_BLEST>, <C9_BLWMS> }
+
    	U_LoadNFS(@aLibera,@aBloqueio)
    
    	If Empty(aBloqueio) .and.  !Empty(aLibera)
@@ -166,7 +166,7 @@ if lContinua
    				//³P.E . para exibir mensagem com motivo de não faturar de acordo com parametro MV_DATAINF³
    				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
    				If (lCond9 .And. SC5->C5_DATA1 < dDataBase .And. !Empty(SC5->C5_DATA1) ) .And. ExistBlock( "M461DINF" ) 
-   					ExecBlock( "M461DINF", .f., .f. ) 
+   					ExecBlock( "M461DINF", .f., .f. )
    				EndIf
    			Next
    		//EndIf

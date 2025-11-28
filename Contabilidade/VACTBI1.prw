@@ -99,7 +99,7 @@ User Function VACTBI1()
 	oGetMrk:oBrowse:blDblClick := {|| MarcaDes(oGetMrk,"L")}
 
 	Activate dialog oDlgMrk centered
-Return lRet 
+Return lRet
 Static Function ConfirmAdd()
 	local aArea     := GetArea()
 	local nPosFil   := aScan( aHeadMrk, { |x| AllTrim(x[2]) == "cFilial"})

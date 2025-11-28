@@ -1,11 +1,11 @@
 User Function UPDATESRA()
 
-    Local cArquivo  := "E:\ATUALIZAÇÃO_CADASTRO.csv" // Caminho do seu arquivo CSV
+    Local cArquivo  := "E:\LISTA_COMBUSTIVEL.csv" // Caminho do seu arquivo CSV
     Local aLinha    := {}
     Local nLin      := 0
     Local nUpdated  := 0
     Local cMat      := ""
-    Local aDados    := {}
+    Local aDados    := {} as Array 
     Local nI        := 0
 
     Private lMsHelp := .T.
@@ -21,13 +21,12 @@ User Function UPDATESRA()
         If ! (oArquivo:EoF())
             While (oArquivo:HasLine())
                 cLinAtu := oArquivo:GetLine()
-                aLinha  := StrTokArr(cLinAtu, ";")
+                aLinha  := StrTokArr(cLinAtu, ",")
                 // Valida se a linha tem a quantidade mínima de colunas
-                If Len(aLinha) >= 5
+                If Len(aLinha) >= 4
                     aAdd(aDados, aLinha)
                 EndIf
             enddo
-
         endif
     EndIf
     
@@ -39,8 +38,7 @@ User Function UPDATESRA()
             RecLock("SRA", .F.)
 
                 // Atualiza os campos
-                SRA->RA_EMAIL   := Alltrim(aDados[nI][4])
-                SRA->RA_TELEFON := Alltrim(aDados[nI][5])
+                SRA->RA_VALORDI   := Val(aDados[nI][4])
 
             // Libera o registro e confirma a transação
             SRA->(MsUnLock())
@@ -50,7 +48,7 @@ User Function UPDATESRA()
         Else
             ConOut(Time() + " - ERRO: Matrícula " + cMat + " da filial " + cFilial + " não encontrada na linha " + cValToChar(nLin))
         EndIf
-    Next nI 
+    Next nI
 
     MsgInfo("Processo finalizado! " + cValToChar(nUpdated) + " registros atualizados de um total de " + cValToChar(nLin) + " linhas lidas.")
 

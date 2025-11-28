@@ -139,13 +139,13 @@ Local aRotina := {}
 	ADD OPTION aRotina TITLE OemToAnsi("Estorno"	   ) 		ACTION "U_BTNEST" 	 OPERATION MODEL_OPERATION_DELETE ACCESS 0 // "Estornar"
 	ADD OPTION aRotina TITLE OemToAnsi("Importar TODOS") 		ACTION "U_BTIMPALL" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Parâmetro Água") 		ACTION "U_BTParH20" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
-	ADD OPTION aRotina TITLE OemToAnsi("Alterar Operadores") 	ACTION "U_AltOpePC" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
+	ADD OPTION aRotina TITLE OemToAnsi("Alterar Operadores") 	ACTION "U_ALTOPER" OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	ADD OPTION aRotina TITLE OemToAnsi("Alterar Produtos Silo")	ACTION "U_AltPrdS"  OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // "Importar"
 	//ADD OPTION aRotina TITLE OemToAnsi("Copiar")     ACTION "VIEWDEF.VAPCPA13"    OPERATION 9 ACCESS 0 // "Copiar"
 
 Return aRotina
 
-User Function AltOpePC()
+/* User Function AltOpePC()
 	
 	GeraX1("ALTMVOPE")
 	
@@ -160,9 +160,9 @@ User Function AltOpePC()
 				MsgAlert("Operador dois não informado!"+ CRLF ,;
 						 "Parametro não será atualizado", "Atenção...")
 			ENDIF
-		endif 
-	endif  
-return
+		endif
+	endif
+return */
 /* ----------------------------------------------------------------------------- */
 User Function btnCfr()
 
@@ -5348,7 +5348,7 @@ Local aDSilo 		:= {}
 					Else
 						If nPKGFornec > 0
 							impZ0W(aDados, nI, nPCurral, @_cCurral, nPCodDieta, nPOrdemProd, nPNumTrt, nPKGInic, nPKGFim, nPKGMetaReca,;
-								nPKGFornec, nPData, nPHoraI, @cHoraI, nPVagao)
+								nPKGFornec, nPData, nPHoraI, @cHoraI, nPVagao,nPLote)
 						EndIf
 					EndIf
 					(cALias)->(DbCloseArea())
@@ -5939,7 +5939,7 @@ Return
  | Obs.     :                                                                      |
  '---------------------------------------------------------------------------------*/
 Static Function impZ0W(aDados, nI, nPCurral, _cCurral, nPCodDieta, nPOrdemProd, nPNumTrt, nPKGInic, nPKGFim, nPKGMetaReca,;
-				nPKGFornec, nPData, nPHoraI, cHoraI, nPVagao )
+				nPKGFornec, nPData, nPHoraI, cHoraI, nPVagao,nPLote )
 /*
 	trato sem planejamento
 	
@@ -5966,8 +5966,9 @@ Static Function impZ0W(aDados, nI, nPCurral, _cCurral, nPCodDieta, nPOrdemProd, 
 		EndIf
 	EndDo */
 	
-Local cPerg := "IMPZ0WPCP1"
-Local lRet  := .T.
+	Local cPerg := "IMPZ0WPCP1"
+	Local lRet  := .T.
+	Local aSave := {MV_PAR01, MV_PAR02, MV_PAR03, MV_PAR04, MV_PAR05, MV_PAR06, MV_PAR07, MV_PAR08}
 
 	If _cCurral <> aDados[nI, nPCurral]
 		_cCurral := aDados[nI, nPCurral]
@@ -5980,7 +5981,7 @@ Local lRet  := .T.
 				  { cPerg, "06", aDados[nI, nPNumTrt]	 },;
 				  { cPerg, "07", aDados[nI, nPKGFornec]	 }})
 		While lRet
-			Pergunte(cPerg, .T.) 
+			Pergunte(cPerg, .T.)
 			
 			If (lRet := Empty(MV_PAR01))
 				MsgInfo("É Obrigatório a seleção de um motivo.")
@@ -6033,6 +6034,14 @@ Local lRet  := .T.
 		Z0W->Z0W_HORFIN := (cHoraI:=aDados[nI, nPHoraI])
 	Z0W->(MSUnlock())
 
+	MV_PAR01 := aSave[1]
+	MV_PAR02 := aSave[2]
+	MV_PAR03 := aSave[3]
+	MV_PAR04 := aSave[4]
+	MV_PAR05 := aSave[5]
+	MV_PAR06 := aSave[6]
+	MV_PAR07 := aSave[7]
+	MV_PAR08 := aSave[8]
 Return nil
 
 
