@@ -330,3 +330,7 @@ User Function MT140SAI()
     endif
 
 Return Nil
+
+/*
+https://ajuda.qive.com.br/pt-BR/articles/7874832-manual-de-instalacao-do-monitor-dfe-para-protheus#h_66c8f2d9ff
+*/

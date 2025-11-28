@@ -32,3 +32,6 @@ telemetry.txt
 /.vscode
 .vscode/launch.json
 .vscode/launch.json
+.DS_Store
+Compras/.DS_Store
+Estoque/.DS_Store
