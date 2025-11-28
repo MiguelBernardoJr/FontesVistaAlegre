@@ -1,0 +1,821 @@
+#INCLUDE "MNTR210.CH"
+#INCLUDE "PROTHEUS.CH"
+
+#DEFINE _nVERSAO 1 //Versao do fonte
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MNTR210  ³ Autor ³ Deivys Joenck         ³ Data ³ 23/08/01 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Historico dos Insumos Aplicados no Bem                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³OBSERVACAO³ Revisao t‚cnica em 01/10/2002                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function MNTR210()
+	
+	//Armazena variaveis p/ devolucao (NGRIGHTCLICK)
+	Local aNGBEGINPRM := NGBEGINPRM(_nVERSAO)
+
+	Local oReport
+	Local aArea := GetArea()
+
+	Private vVETHORAS := {}
+	Private nTamPro	  := TamSX3("TL_CODIGO")[1] - 15
+	Private cDescricao
+	Private cTRB := GetNextAlias()
+
+	/*
+	ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	³ Variaveis utilizadas para parametros!                       ³
+	³ mv_par01     // Da  Data                                    ³
+	³ mv_par02     // Ate Data                                    ³
+	³ mv_par03     // Do  Bem                                     ³
+	³ mv_par04     // Ate Bem                                     ³
+	³ mv_par05     // Tipo do Insumo                              ³
+	³ mv_par06     // De Localizacao ?                            ³
+	³ mv_par07     // Ate Localizacao ?                           ³
+	³ mv_par08     // Imprimir Localizacao ? Sim/Nao              ³
+	ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	*/
+	Private cPERG := "MNT21R"
+
+	If FindFunction("TRepInUse") .And. TRepInUse()
+		//-- Interface de impressao
+		oReport := ReportDef()
+		oReport:SetPortrait() //Default Retrato
+		oReport:PrintDialog()
+	Else
+		MNTR210R3()
+	EndIf
+	RestArea(aArea)
+
+	//Devolve variaveis armazenadas (NGRIGHTCLICK)
+	NGRETURNPRM(aNGBEGINPRM)
+
+Return .T.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ReportDef³ Autor ³ Elisangela Costa      ³ Data ³ 20/06/06 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Define as secoes impressas no relatorio                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MNTR210                                                    ³±±
+±±|__________|____________________________________________________________|±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+*/
+Static Function ReportDef()
+	Local oReport
+	Local oSection1
+	Local oSection2
+	Local oCell
+
+	//LAYOUT
+	/*
+	1         2         3         4         5         6         7         8         9        10       110       120
+	0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
+	____________________________________________________________________________________________________________________________
+	Insumos Aplicados no Periodo
+	____________________________________________________________________________________________________________________________
+
+	Bem              Descricao
+	____________________________________________________________________________________________________________________________
+	xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+	Dt.Aplic.  O.S.     Insumo          Descricao              Localiz.   Quantidade  Un     Contador 1   Contador 2
+	____________________________________________________________________________________________________________________________
+
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXX     999.99  XXX   999.999.999  999.999.999
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXX     999.99  XXX   999.999.999  999.999.999
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXX     999.99  XXX   999.999.999  999.999.999
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXX     999.99  XXX   999.999.999  999.999.999
+
+	Bem              Descricao
+	____________________________________________________________________________________________________________________________
+	xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+	Dt.Aplic.  O.S.     Insumo          Descricao              Localiz.   Quantidade  Un     Contador 1   Contador 2
+	____________________________________________________________________________________________________________________________
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXX     999.99  XXX   999.999.999  999.999.999
+	*/
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Criacao do componente de impressao                                      ³
+	//³                                                                        ³
+	//³TReport():New                                                           ³
+	//³ExpC1 : Nome do relatorio                                               ³
+	//³ExpC2 : Titulo                                                          ³
+	//³ExpC3 : Pergunte                                                        ³
+	//³ExpB4 : Bloco de codigo que sera executado na confirmacao da impressao  ³
+	//³ExpC5 : Descricao                                                       ³
+	//³                                                                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oReport := TReport():New("MNTR210",OemToAnsi(STR0006),"MNT21R",{|oReport| ReportPrint(oReport)},STR0001+" "+STR0002+" "+STR0003)
+
+	/*
+	ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	³ Variaveis utilizadas para parametros!                       ³
+	³ mv_par01     // Da  Data                                    ³
+	³ mv_par02     // Ate Data                                    ³
+	³ mv_par03     // Do  Bem                                     ³
+	³ mv_par04     // Ate Bem                                     ³
+	³ mv_par05     // Tipo do Insumo                              ³
+	³ mv_par06     // De Localizacao ?                            ³
+	³ mv_par07     // Ate Localizacao ?                           ³
+	³ mv_par08     // Imprimir Localizacao ? Sim/Nao              ³
+	ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	*/
+	Pergunte(oReport:uParam,.F.)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Criacao da secao utilizada pelo relatorio                               ³
+	//³                                                                        ³
+	//³TRSection():New                                                         ³
+	//³ExpO1 : Objeto TReport que a secao pertence                             ³
+	//³ExpC2 : Descricao da seçao                                              ³
+	//³ExpA3 : Array com as tabelas utilizadas pela secao. A primeira tabela   ³
+	//³        sera considerada como principal para a seção.                   ³
+	//³ExpA4 : Array com as Ordens do relatório                                ³
+	//³ExpL5 : Carrega campos do SX3 como celulas                              ³
+	//³        Default : False                                                 ³
+	//³ExpL6 : Carrega ordens do Sindex                                        ³
+	//³        Default : False                                                 ³
+	//³                                                                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Criacao da celulas da secao do relatorio                                ³
+	//³                                                                        ³
+	//³TRCell():New                                                            ³
+	//³ExpO1 : Objeto TSection que a secao pertence                            ³
+	//³ExpC2 : Nome da celula do relatório. O SX3 será consultado              ³
+	//³ExpC3 : Nome da tabela de referencia da celula                          ³
+	//³ExpC4 : Titulo da celula                                                ³
+	//³        Default : X3Titulo()                                            ³
+	//³ExpC5 : Picture                                                         ³
+	//³        Default : X3_PICTURE                                            ³
+	//³ExpC6 : Tamanho                                                         ³
+	//³        Default : X3_TAMANHO                                            ³
+	//³ExpL7 : Informe se o tamanho esta em pixel                              ³
+	//³        Default : False                                                 ³
+	//³ExpB8 : Bloco de código para impressao.                                 ³
+	//³        Default : ExpC2                                                 ³
+	//³                                                                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	oSection1 := TRSection():New(oReport,STR0013,{(cTRB),"ST9"}) //"Bem"
+	TRCell():New(oSection1,"CODBEM",(cTRB),STR0013,"@!",26)   //"Bem/Localização"
+	TRCell():New(oSection1,"NOME"  ,""   ,STR0014,"@!",110,/*lPixel*/,{|| cDescricao }) //"Descrição"
+	TRPosition():New(oSection1,"ST9",1,{|| xFilial("ST9") + (cTRB)->CODBEM})
+
+	oSection2 := TRSection():New(oSection1,STR0023,{(cTRB),"TPS"})  //"Insumos aplicados"
+	oCell := TRCell():New(oSection2,"DTINICI" ,(cTRB),STR0015,"99/99/9999",10,/*lPixel*/,/*{|| code-block de impressao }*/)        //"Dt.Aplic."
+	oCell := TRCell():New(oSection2,"ORDEM"   ,(cTRB),STR0016,"@!",6,/*lPixel*/,/*{|| code-block de impressao }*/)              //"O.S"
+	oCell := TRCell():New(oSection2,"CODIGO"  ,(cTRB),STR0017,"@!",TamSX3("TL_CODIGO")[1],/*lPixel*/,/*{|| code-block de impressao }*/)             //"Insumo"
+	oCell := TRCell():New(oSection2,"NOMEINS" ,(cTRB),STR0014,"@!",20,/*lPixel*/,/*{|| code-block de impressao }*/)             //"Descrição"
+	oCell := TRCell():New(oSection2,"TPS_NOME","TPS",STR0018,/*Picture*/,20,/*lPixel*/,/*{|| code-block de impressao }*/)      //"Localiz."
+	oCell := TRCell():New(oSection2,"QUANTID" ,(cTRB),STR0019,"@E 999.99",9,/*lPixel*/,/*{|| code-block de impressao }*/)       //"Quantidade"
+	oCell := TRCell():New(oSection2,"UNIDADE" ,(cTRB),STR0020,"@!",3,/*lPixel*/,/*{|| code-block de impressao }*/)              //"Un"
+	oCell := TRCell():New(oSection2,"POSCONT" ,(cTRB),STR0021,"@E 999,999,999",10,/*lPixel*/,/*{|| code-block de impressao }*/) //"Contador 1"
+	oCell := TRCell():New(oSection2,"POSCON2" ,(cTRB),STR0022,"@E 999,999,999",10,/*lPixel*/,/*{|| code-block de impressao }*/) //"Contador 2"
+	//Definicao para imprimir os cabecalhos de campos numericos da esquerda para a
+	//direita
+	oSection2:Cell("QUANTID"):SetHeaderAlign("RIGHT")
+	oSection2:Cell("POSCONT"):SetHeaderAlign("RIGHT")
+	oSection2:Cell("POSCON2"):SetHeaderAlign("RIGHT")
+	TRPosition():New(oSection2,"TPS",1,{|| xFilial("TPS") + (cTRB)->LOCAPLI})
+
+Return oReport
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MNTR210R3³ Autor ³ Deivys Joenck         ³ Data ³ 23/08/01 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Historico dos Insumos Aplicados no Bem                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MNTR210                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Function MNTR210R3()
+	Local WNREL      := "MNTR210"
+	Local LIMITE     := 132
+	Local cDESC1     := STR0001 //"Relatorio de Historico dos Insumos Aplicados no Bem."
+	Local cDESC2     := STR0002 //"O usuario pode selecionar quais os campos que deverao ser mostrados,"
+	Local cDESC3     := STR0003 //"bem como informar parametros de selecao para a impressao."
+	Local cSTRING    := "ST9"
+
+	Private NOMEPROG := "MNTR210"
+	Private Tamanho  := "M"
+	Private aRETURN  := {STR0004,1,STR0005,1,2,1,"",1}     //"Zebrado"###"Administracao"
+	Private TITULO   := STR0006 //"Insumos Aplicados no Periodo"
+	Private nTIPO    := 0
+	Private nLASTKEY := 0
+	Private CABEC1, CABEC2
+
+	Pergunte(cPERG,.F.)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Envia controle para a funcao SETPRINT                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	WNREL:=SetPrint(cSTRING,WNREL,cPERG,TITULO,cDESC1,cDESC2,cDESC3,.F.,"")
+	If nLASTKEY = 27
+		Set Filter To
+		DbSelectArea("ST9")
+		Return
+	EndIf
+	SetDefault(aReturn,cSTRING)
+
+	RptStatus({|lEND| MNTR210IMP(@lEND,WNREL,TITULO,TAMANHO)},TITULO)
+	Dbselectarea("ST9")
+Return Nil
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³MNTR210IMP³ Autor ³ Deivys Joenck         ³ Data ³ 23/08/01 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Chamada do Relat¢rio                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MNTR210                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Function MNTR210IMP(lEND,WNREL,TITULO,TAMANHO)
+
+	Local cRODATXT := ""
+	Local nCNTIMPR := 0
+	Local nMULT    := 1
+	Local cEstrut  := ""
+	Local cSay     := ""
+	Local cCompare := ""
+	Local aEstrut  := {}
+	Local nCont    := 0
+	Local oARQTR210
+
+	Private aVETINR := {}
+	Private li := 80 ,m_pag := 1
+	Private nCONT1 := 0, nCONT2 := 0
+
+	nTIPO  := IIf(aReturn[4]==1,15,18)
+	CABEC1 := STR0008 //"Bem              Descricao"
+	CABEC2 := "  Dt.Aplic.  O.S.     Insumo          "+Space(nTamPro)+"Descricao               Localiz.        QTD   Un    Contador 1   Contador 2"
+
+	/*
+	1         2         3         4         5         6         7         8         9        10       110       120
+	0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	Bem              Descricao
+	Dt.Aplic.    O.S.   Insumo          Descricao               Localiz.        QTD   Un    Contador 1   Contador 2
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX   XXXXXXXXXX   999.99  XXX   999.999.999  999.999.999
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX   XXXXXXXXXX   999.99  XXX   999.999.999  999.999.999
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX   XXXXXXXXXX   999.99  XXX   999.999.999  999.999.999
+	DD/MM/AA   999999   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXX   XXXXXXXXXX   999.99  XXX   999.999.999  999.999.999
+	*/
+
+	aDBFR210 := {{"CODBEM" ,"C",16,0},;
+				 {"DTINICI","D",08,0},;
+				 {"ORDEM"  ,"C",06,0},;
+				 {"TIPOREG","C",01,0},;
+				 {"CODIGO" ,"C",TamSX3("TL_CODIGO")[1],0},;
+				 {"LOCAPLI","C",06,0},;
+				 {"QUANTID","N",09,2},;
+				 {"UNIDADE","C",03,0},;
+				 {"POSCONT","N",10,0},;
+				 {"POSCON2","N",10,0},;
+				 {"NOMEINS","C",20,0},;
+				 {"TIPOOS" ,"C",01,0}}
+
+	//Cria Tabela Temporária 
+	oARQTR210 := NGFwTmpTbl(cTRB,aDBFR210,{{"CODBEM","DTINICI","ORDEM"}})
+
+	aARRAYIN := {'P','M','F','T','A'}
+	cINSUMO := aARRAYIN[mv_par05]
+
+	Processa({|lEND| MNTR210STJ()},STR0009+STR0010) //"Processando Itens das O.S."+" Normais..."
+	Processa({|lEND| MNTR210STS()},STR0009+STR0011) //"Processando Itens das O.S."+ "historico"
+
+	Dbselectarea(cTRB)
+	DbGotop()
+	SetRegua(LastRec())
+	While !Eof()
+		cCODBEM := (cTRB)->CODBEM
+		NGSOMALI(58)
+
+		If (cTRB)->TIPOOS == "B"
+			@ Li,000 Psay (cTRB)->CODBEM
+			cCompare := (cTRB)->CODBEM
+			@ Li,017 Psay NGSEEK('ST9',(cTRB)->CODBEM,1,'Substr(T9_NOME,1,40)')
+			If MV_PAR08 == 1
+				cEstrut  := NGLocComp((cTRB)->CODBEM,"1")
+				cSay     := STR0024 //"Localização.: "
+			EndIf
+		Else
+			@ Li,000 PSay (cTRB)->CODBEM
+			cCompare := NGSEEK("TAF","X"+"2"+(cTRB)->CODBEM,7,"SubStr(TAF_NOMNIV,1,56)")
+			@ Li,017 PSay cCompare
+			If MV_PAR08 == 1
+				cEstrut  := NGLocComp((cTRB)->CODBEM,"2")
+				cSay     := STR0025 //"Estrutura...: "
+			EndIf
+		EndIf
+
+		NGSOMALI(58)
+
+		If MV_PAR08 == 1
+			aEstrut := {}
+			If Len(cEstrut) > 100
+				aAdd(aEstrut,AllTrim(SubStr(cEstrut,1,100)))
+				cEstrut := AllTrim(SubStr(cEstrut,101))
+				While Len(cEstrut) > 100
+					aAdd(aEstrut,AllTrim(SubStr(cEstrut,1,100)))
+					cEstrut := AllTrim(SubStr(cEstrut,101))
+				End
+				aAdd(aEstrut,AllTrim(cEstrut))
+			EndIf
+			If Len(aEstrut) > 0
+				For nCont := 1 To Len(aEstrut)
+					If nCont == 1
+						@ Li,000 PSay cSay
+					EndIf
+					@ Li,017 PSay aEstrut[nCont]
+					NGSOMALI(58)
+				Next nCont
+			Else
+				If AllTrim(cCompare) <> AllTrim(cEstrut)
+					@ Li,000 PSay cSay
+					@ Li,017 PSay cEstrut
+					NGSOMALI(58)
+					//		Else
+					//			If (cTRB)->TIPOOS == "B"
+					//				@ Li,017 PSay STR0026 // "Não está relacionado a uma Estrutura."
+					//			Else
+					//				@ Li,017 PSay STR0027 // "Pai da Estrutura."
+					//			EndIf
+				EndIf
+			EndIf
+		Endif
+
+		DbSelectArea(cTRB)
+		While !Eof() .And. (cTRB)->CODBEM = cCODBEM
+
+			IncRegua()
+			NGSOMALI(58)
+			@ Li,002 Psay (cTRB)->DTINICI Picture "99/99/99"
+			@ Li,013 Psay (cTRB)->ORDEM
+			@ Li,022 Psay (cTRB)->CODIGO
+			cNOME := NGNOMINSUM((cTRB)->TIPOREG,(cTRB)->CODIGO,20)
+			@ Li,038+nTamPro Psay cNOME[1][2]
+			If !Empty((cTRB)->LOCAPLI)
+				@ Li,062+nTamPro Psay NGSEEK('TPS',(cTRB)->LOCAPLI,1,'SUBSTR(TPS->TPS_NOME,1,20)')
+			EndIf
+			@ Li,075+nTamPro Psay (cTRB)->QUANTID Picture "@E 999.99"
+			@ Li,084+nTamPro Psay (cTRB)->UNIDADE
+			If (cTRB)->POSCONT > 0
+				@ Li,089+nTamPro Psay (cTRB)->POSCONT Picture "@E 999,999,999"
+			EndIf
+			If (cTRB)->POSCON2 > 0
+				@ Li,102+nTamPro Psay (cTRB)->POSCON2 Picture "@E 999,999,999"
+			EndIf
+			DbSelectArea(cTRB)
+			DbSkip()
+		End
+		NGSOMALI(58)
+	End
+
+	RODA(nCNTIMPR,cRODATXT,TAMANHO)
+	RetIndex("ST9")
+	Set Filter To
+	Set Device To Screen
+	If aReturn[5] = 1
+		Set Printer To
+		dbCommitAll()
+		OurSpool(WNREL)
+	Endif
+	MS_FLUSH()
+
+	//Deleta o arquivo temporario fisicamente
+	oARQTR210:Delete()
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ReportPrint³ Autor ³ Elisangela Costa      ³ Data ³ 20/06/06 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Chamada do Relat¢rio                                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ ReportDef                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ReportPrint(oReport)
+
+	Local oSection1  := oReport:Section(1)
+	Local oSection2  := oReport:Section(1):Section(1)
+	Local cEstrut    := ""
+	Local cCompare   := ""
+	Local aEstrut    := {}
+	Local nCont      := 0
+	Local cImpEst    := ""
+	Local cSay       := ""
+	Local nImpLin    := 0
+	Local nImpColCod := 0
+	Local nImpColNom := 0
+	Local oARQTR210
+
+	Private aVETINR := {}
+
+	aARRAYIN := {'P','M','F','T','A'}
+	cINSUMO := aARRAYIN[mv_par05]
+
+	aDBFR210 := {{"CODBEM" ,"C",16,0},;
+				 {"DTINICI","D",08,0},;
+				 {"ORDEM"  ,"C",06,0},;
+				 {"TIPOREG","C",01,0},;
+				 {"CODIGO" ,"C",TamSX3("TL_CODIGO")[1],0},;
+				 {"LOCAPLI","C",06,0},;
+				 {"QUANTID","N",09,2},;
+				 {"UNIDADE","C",03,0},;
+				 {"POSCONT","N",10,0},;
+				 {"POSCON2","N",10,0},;
+				 {"NOMEINS","C",20,0},;
+				 {"TIPOOS" ,"C",01,0}}
+
+	//Cria Tabela Temporária 	
+	oARQTR210 := NGFwTmpTbl((cTRB),aDBFR210,{{"CODBEM","DTINICI","ORDEM"}})
+
+	Processa({|lEND| MNTR210STJ()},STR0009+STR0010) //"Processando Itens das O.S."+" Normais..."
+	Processa({|lEND| MNTR210STS()},STR0009+STR0011) //"Processando Itens das O.S."+ "historico"
+
+	DbSelectArea(cTRB)
+	DbGotop()
+	oReport:SetMeter(RecCount())
+	While !Eof() .And. !oReport:Cancel()
+
+		If (cTRB)->TIPOOS == "B"
+			cDescricao := NGSEEK("ST9",(cTRB)->CODBEM,1,"SubStr(T9_NOME,1,40)")
+			If MV_PAR08 == 1
+				cEstrut    := NGLocComp((cTRB)->CODBEM,"1")
+				cCompare   := (cTRB)->CODBEM
+				cSay       := STR0024 //"Localização.: "
+			EndIf
+		Else
+			cDescricao := NGSEEK("TAF","X"+"2"+(cTRB)->CODBEM,7,"SubStr(TAF_NOMNIV,1,56)")
+			If MV_PAR08 == 1
+				cEstrut    := NGLocComp((cTRB)->CODBEM,"2")
+				cCompare   := cDescricao
+				cSay       := STR0025 //"Estrutura...: "
+			EndIf
+		EndIf
+		oSection1:Init()
+		oSection1:PrintLine()
+		oSection2:Init()
+
+		If MV_PAR08 == 1
+			aEstrut := {}
+			nImpColCod := oSection1:Cell("CODBEM"):Col()
+			nImpColNom := oSection1:Cell("NOME"):Col()
+			If Len(cEstrut) > 100
+				aAdd(aEstrut,AllTrim(SubStr(cEstrut,1,100)))
+				cEstrut := AllTrim(SubStr(cEstrut,101))
+				While Len(cEstrut) > 100
+					aAdd(aEstrut,AllTrim(SubStr(cEstrut,1,100)))
+					cEstrut := AllTrim(SubStr(cEstrut,101))
+				End
+				aAdd(aEstrut,AllTrim(cEstrut))
+			EndIf
+
+			nImpLin := oReport:Row()
+			If Len(aEstrut) > 0
+				oReport:PrintText(cSay,nImpLin,nImpColCod)
+				For nCont := 1 To Len(aEstrut)
+					oReport:PrintText(aEstrut[nCont],nImpLin,nImpColNom)
+					oReport:SkipLine()
+					nImpLin := oReport:Row()
+				Next nCont
+			Else
+				If AllTrim(cCompare) <> AllTrim(cEstrut)
+					oReport:PrintText(cSay,nImpLin,nImpColCod)
+					oReport:PrintText(cEstrut,nImpLin,nImpColNom)
+					oReport:SkipLine()
+					//		Else
+					//			If (cTRB)->TIPOOS == "B"
+					//				oReport:PrintText(STR0026,nImpLin,nImpColNom) //"Não está relacionado a uma Estrutura."
+					//			Else
+					//				oReport:PrintText(STR0027,nImpLin,nImpColNom) // "Pai da Estrutura."
+					//			EndIf
+				EndIf
+			EndIf
+		Endif
+
+		cCODBEM := (cTRB)->CODBEM
+		DbSelectArea(cTRB)
+		While !Eof() .And. !oReport:Cancel() .And. (cTRB)->CODBEM = cCODBEM
+
+			oReport:IncMeter()
+			oSection2:PrintLine()
+			DbSelectArea(cTRB)
+			Dbskip()
+		End
+		oSection1:Finish()
+		oSection2:Finish()
+	End
+
+	//Deleta o arquivo temporario fisicamente
+	oARQTR210:Delete()
+
+Return .T.
+
+//------------------------------------------------------------------------------
+/*/{Protheus.doc} MNTR210STJ
+Realiza o carregamento dos Insumos de ordens de serviço presentes na STJ
+
+@type Function
+
+@author João Ricardo Santini Zandoná
+@since 18/06/2024
+
+@return Logica, retorna .T., retorno padrão para seguir com o processo.
+/*/
+//------------------------------------------------------------------------------
+Static Function MNTR210STJ()
+
+	Local cQuery := ''
+	Local cBanco := Upper( TCGetDB() )
+	Local aSQL   := {}
+
+	 If cBanco == 'ORACLE'
+	
+		aAdd( aSQL, ' SUBSTR' )
+        aAdd( aSQL, ' OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY) ' )
+		aAdd( aSQL, ' ' )
+    
+	ElseIf cBanco == 'POSTGRES'
+
+        aAdd( aSQL, ' SUBSTRING' )
+        aAdd( aSQL, ' LIMIT 1) ' )
+		aAdd( aSQL, ' ' )
+
+    Else
+
+		aAdd( aSQL, ' SUBSTRING' )
+		aAdd( aSQL, ' )' )
+        aAdd( aSQL, ' TOP (1) ' )
+    
+	EndIf
+
+	cQuery := 'SELECT '
+	cQuery += 'STJ.TJ_CODBEM AS CODBEM, '
+	cQuery += 'STL.TL_DTINICI AS DTINICI, '
+	cQuery += 'STL.TL_ORDEM AS ORDEM, '
+	cQuery += 'STL.TL_TIPOREG AS TIPOREG, '
+	cQuery += 'STL.TL_CODIGO AS CODIGO, '
+	cQuery += 'STL.TL_LOCAPLI AS LOCAPLI, '
+	cQuery += 'STL.TL_QUANTID AS QUANTID, '
+	cQuery += 'STL.TL_UNIDADE AS UNIDADE, '
+	cQuery += 'STJ.TJ_TIPOOS AS TIPOOS, '
+	cQuery += 'STJ.TJ_POSCONT AS POSCONT, '
+	cQuery += 'STJ.TJ_POSCON2 AS POSCON2, '
+	cQuery += 'CASE '
+	cQuery += 	"WHEN STL.TL_TIPOREG = 'P' THEN "
+	cQuery +=		'(SELECT ' + aSQL[3]
+	cQuery +=			aSQL[1] + '(SB1.B1_DESC, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'SB1' ) + ' SB1 '
+	cQuery +=		'WHERE '
+	cQuery += 			NGMODCOMP( 'SB1', 'STL','=' ) + ' '
+	cQuery +=			'AND SB1.B1_COD = STL.TL_CODIGO '
+	cQuery +=			"AND SB1.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	"WHEN STL.TL_TIPOREG = 'M' THEN "
+	cQuery +=		'(SELECT ' + aSQL[3] 
+	cQuery +=			aSQL[1] + '(ST1.T1_NOME, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'ST1' ) + ' ST1 '
+	cQuery +=		'WHERE '
+	cQuery +=			NGMODCOMP( 'ST1', 'STL', '=' ) + ' '
+	cQuery +=			'AND ST1.T1_CODFUNC = ' + aSQL[1] + '(STL.TL_CODIGO, 1, ' + cValToChar( TAMSX3( 'T1_CODFUNC' )[ 1 ] ) + ') '
+	cQuery +=			"AND ST1.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	"WHEN STL.TL_TIPOREG = 'F' THEN "
+	cQuery +=		'(SELECT ' + aSQL[3] 
+	cQuery +=			aSQL[1] + '(SH4.H4_DESCRI, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'SH4' ) + ' SH4 '
+	cQuery +=		'WHERE '
+	cQuery += 			NGMODCOMP( 'SH4', 'STL', '=' ) + ' '
+	cQuery +=			'AND SH4.H4_CODIGO = ' + aSQL[1] + '(STL.TL_CODIGO, 1, ' + cValToChar( TAMSX3( 'H4_CODIGO' )[ 1 ] ) + ') '
+	cQuery +=			"AND SH4.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	"WHEN STL.TL_TIPOREG = 'T' THEN "
+	cQuery +=		'(SELECT ' + aSQL[3] 
+	cQuery +=			aSQL[1] + '(SA2.A2_NOME, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'SA2' ) + ' SA2 '
+	cQuery +=		'WHERE '
+	cQuery +=			NGMODCOMP( 'SA2', 'STL', '=' ) + ' '
+	cQuery +=			'AND RTRIM(LTRIM(SA2.A2_COD)) = RTRIM(LTRIM(STL.TL_CODIGO)) '
+	cQuery +=			"AND SA2.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	'ELSE '
+	cQuery +=		'(SELECT ' + aSQL[3] 
+	cQuery +=			aSQL[1] + '(ST0.T0_NOME, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'ST0' ) + ' ST0 '
+	cQuery +=		'WHERE '
+	cQuery += 			NGMODCOMP( 'ST0', 'STL', '=' ) + ' '
+	cQuery +=			'AND ST0.T0_ESPECIA = ' + aSQL[1] + '(STL.TL_CODIGO, 1, 3 ) '
+	cQuery +=			"AND ST0.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	'END AS NOMEINS '
+	cQuery += 'FROM ' + RetSqlName( 'STJ' ) + ' STJ '
+	
+	cQuery += 'INNER JOIN ' + RetSqlName( 'STL' ) + ' STL ON '
+	cQuery += 	NGMODCOMP( 'STL', 'STJ', '=' ) + ' '
+	cQuery += 	'AND STL.TL_ORDEM = STJ.TJ_ORDEM '
+	cQuery += 	'AND STL.TL_PLANO = STJ.TJ_PLANO '
+	cQuery +=	'AND STL.TL_DTINICI >= ' + ValToSQL( MV_PAR01 ) + ' '
+	cQuery +=	'AND STL.TL_DTINICI <= ' + ValToSQL( MV_PAR02 ) + ' '
+	cQuery +=	"AND ((STL.TL_TIPOREG = 'P' "
+	cQuery +=	"AND LTRIM(RTRIM(STL.TL_CODIGO)) NOT IN ('TERCEIROS', 'MANUTENCAO') "
+	cQuery +=	'AND ' + aSQL[1] + "(LTRIM(RTRIM(STL.TL_CODIGO)), 1, 3) <> 'MOD') "
+	cQuery +=	"OR STL.TL_TIPOREG <> 'P') "
+	cQuery +=	"AND STL.D_E_L_E_T_ = ' ' "
+
+	cQuery += 'WHERE '
+	cQuery += 	'STJ.TJ_FILIAL = ' + ValToSQL( xFilial( 'STJ' ) ) + ' '
+	cQuery += 	'AND (( '
+	cQuery += 			"STJ.TJ_TIPOOS = 'B' "
+	cQuery += 			'AND STJ.TJ_CODBEM >= ' + ValToSQL( MV_PAR03 ) + ' '
+	cQuery +=			'AND STJ.TJ_CODBEM <= ' + ValToSQL( MV_PAR04 ) + ') '
+	cQuery +=			'OR ( '
+	cQuery +=			"STJ.TJ_TIPOOS <> 'B' "
+	cQuery += 			'AND STJ.TJ_CODBEM >= ' + ValToSQL( MV_PAR06 ) + ' '
+	cQuery +=			'AND STJ.TJ_CODBEM <= ' + ValToSQL( MV_PAR07 ) + ')) '
+	cQuery += 	"AND STJ.TJ_SITUACA = 'L' "
+	cQuery += 	"AND STJ.TJ_TERMINO = 'S' "
+	
+	If cINSUMO <> 'A'
+	
+		cQuery +=	'AND STL.TL_TIPOREG = ' + ValToSQL( cINSUMO ) + ' '
+	
+	EndIf
+	
+	cQuery += "AND LTRIM(RTRIM(STL.TL_SEQRELA)) <> '0' "
+	cQuery += "AND STJ.D_E_L_E_T_ = ' ' "
+
+	cQuery := ChangeQuery( cQuery )
+
+	SqlToTRB( cQuery, aDBFR210, cTRB )
+
+Return .t.
+
+//------------------------------------------------------------------------------
+/*/{Protheus.doc} MNTR210STS
+Realiza o carregamento dos Insumos de ordens de serviço presentes na STS
+
+@type Function
+
+@author João Ricardo Santini Zandoná
+@since 18/06/2024
+
+@return Logica, retorna .T., retorno padrão para seguir com o processo.
+/*/
+//------------------------------------------------------------------------------
+Function MNTR210STS()
+
+	Local cQuery := ''
+	Local cBanco := Upper( TCGetDB() )
+	Local aSQL   := {}
+
+	If cBanco == 'ORACLE'
+	
+		aAdd(aSQL, ' SUBSTR')
+        aAdd(aSQL, ' OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY) ')
+		aAdd(aSQL, ' ')
+    
+	ElseIf cBanco == 'POSTGRES'
+
+        aAdd(aSQL, ' SUBSTRING')
+        aAdd(aSQL, ' LIMIT 1) ')
+		aAdd(aSQL, ' ')
+
+    Else
+
+		aAdd(aSQL, ' SUBSTRING')
+		aAdd(aSQL, ' )')
+        aAdd(aSQL, ' TOP (1) ')
+    
+	EndIf
+
+	cQuery := 'SELECT '
+	cQuery += 'STS.TS_CODBEM AS CODBEM, '
+	cQuery += 'STT.TT_DTINICI AS DTINICI, '
+	cQuery += 'STT.TT_ORDEM AS ORDEM, '
+	cQuery += 'STT.TT_TIPOREG AS TIPOREG, '
+	cQuery += 'STT.TT_CODIGO AS CODIGO, '
+	cQuery += 'STT.TT_LOCAPLI AS LOCAPLI, '
+	cQuery += 'STT.TT_QUANTID AS QUANTID, '
+	cQuery += 'STT.TT_UNIDADE AS UNIDADE, '
+	cQuery += 'STS.TS_TIPOOS AS TIPOOS, '
+	cQuery += 'STS.TS_POSCONT AS POSCONT, '
+	cQuery += 'STS.TS_POSCON2 AS POSCON2, '
+	cQuery += 'CASE '
+	cQuery += 	"WHEN STT.TT_TIPOREG = 'P' THEN "
+	cQuery +=		'(SELECT ' + aSQL[3]
+	cQuery +=			aSQL[1] + '(SB1.B1_DESC, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'SB1' ) + ' SB1 '
+	cQuery +=		'WHERE '
+	cQuery += 			NGMODCOMP( 'SB1', 'STT','=' ) + ' '
+	cQuery +=			'AND SB1.B1_COD = STT.TT_CODIGO '
+	cQuery +=			"AND SB1.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	"WHEN STT.TT_TIPOREG = 'M' THEN "
+	cQuery +=		'(SELECT ' + aSQL[3] 
+	cQuery +=			aSQL[1] + '(ST1.T1_NOME, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'ST1' ) + ' ST1 '
+	cQuery +=		'WHERE '
+	cQuery +=			NGMODCOMP( 'ST1', 'STT', '=' ) + ' '
+	cQuery +=			'AND ST1.T1_CODFUNC = ' + aSQL[1] + '(STT.TT_CODIGO, 1, ' + cValToChar( TAMSX3( 'T1_CODFUNC' )[ 1 ] ) + ') '
+	cQuery +=			"AND ST1.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	"WHEN STT.TT_TIPOREG = 'F' THEN "
+	cQuery +=		'(SELECT ' + aSQL[1] + '(SH4.H4_DESCRI, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'SH4' ) + ' SH4 '
+	cQuery +=		'WHERE '
+	cQuery += 			NGMODCOMP( 'SH4', 'STT', '=' ) + ' '
+	cQuery +=			'AND SH4.H4_CODIGO = ' + aSQL[1] + '(STT.TT_CODIGO, 1, ' + cValToChar( TAMSX3( 'H4_CODIGO' )[ 1 ] ) + ') '
+	cQuery +=			"AND SH4.D_E_L_E_T_ = ' ') "
+	cQuery +=	"WHEN STT.TT_TIPOREG = 'T' THEN "
+	cQuery +=		'(SELECT ' + aSQL[3] 
+	cQuery +=			aSQL[1] + '(SA2.A2_NOME, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'SA2' ) + ' SA2 '
+	cQuery +=		'WHERE '
+	cQuery +=			NGMODCOMP( 'SA2', 'STT', '=' ) + ' '
+	cQuery +=			'AND RTRIM(LTRIM(SA2.A2_COD)) = RTRIM(LTRIM(STT.TT_CODIGO)) '
+	cQuery +=			"AND SA2.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	'ELSE '
+	cQuery +=		'(SELECT ' + aSQL[3] 
+	cQuery +=			aSQL[1] + '(ST0.T0_NOME, 1, 20) '
+	cQuery +=		'FROM ' + RetSqlName( 'ST0' ) + ' ST0 '
+	cQuery +=		'WHERE '
+	cQuery += 			NGMODCOMP( 'ST0', 'STT', '=' ) + ' '
+	cQuery +=			'AND ST0.T0_ESPECIA = ' + aSQL[1] + '(STT.TT_CODIGO, 1, 3 ) '
+	cQuery +=			"AND ST0.D_E_L_E_T_ = ' ' "
+	cQuery +=		aSQL[2]
+	cQuery +=	'END AS NOMEINS '
+	cQuery += 'FROM ' + RetSqlName( 'STS' ) + ' STS '
+	
+	cQuery += 'INNER JOIN ' + RetSqlName( 'STT' ) + ' STT ON '
+	cQuery += 	NGMODCOMP( 'STT', 'STS', '=' ) + ' '
+	cQuery += 	'AND STT.TT_ORDEM = STS.TS_ORDEM '
+	cQuery += 	'AND STT.TT_PLANO = STS.TS_PLANO '
+	cQuery +=	'AND STT.TT_DTINICI >= ' + ValToSQL( MV_PAR01 ) + ' '
+	cQuery +=	'AND STT.TT_DTINICI <= ' + ValToSQL( MV_PAR02 ) + ' '
+	cQuery +=	"AND ((STT.TT_TIPOREG = 'P' "
+	cQuery +=	"AND LTRIM(RTRIM(STT.TT_CODIGO)) NOT IN ('TERCEIROS', 'MANUTENCAO') "
+	cQuery +=	'AND ' + aSQL[1] + "(LTRIM(RTRIM(STT.TT_CODIGO)), 1, 3) <> 'MOD') "
+	cQuery +=	"OR STT.TT_TIPOREG <> 'P') "
+	cQuery +=	"AND STT.D_E_L_E_T_ = ' ' "
+
+	cQuery += 'WHERE '
+	cQuery += 	'STS.TS_FILIAL = ' + ValToSQL( xFilial( 'STS' ) ) + ' '
+	cQuery += 	'AND (( '
+	cQuery += 			"STS.TS_TIPOOS = 'B' "
+	cQuery += 			'AND STS.TS_CODBEM > ' + ValToSQL( MV_PAR03 ) + ' '
+	cQuery +=			'AND STS.TS_CODBEM < ' + ValToSQL( MV_PAR04 ) + ') '
+	cQuery +=			'OR ( '
+	cQuery +=			"STS.TS_TIPOOS <> 'B' "
+	cQuery += 			'AND STS.TS_CODBEM > ' + ValToSQL( MV_PAR06 ) + ' '
+	cQuery +=			'AND STS.TS_CODBEM < ' + ValToSQL( MV_PAR07 ) + ')) '
+	cQuery += 	"AND STS.TS_SITUACA = 'L' "
+	cQuery += 	"AND STS.TS_TERMINO = 'S' "
+	
+	If cINSUMO <> 'A'
+	
+		cQuery +=	'AND STT.TT_TIPOREG = ' + ValToSQL( cINSUMO ) + ' '
+	
+	EndIf
+	
+	cQuery += "AND LTRIM(RTRIM(STT.TT_SEQRELA)) <> '0' "
+	cQuery += "AND STS.D_E_L_E_T_ = ' ' "
+
+	cQuery := ChangeQuery( cQuery )
+
+	SqlToTRB( cQuery, aDBFR210, cTRB )
+
+Return .t.
